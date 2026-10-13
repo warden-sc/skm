@@ -1,0 +1,146 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/shop_ui.gd" id="1_shop"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.1, 0.11, 0.17, 0.97)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.8, 0.46, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="ShopUI" type="CanvasLayer"]
+process_mode = 3
+layer = 20
+visible = false
+script = ExtResource("1_shop")
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -270.0
+offset_top = -160.0
+offset_right = 270.0
+offset_bottom = 160.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 6
+
+[node name="VBox" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Header" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Panel/Margin/VBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 13
+text = "상점"
+
+[node name="ShopGold" type="Label" parent="Panel/Margin/VBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+text = "보유 골드: 0 G"
+
+[node name="HSeparator" type="HSeparator" parent="Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="Columns" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="BuyColumn" type="VBoxContainer" parent="Panel/Margin/VBox/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BuyHeader" type="Label" parent="Panel/Margin/VBox/Columns/BuyColumn"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.9, 1, 1)
+text = "판매 목록"
+
+[node name="BuyScroll" type="ScrollContainer" parent="Panel/Margin/VBox/Columns/BuyColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="BuyList" type="VBoxContainer" parent="Panel/Margin/VBox/Columns/BuyColumn/BuyScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VSeparator" type="VSeparator" parent="Panel/Margin/VBox/Columns"]
+layout_mode = 2
+
+[node name="InventoryColumn" type="VBoxContainer" parent="Panel/Margin/VBox/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="InventoryHeader" type="Label" parent="Panel/Margin/VBox/Columns/InventoryColumn"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 1, 0.75, 1)
+text = "보유 무기"
+
+[node name="InventoryScroll" type="ScrollContainer" parent="Panel/Margin/VBox/Columns/InventoryColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="InventoryList" type="VBoxContainer" parent="Panel/Margin/VBox/Columns/InventoryColumn/InventoryScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HSeparator2" type="HSeparator" parent="Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="Detail" type="Label" parent="Panel/Margin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 62)
+layout_mode = 2
+theme_override_font_sizes/font_size = 9
+autowrap_mode = 3
+
+[node name="Footer" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="FooterHint" type="Label" parent="Panel/Margin/VBox/Footer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 8
+text = "[E] / [ESC] 닫기  ·  상점이 열려 있는 동안 게임이 일시정지됩니다"
+
+[node name="CloseButton" type="Button" parent="Panel/Margin/VBox/Footer"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+text = "닫기"

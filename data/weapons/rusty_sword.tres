@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/rusty_sword.png" id="2_icon"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/slash.png" id="3_proj"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"rusty_sword"
+display_name = "녹슨 검"
+description = "오래된 훈련용 검. 짧은 검기를 날린다."
+weapon_type = 0
+rarity = 0
+icon = ExtResource("2_icon")
+projectile_texture = ExtResource("3_proj")
+projectile_color = Color(1, 0.85, 0.7, 1)
+damage = 6
+crit_chance = 0.05
+crit_multiplier = 1.5
+knockback = 140.0
+attack_cooldown = 0.38
+projectile_speed = 260.0
+projectile_range = 70.0
+projectiles_per_shot = 1
+spread_degrees = 0.0
+pierce = 2
+projectile_scale = 1.0
+price = 40

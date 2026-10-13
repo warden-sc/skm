@@ -1,0 +1,163 @@
+class_name Enemy
+extends Area2D
+## 모든 몬스터의 기반 클래스 (Area2D)
+##
+## - 플레이어 투사체(Projectile)가 area_entered 로 감지하여 take_damage() 를 호출합니다.
+## - 플레이어 몸체와 겹쳐 있는 동안 contact_damage 를 줍니다 (플레이어 무적시간으로 연타 방지).
+## - 사망 시 died 시그널 발행 → StageManager 가 골드(확정) / 무기(확률) 드랍을 처리합니다.
+## - 이동 패턴은 자식 클래스에서 _get_move_velocity() 를 오버라이드해서 만듭니다.
+
+signal died(enemy: Enemy)
+signal health_changed(current: int, max_hp: int)
+## 보스가 졸개를 소환할 때 사용 (StageManager 가 받아서 스폰)
+signal summon_requested(scene: PackedScene, at_global: Vector2)
+
+@export var display_name: String = "몬스터"
+@export var max_hp: int = 20
+@export var move_speed: float = 40.0
+@export var contact_damage: int = 8
+@export_range(0.0, 1.0) var knockback_resistance: float = 0.0
+@export var is_boss: bool = false
+
+@export_group("Drops")
+@export var gold_min: int = 3
+@export var gold_max: int = 6
+@export_range(0.0, 1.0) var weapon_drop_chance: float = 0.1
+## WeaponDB 의 무기 id 목록. 드랍 시 이 중 하나가 무작위로 선택됩니다.
+@export var weapon_drop_ids: Array[StringName] = []
+
+var hp: int = 0
+## StageManager 가 지정. 크기가 0 이 아니면 이 영역 밖으로 밀려나지 않습니다.
+var arena_rect: Rect2 = Rect2()
+
+var _player: Player
+var _knockback: Vector2 = Vector2.ZERO
+var _touching_player: bool = false
+var _dead: bool = false
+var _hit_flash: float = 0.0
+var _anim_time: float = 0.0
+
+@onready var sprite: Sprite2D = $Sprite2D
+
+
+func _ready() -> void:
+	add_to_group(&"enemies")
+	collision_layer = Layers.ENEMY
+	collision_mask = Layers.PLAYER
+	hp = max_hp
+	_anim_time = randf() * 10.0
+	body_entered.connect(_on_body_entered)
+	body_exited.connect(_on_body_exited)
+	# 스폰 연출
+	sprite.modulate.a = 0.0
+	create_tween().tween_property(sprite, "modulate:a", 1.0, 0.25)
+
+
+## StageManager 가 add_child 전에 호출. 스테이지가 오를수록 강해집니다.
+func apply_stage_scaling(stage: int) -> void:
+	var level := maxi(stage - 1, 0)
+	max_hp = roundi(max_hp * (1.0 + 0.45 * level))
+	contact_damage = roundi(contact_damage * (1.0 + 0.2 * level))
+	gold_min = roundi(gold_min * (1.0 + 0.3 * level))
+	gold_max = roundi(gold_max * (1.0 + 0.3 * level))
+	move_speed *= 1.0 + 0.05 * level
+
+
+func _physics_process(delta: float) -> void:
+	if _dead:
+		return
+	_anim_time += delta
+	if _player == null or not is_instance_valid(_player):
+		_player = get_tree().get_first_node_in_group(&"player") as Player
+
+	var move := _get_move_velocity(delta)
+	_knockback = _knockback.move_toward(Vector2.ZERO, 900.0 * delta)
+	global_position += (move + _knockback) * delta
+	if arena_rect.has_area():
+		global_position = global_position.clamp(arena_rect.position, arena_rect.end)
+
+	if _touching_player and _player != null and is_instance_valid(_player):
+		_player.take_hit(contact_damage, global_position)
+
+	_hit_flash = maxf(_hit_flash - delta, 0.0)
+	sprite.self_modulate = Color(3.0, 3.0, 3.0) if _hit_flash > 0.0 else Color.WHITE
+	_update_visual(delta, move)
+
+
+## 자식 클래스에서 오버라이드: 이번 프레임의 이동 속도(px/s) 반환
+func _get_move_velocity(_delta: float) -> Vector2:
+	if not has_target():
+		return Vector2.ZERO
+	return global_position.direction_to(_player.global_position) * move_speed
+
+
+## 자식 클래스에서 오버라이드: 스프라이트 연출
+func _update_visual(_delta: float, move: Vector2) -> void:
+	if absf(move.x) > 1.0:
+		sprite.flip_h = move.x < 0.0
+
+
+func has_target() -> bool:
+	return _player != null and is_instance_valid(_player) and not GameManager.is_player_dead
+
+
+func is_dead() -> bool:
+	return _dead
+
+
+## 졸개 소환 요청 (보스 등 자식 클래스에서 사용)
+func request_summon(scene: PackedScene, at_global: Vector2) -> void:
+	summon_requested.emit(scene, at_global)
+
+
+func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool = false) -> void:
+	if _dead or amount <= 0:
+		return
+	hp = maxi(hp - amount, 0)
+	_knockback += knockback * (1.0 - knockback_resistance)
+	_hit_flash = 0.08
+	health_changed.emit(hp, max_hp)
+
+	var color := Color(1.0, 0.85, 0.3) if is_crit else Color.WHITE
+	FloatingText.spawn(self, global_position + Vector2(0, -12), str(amount) + ("!" if is_crit else ""), color, is_crit)
+
+	if hp == 0:
+		_die()
+
+
+## 드랍/시그널 없이 조용히 제거 (스테이지 정리용)
+func despawn() -> void:
+	if _dead:
+		return
+	_dead = true
+	remove_from_group(&"enemies")
+	set_deferred(&"monitoring", false)
+	set_deferred(&"monitorable", false)
+	var tween := create_tween()
+	tween.tween_property(sprite, "modulate:a", 0.0, 0.3)
+	tween.tween_callback(queue_free)
+
+
+func _die() -> void:
+	_dead = true
+	remove_from_group(&"enemies")
+	# 충돌 콜백 안에서 호출될 수 있으므로 반드시 deferred
+	set_deferred(&"monitoring", false)
+	set_deferred(&"monitorable", false)
+	died.emit(self)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(sprite, "scale", Vector2(1.6, 0.2), 0.18)
+	tween.tween_property(sprite, "modulate:a", 0.0, 0.2)
+	tween.chain().tween_callback(queue_free)
+
+
+func _on_body_entered(body: Node2D) -> void:
+	if body is Player:
+		_touching_player = true
+		_player = body as Player
+
+
+func _on_body_exited(body: Node2D) -> void:
+	if body is Player:
+		_touching_player = false

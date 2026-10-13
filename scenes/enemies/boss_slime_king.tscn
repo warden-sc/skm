@@ -1,0 +1,40 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/boss_slime_king.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/slime_king.png" id="2_tex"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/shadow.png" id="3_shadow"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/enemy_bullet.png" id="4_bullet"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/slime.tscn" id="5_minion"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 13.0
+
+[node name="BossSlimeKing" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_script")
+display_name = "슬라임 킹"
+max_hp = 700
+move_speed = 26.0
+contact_damage = 18
+knockback_resistance = 0.9
+gold_min = 60
+gold_max = 90
+weapon_drop_chance = 1.0
+weapon_drop_ids = Array[StringName]([&"king_scepter", &"flame_blade"])
+is_boss = true
+bullet_texture = ExtResource("4_bullet")
+minion_scene = ExtResource("5_minion")
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(2.6, 2.6)
+texture = ExtResource("3_shadow")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -16)
+texture = ExtResource("2_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -11)
+shape = SubResource("CircleShape2D_hit")

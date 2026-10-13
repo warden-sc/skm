@@ -1,0 +1,35 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/goblin.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/goblin.png" id="2_tex"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/shadow.png" id="3_shadow"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 6.0
+
+[node name="Goblin" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_script")
+display_name = "고블린"
+max_hp = 28
+move_speed = 55.0
+contact_damage = 10
+knockback_resistance = 0.2
+gold_min = 4
+gold_max = 8
+weapon_drop_chance = 0.12
+weapon_drop_ids = Array[StringName]([&"goblin_dagger", &"hunter_bow", &"iron_sword"])
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(1.0, 1.0)
+texture = ExtResource("3_shadow")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -8)
+texture = ExtResource("2_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -6)
+shape = SubResource("CircleShape2D_hit")

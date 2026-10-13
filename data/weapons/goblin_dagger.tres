@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/goblin_dagger.png" id="2_icon"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/knife.png" id="3_proj"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"goblin_dagger"
+display_name = "고블린 단검"
+description = "고블린이 쓰던 독 묻은 단검. 빠르고 치명타가 잘 터진다.
+(고블린 드랍 전용)"
+weapon_type = 3
+rarity = 1
+icon = ExtResource("2_icon")
+projectile_texture = ExtResource("3_proj")
+projectile_color = Color(0.7, 1, 0.6, 1)
+damage = 6
+crit_chance = 0.3
+crit_multiplier = 2.2
+knockback = 60.0
+attack_cooldown = 0.16
+projectile_speed = 340.0
+projectile_range = 110.0
+projectiles_per_shot = 1
+spread_degrees = 0.0
+pierce = 1
+projectile_scale = 1.0
+price = 160
