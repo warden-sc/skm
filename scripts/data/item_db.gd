@@ -1,5 +1,5 @@
 class_name ItemDB
-## 모든 장비 리소스(무기/방패/투구)를 id(StringName)로 조회하는 정적 데이터베이스.
+## 모든 장비 리소스(무기/방패/투구/갑옷/보석)를 id(StringName)로 조회하는 정적 데이터베이스.
 ## 새 장비를 추가하려면 .tres 를 만들고 ITEM_PATHS 에 경로만 추가하세요.
 
 const ITEM_PATHS: Array[String] = [
@@ -32,6 +32,17 @@ const ITEM_PATHS: Array[String] = [
 	"res://data/helmets/iron_helm.tres",
 	"res://data/helmets/orc_warhelm.tres",
 	"res://data/helmets/gatekeeper_horns.tres",
+	# 갑옷
+	"res://data/armors/leather_armor.tres",
+	"res://data/armors/chain_mail.tres",
+	"res://data/armors/hellsteel_plate.tres",
+	"res://data/armors/paladin_plate.tres",
+	# 보석
+	"res://data/gems/rough_ruby.tres",
+	"res://data/gems/ruby.tres",
+	"res://data/gems/sapphire.tres",
+	"res://data/gems/blood_ruby.tres",
+	"res://data/gems/star_diamond.tres",
 ]
 
 static var _cache: Dictionary = {}
@@ -55,6 +66,27 @@ static func get_shield(item_id: StringName) -> ShieldData:
 
 static func get_helmet(item_id: StringName) -> HelmetData:
 	return get_item(item_id) as HelmetData
+
+
+static func get_all() -> Array[ItemData]:
+	_ensure_loaded()
+	var result: Array[ItemData] = []
+	for item in _cache.values():
+		result.append(item as ItemData)
+	return result
+
+
+## 보스 상자용: 검 / 활 / 지팡이 / 방패 / 투구 / 갑옷 중 해당 등급 장비 목록
+static func get_chest_candidates(rarity: ItemData.Rarity) -> Array[ItemData]:
+	var result: Array[ItemData] = []
+	for item in get_all():
+		if item.rarity != rarity:
+			continue
+		var weapon := item as WeaponData
+		var is_chest_weapon := weapon != null and weapon.weapon_type != WeaponData.WeaponType.DAGGER
+		if is_chest_weapon or item is ShieldData or item is HelmetData or item is ArmorData:
+			result.append(item)
+	return result
 
 
 static func has_item(item_id: StringName) -> bool:

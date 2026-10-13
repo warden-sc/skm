@@ -1,8 +1,13 @@
 extends Node
 ## 전역 게임 상태 관리자 (Autoload 이름: GameManager)
 ##
-## - 플레이어 체력 / 대시 쿨타임 / 가드 게이지 / 골드 / 인벤토리 / 장착 무기·방패·투구 / 스테이지 진행 데이터를 보관합니다.
-## - 값이 바뀌면 항상 시그널을 발행하므로 HUD/상점 UI 는 시그널만 구독하면 실시간으로 갱신됩니다.
+## - 난이도 / 플레이어 체력 / 대시 쿨타임 / 가드 게이지 / 골드 / 인벤토리 / 장비 칸 / 스테이지 진행 데이터를 보관합니다.
+## - 값이 바뀌면 항상 시그널을 발행하므로 HUD/상점/인벤토리 UI 는 시그널만 구독하면 실시간으로 갱신됩니다.
+##
+## 장비 칸
+##   무기 3칸   : 검(단검 포함) / 활 / 지팡이 — 종류별로 1개씩. 1/2/3·Q 로 사용할 무기를 고릅니다.
+##   방어구 3칸 : 방패 / 투구 / 갑옷
+##   보석 3칸   : 치명타 확률·치명타 피해·공격력 보너스 (합산)
 ##
 ## ⚠️ Autoload 스크립트에는 class_name 을 붙이지 않습니다.
 ##    (붙이면 "Class 'GameManager' hides an autoload singleton" 에러가 납니다.)
@@ -17,16 +22,22 @@ signal guard_broken
 
 # --- 경제 / 장비 ---
 signal gold_changed(gold: int)
-## 무기 또는 방패 인벤토리가 바뀌었을 때
+## 보유 아이템 목록이 바뀌었을 때 (획득 / 구매 / 판매)
 signal inventory_changed
+## 장비 칸 중 하나라도 바뀌었을 때
+signal equipment_changed
+## 현재 손에 든 무기가 바뀌었을 때
 signal weapon_equipped(weapon: WeaponData)
 signal shield_equipped(shield: ShieldData)
 signal helmet_equipped(helmet: HelmetData)
+signal armor_equipped(armor: ArmorData)
+## 방어력 / 최대 체력 / 치명타 등 파생 능력치가 바뀌었을 때
+signal stats_changed
 
 # --- 스테이지 / 보스 ---
 signal stage_changed(stage: int)
+signal location_changed(location_name: String)
 signal kill_progress_changed(kills: int, target: int)
-signal intermission_changed(seconds_left: int)
 signal boss_spawned(boss_name: String, max_hp: int)
 signal boss_hp_changed(current: int, max_hp: int)
 signal boss_defeated
@@ -35,10 +46,35 @@ signal boss_defeated
 signal notice_requested(text: String, color: Color)
 signal shop_open_requested(shop_name: String, stock_ids: Array)
 
-const STARTING_WEAPON_ID: StringName = &"rusty_sword"
-const STARTING_SHIELD_ID: StringName = &"wooden_shield"
+enum Difficulty { NORMAL, HARD, VERY_HARD }
+enum WeaponSlot { MELEE, BOW, STAFF }
+
+## 난이도별 몬스터 배율
+const DIFFICULTY_INFO := {
+	Difficulty.NORMAL: {
+		"name": "노멀", "color": Color(0.55, 1.0, 0.6),
+		"enemy_hp": 1.0, "enemy_damage": 1.0, "enemy_speed": 1.0, "gold": 1.0, "max_alive_bonus": 0,
+		"desc": "처음 모험을 떠나는 분께 추천합니다.",
+	},
+	Difficulty.HARD: {
+		"name": "하드", "color": Color(1.0, 0.75, 0.35),
+		"enemy_hp": 1.5, "enemy_damage": 1.4, "enemy_speed": 1.1, "gold": 1.25, "max_alive_bonus": 2,
+		"desc": "몬스터 체력 x1.5 · 공격력 x1.4 · 골드 x1.25",
+	},
+	Difficulty.VERY_HARD: {
+		"name": "베리하드", "color": Color(1.0, 0.35, 0.4),
+		"enemy_hp": 2.2, "enemy_damage": 1.9, "enemy_speed": 1.2, "gold": 1.6, "max_alive_bonus": 4,
+		"desc": "몬스터 체력 x2.2 · 공격력 x1.9 · 더 많고 빠름 · 골드 x1.6",
+	},
+}
+const WEAPON_SLOT_NAMES := ["검", "활", "지팡이"]
+const GEM_SLOT_COUNT := 3
+
+const STARTING_ITEM_IDS: Array[StringName] = [&"rusty_sword", &"wooden_shield"]
 const BASE_MAX_HP := 100
-const STARTING_GOLD := 40
+const STARTING_GOLD := 60
+
+var difficulty: Difficulty = Difficulty.NORMAL
 
 var max_hp: int = BASE_MAX_HP
 var hp: int = BASE_MAX_HP
@@ -51,17 +87,24 @@ var guard: float = 0.0
 var max_guard: float = 0.0
 
 var gold: int = 0
-var weapons: Array[WeaponData] = []
-var shields: Array[ShieldData] = []
-var helmets: Array[HelmetData] = []
+## 가지고 있는 모든 장비 (장착 여부와 무관)
+var items: Array[ItemData] = []
+## 무기 칸 3개 (WeaponSlot 순서). 빈 칸은 null
+var weapon_slots: Array[WeaponData] = [null, null, null]
+var active_weapon_slot: int = WeaponSlot.MELEE
+## 지금 손에 든 무기 (= weapon_slots[active_weapon_slot])
 var equipped_weapon: WeaponData
 var equipped_shield: ShieldData
 var equipped_helmet: HelmetData
-## 플레이어 쪽 공격력 배율 (버프/패시브 확장용)
+var equipped_armor: ArmorData
+## 보석 칸 3개. 빈 칸은 null
+var gem_slots: Array[GemData] = [null, null, null]
+## 플레이어 쪽 공격력 배율 (보석 공격력 보너스 반영)
 var damage_multiplier: float = 1.0
 
 var stage: int = 1
 var stage_name: String = ""
+var location_name: String = ""
 var kills: int = 0
 var kill_target: int = 0
 var is_boss_active: bool = false
@@ -72,7 +115,13 @@ func _ready() -> void:
 	reset_game()
 
 
-## 새 게임 / 재시작 시 모든 데이터를 초기화합니다.
+## 타이틀에서 난이도를 고르고 새 게임 시작
+func start_new_game(new_difficulty: Difficulty) -> void:
+	difficulty = new_difficulty
+	reset_game()
+
+
+## 새 게임 / 재시작 시 모든 데이터를 초기화합니다. (난이도는 유지)
 func reset_game() -> void:
 	max_hp = BASE_MAX_HP
 	hp = max_hp
@@ -82,19 +131,24 @@ func reset_game() -> void:
 	damage_multiplier = 1.0
 	stage = 1
 	stage_name = ""
+	location_name = ""
 	kills = 0
 	kill_target = 0
 	is_boss_active = false
-	weapons.clear()
-	shields.clear()
-	helmets.clear()
+	items.clear()
+	weapon_slots = [null, null, null]
+	gem_slots = [null, null, null]
+	active_weapon_slot = WeaponSlot.MELEE
 	equipped_weapon = null
 	equipped_shield = null
 	equipped_helmet = null
-	add_item(ItemDB.get_item(STARTING_WEAPON_ID))
-	add_item(ItemDB.get_item(STARTING_SHIELD_ID))
-	equip_item(ItemDB.get_item(STARTING_WEAPON_ID))
-	equip_item(ItemDB.get_item(STARTING_SHIELD_ID))
+	equipped_armor = null
+	for item_id in STARTING_ITEM_IDS:
+		var item := ItemDB.get_item(item_id)
+		add_item(item)
+		equip_item(item)
+	_recalculate_stats()
+	hp = max_hp
 	emit_all()
 
 
@@ -105,11 +159,22 @@ func emit_all() -> void:
 	guard_changed.emit(guard, max_guard)
 	gold_changed.emit(gold)
 	inventory_changed.emit()
+	equipment_changed.emit()
 	weapon_equipped.emit(equipped_weapon)
 	shield_equipped.emit(equipped_shield)
 	helmet_equipped.emit(equipped_helmet)
+	armor_equipped.emit(equipped_armor)
+	stats_changed.emit()
 	stage_changed.emit(stage)
 	kill_progress_changed.emit(kills, kill_target)
+
+
+func get_difficulty_info() -> Dictionary:
+	return DIFFICULTY_INFO[difficulty]
+
+
+func get_difficulty_name() -> String:
+	return get_difficulty_info()["name"]
 
 
 # ============================================================ 체력
@@ -135,28 +200,7 @@ func heal_full() -> void:
 	heal_player(max_hp)
 
 
-## 방패 + 투구 방어력 합계. 모든 피해에서 이만큼 빠집니다 (최소 1은 들어감).
-func get_total_defense() -> int:
-	var total := 0
-	if equipped_shield != null:
-		total += equipped_shield.defense
-	if equipped_helmet != null:
-		total += equipped_helmet.defense
-	return total
-
-
-## 투구 보너스를 반영해 최대 체력을 다시 계산. 늘어난 만큼은 현재 체력도 함께 늘어납니다.
-func _recalculate_max_hp() -> void:
-	var new_max := BASE_MAX_HP + (equipped_helmet.bonus_max_hp if equipped_helmet != null else 0)
-	if new_max == max_hp:
-		return
-	var diff := new_max - max_hp
-	max_hp = new_max
-	hp = clampi(hp + maxi(diff, 0), 1 if not is_player_dead else 0, max_hp)
-	player_hp_changed.emit(hp, max_hp)
-
-
-# ============================================================ 대시
+# ============================================================ 대시 / 가드
 ## Player 가 매 프레임 호출. 값이 실제로 변했을 때만 시그널을 보냅니다.
 func set_dash_cooldown(remaining: float, total: float) -> void:
 	remaining = maxf(remaining, 0.0)
@@ -172,7 +216,6 @@ func is_dash_ready() -> bool:
 	return dash_cooldown_remaining <= 0.0
 
 
-# ============================================================ 가드
 ## GuardController 가 호출. 값이 실제로 변했을 때만 시그널을 보냅니다.
 func set_guard(current: float, maximum: float) -> void:
 	current = clampf(current, 0.0, maximum)
@@ -185,6 +228,78 @@ func set_guard(current: float, maximum: float) -> void:
 
 func report_guard_broken() -> void:
 	guard_broken.emit()
+
+
+# ============================================================ 능력치
+## 방패 + 투구 + 갑옷 방어력 합계. 모든 피해에서 이만큼 빠집니다 (최소 1은 들어감).
+func get_total_defense() -> int:
+	var total := 0
+	if equipped_shield != null:
+		total += equipped_shield.defense
+	if equipped_helmet != null:
+		total += equipped_helmet.defense
+	if equipped_armor != null:
+		total += equipped_armor.defense
+	return total
+
+
+func get_bonus_max_hp() -> int:
+	var total := 0
+	if equipped_helmet != null:
+		total += equipped_helmet.bonus_max_hp
+	if equipped_armor != null:
+		total += equipped_armor.bonus_max_hp
+	return total
+
+
+## 보석으로 더해지는 치명타 확률 (0.1 = +10%)
+func get_crit_chance_bonus() -> float:
+	var total := 0.0
+	for gem in gem_slots:
+		if gem != null:
+			total += gem.crit_chance_bonus
+	return total
+
+
+func get_crit_damage_bonus() -> float:
+	var total := 0.0
+	for gem in gem_slots:
+		if gem != null:
+			total += gem.crit_damage_bonus
+	return total
+
+
+func get_attack_bonus() -> float:
+	var total := 0.0
+	for gem in gem_slots:
+		if gem != null:
+			total += gem.attack_bonus
+	return total
+
+
+## 무기 + 보석을 합친 최종 치명타 확률
+func get_crit_chance(weapon: WeaponData = null) -> float:
+	if weapon == null:
+		weapon = equipped_weapon
+	var base := weapon.crit_chance if weapon != null else 0.0
+	return minf(base + get_crit_chance_bonus(), 1.0)
+
+
+## 장착 무기로 1타 데미지 굴리기 (공격력·치명타 보석 반영)
+func roll_weapon_damage(weapon: WeaponData) -> Dictionary:
+	return weapon.roll_damage(damage_multiplier, get_crit_chance_bonus(), get_crit_damage_bonus())
+
+
+func _recalculate_stats() -> void:
+	damage_multiplier = 1.0 + get_attack_bonus()
+	var new_max := BASE_MAX_HP + get_bonus_max_hp()
+	if new_max != max_hp:
+		var diff := new_max - max_hp
+		max_hp = new_max
+		# 늘어난 만큼은 현재 체력도 늘리고, 줄어들면 최대치에 맞춰 자름
+		hp = clampi(hp + maxi(diff, 0), 1 if not is_player_dead else 0, max_hp)
+		player_hp_changed.emit(hp, max_hp)
+	stats_changed.emit()
 
 
 # ============================================================ 골드
@@ -207,40 +322,68 @@ func spend_gold(amount: int) -> bool:
 	return true
 
 
-# ============================================================ 장비 / 인벤토리
+# ============================================================ 보유 아이템
 func owns_item(item_id: StringName) -> bool:
-	for w in weapons:
-		if w.id == item_id:
-			return true
-	for sh in shields:
-		if sh.id == item_id:
-			return true
-	for h in helmets:
-		if h.id == item_id:
+	for item in items:
+		if item.id == item_id:
 			return true
 	return false
 
 
-## 새 장비를 인벤토리에 추가. null 이거나 이미 가지고 있으면 false.
+func get_weapons() -> Array[WeaponData]:
+	var result: Array[WeaponData] = []
+	for item in items:
+		if item is WeaponData:
+			result.append(item as WeaponData)
+	return result
+
+
+func get_shields() -> Array[ShieldData]:
+	var result: Array[ShieldData] = []
+	for item in items:
+		if item is ShieldData:
+			result.append(item as ShieldData)
+	return result
+
+
+func get_helmets() -> Array[HelmetData]:
+	var result: Array[HelmetData] = []
+	for item in items:
+		if item is HelmetData:
+			result.append(item as HelmetData)
+	return result
+
+
+func get_armors() -> Array[ArmorData]:
+	var result: Array[ArmorData] = []
+	for item in items:
+		if item is ArmorData:
+			result.append(item as ArmorData)
+	return result
+
+
+func get_gems() -> Array[GemData]:
+	var result: Array[GemData] = []
+	for item in items:
+		if item is GemData:
+			result.append(item as GemData)
+	return result
+
+
+## 새 장비를 가방에 추가. null 이거나 이미 가지고 있으면 false.
 func add_item(item: ItemData) -> bool:
 	if item == null or owns_item(item.id):
 		return false
-	if item is WeaponData:
-		weapons.append(item as WeaponData)
-	elif item is ShieldData:
-		shields.append(item as ShieldData)
-	elif item is HelmetData:
-		helmets.append(item as HelmetData)
-	else:
-		push_error("GameManager.add_item: 지원하지 않는 아이템 타입 (%s)" % item.id)
-		return false
+	items.append(item)
 	inventory_changed.emit()
 	return true
 
 
-## 상점 구매: 골드 차감 + 인벤토리 추가 + 자동 장착
+## 상점 구매: 골드 차감 + 가방 추가 + 자동 장착
 func buy_item(item: ItemData) -> bool:
 	if item == null or owns_item(item.id) or not can_afford(item.price):
+		return false
+	if stage < item.get_unlock_stage():
 		return false
 	spend_gold(item.price)
 	add_item(item)
@@ -248,36 +391,134 @@ func buy_item(item: ItemData) -> bool:
 	return true
 
 
-## 무기면 무기 칸, 방패면 방패 칸, 투구면 투구 칸에 장착
-func equip_item(item: ItemData) -> void:
-	if item == null or not owns_item(item.id):
-		return
-	if item is WeaponData:
-		if equipped_weapon != item:
-			equipped_weapon = item as WeaponData
-			weapon_equipped.emit(equipped_weapon)
-	elif item is ShieldData:
-		if equipped_shield != item:
-			equipped_shield = item as ShieldData
-			shield_equipped.emit(equipped_shield)
-	elif item is HelmetData:
-		if equipped_helmet != item:
-			equipped_helmet = item as HelmetData
-			_recalculate_max_hp()
-			helmet_equipped.emit(equipped_helmet)
+## 장착 중이 아닌 장비만 팔 수 있습니다.
+func can_sell(item: ItemData) -> bool:
+	return item != null and items.has(item) and not is_equipped(item)
+
+
+## 상인에게 판매. 받은 골드를 반환 (실패하면 0)
+func sell_item(item: ItemData) -> int:
+	if not can_sell(item):
+		return 0
+	items.erase(item)
+	var value := item.get_sell_value()
+	add_gold(value)
+	inventory_changed.emit()
+	return value
+
+
+# ============================================================ 장비 칸
+## 무기 종류 → 무기 칸 (검·단검은 같은 칸)
+func weapon_slot_of(weapon: WeaponData) -> int:
+	match weapon.weapon_type:
+		WeaponData.WeaponType.BOW:
+			return WeaponSlot.BOW
+		WeaponData.WeaponType.STAFF:
+			return WeaponSlot.STAFF
+	return WeaponSlot.MELEE
 
 
 func is_equipped(item: ItemData) -> bool:
-	return item != null and (item == equipped_weapon or item == equipped_shield or item == equipped_helmet)
+	# 타입이 지정된 배열(Array[WeaponData] 등)에 다른 타입을 넣어 검색하면 엔진 에러가 나므로 먼저 종류를 확인
+	if item is WeaponData:
+		return weapon_slots.has(item)
+	if item is GemData:
+		return gem_slots.has(item)
+	return item != null and (item == equipped_shield or item == equipped_helmet or item == equipped_armor)
 
 
-## Q / 마우스 휠로 장착 무기 순환
+## 장비를 알맞은 칸에 장착 (같은 칸의 기존 장비는 가방으로).
+## 무기는 장착하면서 바로 손에 듭니다. 보석은 gem_slot(0~2)을 지정하지 않으면 빈 칸 → 없으면 1번 칸을 교체.
+func equip_item(item: ItemData, gem_slot: int = -1) -> bool:
+	if item == null or not owns_item(item.id):
+		return false
+	if item is WeaponData:
+		var weapon := item as WeaponData
+		var slot := weapon_slot_of(weapon)
+		weapon_slots[slot] = weapon
+		_set_active_weapon_slot(slot)
+	elif item is ShieldData:
+		equipped_shield = item as ShieldData
+		shield_equipped.emit(equipped_shield)
+	elif item is HelmetData:
+		equipped_helmet = item as HelmetData
+		helmet_equipped.emit(equipped_helmet)
+	elif item is ArmorData:
+		equipped_armor = item as ArmorData
+		armor_equipped.emit(equipped_armor)
+	elif item is GemData:
+		if gem_slots.has(item):
+			return true
+		if gem_slot < 0:
+			gem_slot = gem_slots.find(null)
+		gem_slots[clampi(gem_slot, 0, GEM_SLOT_COUNT - 1)] = item as GemData
+	else:
+		return false
+	_recalculate_stats()
+	equipment_changed.emit()
+	return true
+
+
+## 장착 해제 (가방으로). 손에 든 무기가 마지막 무기라면 해제할 수 없습니다.
+func unequip_item(item: ItemData) -> bool:
+	if not is_equipped(item):
+		return false
+	if item is WeaponData:
+		var slot := weapon_slots.find(item)
+		if _equipped_weapon_count() <= 1:
+			show_notice("무기를 하나는 장착하고 있어야 합니다.", Color(1.0, 0.6, 0.5))
+			return false
+		weapon_slots[slot] = null
+		if slot == active_weapon_slot:
+			cycle_weapon(1)
+	elif item == equipped_shield:
+		equipped_shield = null
+		shield_equipped.emit(null)
+	elif item == equipped_helmet:
+		equipped_helmet = null
+		helmet_equipped.emit(null)
+	elif item == equipped_armor:
+		equipped_armor = null
+		armor_equipped.emit(null)
+	elif item is GemData:
+		gem_slots[gem_slots.find(item)] = null
+	_recalculate_stats()
+	equipment_changed.emit()
+	return true
+
+
+## 1/2/3 키: 해당 무기 칸의 무기를 손에 듦
+func select_weapon_slot(slot: int) -> bool:
+	if slot < 0 or slot >= weapon_slots.size() or weapon_slots[slot] == null:
+		return false
+	_set_active_weapon_slot(slot)
+	equipment_changed.emit()
+	return true
+
+
+## Q / 마우스 휠: 장착된 무기 칸을 순서대로 순환
 func cycle_weapon(step: int) -> void:
-	if weapons.size() <= 1:
-		return
-	var index := weapons.find(equipped_weapon)
-	index = wrapi(index + step, 0, weapons.size())
-	equip_item(weapons[index])
+	for i in range(1, weapon_slots.size() + 1):
+		var slot := wrapi(active_weapon_slot + step * i, 0, weapon_slots.size())
+		if weapon_slots[slot] != null:
+			select_weapon_slot(slot)
+			return
+
+
+func _equipped_weapon_count() -> int:
+	var count := 0
+	for w in weapon_slots:
+		if w != null:
+			count += 1
+	return count
+
+
+func _set_active_weapon_slot(slot: int) -> void:
+	active_weapon_slot = slot
+	var weapon := weapon_slots[slot]
+	if weapon != equipped_weapon:
+		equipped_weapon = weapon
+		weapon_equipped.emit(equipped_weapon)
 
 
 # ============================================================ 스테이지
@@ -287,14 +528,15 @@ func set_stage(value: int, new_stage_name: String = "") -> void:
 	stage_changed.emit(stage)
 
 
+func set_location(new_location: String) -> void:
+	location_name = new_location
+	location_changed.emit(location_name)
+
+
 func set_kill_progress(current_kills: int, target: int) -> void:
 	kills = current_kills
 	kill_target = target
 	kill_progress_changed.emit(kills, kill_target)
-
-
-func set_intermission(seconds_left: int) -> void:
-	intermission_changed.emit(seconds_left)
 
 
 func report_boss_spawned(boss_name: String, boss_max_hp: int) -> void:

@@ -72,11 +72,12 @@ func is_staff() -> bool:
 
 
 ## 실제 1타의 데미지를 굴립니다. (치명타 포함)
-func roll_damage(multiplier: float = 1.0) -> Dictionary:
+## crit_bonus / crit_damage_bonus: 보석 등으로 더해지는 치명타 확률 / 치명타 배율
+func roll_damage(multiplier: float = 1.0, crit_bonus: float = 0.0, crit_damage_bonus: float = 0.0) -> Dictionary:
 	var amount := float(damage) * multiplier
-	var is_crit := randf() < crit_chance
+	var is_crit := randf() < crit_chance + crit_bonus
 	if is_crit:
-		amount *= crit_multiplier
+		amount *= crit_multiplier + crit_damage_bonus
 	return {"amount": maxi(1, roundi(amount)), "crit": is_crit}
 
 

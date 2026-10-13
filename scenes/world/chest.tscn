@@ -1,0 +1,22 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/chest.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/world/chest_closed.png" id="2_closed"]
+[ext_resource type="Texture2D" path="res://assets/sprites/world/chest_open.png" id="3_open"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_use"]
+radius = 20.0
+
+[node name="Chest" type="Area2D"]
+script = ExtResource("1_script")
+closed_texture = ExtResource("2_closed")
+open_texture = ExtResource("3_open")
+prompt_text = "[E] 보물상자 열기"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -8)
+texture = ExtResource("2_closed")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -6)
+shape = SubResource("CircleShape2D_use")

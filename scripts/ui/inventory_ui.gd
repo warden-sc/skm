@@ -1,0 +1,166 @@
+class_name InventoryUI
+extends CanvasLayer
+## 인벤토리 [I] / [Tab]. 열려 있는 동안 게임이 일시정지됩니다.
+##
+## 왼쪽: 장비 칸
+##   무기 3칸 (검 / 활 / 지팡이) — 손에 든 무기는 노란 테두리
+##   방어구 3칸 (방패 / 투구 / 갑옷)
+##   보석 3칸
+##   → 칸을 클릭하면 장착 해제 (마지막 무기는 해제 불가)
+## 오른쪽: 가방 (보유 장비 전체) — 장착 / 해제 버튼
+## 아래: 마우스를 올린 장비의 상세 정보
+
+const SLOT_SIZE := Vector2(28, 28)
+const ARMOR_SLOT_NAMES := ["방패", "투구", "갑옷"]
+
+@onready var _gold_label: Label = %InvGold
+@onready var _weapon_slots: HBoxContainer = %WeaponSlots
+@onready var _armor_slots: HBoxContainer = %ArmorSlots
+@onready var _gem_slots: HBoxContainer = %GemSlots
+@onready var _stats: Label = %Stats
+@onready var _bag_list: VBoxContainer = %BagList
+@onready var _detail: Label = %InvDetail
+@onready var _close_button: Button = %InvCloseButton
+
+
+func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	hide()
+	GameManager.inventory_changed.connect(_on_data_changed)
+	GameManager.equipment_changed.connect(_on_data_changed)
+	GameManager.stats_changed.connect(_on_data_changed)
+	GameManager.gold_changed.connect(_on_data_changed.unbind(1))
+	_close_button.pressed.connect(close)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed(&"inventory"):
+		if visible:
+			close()
+			get_viewport().set_input_as_handled()
+		elif not get_tree().paused and not GameManager.is_player_dead:
+			open()
+			get_viewport().set_input_as_handled()
+	elif visible and event.is_action_pressed(&"ui_cancel"):
+		close()
+		get_viewport().set_input_as_handled()
+
+
+func open() -> void:
+	_detail.text = "장비에 마우스를 올리면 상세 정보가 표시됩니다."
+	_refresh()
+	show()
+	get_tree().paused = true
+
+
+func close() -> void:
+	if not visible:
+		return
+	hide()
+	get_tree().paused = false
+
+
+func is_open() -> bool:
+	return visible
+
+
+func _on_data_changed() -> void:
+	if visible:
+		_refresh()
+
+
+func _refresh() -> void:
+	_gold_label.text = "보유 골드: %d G" % GameManager.gold
+	for container in [_weapon_slots, _armor_slots, _gem_slots, _bag_list]:
+		for child in (container as Node).get_children():
+			child.queue_free()
+
+	for i in GameManager.weapon_slots.size():
+		var caption := "%d %s" % [i + 1, GameManager.WEAPON_SLOT_NAMES[i]]
+		_weapon_slots.add_child(_make_slot(GameManager.weapon_slots[i], caption, i == GameManager.active_weapon_slot))
+	var armors: Array[ItemData] = [GameManager.equipped_shield, GameManager.equipped_helmet, GameManager.equipped_armor]
+	for i in armors.size():
+		_armor_slots.add_child(_make_slot(armors[i], ARMOR_SLOT_NAMES[i], false))
+	for i in GameManager.gem_slots.size():
+		_gem_slots.add_child(_make_slot(GameManager.gem_slots[i], "보석 %d" % (i + 1), false))
+
+	_stats.text = _stats_text()
+
+	for item in _sorted_items():
+		var equipped := GameManager.is_equipped(item)
+		var button := ItemRow.make_button("해제" if equipped else "장착", false,
+			_on_unequip_pressed.bind(item) if equipped else _on_equip_pressed.bind(item), 40.0)
+		var subtitle := ("장착중 · " if equipped else "") + item.get_summary()
+		_bag_list.add_child(ItemRow.build(item, [button], _show_detail.bind(item), false, subtitle))
+
+
+func _make_slot(item: ItemData, caption: String, highlight: bool) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override(&"separation", 1)
+	var button := Button.new()
+	button.custom_minimum_size = SLOT_SIZE
+	button.focus_mode = Control.FOCUS_NONE
+	button.expand_icon = true
+	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var style := ItemRow.rarity_style(item, highlight)
+	for state in [&"normal", &"hover", &"pressed", &"disabled"]:
+		button.add_theme_stylebox_override(state, style)
+	if item != null:
+		button.icon = item.icon
+		button.tooltip_text = "%s (클릭: 해제)" % item.display_name
+		button.pressed.connect(_on_unequip_pressed.bind(item))
+		button.mouse_entered.connect(_show_detail.bind(item))
+	else:
+		button.disabled = true
+	box.add_child(button)
+	var label := Label.new()
+	label.text = caption
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override(&"font_size", 8)
+	label.add_theme_color_override(&"font_color", Color(1.0, 0.95, 0.6) if highlight else Color(0.75, 0.75, 0.8))
+	box.add_child(label)
+	return box
+
+
+func _stats_text() -> String:
+	var weapon := GameManager.equipped_weapon
+	var lines := PackedStringArray()
+	if weapon != null:
+		lines.append("손에 든 무기: %s (ATK %d)" % [weapon.display_name, roundi(weapon.damage * GameManager.damage_multiplier)])
+		lines.append("치명타 확률 %d%% · 치명타 피해 x%.1f" % [roundi(GameManager.get_crit_chance(weapon) * 100.0), weapon.crit_multiplier + GameManager.get_crit_damage_bonus()])
+	lines.append("공격력 +%d%% · 방어력 %d · 최대 HP %d" % [roundi(GameManager.get_attack_bonus() * 100.0), GameManager.get_total_defense(), GameManager.max_hp])
+	return "\n".join(lines)
+
+
+## 가방 정렬: 무기 → 방패 → 투구 → 갑옷 → 보석, 같은 종류는 등급 높은 순
+func _sorted_items() -> Array[ItemData]:
+	var sorted: Array[ItemData] = GameManager.items.duplicate()
+	sorted.sort_custom(func(a: ItemData, b: ItemData) -> bool:
+		var ka := _type_order(a)
+		var kb := _type_order(b)
+		return ka < kb if ka != kb else a.rarity > b.rarity)
+	return sorted
+
+
+func _type_order(item: ItemData) -> int:
+	if item is WeaponData:
+		return GameManager.weapon_slot_of(item as WeaponData)
+	if item is ShieldData:
+		return 3
+	if item is HelmetData:
+		return 4
+	if item is ArmorData:
+		return 5
+	return 6
+
+
+func _show_detail(item: ItemData) -> void:
+	_detail.text = "%s\n%s\n%s" % [item.display_name, item.get_stat_text(), item.description]
+
+
+func _on_equip_pressed(item: ItemData) -> void:
+	GameManager.equip_item(item)
+
+
+func _on_unequip_pressed(item: ItemData) -> void:
+	GameManager.unequip_item(item)

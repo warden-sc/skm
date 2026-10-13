@@ -28,9 +28,9 @@ var slow_duration: float = 0.0
 
 
 ## 플레이어 무기 데이터로부터 1발 분량의 명세를 만듭니다.
-static func from_weapon(weapon: WeaponData, from: Vector2, dir: Vector2, damage_multiplier: float) -> ProjectileSpec:
+## roll: WeaponData.roll_damage() 결과 { "amount", "crit" } — 보통 GameManager.roll_weapon_damage(weapon)
+static func from_weapon(weapon: WeaponData, from: Vector2, dir: Vector2, roll: Dictionary) -> ProjectileSpec:
 	var spec := ProjectileSpec.new()
-	var roll := weapon.roll_damage(damage_multiplier)
 	spec.team = Team.PLAYER
 	spec.origin = from
 	spec.direction = dir

@@ -2,9 +2,15 @@ class_name HUD
 extends CanvasLayer
 ## 화면 HUD. GameManager 시그널만 구독해서 갱신합니다 (게임 로직을 직접 참조하지 않음).
 ##
+## - 왼쪽 위: HP / DASH / GUARD 게이지(TextureProgressBar), 골드
+## - 위 가운데: 스테이지·난이도, 현재 위치(야영지/사냥터/보스방), 보스방 해방 진행도, 보스 체력
+## - 아래 가운데 단축바: 무기 3칸(1/2/3, 손에 든 무기 강조) + 방어구 3칸 + 보석 3칸
+##
 ## hud.tscn 의 노드들은 "고유 이름(%)" 으로 접근하므로 레이아웃을 바꿔도 경로가 깨지지 않습니다.
 
 const NOTICE_TIME := 2.5
+const WEAPON_SLOT_SIZE := Vector2(30, 30)
+const SMALL_SLOT_SIZE := Vector2(20, 20)
 
 @onready var _hp_bar: TextureProgressBar = %HPBar
 @onready var _hp_label: Label = %HPLabel
@@ -12,20 +18,16 @@ const NOTICE_TIME := 2.5
 @onready var _dash_label: Label = %DashLabel
 @onready var _guard_bar: TextureProgressBar = %GuardBar
 @onready var _guard_label: Label = %GuardLabel
-@onready var _shield_icon: TextureRect = %ShieldIcon
-@onready var _shield_label: Label = %ShieldLabel
-@onready var _helmet_icon: TextureRect = %HelmetIcon
-@onready var _helmet_label: Label = %HelmetLabel
 @onready var _gold_label: Label = %GoldLabel
-@onready var _weapon_icon: TextureRect = %WeaponIcon
-@onready var _weapon_label: Label = %WeaponLabel
 @onready var _stage_label: Label = %StageLabel
+@onready var _location_label: Label = %LocationLabel
 @onready var _progress_label: Label = %ProgressLabel
 @onready var _boss_box: Control = %BossBox
 @onready var _boss_name: Label = %BossName
 @onready var _boss_bar: TextureProgressBar = %BossBar
 @onready var _notice_label: Label = %NoticeLabel
 @onready var _damage_flash: ColorRect = %DamageFlash
+@onready var _hotbar: HBoxContainer = %Hotbar
 @onready var _game_over: Control = %GameOver
 
 var _hp_tween: Tween
@@ -38,13 +40,11 @@ func _ready() -> void:
 	GameManager.player_died.connect(_on_player_died)
 	GameManager.dash_cooldown_changed.connect(_on_dash_cooldown_changed)
 	GameManager.guard_changed.connect(_on_guard_changed)
-	GameManager.shield_equipped.connect(_on_shield_equipped)
-	GameManager.helmet_equipped.connect(_on_helmet_equipped)
 	GameManager.gold_changed.connect(_on_gold_changed)
-	GameManager.weapon_equipped.connect(_on_weapon_equipped)
+	GameManager.equipment_changed.connect(_rebuild_hotbar)
 	GameManager.stage_changed.connect(_on_stage_changed)
+	GameManager.location_changed.connect(_on_location_changed)
 	GameManager.kill_progress_changed.connect(_on_kill_progress_changed)
-	GameManager.intermission_changed.connect(_on_intermission_changed)
 	GameManager.boss_spawned.connect(_on_boss_spawned)
 	GameManager.boss_hp_changed.connect(_on_boss_hp_changed)
 	GameManager.boss_defeated.connect(_on_boss_defeated)
@@ -60,13 +60,12 @@ func _ready() -> void:
 	_hp_bar.value = GameManager.hp
 	_on_hp_changed(GameManager.hp, GameManager.max_hp)
 	_on_dash_cooldown_changed(GameManager.dash_cooldown_remaining, GameManager.dash_cooldown_total)
-	_on_gold_changed(GameManager.gold)
-	_on_weapon_equipped(GameManager.equipped_weapon)
-	_on_shield_equipped(GameManager.equipped_shield)
-	_on_helmet_equipped(GameManager.equipped_helmet)
 	_on_guard_changed(GameManager.guard, GameManager.max_guard)
+	_on_gold_changed(GameManager.gold)
 	_on_stage_changed(GameManager.stage)
-	_progress_label.text = ""
+	_on_location_changed(GameManager.location_name)
+	_on_kill_progress_changed(GameManager.kills, GameManager.kill_target)
+	_rebuild_hotbar()
 
 
 func _on_hp_changed(current: int, max_hp: int) -> void:
@@ -99,52 +98,35 @@ func _on_gold_changed(gold: int) -> void:
 	_gold_label.text = "%d G" % gold
 
 
-func _on_weapon_equipped(weapon: WeaponData) -> void:
-	if weapon == null:
-		_weapon_icon.texture = null
-		_weapon_label.text = "무기 없음"
-		return
-	_weapon_icon.texture = weapon.icon
-	_weapon_label.text = "%s  ATK %d %s" % [weapon.display_name, weapon.damage, "(근접)" if weapon.is_melee() else "(원거리)"]
-	_weapon_label.add_theme_color_override(&"font_color", weapon.get_rarity_color())
-
-
-func _on_shield_equipped(shield: ShieldData) -> void:
-	if shield == null:
-		_shield_icon.texture = null
-		_shield_label.text = "방패 없음"
-		return
-	_shield_icon.texture = shield.icon
-	_shield_label.text = "%s  막기 %d%%" % [shield.display_name, roundi(shield.block_ratio * 100.0)]
-	_shield_label.add_theme_color_override(&"font_color", shield.get_rarity_color())
-	_on_helmet_equipped(GameManager.equipped_helmet)  # 총 방어력 표시 갱신
-
-
-func _on_helmet_equipped(helmet: HelmetData) -> void:
-	if helmet == null:
-		_helmet_icon.texture = null
-		_helmet_label.text = "투구 없음  (방어 %d)" % GameManager.get_total_defense()
-		_helmet_label.remove_theme_color_override(&"font_color")
-		return
-	_helmet_icon.texture = helmet.icon
-	_helmet_label.text = "%s  (총 방어 %d)" % [helmet.display_name, GameManager.get_total_defense()]
-	_helmet_label.add_theme_color_override(&"font_color", helmet.get_rarity_color())
-
-
 func _on_stage_changed(stage: int) -> void:
+	var difficulty := "[%s]" % GameManager.get_difficulty_name()
 	if GameManager.stage_name.is_empty():
-		_stage_label.text = "STAGE %d" % stage
+		_stage_label.text = "%s STAGE %d" % [difficulty, stage]
 	else:
-		_stage_label.text = "STAGE %d · %s" % [stage, GameManager.stage_name]
+		_stage_label.text = "%s STAGE %d · %s" % [difficulty, stage, GameManager.stage_name]
+	_stage_label.add_theme_color_override(&"font_color", GameManager.get_difficulty_info()["color"])
 
 
-func _on_kill_progress_changed(kills: int, target: int) -> void:
-	_progress_label.text = "" if target <= 0 else "처치 %d / %d" % [kills, target]
+func _on_location_changed(location_name: String) -> void:
+	_location_label.text = location_name
+	_update_progress_text()
 
 
-func _on_intermission_changed(seconds_left: int) -> void:
-	if seconds_left > 0:
-		_progress_label.text = "다음 웨이브까지 %d초" % seconds_left
+func _on_kill_progress_changed(_kills: int, _target: int) -> void:
+	_update_progress_text()
+
+
+func _update_progress_text() -> void:
+	var kills := GameManager.kills
+	var target := GameManager.kill_target
+	if GameManager.is_boss_active:
+		_progress_label.text = "보스전"
+	elif target <= 0:
+		_progress_label.text = ""
+	elif kills >= target:
+		_progress_label.text = "보스방 해방됨 — 사냥터 북쪽 문"
+	else:
+		_progress_label.text = "보스방 해방까지 처치 %d / %d" % [kills, target]
 
 
 func _on_boss_spawned(boss_name: String, max_hp: int) -> void:
@@ -162,6 +144,7 @@ func _on_boss_hp_changed(current: int, max_hp: int) -> void:
 
 func _on_boss_defeated() -> void:
 	_boss_box.hide()
+	_progress_label.text = "보스 토벌 완료!"
 
 
 func _on_notice_requested(text: String, color: Color) -> void:
@@ -177,3 +160,56 @@ func _on_notice_requested(text: String, color: Color) -> void:
 
 func _on_player_died() -> void:
 	_game_over.show()
+
+
+# ============================================================ 단축바
+func _rebuild_hotbar() -> void:
+	for child in _hotbar.get_children():
+		child.queue_free()
+	for i in GameManager.weapon_slots.size():
+		var weapon := GameManager.weapon_slots[i]
+		_hotbar.add_child(_make_slot(weapon, WEAPON_SLOT_SIZE, str(i + 1), i == GameManager.active_weapon_slot))
+	_hotbar.add_child(_make_spacer())
+	for item in [GameManager.equipped_shield, GameManager.equipped_helmet, GameManager.equipped_armor]:
+		_hotbar.add_child(_make_slot(item, SMALL_SLOT_SIZE, "", false))
+	_hotbar.add_child(_make_spacer())
+	for gem in GameManager.gem_slots:
+		_hotbar.add_child(_make_slot(gem, SMALL_SLOT_SIZE, "", false))
+
+
+func _make_slot(item: ItemData, slot_size: Vector2, key: String, active: bool) -> Control:
+	var panel := PanelContainer.new()
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.size_flags_vertical = Control.SIZE_SHRINK_END
+	var style := ItemRow.rarity_style(item, active)
+	style.set_content_margin_all(1)
+	if item == null:
+		style.bg_color = Color(0.08, 0.08, 0.12, 0.6)
+	panel.add_theme_stylebox_override(&"panel", style)
+	var icon := TextureRect.new()
+	icon.custom_minimum_size = slot_size
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture = item.icon if item != null else null
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if not active and slot_size == WEAPON_SLOT_SIZE:
+		icon.modulate = Color(0.75, 0.75, 0.8)
+	panel.add_child(icon)
+	if key != "":
+		var label := Label.new()
+		label.text = key
+		label.add_theme_font_size_override(&"font_size", 8)
+		label.add_theme_constant_override(&"outline_size", 3)
+		label.add_theme_color_override(&"font_outline_color", Color(0.05, 0.05, 0.1))
+		label.add_theme_color_override(&"font_color", Color(1.0, 0.95, 0.6) if active else Color(0.8, 0.8, 0.85))
+		label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		panel.add_child(label)
+	return panel
+
+
+func _make_spacer() -> Control:
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(6, 0)
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return spacer

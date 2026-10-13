@@ -1,0 +1,164 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/inventory_ui.gd" id="1_inv"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.1, 0.11, 0.17, 0.97)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.55, 0.75, 1, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="InventoryUI" type="CanvasLayer"]
+process_mode = 3
+layer = 20
+visible = false
+script = ExtResource("1_inv")
+
+[node name="Dim" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -305.0
+offset_top = -177.0
+offset_right = 305.0
+offset_bottom = 177.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 4
+
+[node name="VBox" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="Header" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Panel/Margin/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 13
+text = "인벤토리"
+
+[node name="InvGold" type="Label" parent="Panel/Margin/VBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+text = "보유 골드: 0 G"
+
+[node name="HSeparator" type="HSeparator" parent="Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="Columns" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="EquipColumn" type="VBoxContainer" parent="Panel/Margin/VBox/Columns"]
+custom_minimum_size = Vector2(250, 0)
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="WeaponHeader" type="Label" parent="Panel/Margin/VBox/Columns/EquipColumn"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.8, 0.55, 1)
+text = "무기 칸  (1 / 2 / 3 · Q 로 손에 들 무기 전환)"
+
+[node name="WeaponSlots" type="HBoxContainer" parent="Panel/Margin/VBox/Columns/EquipColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ArmorHeader" type="Label" parent="Panel/Margin/VBox/Columns/EquipColumn"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.9, 1, 1)
+text = "방어구 칸"
+
+[node name="ArmorSlots" type="HBoxContainer" parent="Panel/Margin/VBox/Columns/EquipColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="GemHeader" type="Label" parent="Panel/Margin/VBox/Columns/EquipColumn"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.6, 0.7, 1)
+text = "보석 칸  (치명타 · 공격력 보너스)"
+
+[node name="GemSlots" type="HBoxContainer" parent="Panel/Margin/VBox/Columns/EquipColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Stats" type="Label" parent="Panel/Margin/VBox/Columns/EquipColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 9
+
+[node name="VSeparator" type="VSeparator" parent="Panel/Margin/VBox/Columns"]
+layout_mode = 2
+
+[node name="BagColumn" type="VBoxContainer" parent="Panel/Margin/VBox/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BagHeader" type="Label" parent="Panel/Margin/VBox/Columns/BagColumn"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 1, 0.75, 1)
+text = "가방"
+
+[node name="BagScroll" type="ScrollContainer" parent="Panel/Margin/VBox/Columns/BagColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="BagList" type="VBoxContainer" parent="Panel/Margin/VBox/Columns/BagColumn/BagScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HSeparator2" type="HSeparator" parent="Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="InvDetail" type="Label" parent="Panel/Margin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+theme_override_font_sizes/font_size = 9
+autowrap_mode = 3
+
+[node name="Footer" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="FooterHint" type="Label" parent="Panel/Margin/VBox/Footer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 8
+text = "[I] / [Tab] / [ESC] 닫기  ·  장착 칸을 클릭하면 해제  ·  판매는 야영지 상인에게서"
+
+[node name="InvCloseButton" type="Button" parent="Panel/Margin/VBox/Footer"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+text = "닫기"

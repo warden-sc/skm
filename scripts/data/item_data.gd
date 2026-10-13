@@ -1,6 +1,6 @@
 class_name ItemData
 extends Resource
-## 장비 아이템 공통 데이터 (무기 / 방패 / 투구의 부모 클래스).
+## 장비 아이템 공통 데이터 (무기 / 방패 / 투구 / 갑옷 / 보석의 부모 클래스).
 ## 상점·드랍·인벤토리는 이 타입만 알면 되므로, 새 장비 종류를 추가해도 UI 코드가 그대로 동작합니다.
 
 enum Rarity { COMMON, RARE, EPIC, LEGENDARY }
@@ -41,6 +41,9 @@ const RARITY_UNLOCK_STAGE := {
 @export_group("Shop")
 @export var price: int = 50
 
+## 상인에게 팔 때 받는 비율
+const SELL_RATIO := 0.4
+
 
 func get_rarity_color() -> Color:
 	return RARITY_COLORS.get(rarity, Color.WHITE)
@@ -59,14 +62,24 @@ func get_unlock_stage() -> int:
 	return RARITY_UNLOCK_STAGE.get(rarity, 1)
 
 
+## 해당 스테이지의 일반 몬스터가 떨어뜨릴 수 있는 최고 등급
+## (1스테이지: 희귀까지 / 2스테이지: 레어까지 / 3스테이지 이후: 전설까지)
+static func max_rarity_for_stage(stage: int) -> Rarity:
+	var best := Rarity.COMMON
+	for r in RARITY_UNLOCK_STAGE:
+		if RARITY_UNLOCK_STAGE[r] <= stage and r > best:
+			best = r
+	return best
+
+
 ## 이펙트 화려함 단계 0(일반) ~ 3(전설)
 func get_fx_level() -> int:
 	return int(rarity)
 
 
+## 상인에게 팔 때 / 중복 획득 시 받는 골드
 func get_sell_value() -> int:
-	@warning_ignore("integer_division")
-	return maxi(5, price / 4)
+	return maxi(5, roundi(price * SELL_RATIO))
 
 
 ## 상점 목록 한 줄 요약 (자식 클래스에서 오버라이드)

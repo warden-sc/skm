@@ -4,7 +4,7 @@ extends Area2D
 ##
 ## 사용 순서 (StageManager):
 ##   var p := pickup_scene.instantiate() as Pickup
-##   p.setup_gold(10)   또는   p.setup_item(item_data)   # 무기·방패 공통
+##   p.setup_gold(10)   또는   p.setup_item(item_data)   # 모든 장비 공통
 ##   entities.add_child(p)
 ##
 ## 플레이어가 가까이 오면 끌려가고(magnet), 닿으면 GameManager 에 반영됩니다.
@@ -89,6 +89,12 @@ func _physics_process(delta: float) -> void:
 			return
 
 
+## 즉시 획득 (스테이지 이동 시 남은 전리품 자동 회수 등)
+func collect() -> void:
+	if not _collected:
+		_collect()
+
+
 func _collect() -> void:
 	_collected = true
 	match kind:
@@ -99,7 +105,7 @@ func _collect() -> void:
 			if item == null:
 				pass
 			elif GameManager.add_item(item):
-				var hint := "Q 로 교체" if item is WeaponData else "상점에서 장착"
+				var hint := "I: 인벤토리에서 장착"
 				GameManager.show_notice("획득: %s  (%s)" % [item.display_name, hint], item.get_rarity_color())
 				FloatingText.spawn(self, global_position, item.display_name, item.get_rarity_color(), true)
 			else:

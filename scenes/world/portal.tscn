@@ -1,0 +1,20 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/portal.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/world/portal_blue.png" id="2_tex"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_use"]
+radius = 22.0
+
+[node name="Portal" type="Area2D"]
+script = ExtResource("1_script")
+prompt_text = "[E] 텔레포트"
+hint_offset = Vector2(0, -44)
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -16)
+texture = ExtResource("2_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -10)
+shape = SubResource("CircleShape2D_use")

@@ -142,7 +142,7 @@ func _melee_attack(weapon: WeaponData) -> bool:
 		if to_enemy.length() > MELEE_POINT_BLANK and absf(aim.angle_to(to_enemy)) > half_arc:
 			continue
 		hit_ids[enemy.get_instance_id()] = true
-		var roll := weapon.roll_damage(GameManager.damage_multiplier)
+		var roll := GameManager.roll_weapon_damage(weapon)
 		var push := to_enemy.normalized() if to_enemy != Vector2.ZERO else aim
 		enemy.take_damage(roll["amount"], push * weapon.knockback, roll["crit"])
 		var level := weapon.get_fx_level()
@@ -189,7 +189,7 @@ func _ranged_attack(weapon: WeaponData) -> bool:
 		# count 가 1 이면 정면, 여러 발이면 -spread/2 ~ +spread/2 로 균등 분배
 		var t := 0.0 if count == 1 else float(i) / float(count - 1) - 0.5
 		var dir := base_dir.rotated(spread * t)
-		pool.spawn(ProjectileSpec.from_weapon(weapon, origin, dir, GameManager.damage_multiplier))
+		pool.spawn(ProjectileSpec.from_weapon(weapon, origin, dir, GameManager.roll_weapon_damage(weapon)))
 
 	var level := weapon.get_fx_level()
 	if level >= 2:

@@ -723,6 +723,231 @@ def floor_ruins():
     return img
 
 
+# ---------------------------------------------------------------- 갑옷 (착용 오버레이 = 플레이어 몸통 위치에 정확히 맞춤)
+ARMOR_COLORS = {
+    # 이름: (주색, 밝은 포인트, 어두운 색, 장식)
+    "leather_armor": ("t", "y", "T", None),
+    "chain_mail": ("l", "W", "m", "chain"),
+    "hellsteel_plate": ("n", "r", "k", "trim"),
+    "paladin_plate": ("W", "y", "l", "cross"),
+}
+
+
+def armor_worn(main_col, light, dark, deco):
+    img = canvas(16)
+    for y in range(8, 13):
+        for x, ch in enumerate(PLAYER[y]):
+            if ch in "Bb":
+                col = main_col if ch == "B" else dark
+                if deco == "chain" and (x + y) % 2 == 0:
+                    col = dark
+                put(img, [(x, y)], col)
+            elif ch == "c":
+                put(img, [(x, y)], light)
+            elif ch == "k" and y in (8, 12):
+                put(img, [(x, y)], "k")
+    if deco == "trim":
+        put(img, [(x, 8) for x in range(5, 11)], light)
+        put(img, [(7, 10), (8, 10)], light)
+    if deco == "cross":
+        put(img, [(7, y) for y in range(9, 13)] + [(8, y) for y in range(9, 13)] + [(6, 10), (9, 10)], light)
+    return img
+
+
+def armor_icon(main_col, light, dark, deco):
+    img = canvas(16)
+    rect(img, 3, 3, 12, 12, main_col)          # 몸판
+    rect(img, 1, 3, 3, 6, dark)                # 어깨
+    rect(img, 12, 3, 14, 6, dark)
+    rect(img, 6, 2, 9, 3, (0, 0, 0, 0))        # 목 부분
+    rect(img, 4, 12, 11, 13, dark)
+    if deco == "chain":
+        for y in range(4, 12):
+            for x in range(4, 12):
+                if (x + y) % 2 == 0:
+                    put(img, [(x, y)], dark)
+    if deco == "trim":
+        rect(img, 4, 4, 11, 4, light)
+        rect(img, 7, 6, 8, 10, light)
+    if deco == "cross":
+        rect(img, 7, 5, 8, 11, light)
+        rect(img, 5, 7, 10, 8, light)
+    if deco is None:
+        rect(img, 7, 4, 8, 11, dark)
+        put(img, [(5, 6), (10, 6)], light)
+    return outline(img)
+
+
+# ---------------------------------------------------------------- 보석
+GEMS = {
+    "rough_ruby": ((170, 60, 70), (220, 120, 120), 0.75),
+    "ruby": ((220, 40, 60), (255, 150, 160), 1.0),
+    "sapphire": ((50, 90, 230), (150, 190, 255), 1.0),
+    "blood_ruby": ((140, 10, 30), (255, 80, 90), 1.15),
+    "star_diamond": ((180, 235, 255), (255, 255, 255), 1.25),
+}
+
+
+def gem_icon(base, light, size_scale):
+    img = canvas(16)
+    r = 5.5 * size_scale
+    for y in range(16):
+        for x in range(16):
+            dx, dy = x - 7.5, y - 8.0
+            if abs(dx) / r + abs(dy) / (r * 1.1) <= 1.0:  # 마름모(브릴리언트 컷 느낌)
+                t = (dy + r) / (2 * r)
+                col = tuple(int(light[i] * (1 - t) + base[i] * t) for i in range(3))
+                if dy < -r * 0.35:
+                    col = tuple(min(255, c + 40) for c in col)
+                img.putpixel((x, y), col + (255,))
+    put(img, [(6, 5), (6, 6), (7, 5)], (255, 255, 255, 255))
+    return outline(img)
+
+
+# ---------------------------------------------------------------- 월드 오브젝트
+def portal(core, rim):
+    img = canvas(32)
+    for y in range(32):
+        for x in range(32):
+            dx, dy = (x - 15.5) / 13.0, (y - 15.5) / 15.0
+            d = math.hypot(dx, dy)
+            if d <= 1.0:
+                a = math.atan2(dy, dx)
+                swirl = (math.sin(a * 3 + d * 9) + 1) / 2
+                t = d
+                c = tuple(int(core[i] * (1 - t) + rim[i] * t) for i in range(3))
+                c = tuple(min(255, int(v * (0.75 + 0.45 * swirl))) for v in c)
+                img.putpixel((x, y), c + (int(255 * (0.55 + 0.45 * d)),))
+    return outline(img)
+
+
+def boss_gate(open_gate):
+    img = canvas(32, 40)
+    stone, dark, rune = (96, 92, 110, 255), (54, 50, 66, 255), (200, 60, 70, 255)
+    rect(img, 0, 6, 31, 39, stone)
+    rect(img, 0, 6, 31, 9, dark)
+    for y in range(12, 40, 6):  # 벽돌 줄
+        rect(img, 0, y, 31, y, dark)
+    rect(img, 6, 12, 25, 39, (20, 14, 26, 255))  # 문 구멍
+    ellipse(img, 15.5, 12, 9.5, 6, (20, 14, 26, 255))
+    if open_gate:
+        for y in range(8, 40):
+            for x in range(6, 26):
+                if img.getpixel((x, y))[:3] == (20, 14, 26):
+                    t = abs(x - 15.5) / 10 + (40 - y) / 60
+                    img.putpixel((x, y), (int(255 - 90 * t), int(70 + 40 * t), int(60 + 30 * t), 255))
+    else:
+        rect(img, 6, 20, 25, 23, (120, 110, 90, 255))   # 봉인 사슬
+        rect(img, 14, 17, 17, 26, (200, 170, 60, 255))  # 자물쇠
+    for rx, ry in ((2, 14), (28, 14), (2, 26), (28, 26)):
+        put(img, [(rx, ry), (rx + 1, ry), (rx, ry + 1), (rx + 1, ry + 1)], rune if not open_gate else (255, 200, 90, 255))
+    rect(img, 13, 0, 18, 5, dark)  # 해골 장식 자리
+    put(img, [(14, 2), (17, 2)], rune)
+    return outline(img)
+
+
+def chest(opened):
+    img = canvas(18, 16)
+    wood, dark, gold = (150, 95, 50, 255), (95, 58, 32, 255), PAL["y"]
+    rect(img, 1, 7, 16, 14, wood)
+    rect(img, 1, 14, 16, 14, dark)
+    if opened:
+        rect(img, 1, 1, 16, 4, dark)       # 뒤로 젖혀진 뚜껑
+        rect(img, 2, 5, 15, 7, (255, 230, 140, 255))  # 안쪽 빛
+    else:
+        rect(img, 1, 3, 16, 7, wood)
+        rect(img, 1, 3, 16, 3, dark)
+        rect(img, 7, 6, 10, 9, gold)
+    rect(img, 4, 7, 4, 14, gold)
+    rect(img, 13, 7, 13, 14, gold)
+    return outline(img)
+
+
+def campfire():
+    img = canvas(16)
+    rect(img, 2, 12, 13, 13, (110, 70, 40, 255))
+    rect(img, 4, 11, 11, 11, (90, 56, 32, 255))
+    for x in range(5, 11):
+        h = 4 + (3 if x in (7, 8) else 0)
+        for y in range(11 - h, 11):
+            t = (11 - y) / h
+            img.putpixel((x, y), PAL["y"] if t > 0.6 else (PAL["o"] if t > 0.25 else PAL["r"]))
+    for sx, sy in ((1, 13), (14, 13), (3, 14), (12, 14)):
+        put(img, [(sx, sy)], (120, 120, 130, 255))
+    return outline(img)
+
+
+# ---------------------------------------------------------------- 타이틀 배경 (320x180): 전사 vs 몬스터
+def _paste_scaled(bg, img, x, y, scale, flip=False, alpha=1.0):
+    im = img.resize((img.width * scale, img.height * scale), Image.NEAREST)
+    if flip:
+        im = im.transpose(Image.FLIP_LEFT_RIGHT)
+    if alpha < 1.0:
+        a = im.getchannel("A").point(lambda v: int(v * alpha))
+        im.putalpha(a)
+    bg.alpha_composite(im, (x, y))
+
+
+def title_background():
+    W, H = 320, 180
+    rnd = random.Random(3)
+    bg = Image.new("RGBA", (W, H))
+    for y in range(H):  # 노을 하늘
+        t = y / 125.0
+        c = (int(36 + 200 * t ** 1.6), int(22 + 95 * t ** 1.4), int(64 + 30 * t))
+        for x in range(W):
+            bg.putpixel((x, y), tuple(min(255, v) for v in c) + (255,))
+    ellipse(bg, 262, 34, 13, 13, (255, 236, 200, 255))  # 달
+    ellipse(bg, 267, 31, 11, 11, (0, 0, 0, 0))
+    for y in range(H):
+        for x in range(W):
+            if bg.getpixel((x, y))[3] == 0:
+                t = y / 125.0
+                bg.putpixel((x, y), (int(36 + 200 * t ** 1.6), int(22 + 95 * t ** 1.4), int(64 + 30 * t), 255))
+    for _ in range(40):  # 별
+        x, y = rnd.randint(0, W - 1), rnd.randint(0, 60)
+        bg.putpixel((x, y), (255, 240, 220, 255))
+    # 먼 산 / 가까운 언덕
+    for layer, (base_y, amp, col) in enumerate(((100, 22, (70, 42, 86)), (118, 14, (44, 30, 58)))):
+        for x in range(W):
+            h = base_y - amp * (0.5 + 0.5 * math.sin(x * (0.031 + 0.02 * layer) + layer)) - rnd.randint(0, 2)
+            for y in range(int(h), H):
+                bg.putpixel((x, y), col + (255,))
+    # 무너진 유적 기둥
+    for px, ph in ((28, 46), (44, 30), (292, 52), (276, 26)):
+        rect(bg, px, 130 - ph, px + 7, 130, (58, 50, 74, 255))
+        rect(bg, px - 1, 130 - ph, px + 8, 130 - ph + 2, (72, 62, 88, 255))
+    # 땅
+    for y in range(128, H):
+        for x in range(W):
+            v = rnd.randint(-5, 5)
+            bg.putpixel((x, y), (40 + v, 72 + v, 46 + v, 255) if y < 134 else (32 + v, 52 + v, 36 + v, 255))
+    # 전사 (투구·갑옷·방패·검)
+    hero = from_map(PLAYER)
+    for overlay_rows in (HELMETS_WORN["iron_helm"],):
+        ov = from_map(overlay_rows)
+        hero.alpha_composite(ov)
+    hero.alpha_composite(armor_worn(*ARMOR_COLORS["paladin_plate"]))
+    _paste_scaled(bg, Image.new("RGBA", (12, 3), (0, 0, 0, 90)), 54, 134, 4)
+    sword = sword_icon("W", "y", "y", "B")
+    _paste_scaled(bg, sword, 92, 46, 3)                 # 치켜든 성검
+    _paste_scaled(bg, hero, 48, 72, 4)
+    _paste_scaled(bg, kite_shield("l", "m", "B"), 40, 104, 2)
+    # 몬스터들 (전사를 향해 왼쪽을 봄)
+    _paste_scaled(bg, slime_king(), 222, 50, 3)
+    _paste_scaled(bg, from_map(ORC), 176, 72, 4, flip=True)
+    _paste_scaled(bg, from_map(GOBLIN), 270, 98, 3, flip=True)
+    _paste_scaled(bg, from_map(SLIME), 206, 128, 2)
+    _paste_scaled(bg, from_map(HELLHOUND), 134, 100, 3, flip=True)
+    # 베기 섬광 + 불티
+    _paste_scaled(bg, swing_arc(), 112, 70, 2, alpha=0.55)
+    for _ in range(80):
+        x, y = rnd.randint(112, 196), rnd.randint(60, 140)
+        if math.hypot(x - 150, y - 100) < 40:
+            bg.putpixel((x, y), rnd.choice(((255, 240, 160, 255), (255, 180, 80, 255), (255, 255, 255, 255))))
+    return bg
+
+
 def main():
     save(from_map(PLAYER), "characters", "player.png")
     save(from_map(SLIME), "characters", "slime.png")
@@ -771,6 +996,20 @@ def main():
     save(round_shield("G", "T", "r"), "shields", "goblin_buckler.png")
     save(kite_shield("y", "o", "P"), "shields", "royal_aegis.png")
     save(kite_shield("n", "y", "C"), "shields", "colossus_bulwark.png")
+    for name, cols in ARMOR_COLORS.items():
+        save(armor_worn(*cols), "armors", f"{name}_worn.png")
+        save(armor_icon(*cols), "armors", f"{name}.png")
+    for name, (base, light, sc) in GEMS.items():
+        save(gem_icon(base, light, sc), "gems", f"{name}.png")
+    save(portal((255, 255, 255), (80, 170, 255)), "world", "portal_blue.png")
+    save(portal((255, 240, 200), (255, 70, 60)), "world", "portal_red.png")
+    save(portal((255, 255, 230), (255, 190, 60)), "world", "portal_gold.png")
+    save(boss_gate(False), "world", "boss_gate_sealed.png")
+    save(boss_gate(True), "world", "boss_gate_open.png")
+    save(chest(False), "world", "chest_closed.png")
+    save(chest(True), "world", "chest_open.png")
+    save(campfire(), "world", "campfire.png")
+    save(title_background(), "ui", "title_bg.png")
     save(spark(), "effects", "spark.png")
     save(glow(), "effects", "glow.png")
     save(ring(), "effects", "ring.png")

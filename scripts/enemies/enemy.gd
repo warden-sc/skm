@@ -86,6 +86,16 @@ func apply_scaling(level: int) -> void:
 	power = 1.0 + 0.25 * level
 
 
+## 난이도 배율 적용 (StageManager 가 add_child 전에 호출)
+func apply_difficulty(info: Dictionary) -> void:
+	max_hp = roundi(max_hp * float(info["enemy_hp"]))
+	contact_damage = roundi(contact_damage * float(info["enemy_damage"]))
+	power *= float(info["enemy_damage"])
+	move_speed *= float(info["enemy_speed"])
+	gold_min = roundi(gold_min * float(info["gold"]))
+	gold_max = roundi(gold_max * float(info["gold"]))
+
+
 func _physics_process(delta: float) -> void:
 	if _dead:
 		return

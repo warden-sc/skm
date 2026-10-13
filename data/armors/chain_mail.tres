@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ArmorData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/armor_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/armors/chain_mail.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/armors/chain_mail_worn.png" id="3_res"]
+
+[resource]
+script = ExtResource("1_script")
+defense = 2
+bonus_max_hp = 25
+worn_texture = ExtResource("3_res")
+id = &"chain_mail"
+display_name = "사슬 갑옷"
+description = "촘촘한 사슬을 엮은 갑옷. 베기에 강하다."
+rarity = 1
+icon = ExtResource("2_res")
+price = 200

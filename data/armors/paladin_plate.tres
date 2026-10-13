@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ArmorData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/armor_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/armors/paladin_plate.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/armors/paladin_plate_worn.png" id="3_res"]
+
+[resource]
+script = ExtResource("1_script")
+defense = 6
+bonus_max_hp = 70
+worn_texture = ExtResource("3_res")
+id = &"paladin_plate"
+display_name = "성기사의 판금 갑옷"
+description = "빛의 가호가 깃든 전설의 판금 갑옷. 몸을 아득히 단단하게 만든다."
+rarity = 3
+icon = ExtResource("2_res")
+price = 1500

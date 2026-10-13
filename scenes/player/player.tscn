@@ -28,6 +28,9 @@ texture = ExtResource("4_shadow")
 position = Vector2(0, -8)
 texture = ExtResource("3_body")
 
+[node name="ArmorSprite" type="Sprite2D" parent="BodySprite"]
+visible = false
+
 [node name="HelmetSprite" type="Sprite2D" parent="BodySprite"]
 visible = false
 

@@ -10,7 +10,7 @@ extends CharacterBody2D
 ## - 활 시위 당기기 / 지팡이 영창(구슬에 마력이 모임) 연출은 AttackController 가 begin_windup() 등으로 요청
 ##
 ## 필요한 자식 노드 (player.tscn):
-##   BodySprite(Sprite2D) └ HelmetSprite(Sprite2D)
+##   BodySprite(Sprite2D) ├ ArmorSprite(Sprite2D) └ HelmetSprite(Sprite2D)
 ##   CollisionShape2D, ChantLabel(Label)
 ##   WeaponPivot(Node2D)
 ##   ├ SwingPivot(Node2D) ├ WeaponSprite(Sprite2D) ├ BowString(Line2D) └ NockedArrow(Sprite2D)
@@ -55,6 +55,7 @@ const SWING_FX_ARC := 124.0     # swing_arc.png 가 그리는 각도(도)
 
 @onready var _body_sprite: Sprite2D = $BodySprite
 @onready var _helmet_sprite: Sprite2D = $BodySprite/HelmetSprite
+@onready var _armor_sprite: Sprite2D = $BodySprite/ArmorSprite
 @onready var _chant_label: Label = $ChantLabel
 @onready var _bow_string: Line2D = $WeaponPivot/SwingPivot/BowString
 @onready var _nocked_arrow: Sprite2D = $WeaponPivot/SwingPivot/NockedArrow
@@ -97,12 +98,14 @@ func _ready() -> void:
 	GameManager.weapon_equipped.connect(_on_weapon_equipped)
 	GameManager.shield_equipped.connect(_on_shield_equipped)
 	GameManager.helmet_equipped.connect(_on_helmet_equipped)
+	GameManager.armor_equipped.connect(_on_armor_equipped)
 	GameManager.player_damaged.connect(_on_player_damaged)
 	GameManager.player_died.connect(_on_player_died)
 	GameManager.guard_broken.connect(_on_guard_broken)
 	_on_weapon_equipped(GameManager.equipped_weapon)
 	_on_shield_equipped(GameManager.equipped_shield)
 	_on_helmet_equipped(GameManager.equipped_helmet)
+	_on_armor_equipped(GameManager.equipped_armor)
 	GameManager.set_dash_cooldown(0.0, dash_cooldown)
 
 
@@ -146,6 +149,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		GameManager.cycle_weapon(1)
 	elif event.is_action_pressed(&"weapon_prev"):
 		GameManager.cycle_weapon(-1)
+	else:
+		for slot in 3:
+			if event.is_action_pressed(StringName("weapon_slot_%d" % (slot + 1))):
+				if not GameManager.select_weapon_slot(slot):
+					GameManager.show_notice("%s 칸이 비어 있습니다." % GameManager.WEAPON_SLOT_NAMES[slot], Color(1.0, 0.7, 0.5))
 
 
 # ============================================================ 공개 API (컴포넌트들이 사용)
@@ -271,6 +279,23 @@ func is_winding_up() -> bool:
 	return _windup_weapon != null
 
 
+## 텔레포트: 즉시 이동 + 카메라를 새 방의 경계에 맞춤
+func teleport_to(at_global: Vector2, camera_bounds: Rect2) -> void:
+	if _windup_weapon != null:
+		end_windup(false)
+	global_position = at_global
+	velocity = Vector2.ZERO
+	set_camera_bounds(camera_bounds)
+
+
+func set_camera_bounds(bounds: Rect2) -> void:
+	_camera.limit_left = floori(bounds.position.x)
+	_camera.limit_top = floori(bounds.position.y)
+	_camera.limit_right = ceili(bounds.end.x)
+	_camera.limit_bottom = ceili(bounds.end.y)
+	_camera.reset_smoothing()
+
+
 ## 빙결 등으로 이동속도 감소
 func apply_slow(multiplier: float, duration: float) -> void:
 	_slow_multiplier = minf(multiplier, _slow_multiplier) if _slow_left > 0.0 else multiplier
@@ -354,6 +379,7 @@ func _update_aim(delta: float) -> void:
 	_weapon_pivot.scale.y = -1.0 if _aim_direction.x < 0.0 else 1.0
 	_body_sprite.flip_h = _aim_direction.x < 0.0
 	_helmet_sprite.flip_h = _body_sprite.flip_h
+	_armor_sprite.flip_h = _body_sprite.flip_h
 
 
 func _update_timers(delta: float) -> void:
@@ -481,6 +507,11 @@ func _on_weapon_equipped(weapon: WeaponData) -> void:
 	_bow_string.visible = weapon.is_bow()
 	if weapon.is_bow():
 		_update_bow_string(0.0)
+
+
+func _on_armor_equipped(armor: ArmorData) -> void:
+	_armor_sprite.texture = armor.worn_texture if armor != null else null
+	_armor_sprite.visible = armor != null
 
 
 func _on_helmet_equipped(helmet: HelmetData) -> void:
