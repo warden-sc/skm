@@ -6,23 +6,23 @@
 
 [resource]
 script = ExtResource("1_script")
-id = &"hunter_bow"
-display_name = "사냥꾼의 활"
-description = "멀리 있는 적을 정확하게 꿰뚫는 활."
 weapon_type = 1
-rarity = 0
-icon = ExtResource("2_icon")
-projectile_texture = ExtResource("3_proj")
-projectile_color = Color(1, 0.95, 0.8, 1)
+effect_color = Color(1, 0.95, 0.8, 1)
 damage = 10
 crit_chance = 0.15
 crit_multiplier = 1.8
 knockback = 90.0
 attack_cooldown = 0.45
+projectile_texture = ExtResource("3_proj")
 projectile_speed = 430.0
 projectile_range = 280.0
 projectiles_per_shot = 1
 spread_degrees = 0.0
 pierce = 1
 projectile_scale = 1.0
+id = &"hunter_bow"
+display_name = "사냥꾼의 활"
+description = "멀리 있는 적을 정확하게 꿰뚫는 활."
+rarity = 0
+icon = ExtResource("2_icon")
 price = 90

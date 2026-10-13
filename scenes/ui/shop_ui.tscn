@@ -108,7 +108,7 @@ size_flags_horizontal = 3
 [node name="InventoryHeader" type="Label" parent="Panel/Margin/VBox/Columns/InventoryColumn"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 1, 0.75, 1)
-text = "보유 무기"
+text = "보유 장비"
 
 [node name="InventoryScroll" type="ScrollContainer" parent="Panel/Margin/VBox/Columns/InventoryColumn"]
 layout_mode = 2

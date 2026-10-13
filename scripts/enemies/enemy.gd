@@ -2,9 +2,10 @@ class_name Enemy
 extends Area2D
 ## 모든 몬스터의 기반 클래스 (Area2D)
 ##
-## - 플레이어 투사체(Projectile)가 area_entered 로 감지하여 take_damage() 를 호출합니다.
+## - 플레이어의 근접 공격(AttackController 의 형상 질의)과 투사체(area_entered)가 take_damage() 를 호출합니다.
 ## - 플레이어 몸체와 겹쳐 있는 동안 contact_damage 를 줍니다 (플레이어 무적시간으로 연타 방지).
-## - 사망 시 died 시그널 발행 → StageManager 가 골드(확정) / 무기(확률) 드랍을 처리합니다.
+##   방패로 막히면 apply_knockback() 으로 밀려나고, 퍼펙트 가드면 stun() 으로 기절합니다.
+## - 사망 시 died 시그널 발행 → StageManager 가 골드(확정) / 장비(확률) 드랍을 처리합니다.
 ## - 이동 패턴은 자식 클래스에서 _get_move_velocity() 를 오버라이드해서 만듭니다.
 
 signal died(enemy: Enemy)
@@ -22,9 +23,9 @@ signal summon_requested(scene: PackedScene, at_global: Vector2)
 @export_group("Drops")
 @export var gold_min: int = 3
 @export var gold_max: int = 6
-@export_range(0.0, 1.0) var weapon_drop_chance: float = 0.1
-## WeaponDB 의 무기 id 목록. 드랍 시 이 중 하나가 무작위로 선택됩니다.
-@export var weapon_drop_ids: Array[StringName] = []
+@export_range(0.0, 1.0) var item_drop_chance: float = 0.1
+## ItemDB 의 장비 id 목록 (무기/방패). 드랍 시 이 중 하나가 무작위로 선택됩니다.
+@export var item_drop_ids: Array[StringName] = []
 
 var hp: int = 0
 ## StageManager 가 지정. 크기가 0 이 아니면 이 영역 밖으로 밀려나지 않습니다.
@@ -35,9 +36,11 @@ var _knockback: Vector2 = Vector2.ZERO
 var _touching_player: bool = false
 var _dead: bool = false
 var _hit_flash: float = 0.0
+var _stun_left: float = 0.0
 var _anim_time: float = 0.0
 
 @onready var sprite: Sprite2D = $Sprite2D
+@onready var _hit_shape: CollisionShape2D = $CollisionShape2D
 
 
 func _ready() -> void:
@@ -70,17 +73,23 @@ func _physics_process(delta: float) -> void:
 	if _player == null or not is_instance_valid(_player):
 		_player = get_tree().get_first_node_in_group(&"player") as Player
 
-	var move := _get_move_velocity(delta)
+	_stun_left = maxf(_stun_left - delta, 0.0)
+	var move := Vector2.ZERO if _stun_left > 0.0 else _get_move_velocity(delta)
 	_knockback = _knockback.move_toward(Vector2.ZERO, 900.0 * delta)
 	global_position += (move + _knockback) * delta
 	if arena_rect.has_area():
 		global_position = global_position.clamp(arena_rect.position, arena_rect.end)
 
-	if _touching_player and _player != null and is_instance_valid(_player):
-		_player.take_hit(contact_damage, global_position)
+	if _touching_player and _stun_left <= 0.0 and _player != null and is_instance_valid(_player):
+		_player.take_hit(contact_damage, get_hit_center(), self)
 
 	_hit_flash = maxf(_hit_flash - delta, 0.0)
-	sprite.self_modulate = Color(3.0, 3.0, 3.0) if _hit_flash > 0.0 else Color.WHITE
+	if _hit_flash > 0.0:
+		sprite.self_modulate = Color(3.0, 3.0, 3.0)
+	elif _stun_left > 0.0:
+		sprite.self_modulate = Color(0.6, 0.8, 1.6)  # 기절: 푸르스름하게
+	else:
+		sprite.self_modulate = Color.WHITE
 	_update_visual(delta, move)
 
 
@@ -103,6 +112,30 @@ func has_target() -> bool:
 
 func is_dead() -> bool:
 	return _dead
+
+
+func is_stunned() -> bool:
+	return _stun_left > 0.0
+
+
+## 몸통 판정 중심 (근접 공격 각도 계산 / 가드 방향 판정용)
+func get_hit_center() -> Vector2:
+	return _hit_shape.global_position
+
+
+func apply_knockback(force: Vector2) -> void:
+	if _dead:
+		return
+	_knockback += force * (1.0 - knockback_resistance)
+
+
+## 퍼펙트 가드 등으로 기절. 보스는 넉백 저항만큼 기절 시간이 줄어듭니다.
+func stun(duration: float) -> void:
+	if _dead:
+		return
+	var actual := duration * (1.0 - knockback_resistance * 0.6)
+	_stun_left = maxf(_stun_left, actual)
+	FloatingText.spawn(self, global_position + Vector2(0, -20), "기절!", Color(0.6, 0.8, 1.0))
 
 
 ## 졸개 소환 요청 (보스 등 자식 클래스에서 사용)

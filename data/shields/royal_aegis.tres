@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ShieldData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/shield_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/shields/royal_aegis.png" id="2_icon"]
+
+[resource]
+script = ExtResource("1_script")
+defense = 2
+block_ratio = 1.0
+block_arc_degrees = 160.0
+max_guard = 100.0
+guard_regen = 20.0
+perfect_guard_window = 0.2
+guard_move_multiplier = 0.6
+guard_break_time = 0.8
+id = &"royal_aegis"
+display_name = "왕실 방패"
+description = "왕국 기사단의 방패. 넓은 범위의 공격을 전부 막아낸다."
+rarity = 2
+icon = ExtResource("2_icon")
+price = 500

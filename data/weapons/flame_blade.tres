@@ -1,28 +1,22 @@
-[gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://assets/sprites/weapons/flame_blade.png" id="2_icon"]
-[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/slash.png" id="3_proj"]
 
 [resource]
 script = ExtResource("1_script")
-id = &"flame_blade"
-display_name = "화염검"
-description = "불꽃이 깃든 검. 거대한 화염 검기가 적을 꿰뚫는다."
 weapon_type = 0
-rarity = 2
-icon = ExtResource("2_icon")
-projectile_texture = ExtResource("3_proj")
-projectile_color = Color(1, 0.55, 0.25, 1)
-damage = 22
+effect_color = Color(1, 0.55, 0.25, 1)
+damage = 26
 crit_chance = 0.15
 crit_multiplier = 1.8
-knockback = 200.0
-attack_cooldown = 0.3
-projectile_speed = 300.0
-projectile_range = 110.0
-projectiles_per_shot = 1
-spread_degrees = 0.0
-pierce = 6
-projectile_scale = 1.45
+knockback = 230.0
+attack_cooldown = 0.32
+melee_range = 36.0
+melee_arc_degrees = 150.0
+id = &"flame_blade"
+display_name = "화염검"
+description = "불꽃이 깃든 대검. 넓은 범위를 강하게 베어낸다."
+rarity = 2
+icon = ExtResource("2_icon")
 price = 600

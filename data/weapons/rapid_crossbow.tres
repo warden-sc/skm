@@ -6,23 +6,23 @@
 
 [resource]
 script = ExtResource("1_script")
-id = &"rapid_crossbow"
-display_name = "연사 석궁"
-description = "볼트를 쉴 새 없이 쏘아대는 석궁."
 weapon_type = 1
-rarity = 1
-icon = ExtResource("2_icon")
-projectile_texture = ExtResource("3_proj")
-projectile_color = Color(0.7, 0.85, 1, 1)
+effect_color = Color(0.7, 0.85, 1, 1)
 damage = 6
 crit_chance = 0.08
 crit_multiplier = 1.5
 knockback = 50.0
 attack_cooldown = 0.13
+projectile_texture = ExtResource("3_proj")
 projectile_speed = 460.0
 projectile_range = 240.0
 projectiles_per_shot = 1
 spread_degrees = 6.0
 pierce = 0
 projectile_scale = 0.9
+id = &"rapid_crossbow"
+display_name = "연사 석궁"
+description = "볼트를 쉴 새 없이 쏘아대는 석궁."
+rarity = 1
+icon = ExtResource("2_icon")
 price = 220

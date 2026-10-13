@@ -10,6 +10,10 @@ const NOTICE_TIME := 2.5
 @onready var _hp_label: Label = %HPLabel
 @onready var _dash_bar: TextureProgressBar = %DashBar
 @onready var _dash_label: Label = %DashLabel
+@onready var _guard_bar: TextureProgressBar = %GuardBar
+@onready var _guard_label: Label = %GuardLabel
+@onready var _shield_icon: TextureRect = %ShieldIcon
+@onready var _shield_label: Label = %ShieldLabel
 @onready var _gold_label: Label = %GoldLabel
 @onready var _weapon_icon: TextureRect = %WeaponIcon
 @onready var _weapon_label: Label = %WeaponLabel
@@ -31,6 +35,8 @@ func _ready() -> void:
 	GameManager.player_damaged.connect(_on_player_damaged)
 	GameManager.player_died.connect(_on_player_died)
 	GameManager.dash_cooldown_changed.connect(_on_dash_cooldown_changed)
+	GameManager.guard_changed.connect(_on_guard_changed)
+	GameManager.shield_equipped.connect(_on_shield_equipped)
 	GameManager.gold_changed.connect(_on_gold_changed)
 	GameManager.weapon_equipped.connect(_on_weapon_equipped)
 	GameManager.stage_changed.connect(_on_stage_changed)
@@ -53,6 +59,8 @@ func _ready() -> void:
 	_on_dash_cooldown_changed(GameManager.dash_cooldown_remaining, GameManager.dash_cooldown_total)
 	_on_gold_changed(GameManager.gold)
 	_on_weapon_equipped(GameManager.equipped_weapon)
+	_on_shield_equipped(GameManager.equipped_shield)
+	_on_guard_changed(GameManager.guard, GameManager.max_guard)
 	_on_stage_changed(GameManager.stage)
 	_progress_label.text = ""
 
@@ -77,6 +85,12 @@ func _on_dash_cooldown_changed(remaining: float, total: float) -> void:
 	_dash_label.text = "READY" if remaining <= 0.0 else "%.1fs" % remaining
 
 
+func _on_guard_changed(current: float, max_guard: float) -> void:
+	_guard_bar.max_value = maxf(max_guard, 1.0)
+	_guard_bar.value = current
+	_guard_label.text = "-" if max_guard <= 0.0 else "%d / %d" % [roundi(current), roundi(max_guard)]
+
+
 func _on_gold_changed(gold: int) -> void:
 	_gold_label.text = "%d G" % gold
 
@@ -87,8 +101,18 @@ func _on_weapon_equipped(weapon: WeaponData) -> void:
 		_weapon_label.text = "무기 없음"
 		return
 	_weapon_icon.texture = weapon.icon
-	_weapon_label.text = "%s  ATK %d" % [weapon.display_name, weapon.damage]
+	_weapon_label.text = "%s  ATK %d %s" % [weapon.display_name, weapon.damage, "(근접)" if weapon.is_melee() else "(원거리)"]
 	_weapon_label.add_theme_color_override(&"font_color", weapon.get_rarity_color())
+
+
+func _on_shield_equipped(shield: ShieldData) -> void:
+	if shield == null:
+		_shield_icon.texture = null
+		_shield_label.text = "방패 없음"
+		return
+	_shield_icon.texture = shield.icon
+	_shield_label.text = "%s  막기 %d%%" % [shield.display_name, roundi(shield.block_ratio * 100.0)]
+	_shield_label.add_theme_color_override(&"font_color", shield.get_rarity_color())
 
 
 func _on_stage_changed(stage: int) -> void:

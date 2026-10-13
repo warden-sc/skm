@@ -1,16 +1,16 @@
 class_name Pickup
 extends Area2D
-## 몬스터 드랍 아이템 (골드 / 무기)
+## 몬스터 드랍 아이템 (골드 / 장비)
 ##
 ## 사용 순서 (StageManager):
 ##   var p := pickup_scene.instantiate() as Pickup
-##   p.setup_gold(10)   또는   p.setup_weapon(weapon_data)
+##   p.setup_gold(10)   또는   p.setup_item(item_data)   # 무기·방패 공통
 ##   entities.add_child(p)
 ##
 ## 플레이어가 가까이 오면 끌려가고(magnet), 닿으면 GameManager 에 반영됩니다.
-## 이미 가진 무기를 주우면 판매가만큼 골드로 자동 환전됩니다.
+## 이미 가진 장비를 주우면 판매가만큼 골드로 자동 환전됩니다.
 
-enum Kind { GOLD, WEAPON }
+enum Kind { GOLD, ITEM }
 
 @export var gold_texture: Texture2D
 @export var magnet_radius: float = 56.0
@@ -20,7 +20,7 @@ enum Kind { GOLD, WEAPON }
 
 var kind: Kind = Kind.GOLD
 var gold_amount: int = 0
-var weapon: WeaponData
+var item: ItemData
 
 var _delay_left: float = 0.0
 var _scatter_velocity: Vector2 = Vector2.ZERO
@@ -35,9 +35,9 @@ func setup_gold(amount: int) -> void:
 	gold_amount = maxi(amount, 1)
 
 
-func setup_weapon(weapon_data: WeaponData) -> void:
-	kind = Kind.WEAPON
-	weapon = weapon_data
+func setup_item(item_data: ItemData) -> void:
+	kind = Kind.ITEM
+	item = item_data
 
 
 func _ready() -> void:
@@ -48,11 +48,11 @@ func _ready() -> void:
 	_anim_time = randf() * TAU
 	_scatter_velocity = Vector2.from_angle(randf() * TAU) * randf_range(40.0, 90.0)
 
-	if kind == Kind.WEAPON and weapon != null:
-		_sprite.texture = weapon.icon
+	if kind == Kind.ITEM and item != null:
+		_sprite.texture = item.icon
 		# 등급 색으로 은은하게 빛나도록
 		var glow := create_tween().set_loops()
-		glow.tween_property(_sprite, "self_modulate", weapon.get_rarity_color().lightened(0.3), 0.5)
+		glow.tween_property(_sprite, "self_modulate", item.get_rarity_color().lightened(0.3), 0.5)
 		glow.tween_property(_sprite, "self_modulate", Color.WHITE, 0.5)
 	else:
 		_sprite.texture = gold_texture
@@ -95,14 +95,15 @@ func _collect() -> void:
 		Kind.GOLD:
 			GameManager.add_gold(gold_amount)
 			FloatingText.spawn(self, global_position, "+%dG" % gold_amount, Color(1.0, 0.85, 0.3))
-		Kind.WEAPON:
-			if weapon == null:
+		Kind.ITEM:
+			if item == null:
 				pass
-			elif GameManager.add_weapon(weapon):
-				GameManager.show_notice("무기 획득: %s  (Q 로 교체)" % weapon.display_name, weapon.get_rarity_color())
-				FloatingText.spawn(self, global_position, weapon.display_name, weapon.get_rarity_color(), true)
+			elif GameManager.add_item(item):
+				var hint := "Q 로 교체" if item is WeaponData else "상점에서 장착"
+				GameManager.show_notice("획득: %s  (%s)" % [item.display_name, hint], item.get_rarity_color())
+				FloatingText.spawn(self, global_position, item.display_name, item.get_rarity_color(), true)
 			else:
-				var value := weapon.get_sell_value()
+				var value := item.get_sell_value()
 				GameManager.add_gold(value)
 				FloatingText.spawn(self, global_position, "중복 → +%dG" % value, Color(1.0, 0.85, 0.3))
 	queue_free()

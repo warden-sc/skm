@@ -6,24 +6,24 @@
 
 [resource]
 script = ExtResource("1_script")
-id = &"slime_staff"
-display_name = "슬라임 지팡이"
-description = "끈적한 점액탄 5발을 흩뿌린다.
-(슬라임 드랍 전용)"
 weapon_type = 2
-rarity = 1
-icon = ExtResource("2_icon")
-projectile_texture = ExtResource("3_proj")
-projectile_color = Color(0.6, 1, 0.45, 1)
+effect_color = Color(0.6, 1, 0.45, 1)
 damage = 6
 crit_chance = 0.05
 crit_multiplier = 1.5
 knockback = 60.0
 attack_cooldown = 0.42
+projectile_texture = ExtResource("3_proj")
 projectile_speed = 200.0
 projectile_range = 150.0
 projectiles_per_shot = 5
 spread_degrees = 50.0
 pierce = 1
 projectile_scale = 1.1
+id = &"slime_staff"
+display_name = "슬라임 지팡이"
+description = "끈적한 점액탄 5발을 흩뿌린다.
+(슬라임 드랍 전용)"
+rarity = 1
+icon = ExtResource("2_icon")
 price = 180

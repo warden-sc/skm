@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ShieldData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/shield_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/shields/iron_shield.png" id="2_icon"]
+
+[resource]
+script = ExtResource("1_script")
+defense = 1
+block_ratio = 0.9
+block_arc_degrees = 120.0
+max_guard = 70.0
+guard_regen = 16.0
+perfect_guard_window = 0.15
+guard_move_multiplier = 0.5
+guard_break_time = 1.0
+id = &"iron_shield"
+display_name = "강철 방패"
+description = "정면 공격을 거의 완벽하게 막아내는 튼튼한 방패."
+rarity = 1
+icon = ExtResource("2_icon")
+price = 160

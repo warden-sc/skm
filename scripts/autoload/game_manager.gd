@@ -1,7 +1,7 @@
 extends Node
 ## 전역 게임 상태 관리자 (Autoload 이름: GameManager)
 ##
-## - 플레이어 체력 / 대시 쿨타임 / 골드 / 인벤토리 / 장착 무기 / 스테이지 진행 데이터를 보관합니다.
+## - 플레이어 체력 / 대시 쿨타임 / 가드 게이지 / 골드 / 인벤토리 / 장착 무기·방패 / 스테이지 진행 데이터를 보관합니다.
 ## - 값이 바뀌면 항상 시그널을 발행하므로 HUD/상점 UI 는 시그널만 구독하면 실시간으로 갱신됩니다.
 ##
 ## ⚠️ Autoload 스크립트에는 class_name 을 붙이지 않습니다.
@@ -12,11 +12,15 @@ signal player_hp_changed(current: int, max_hp: int)
 signal player_damaged(amount: int)
 signal player_died
 signal dash_cooldown_changed(remaining: float, total: float)
+signal guard_changed(current: float, max_guard: float)
+signal guard_broken
 
-# --- 경제 / 무기 ---
+# --- 경제 / 장비 ---
 signal gold_changed(gold: int)
-signal inventory_changed(inventory: Array)
+## 무기 또는 방패 인벤토리가 바뀌었을 때
+signal inventory_changed
 signal weapon_equipped(weapon: WeaponData)
+signal shield_equipped(shield: ShieldData)
 
 # --- 스테이지 / 보스 ---
 signal stage_changed(stage: int)
@@ -31,6 +35,7 @@ signal notice_requested(text: String, color: Color)
 signal shop_open_requested(shop_name: String, stock_ids: Array)
 
 const STARTING_WEAPON_ID: StringName = &"rusty_sword"
+const STARTING_SHIELD_ID: StringName = &"wooden_shield"
 const BASE_MAX_HP := 100
 const STARTING_GOLD := 40
 
@@ -41,9 +46,14 @@ var is_player_dead: bool = false
 var dash_cooldown_remaining: float = 0.0
 var dash_cooldown_total: float = 1.0
 
+var guard: float = 0.0
+var max_guard: float = 0.0
+
 var gold: int = 0
-var inventory: Array[WeaponData] = []
+var weapons: Array[WeaponData] = []
+var shields: Array[ShieldData] = []
 var equipped_weapon: WeaponData
+var equipped_shield: ShieldData
 ## 플레이어 쪽 공격력 배율 (버프/패시브 확장용)
 var damage_multiplier: float = 1.0
 
@@ -70,12 +80,14 @@ func reset_game() -> void:
 	kills = 0
 	kill_target = 0
 	is_boss_active = false
-	inventory.clear()
+	weapons.clear()
+	shields.clear()
 	equipped_weapon = null
-	var starter := WeaponDB.get_weapon(STARTING_WEAPON_ID)
-	if starter != null:
-		inventory.append(starter)
-		equipped_weapon = starter
+	equipped_shield = null
+	add_item(ItemDB.get_item(STARTING_WEAPON_ID))
+	add_item(ItemDB.get_item(STARTING_SHIELD_ID))
+	equip_item(ItemDB.get_item(STARTING_WEAPON_ID))
+	equip_item(ItemDB.get_item(STARTING_SHIELD_ID))
 	emit_all()
 
 
@@ -83,9 +95,11 @@ func reset_game() -> void:
 func emit_all() -> void:
 	player_hp_changed.emit(hp, max_hp)
 	dash_cooldown_changed.emit(dash_cooldown_remaining, dash_cooldown_total)
+	guard_changed.emit(guard, max_guard)
 	gold_changed.emit(gold)
-	inventory_changed.emit(inventory)
+	inventory_changed.emit()
 	weapon_equipped.emit(equipped_weapon)
+	shield_equipped.emit(equipped_shield)
 	stage_changed.emit(stage)
 	kill_progress_changed.emit(kills, kill_target)
 
@@ -129,6 +143,21 @@ func is_dash_ready() -> bool:
 	return dash_cooldown_remaining <= 0.0
 
 
+# ============================================================ 가드
+## GuardController 가 호출. 값이 실제로 변했을 때만 시그널을 보냅니다.
+func set_guard(current: float, maximum: float) -> void:
+	current = clampf(current, 0.0, maximum)
+	if is_equal_approx(current, guard) and is_equal_approx(maximum, max_guard):
+		return
+	guard = current
+	max_guard = maximum
+	guard_changed.emit(guard, max_guard)
+
+
+func report_guard_broken() -> void:
+	guard_broken.emit()
+
+
 # ============================================================ 골드
 func add_gold(amount: int) -> void:
 	if amount <= 0:
@@ -149,49 +178,67 @@ func spend_gold(amount: int) -> bool:
 	return true
 
 
-# ============================================================ 무기 / 인벤토리
-func owns_weapon(weapon_id: StringName) -> bool:
-	for w in inventory:
-		if w.id == weapon_id:
+# ============================================================ 장비 / 인벤토리
+func owns_item(item_id: StringName) -> bool:
+	for w in weapons:
+		if w.id == item_id:
+			return true
+	for sh in shields:
+		if sh.id == item_id:
 			return true
 	return false
 
 
-## 새 무기를 인벤토리에 추가. 이미 가지고 있으면 false.
-func add_weapon(weapon: WeaponData) -> bool:
-	if weapon == null or owns_weapon(weapon.id):
+## 새 장비를 인벤토리에 추가. null 이거나 이미 가지고 있으면 false.
+func add_item(item: ItemData) -> bool:
+	if item == null or owns_item(item.id):
 		return false
-	inventory.append(weapon)
-	inventory_changed.emit(inventory)
+	if item is WeaponData:
+		weapons.append(item as WeaponData)
+	elif item is ShieldData:
+		shields.append(item as ShieldData)
+	else:
+		push_error("GameManager.add_item: 지원하지 않는 아이템 타입 (%s)" % item.id)
+		return false
+	inventory_changed.emit()
 	return true
 
 
 ## 상점 구매: 골드 차감 + 인벤토리 추가 + 자동 장착
-func buy_weapon(weapon: WeaponData) -> bool:
-	if weapon == null or owns_weapon(weapon.id) or not can_afford(weapon.price):
+func buy_item(item: ItemData) -> bool:
+	if item == null or owns_item(item.id) or not can_afford(item.price):
 		return false
-	spend_gold(weapon.price)
-	add_weapon(weapon)
-	equip_weapon(weapon)
+	spend_gold(item.price)
+	add_item(item)
+	equip_item(item)
 	return true
 
 
-func equip_weapon(weapon: WeaponData) -> void:
-	if weapon == null or not owns_weapon(weapon.id):
+## 무기면 무기 칸, 방패면 방패 칸에 장착
+func equip_item(item: ItemData) -> void:
+	if item == null or not owns_item(item.id):
 		return
-	if equipped_weapon == weapon:
-		return
-	equipped_weapon = weapon
-	weapon_equipped.emit(equipped_weapon)
+	if item is WeaponData:
+		if equipped_weapon != item:
+			equipped_weapon = item as WeaponData
+			weapon_equipped.emit(equipped_weapon)
+	elif item is ShieldData:
+		if equipped_shield != item:
+			equipped_shield = item as ShieldData
+			shield_equipped.emit(equipped_shield)
+
+
+func is_equipped(item: ItemData) -> bool:
+	return item != null and (item == equipped_weapon or item == equipped_shield)
 
 
 ## Q / 마우스 휠로 장착 무기 순환
 func cycle_weapon(step: int) -> void:
-	if inventory.size() <= 1:
+	if weapons.size() <= 1:
 		return
-	var index := inventory.find(equipped_weapon)
-	index = wrapi(index + step, 0, inventory.size())
-	equip_weapon(inventory[index])
+	var index := weapons.find(equipped_weapon)
+	index = wrapi(index + step, 0, weapons.size())
+	equip_item(weapons[index])
 
 
 # ============================================================ 스테이지

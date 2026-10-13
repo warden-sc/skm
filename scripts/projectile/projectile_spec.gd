@@ -33,7 +33,7 @@ static func from_weapon(weapon: WeaponData, from: Vector2, dir: Vector2, damage_
 	spec.pierce = weapon.pierce
 	spec.knockback = weapon.knockback
 	spec.texture = weapon.projectile_texture
-	spec.color = weapon.projectile_color
+	spec.color = weapon.effect_color
 	spec.scale = weapon.projectile_scale
 	return spec
 

@@ -4,7 +4,12 @@ extends Area2D
 ##
 ## - activate(spec) 로 활성화, release() 로 비활성화 후 finished 시그널 → 풀로 반환
 ## - 충돌 콜백(area_entered/body_entered) 안에서는 물리 상태를 직접 바꾸면 안 되므로
-##   monitoring / disabled 변경은 전부 set_deferred() 로 처리합니다.
+##   monitoring / disabled / collision_layer 변경은 전부 set_deferred() 로 처리합니다.
+## - 적 탄은 플레이어의 퍼펙트 가드에 맞으면 반사되어 플레이어 편 탄이 됩니다.
+
+## 퍼펙트 가드로 반사된 탄의 데미지 / 속도 배율
+const REFLECT_DAMAGE_MULTIPLIER := 2.0
+const REFLECT_SPEED_MULTIPLIER := 1.3
 
 signal finished(projectile: Projectile)
 
@@ -47,13 +52,7 @@ func activate(spec: ProjectileSpec) -> void:
 	_sprite.texture = spec.texture if spec.texture != null else _default_texture
 	_sprite.modulate = spec.color
 
-	if spec.team == ProjectileSpec.Team.PLAYER:
-		collision_layer = Layers.PLAYER_PROJECTILE
-		collision_mask = Layers.ENEMY | Layers.WORLD
-	else:
-		collision_layer = Layers.ENEMY_PROJECTILE
-		collision_mask = Layers.PLAYER | Layers.WORLD
-
+	_apply_team_layers(false)
 	show()
 	set_deferred(&"monitoring", true)
 	_shape.set_deferred(&"disabled", false)
@@ -111,12 +110,48 @@ func _on_body_entered(body: Node2D) -> void:
 		return
 	var player := body as Player
 	if player != null:
-		# 적 탄환만 플레이어를 때립니다. 대시(무적) 중이면 탄이 통과합니다.
-		if _spec.team == ProjectileSpec.Team.ENEMY and player.take_hit(_spec.damage, global_position):
-			release()
+		if _spec.team != ProjectileSpec.Team.ENEMY:
+			return
+		match player.take_hit(_spec.damage, global_position):
+			Player.HitResult.DAMAGED, Player.HitResult.BLOCKED:
+				release()
+			Player.HitResult.PARRIED:
+				_reflect()
+			_:
+				pass  # IGNORED: 대시 무적 → 탄이 그대로 통과
 		return
 	# 그 외 바디 = 벽(StaticBody2D / TileMap)
 	release()
+
+
+## 퍼펙트 가드: 진행 방향을 뒤집고 플레이어 편 탄으로 전환
+func _reflect() -> void:
+	_spec.team = ProjectileSpec.Team.PLAYER
+	_spec.damage = roundi(_spec.damage * REFLECT_DAMAGE_MULTIPLIER)
+	_spec.knockback = maxf(_spec.knockback, 120.0)
+	_spec.pierce = 1
+	_pierce_left = _spec.pierce
+	_travelled = 0.0
+	_hit_ids.clear()
+	_velocity = -_velocity * REFLECT_SPEED_MULTIPLIER
+	rotation = _velocity.angle()
+	_spec.color = Color(0.6, 1.0, 1.0)
+	_sprite.modulate = _spec.color
+	_apply_team_layers(true)
+
+
+func _apply_team_layers(deferred: bool) -> void:
+	var layer := Layers.PLAYER_PROJECTILE
+	var mask := Layers.ENEMY | Layers.WORLD
+	if _spec.team == ProjectileSpec.Team.ENEMY:
+		layer = Layers.ENEMY_PROJECTILE
+		mask = Layers.PLAYER | Layers.WORLD
+	if deferred:
+		set_deferred(&"collision_layer", layer)
+		set_deferred(&"collision_mask", mask)
+	else:
+		collision_layer = layer
+		collision_mask = mask
 
 
 func _apply_inactive_state() -> void:

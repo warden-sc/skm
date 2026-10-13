@@ -168,7 +168,7 @@ func _on_summon_requested(scene: PackedScene, at_global: Vector2) -> void:
 		return
 	minion.apply_stage_scaling(GameManager.stage)
 	# 소환된 졸개는 드랍이 적습니다
-	minion.weapon_drop_chance *= 0.3
+	minion.item_drop_chance *= 0.3
 	_add_enemy(minion, at_global)
 
 
@@ -205,11 +205,11 @@ func _spawn_drops(at_global: Vector2, enemy: Enemy) -> void:
 			coin.setup_gold(per_coin + (remainder if i == 0 else 0))
 			_add_entity(coin, at_global)
 
-	# 2) 무기: 확률 드랍
-	if not enemy.weapon_drop_ids.is_empty() and randf() < enemy.weapon_drop_chance:
-		var weapon_id: StringName = enemy.weapon_drop_ids.pick_random()
-		var weapon := WeaponDB.get_weapon(weapon_id)
-		if weapon != null:
+	# 2) 장비(무기/방패): 확률 드랍
+	if not enemy.item_drop_ids.is_empty() and randf() < enemy.item_drop_chance:
+		var item_id: StringName = enemy.item_drop_ids.pick_random()
+		var item := ItemDB.get_item(item_id)
+		if item != null:
 			var drop := pickup_scene.instantiate() as Pickup
-			drop.setup_weapon(weapon)
+			drop.setup_item(item)
 			_add_entity(drop, at_global)

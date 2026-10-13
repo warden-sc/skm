@@ -1,28 +1,22 @@
-[gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://assets/sprites/weapons/iron_sword.png" id="2_icon"]
-[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/slash.png" id="3_proj"]
 
 [resource]
 script = ExtResource("1_script")
-id = &"iron_sword"
-display_name = "강철 검"
-description = "잘 벼려진 강철 검. 넓고 강한 검기."
 weapon_type = 0
-rarity = 1
-icon = ExtResource("2_icon")
-projectile_texture = ExtResource("3_proj")
-projectile_color = Color(0.8, 0.95, 1, 1)
-damage = 12
+effect_color = Color(0.8, 0.95, 1, 1)
+damage = 15
 crit_chance = 0.1
 crit_multiplier = 1.6
-knockback = 170.0
+knockback = 190.0
 attack_cooldown = 0.34
-projectile_speed = 280.0
-projectile_range = 85.0
-projectiles_per_shot = 1
-spread_degrees = 0.0
-pierce = 3
-projectile_scale = 1.15
+melee_range = 30.0
+melee_arc_degrees = 120.0
+id = &"iron_sword"
+display_name = "강철 검"
+description = "잘 벼려진 강철 검. 리치가 길고 묵직하다."
+rarity = 1
+icon = ExtResource("2_icon")
 price = 150

@@ -255,14 +255,57 @@ def arrow():
     return img
 
 
-def knife():
-    img = canvas(16)
-    put(img, [(x, 7) for x in range(5, 13)], (255, 255, 255, 255))
-    put(img, [(x, 8) for x in range(5, 12)], (190, 190, 190, 255))
-    put(img, [(13, 7)], (255, 255, 255, 255))
-    put(img, [(4, 6), (4, 7), (4, 8), (4, 9)], (160, 160, 160, 255))
-    put(img, [(2, 7), (3, 7), (2, 8), (3, 8)], (120, 120, 120, 255))
+def swing_arc():
+    """근접 휘두르기 이펙트 (오른쪽을 향한 넓은 초승달, 무기 색으로 modulate)"""
+    img = canvas(32)
+    for y in range(32):
+        for x in range(32):
+            d = math.hypot(x - 4.0, y - 15.5)
+            a = math.atan2(y - 15.5, x - 4.0)
+            if 18.0 <= d <= 27.0 and abs(a) <= math.radians(62):
+                edge = 1.0 - abs(a) / math.radians(62)
+                t = (d - 18.0) / 9.0
+                alpha = int(255 * min(1.0, edge * 2.2) * (0.35 + 0.65 * t))
+                img.putpixel((x, y), (255, 255, 255, max(0, min(255, alpha))))
     return img
+
+
+# ---------------------------------------------------------------- 방패 아이콘 (정면)
+def round_shield(face, rim, boss=None):
+    img = canvas(16)
+    for y in range(16):
+        for x in range(16):
+            d = math.hypot(x - 7.5, y - 7.5)
+            if d <= 6.6:
+                img.putpixel((x, y), PAL[rim] if d > 5.2 else PAL[face])
+    if boss:
+        put(img, [(7, 7), (8, 7), (7, 8), (8, 8)], boss)
+    put(img, [(5, 4), (4, 5)], "W")
+    return outline(img)
+
+
+def wood_shield():
+    img = canvas(16)
+    for y in range(2, 15):
+        for x in range(3, 13):
+            if y > 10 and abs(x - 7.5) > (15 - y) * 1.2:
+                continue
+            img.putpixel((x, y), PAL["t"] if (x - 3) % 3 else PAL["T"])
+    put(img, [(x, 5) for x in range(3, 13)] + [(x, 10) for x in range(4, 12)], "m")
+    return outline(img)
+
+
+def kite_shield(face, rim, emblem):
+    img = canvas(16)
+    for y in range(1, 15):
+        half = 5.5 if y < 8 else 5.5 * (14 - y) / 6.0
+        for x in range(16):
+            if abs(x - 7.5) <= half:
+                edge = abs(x - 7.5) > half - 1.2 or y == 1
+                img.putpixel((x, y), PAL[rim] if edge else PAL[face])
+    put(img, [(7, y) for y in range(3, 11)] + [(8, y) for y in range(3, 11)], emblem)
+    put(img, [(x, 5) for x in range(5, 11)], emblem)
+    return outline(img)
 
 
 def orb(core=(255, 255, 255), edge=(255, 255, 255), size=8):
@@ -388,7 +431,12 @@ def main():
 
     save(slash(), "projectiles", "slash.png")
     save(arrow(), "projectiles", "arrow.png")
-    save(knife(), "projectiles", "knife.png")
+    save(swing_arc(), "effects", "swing_arc.png")
+
+    save(wood_shield(), "shields", "wooden_shield.png")
+    save(kite_shield("l", "m", "B"), "shields", "iron_shield.png")
+    save(round_shield("G", "T", "r"), "shields", "goblin_buckler.png")
+    save(kite_shield("y", "o", "P"), "shields", "royal_aegis.png")
     save(orb(), "projectiles", "orb.png")
     save(orb((255, 255, 255), (230, 60, 110)), "projectiles", "enemy_bullet.png")
 
@@ -402,6 +450,7 @@ def main():
     save(bar((200, 50, 70)), "ui", "bar_hp.png")
     save(bar((65, 166, 246)), "ui", "bar_dash.png")
     save(bar((150, 80, 180)), "ui", "bar_boss.png")
+    save(bar((255, 190, 70)), "ui", "bar_guard.png")
 
 
 if __name__ == "__main__":

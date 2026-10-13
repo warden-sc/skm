@@ -6,23 +6,23 @@
 
 [resource]
 script = ExtResource("1_script")
-id = &"apprentice_staff"
-display_name = "견습 지팡이"
-description = "마력 구슬 3발을 부채꼴로 발사한다."
 weapon_type = 2
-rarity = 0
-icon = ExtResource("2_icon")
-projectile_texture = ExtResource("3_proj")
-projectile_color = Color(0.5, 0.9, 1, 1)
+effect_color = Color(0.5, 0.9, 1, 1)
 damage = 7
 crit_chance = 0.05
 crit_multiplier = 1.5
 knockback = 80.0
 attack_cooldown = 0.55
+projectile_texture = ExtResource("3_proj")
 projectile_speed = 220.0
 projectile_range = 190.0
 projectiles_per_shot = 3
 spread_degrees = 24.0
 pierce = 0
 projectile_scale = 1.0
+id = &"apprentice_staff"
+display_name = "견습 지팡이"
+description = "마력 구슬 3발을 부채꼴로 발사한다."
+rarity = 0
+icon = ExtResource("2_icon")
 price = 110

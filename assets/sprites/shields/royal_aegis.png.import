@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://r3cd8bkfuceo"
-path="res://.godot/imported/knife.png-37471f96e63a592c81c7346442bde631.ctex"
+uid="uid://xlv4c8qmgnsc"
+path="res://.godot/imported/royal_aegis.png-1786ac1bd801c0e7059faa1ea3dadf8f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/projectiles/knife.png"
-dest_files=["res://.godot/imported/knife.png-37471f96e63a592c81c7346442bde631.ctex"]
+source_file="res://assets/sprites/shields/royal_aegis.png"
+dest_files=["res://.godot/imported/royal_aegis.png-1786ac1bd801c0e7059faa1ea3dadf8f.ctex"]
 
 [params]
 

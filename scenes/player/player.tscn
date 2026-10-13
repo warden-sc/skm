@@ -1,10 +1,13 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/player.gd" id="1_player"]
 [ext_resource type="Script" path="res://scripts/player/attack_controller.gd" id="2_attack"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/player.png" id="3_body"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/shadow.png" id="4_shadow"]
 [ext_resource type="Texture2D" path="res://assets/sprites/weapons/rusty_sword.png" id="5_weapon"]
+[ext_resource type="Script" path="res://scripts/player/guard_controller.gd" id="6_guard"]
+[ext_resource type="Texture2D" path="res://assets/sprites/effects/swing_arc.png" id="7_swing"]
+[ext_resource type="Texture2D" path="res://assets/sprites/shields/wooden_shield.png" id="8_shield"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_body"]
 radius = 5.0
@@ -30,16 +33,32 @@ shape = SubResource("CircleShape2D_body")
 [node name="WeaponPivot" type="Node2D" parent="."]
 position = Vector2(0, -7)
 
-[node name="WeaponSprite" type="Sprite2D" parent="WeaponPivot"]
+[node name="SwingPivot" type="Node2D" parent="WeaponPivot"]
+
+[node name="WeaponSprite" type="Sprite2D" parent="WeaponPivot/SwingPivot"]
 position = Vector2(6, 0)
 rotation = 0.785398
 texture = ExtResource("5_weapon")
+
+[node name="SwingFx" type="Sprite2D" parent="WeaponPivot"]
+z_index = 4
+texture = ExtResource("7_swing")
+offset = Vector2(12, 0)
+
+[node name="ShieldSprite" type="Sprite2D" parent="WeaponPivot"]
+position = Vector2(-1, 5)
+scale = Vector2(0.7, 0.7)
+texture = ExtResource("8_shield")
 
 [node name="Muzzle" type="Marker2D" parent="WeaponPivot"]
 position = Vector2(14, 0)
 
 [node name="AttackController" type="Node" parent="." node_paths=PackedStringArray("player")]
 script = ExtResource("2_attack")
+player = NodePath("..")
+
+[node name="GuardController" type="Node" parent="." node_paths=PackedStringArray("player")]
+script = ExtResource("6_guard")
 player = NodePath("..")
 
 [node name="Camera2D" type="Camera2D" parent="."]

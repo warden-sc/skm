@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ShieldData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/shield_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/shields/wooden_shield.png" id="2_icon"]
+
+[resource]
+script = ExtResource("1_script")
+defense = 0
+block_ratio = 0.7
+block_arc_degrees = 110.0
+max_guard = 40.0
+guard_regen = 14.0
+perfect_guard_window = 0.15
+guard_move_multiplier = 0.55
+guard_break_time = 1.2
+id = &"wooden_shield"
+display_name = "나무 방패"
+description = "가볍지만 다 막아주지는 못하는 나무 방패."
+rarity = 0
+icon = ExtResource("2_icon")
+price = 30
