@@ -36,8 +36,8 @@ color = Color(0.8, 0.1, 0.15, 1)
 layout_mode = 0
 offset_left = 6.0
 offset_top = 6.0
-offset_right = 196.0
-offset_bottom = 104.0
+offset_right = 210.0
+offset_bottom = 118.0
 mouse_filter = 2
 
 [node name="VBox" type="VBoxContainer" parent="Root/StatusPanel"]
@@ -185,6 +185,24 @@ stretch_mode = 5
 unique_name_in_owner = true
 layout_mode = 2
 text = "방패"
+
+[node name="HelmetRow" type="HBoxContainer" parent="Root/StatusPanel/VBox"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="HelmetIcon" type="TextureRect" parent="Root/StatusPanel/VBox/HelmetRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(14, 14)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HelmetLabel" type="Label" parent="Root/StatusPanel/VBox/HelmetRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "투구 없음"
 
 [node name="TopCenter" type="VBoxContainer" parent="Root"]
 layout_mode = 1

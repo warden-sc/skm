@@ -14,6 +14,8 @@ const NOTICE_TIME := 2.5
 @onready var _guard_label: Label = %GuardLabel
 @onready var _shield_icon: TextureRect = %ShieldIcon
 @onready var _shield_label: Label = %ShieldLabel
+@onready var _helmet_icon: TextureRect = %HelmetIcon
+@onready var _helmet_label: Label = %HelmetLabel
 @onready var _gold_label: Label = %GoldLabel
 @onready var _weapon_icon: TextureRect = %WeaponIcon
 @onready var _weapon_label: Label = %WeaponLabel
@@ -37,6 +39,7 @@ func _ready() -> void:
 	GameManager.dash_cooldown_changed.connect(_on_dash_cooldown_changed)
 	GameManager.guard_changed.connect(_on_guard_changed)
 	GameManager.shield_equipped.connect(_on_shield_equipped)
+	GameManager.helmet_equipped.connect(_on_helmet_equipped)
 	GameManager.gold_changed.connect(_on_gold_changed)
 	GameManager.weapon_equipped.connect(_on_weapon_equipped)
 	GameManager.stage_changed.connect(_on_stage_changed)
@@ -60,6 +63,7 @@ func _ready() -> void:
 	_on_gold_changed(GameManager.gold)
 	_on_weapon_equipped(GameManager.equipped_weapon)
 	_on_shield_equipped(GameManager.equipped_shield)
+	_on_helmet_equipped(GameManager.equipped_helmet)
 	_on_guard_changed(GameManager.guard, GameManager.max_guard)
 	_on_stage_changed(GameManager.stage)
 	_progress_label.text = ""
@@ -113,10 +117,25 @@ func _on_shield_equipped(shield: ShieldData) -> void:
 	_shield_icon.texture = shield.icon
 	_shield_label.text = "%s  막기 %d%%" % [shield.display_name, roundi(shield.block_ratio * 100.0)]
 	_shield_label.add_theme_color_override(&"font_color", shield.get_rarity_color())
+	_on_helmet_equipped(GameManager.equipped_helmet)  # 총 방어력 표시 갱신
+
+
+func _on_helmet_equipped(helmet: HelmetData) -> void:
+	if helmet == null:
+		_helmet_icon.texture = null
+		_helmet_label.text = "투구 없음  (방어 %d)" % GameManager.get_total_defense()
+		_helmet_label.remove_theme_color_override(&"font_color")
+		return
+	_helmet_icon.texture = helmet.icon
+	_helmet_label.text = "%s  (총 방어 %d)" % [helmet.display_name, GameManager.get_total_defense()]
+	_helmet_label.add_theme_color_override(&"font_color", helmet.get_rarity_color())
 
 
 func _on_stage_changed(stage: int) -> void:
-	_stage_label.text = "STAGE %d" % stage
+	if GameManager.stage_name.is_empty():
+		_stage_label.text = "STAGE %d" % stage
+	else:
+		_stage_label.text = "STAGE %d · %s" % [stage, GameManager.stage_name]
 
 
 func _on_kill_progress_changed(kills: int, target: int) -> void:

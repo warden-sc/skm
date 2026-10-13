@@ -1,0 +1,50 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/boss_archeon.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/archeon.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/shadow.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/fireball.png" id="4_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/ice_shard.png" id="5_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/rock.png" id="6_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/golem_fire.tscn" id="7_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/golem_ice.tscn" id="8_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/golem_lightning.tscn" id="9_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/golem_earth.tscn" id="10_res"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 20.0
+
+[node name="BossArcheon" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_res")
+display_name = "원소의 거신 아르케온"
+max_hp = 5200
+move_speed = 22.0
+contact_damage = 30
+knockback_resistance = 0.97
+is_boss = true
+aura_element = 1
+aura_amount = 30
+gold_min = 600
+gold_max = 750
+item_drop_chance = 1.0
+item_drop_ids = Array[StringName]([&"holy_sword", &"solaris_bow", &"arcana_staff", &"colossus_bulwark"])
+fireball_texture = ExtResource("4_res")
+ice_texture = ExtResource("5_res")
+rock_texture = ExtResource("6_res")
+minion_scenes = Array[PackedScene]([ExtResource("7_res"), ExtResource("8_res"), ExtResource("9_res"), ExtResource("10_res")])
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(4.0, 4.0)
+texture = ExtResource("3_res")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -26)
+scale = Vector2(1.3, 1.3)
+texture = ExtResource("2_res")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -20)
+shape = SubResource("CircleShape2D_hit")

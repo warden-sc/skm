@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="HelmetData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/helmet_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/helmets/gatekeeper_horns.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/helmets/gatekeeper_horns_worn.png" id="3_res"]
+
+[resource]
+script = ExtResource("1_script")
+defense = 5
+bonus_max_hp = 60
+worn_texture = ExtResource("3_res")
+id = &"gatekeeper_horns"
+display_name = "수문장의 뿔투구"
+description = "지옥의 수문장이 쓰던 불타는 뿔투구. 엄청난 생명력을 불어넣는다."
+rarity = 3
+icon = ExtResource("2_res")
+price = 1400

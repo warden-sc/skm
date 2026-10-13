@@ -7,6 +7,7 @@ extends Area2D
 ##   방패로 막히면 apply_knockback() 으로 밀려나고, 퍼펙트 가드면 stun() 으로 기절합니다.
 ## - 사망 시 died 시그널 발행 → StageManager 가 골드(확정) / 장비(확률) 드랍을 처리합니다.
 ## - 이동 패턴은 자식 클래스에서 _get_move_velocity() 를 오버라이드해서 만듭니다.
+## - 원거리/장판 공격은 shoot() / telegraph_strike() 헬퍼를 쓰면 풀·이펙트·강화 배율이 자동 적용됩니다.
 
 signal died(enemy: Enemy)
 signal health_changed(current: int, max_hp: int)
@@ -20,6 +21,11 @@ signal summon_requested(scene: PackedScene, at_global: Vector2)
 @export_range(0.0, 1.0) var knockback_resistance: float = 0.0
 @export var is_boss: bool = false
 
+@export_group("Aura")
+## 몸에 두르는 속성 오라 파티클 (헬하운드/수문장의 불꽃, 골렘의 원소 등). 0 이면 없음
+@export var aura_element: Elements.Type = Elements.Type.NONE
+@export var aura_amount: int = 0
+
 @export_group("Drops")
 @export var gold_min: int = 3
 @export var gold_max: int = 6
@@ -28,6 +34,8 @@ signal summon_requested(scene: PackedScene, at_global: Vector2)
 @export var item_drop_ids: Array[StringName] = []
 
 var hp: int = 0
+## 반복 스테이지 강화 배율 (탄/장판 피해에 곱해짐)
+var power: float = 1.0
 ## StageManager 가 지정. 크기가 0 이 아니면 이 영역 밖으로 밀려나지 않습니다.
 var arena_rect: Rect2 = Rect2()
 
@@ -37,6 +45,9 @@ var _touching_player: bool = false
 var _dead: bool = false
 var _hit_flash: float = 0.0
 var _stun_left: float = 0.0
+var _slow_left: float = 0.0
+var _slow_multiplier: float = 1.0
+var _aura: CPUParticles2D
 var _anim_time: float = 0.0
 
 @onready var sprite: Sprite2D = $Sprite2D
@@ -51,19 +62,28 @@ func _ready() -> void:
 	_anim_time = randf() * 10.0
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
+	if aura_amount > 0:
+		_aura = Fx.make_aura(Elements.color_of(aura_element), aura_amount, _aura_radius(), Elements.gravity_of(aura_element))
+		_aura.position = _hit_shape.position
+		_aura.z_index = 1
+		add_child(_aura)
+		_aura.emitting = true
 	# 스폰 연출
 	sprite.modulate.a = 0.0
 	create_tween().tween_property(sprite, "modulate:a", 1.0, 0.25)
 
 
-## StageManager 가 add_child 전에 호출. 스테이지가 오를수록 강해집니다.
-func apply_stage_scaling(stage: int) -> void:
-	var level := maxi(stage - 1, 0)
-	max_hp = roundi(max_hp * (1.0 + 0.45 * level))
-	contact_damage = roundi(contact_damage * (1.0 + 0.2 * level))
+## StageManager 가 add_child 전에 호출.
+## 스테이지별 몬스터는 각자 씬에서 수치가 설계되어 있으므로, level 은
+## "마지막 스테이지를 몇 바퀴째 반복 중인지" 입니다 (0 = 강화 없음).
+func apply_scaling(level: int) -> void:
+	level = maxi(level, 0)
+	max_hp = roundi(max_hp * (1.0 + 0.5 * level))
+	contact_damage = roundi(contact_damage * (1.0 + 0.25 * level))
 	gold_min = roundi(gold_min * (1.0 + 0.3 * level))
 	gold_max = roundi(gold_max * (1.0 + 0.3 * level))
 	move_speed *= 1.0 + 0.05 * level
+	power = 1.0 + 0.25 * level
 
 
 func _physics_process(delta: float) -> void:
@@ -74,7 +94,10 @@ func _physics_process(delta: float) -> void:
 		_player = get_tree().get_first_node_in_group(&"player") as Player
 
 	_stun_left = maxf(_stun_left - delta, 0.0)
+	_slow_left = maxf(_slow_left - delta, 0.0)
 	var move := Vector2.ZERO if _stun_left > 0.0 else _get_move_velocity(delta)
+	if _slow_left > 0.0:
+		move *= _slow_multiplier
 	_knockback = _knockback.move_toward(Vector2.ZERO, 900.0 * delta)
 	global_position += (move + _knockback) * delta
 	if arena_rect.has_area():
@@ -88,6 +111,8 @@ func _physics_process(delta: float) -> void:
 		sprite.self_modulate = Color(3.0, 3.0, 3.0)
 	elif _stun_left > 0.0:
 		sprite.self_modulate = Color(0.6, 0.8, 1.6)  # 기절: 푸르스름하게
+	elif _slow_left > 0.0:
+		sprite.self_modulate = Color(0.7, 0.95, 1.3)  # 빙결 감속
 	else:
 		sprite.self_modulate = Color.WHITE
 	_update_visual(delta, move)
@@ -121,6 +146,51 @@ func is_stunned() -> bool:
 ## 몸통 판정 중심 (근접 공격 각도 계산 / 가드 방향 판정용)
 func get_hit_center() -> Vector2:
 	return _hit_shape.global_position
+
+
+## 빙결 등으로 감속 (보스는 넉백 저항만큼 덜 느려짐)
+func apply_slow(multiplier: float, duration: float) -> void:
+	if _dead:
+		return
+	_slow_multiplier = lerpf(multiplier, 1.0, knockback_resistance * 0.5)
+	_slow_left = maxf(_slow_left, duration)
+
+
+func is_slowed() -> bool:
+	return _slow_left > 0.0
+
+
+func direction_to_player() -> Vector2:
+	if not has_target():
+		return Vector2.RIGHT
+	return get_hit_center().direction_to(_player.global_position + Vector2(0, -4))
+
+
+func distance_to_player() -> float:
+	if not has_target():
+		return INF
+	return global_position.distance_to(_player.global_position)
+
+
+## 적 탄 발사 (ProjectilePool 사용, 반복 강화 배율 적용)
+func shoot(dir: Vector2, speed: float, damage: int, texture: Texture2D, slow: float = 0.0,
+		element: Elements.Type = Elements.Type.NONE, from: Vector2 = Vector2.INF) -> void:
+	var pool := ProjectilePool.find(get_tree())
+	if pool == null:
+		return
+	var origin := get_hit_center() if from == Vector2.INF else from
+	pool.spawn(ProjectileSpec.enemy_bullet(origin, dir, speed, roundi(damage * power), texture, slow, element))
+
+
+## 예고 후 폭발하는 장판 공격 (반복 강화 배율 적용)
+func telegraph_strike(at_global: Vector2, radius: float, delay: float, damage: int,
+		element: Elements.Type = Elements.Type.FIRE, slow: float = 0.0) -> AoeStrike:
+	return AoeStrike.spawn(self, at_global, radius, delay, roundi(damage * power), Elements.color_of(element), slow, Elements.gravity_of(element))
+
+
+func _aura_radius() -> float:
+	var circle := _hit_shape.shape as CircleShape2D
+	return circle.radius if circle != null else 8.0
 
 
 func apply_knockback(force: Vector2) -> void:
@@ -174,6 +244,8 @@ func despawn() -> void:
 func _die() -> void:
 	_dead = true
 	remove_from_group(&"enemies")
+	if _aura != null:
+		_aura.emitting = false
 	# 충돌 콜백 안에서 호출될 수 있으므로 반드시 deferred
 	set_deferred(&"monitoring", false)
 	set_deferred(&"monitorable", false)

@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/arcana_staff.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/orb.png" id="3_res"]
+
+[resource]
+script = ExtResource("1_script")
+weapon_type = 2
+element = 7
+effect_color = Color(0.8, 0.55, 1, 1)
+damage = 16
+crit_chance = 0.15
+crit_multiplier = 2.0
+knockback = 100.0
+attack_cooldown = 0.25
+windup_time = 0.7
+chant_text = "별의 근원이여, 나의 부름에 응하라!"
+projectile_texture = ExtResource("3_res")
+projectile_speed = 300.0
+projectile_range = 260.0
+projectiles_per_shot = 9
+spread_degrees = 80.0
+pierce = 1
+projectile_scale = 1.4
+explosion_radius = 22.0
+slow_duration = 0.0
+id = &"arcana_staff"
+display_name = "대마법사의 지팡이 아르카나"
+description = "별의 힘을 끌어내는 전설의 지팡이. 수많은 마력탄이 쏟아지며 연쇄 폭발한다."
+rarity = 3
+icon = ExtResource("2_res")
+price = 1800

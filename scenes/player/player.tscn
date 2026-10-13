@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/player.gd" id="1_player"]
 [ext_resource type="Script" path="res://scripts/player/attack_controller.gd" id="2_attack"]
@@ -8,6 +8,8 @@
 [ext_resource type="Script" path="res://scripts/player/guard_controller.gd" id="6_guard"]
 [ext_resource type="Texture2D" path="res://assets/sprites/effects/swing_arc.png" id="7_swing"]
 [ext_resource type="Texture2D" path="res://assets/sprites/shields/wooden_shield.png" id="8_shield"]
+[ext_resource type="Texture2D" path="res://assets/sprites/effects/glow.png" id="9_glow"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/arrow.png" id="10_arrow"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_body"]
 radius = 5.0
@@ -26,6 +28,9 @@ texture = ExtResource("4_shadow")
 position = Vector2(0, -8)
 texture = ExtResource("3_body")
 
+[node name="HelmetSprite" type="Sprite2D" parent="BodySprite"]
+visible = false
+
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(0, -4)
 shape = SubResource("CircleShape2D_body")
@@ -40,6 +45,16 @@ position = Vector2(6, 0)
 rotation = 0.785398
 texture = ExtResource("5_weapon")
 
+[node name="BowString" type="Line2D" parent="WeaponPivot/SwingPivot"]
+visible = false
+points = PackedVector2Array(3.5, -6.5, 3.5, 0, 3.5, 6.5)
+width = 1.0
+default_color = Color(0.95, 0.92, 0.85, 1)
+
+[node name="NockedArrow" type="Sprite2D" parent="WeaponPivot/SwingPivot"]
+visible = false
+texture = ExtResource("10_arrow")
+
 [node name="SwingFx" type="Sprite2D" parent="WeaponPivot"]
 z_index = 4
 texture = ExtResource("7_swing")
@@ -51,7 +66,26 @@ scale = Vector2(0.7, 0.7)
 texture = ExtResource("8_shield")
 
 [node name="Muzzle" type="Marker2D" parent="WeaponPivot"]
-position = Vector2(14, 0)
+position = Vector2(13, -1)
+
+[node name="ChargeOrb" type="Sprite2D" parent="WeaponPivot"]
+visible = false
+z_index = 6
+position = Vector2(13, -1)
+scale = Vector2(0.2, 0.2)
+texture = ExtResource("9_glow")
+
+[node name="ChantLabel" type="Label" parent="."]
+visible = false
+z_index = 50
+offset_left = -80.0
+offset_top = -36.0
+offset_right = 80.0
+offset_bottom = -24.0
+theme_override_colors/font_outline_color = Color(0.1, 0.1, 0.17, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 8
+horizontal_alignment = 1
 
 [node name="AttackController" type="Node" parent="." node_paths=PackedStringArray("player")]
 script = ExtResource("2_attack")

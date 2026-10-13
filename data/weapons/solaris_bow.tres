@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/solaris_bow.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/arrow.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/solaris_bow_held.png" id="4_res"]
+
+[resource]
+script = ExtResource("1_script")
+weapon_type = 1
+element = 1
+effect_color = Color(1, 0.7, 0.25, 1)
+held_texture = ExtResource("4_res")
+damage = 30
+crit_chance = 0.2
+crit_multiplier = 2.0
+knockback = 160.0
+attack_cooldown = 0.2
+windup_time = 0.45
+chant_text = ""
+projectile_texture = ExtResource("3_res")
+projectile_speed = 600.0
+projectile_range = 340.0
+projectiles_per_shot = 1
+spread_degrees = 0.0
+pierce = 4
+projectile_scale = 1.4
+explosion_radius = 28.0
+slow_duration = 0.0
+id = &"solaris_bow"
+display_name = "태양궁 솔라리스"
+description = "태양의 불꽃을 담은 전설의 활. 화살이 적을 꿰뚫고 폭발한다."
+rarity = 3
+icon = ExtResource("2_res")
+price = 1700

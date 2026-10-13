@@ -83,14 +83,11 @@ func _enter(state: State, duration: float) -> void:
 
 
 func _fire_ring() -> void:
-	var pool := ProjectilePool.find(get_tree())
-	if pool == null:
-		return
 	var count := ring_bullet_count + (6 if _phase_two else 0)
 	var origin := global_position + Vector2(0, -12)
 	for i in count:
 		var dir := Vector2.RIGHT.rotated(_ring_angle_offset + TAU * float(i) / float(count))
-		pool.spawn(ProjectileSpec.enemy_bullet(origin, dir, bullet_speed, bullet_damage, bullet_texture))
+		shoot(dir, bullet_speed, bullet_damage, bullet_texture, 0.0, Elements.Type.NONE, origin)
 	_ring_angle_offset += PI / float(count)
 	if _player != null:
 		_player.shake_camera(2.0)

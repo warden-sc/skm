@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="ShieldData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/shield_data.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://assets/sprites/shields/royal_aegis.png" id="2_icon"]
+[ext_resource type="Texture2D" path="res://assets/sprites/shields/royal_aegis.png" id="2_res"]
 
 [resource]
 script = ExtResource("1_script")
@@ -17,5 +17,5 @@ id = &"royal_aegis"
 display_name = "왕실 방패"
 description = "왕국 기사단의 방패. 넓은 범위의 공격을 전부 막아낸다."
 rarity = 2
-icon = ExtResource("2_icon")
+icon = ExtResource("2_res")
 price = 500

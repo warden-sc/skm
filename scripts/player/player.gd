@@ -7,18 +7,26 @@ extends CharacterBody2D
 ##   "여기(Player)" 에서만 호출하고, 결과를 get_aim_direction() 으로 다른 노드에 제공합니다.
 ## - 쿨타임 대시 (대시 중 무적 + 잔상)
 ## - 공격은 AttackController, 방패 가드는 GuardController (둘 다 Node 컴포넌트) 가 담당
+## - 활 시위 당기기 / 지팡이 영창(구슬에 마력이 모임) 연출은 AttackController 가 begin_windup() 등으로 요청
 ##
 ## 필요한 자식 노드 (player.tscn):
-##   BodySprite(Sprite2D), CollisionShape2D,
+##   BodySprite(Sprite2D) └ HelmetSprite(Sprite2D)
+##   CollisionShape2D, ChantLabel(Label)
 ##   WeaponPivot(Node2D)
-##   ├ SwingPivot(Node2D) └ WeaponSprite(Sprite2D)
-##   ├ SwingFx(Sprite2D)  ├ ShieldSprite(Sprite2D)  └ Muzzle(Marker2D)
+##   ├ SwingPivot(Node2D) ├ WeaponSprite(Sprite2D) ├ BowString(Line2D) └ NockedArrow(Sprite2D)
+##   ├ SwingFx(Sprite2D)  ├ ShieldSprite(Sprite2D)  ├ Muzzle(Marker2D) └ ChargeOrb(Sprite2D)
 ##   AttackController(Node), GuardController(Node), Camera2D
 
 ## take_hit() 의 결과. 투사체는 이 값을 보고 소멸/통과/반사를 결정합니다.
 enum HitResult { IGNORED, DAMAGED, BLOCKED, PARRIED }
 
 const WEAPON_REST_ANGLE := PI / 4.0
+## *_held.png 활 그림에서 시위가 걸리는 양 끝 (WeaponSprite 기준 좌표)
+const BOW_TIP_TOP := Vector2(-2.5, -6.5)
+const BOW_TIP_BOTTOM := Vector2(-2.5, 6.5)
+const BOW_MAX_PULL := 7.0
+## 등급별(0~3) 영창 시 구슬로 모이는 마력 입자 수
+const CHARGE_PARTICLES := [8, 14, 26, 44]
 const SWING_FX_RADIUS := 27.0   # swing_arc.png 의 바깥 반지름(px)
 const SWING_FX_ARC := 124.0     # swing_arc.png 가 그리는 각도(도)
 
@@ -46,6 +54,12 @@ const SWING_FX_ARC := 124.0     # swing_arc.png 가 그리는 각도(도)
 @export var parry_stun_time: float = 1.0
 
 @onready var _body_sprite: Sprite2D = $BodySprite
+@onready var _helmet_sprite: Sprite2D = $BodySprite/HelmetSprite
+@onready var _chant_label: Label = $ChantLabel
+@onready var _bow_string: Line2D = $WeaponPivot/SwingPivot/BowString
+@onready var _nocked_arrow: Sprite2D = $WeaponPivot/SwingPivot/NockedArrow
+@onready var _charge_orb: Sprite2D = $WeaponPivot/ChargeOrb
+@onready var _attack: AttackController = $AttackController
 @onready var _weapon_pivot: Node2D = $WeaponPivot
 @onready var _swing_pivot: Node2D = $WeaponPivot/SwingPivot
 @onready var _weapon_sprite: Sprite2D = $WeaponPivot/SwingPivot/WeaponSprite
@@ -68,19 +82,27 @@ var _swing_sign: float = 1.0
 var _swing_tween: Tween
 var _is_dead: bool = false
 var _body_base_y: float = 0.0
+var _weapon_rest_angle: float = WEAPON_REST_ANGLE
+var _slow_left: float = 0.0
+var _slow_multiplier: float = 1.0
+var _windup_weapon: WeaponData
+var _charge_particles: CPUParticles2D
 
 
 func _ready() -> void:
 	add_to_group(&"player")
 	_body_base_y = _body_sprite.position.y
 	_swing_fx.modulate.a = 0.0
+	_setup_windup_visuals()
 	GameManager.weapon_equipped.connect(_on_weapon_equipped)
 	GameManager.shield_equipped.connect(_on_shield_equipped)
+	GameManager.helmet_equipped.connect(_on_helmet_equipped)
 	GameManager.player_damaged.connect(_on_player_damaged)
 	GameManager.player_died.connect(_on_player_died)
 	GameManager.guard_broken.connect(_on_guard_broken)
 	_on_weapon_equipped(GameManager.equipped_weapon)
 	_on_shield_equipped(GameManager.equipped_shield)
+	_on_helmet_equipped(GameManager.equipped_helmet)
 	GameManager.set_dash_cooldown(0.0, dash_cooldown)
 
 
@@ -102,7 +124,9 @@ func _physics_process(delta: float) -> void:
 	else:
 		# get_vector 는 이미 길이 1 이하로 정규화되어 대각선도 속도가 같습니다.
 		var input_dir := Input.get_vector(&"move_left", &"move_right", &"move_up", &"move_down")
-		var speed := max_speed * _guard.get_move_multiplier()
+		var speed := max_speed * _guard.get_move_multiplier() * _attack.get_move_multiplier()
+		if _slow_left > 0.0:
+			speed *= _slow_multiplier
 		if input_dir != Vector2.ZERO:
 			velocity = velocity.move_toward(input_dir * speed, acceleration * delta)
 		else:
@@ -187,6 +211,76 @@ func play_melee_swing(weapon: WeaponData) -> void:
 	fx.tween_property(_swing_fx, "modulate:a", 0.0, duration + 0.08)
 
 
+## 활 시위 당기기 / 지팡이 영창 시작
+func begin_windup(weapon: WeaponData) -> void:
+	_windup_weapon = weapon
+	_swing_pivot.rotation = 0.0
+	if weapon.is_bow():
+		_nocked_arrow.texture = weapon.projectile_texture
+		_nocked_arrow.modulate = weapon.effect_color
+		_nocked_arrow.show()
+	elif weapon.is_staff():
+		var level := weapon.get_fx_level()
+		_charge_orb.modulate = weapon.effect_color
+		_charge_orb.scale = Vector2.ZERO
+		_charge_orb.show()
+		_charge_particles.amount = CHARGE_PARTICLES[clampi(level, 0, 3)]
+		_charge_particles.color = weapon.effect_color
+		_charge_particles.emitting = true
+		_chant_label.text = weapon.chant_text
+		_chant_label.add_theme_color_override(&"font_color", weapon.effect_color.lightened(0.3))
+		_chant_label.visible_ratio = 0.0
+		_chant_label.show()
+	set_windup_progress(0.0)
+
+
+## progress: 0(시작) ~ 1(발사 직전)
+func set_windup_progress(progress: float) -> void:
+	if _windup_weapon == null:
+		return
+	if _windup_weapon.is_bow():
+		_update_bow_string(progress)
+	elif _windup_weapon.is_staff():
+		var level := _windup_weapon.get_fx_level()
+		var pulse := 1.0 + sin(_anim_time * 30.0) * 0.08 * progress
+		_charge_orb.scale = Vector2.ONE * (0.15 + 0.35 * progress + 0.08 * level) * pulse
+		_chant_label.visible_ratio = clampf(progress * 1.3, 0.0, 1.0)
+
+
+## fired: true 면 발사(시위가 튕겨 돌아감 / 구슬이 터짐), false 면 취소
+func end_windup(fired: bool) -> void:
+	if _windup_weapon == null:
+		return
+	var weapon := _windup_weapon
+	_windup_weapon = null
+	_nocked_arrow.hide()
+	_charge_particles.emitting = false
+	_chant_label.hide()
+	if weapon.is_bow():
+		var snap := create_tween()
+		snap.tween_method(_update_bow_string, 0.6 if fired else 0.3, 0.0, 0.08)
+	if weapon.is_staff():
+		if fired:
+			var level := weapon.get_fx_level()
+			Fx.flash(self, _charge_orb.global_position, weapon.effect_color, 8.0 + 4.0 * level, 0.2)
+			Fx.burst(self, _charge_orb.global_position, weapon.effect_color, 4 + 4 * level, 50.0, 0.3, Elements.gravity_of(weapon.element))
+		_charge_orb.hide()
+
+
+func is_winding_up() -> bool:
+	return _windup_weapon != null
+
+
+## 빙결 등으로 이동속도 감소
+func apply_slow(multiplier: float, duration: float) -> void:
+	_slow_multiplier = minf(multiplier, _slow_multiplier) if _slow_left > 0.0 else multiplier
+	_slow_left = maxf(_slow_left, duration)
+
+
+func is_slowed() -> bool:
+	return _slow_left > 0.0
+
+
 func shake_camera(strength: float) -> void:
 	_shake_strength = maxf(_shake_strength, strength)
 
@@ -223,8 +317,8 @@ func take_hit(amount: int, from_position: Vector2, attacker: Enemy = null) -> Hi
 func _apply_damage(amount: int) -> void:
 	if amount <= 0:
 		return
-	# 방패 상시 방어력 (최소 1은 들어감)
-	GameManager.damage_player(maxi(1, amount - _guard.get_defense()))
+	# 방패 + 투구 방어력 (최소 1은 들어감)
+	GameManager.damage_player(maxi(1, amount - GameManager.get_total_defense()))
 
 
 func _on_blocked(leftover_damage: int, hit_dir: Vector2, attacker: Enemy) -> void:
@@ -259,10 +353,12 @@ func _update_aim(delta: float) -> void:
 	# 왼쪽을 볼 때 무기가 뒤집혀 보이지 않도록 피벗의 Y 스케일을 반전
 	_weapon_pivot.scale.y = -1.0 if _aim_direction.x < 0.0 else 1.0
 	_body_sprite.flip_h = _aim_direction.x < 0.0
+	_helmet_sprite.flip_h = _body_sprite.flip_h
 
 
 func _update_timers(delta: float) -> void:
 	_invincible_left = maxf(_invincible_left - delta, 0.0)
+	_slow_left = maxf(_slow_left - delta, 0.0)
 	_dash_time_left = maxf(_dash_time_left - delta, 0.0)
 	if _dash_cooldown_left > 0.0:
 		_dash_cooldown_left = maxf(_dash_cooldown_left - delta, 0.0)
@@ -308,13 +404,15 @@ func _update_visuals(delta: float) -> void:
 	# 피격 무적 깜빡임
 	if _invincible_left > 0.0:
 		_body_sprite.modulate = Color(1, 0.5, 0.5, 0.45 if int(_anim_time * 20.0) % 2 == 0 else 1.0)
+	elif _slow_left > 0.0:
+		_body_sprite.modulate = Color(0.6, 0.85, 1.0)  # 빙결 감속
 	else:
 		_body_sprite.modulate = Color.WHITE
 
 	# 무기: 원거리 반동 / 가드 중에는 뒤로 젖힘
 	_weapon_kick = move_toward(_weapon_kick, 0.0, delta * 8.0)
 	_weapon_sprite.position.x = weapon_orbit_radius - _weapon_kick * 3.0
-	var weapon_rest := WEAPON_REST_ANGLE + (-1.3 if guarding else 0.0)
+	var weapon_rest := _weapon_rest_angle + (-1.3 if guarding else 0.0)
 	_weapon_sprite.rotation = lerp_angle(_weapon_sprite.rotation, weapon_rest, 1.0 - exp(-25.0 * delta))
 
 	# 방패: 평소엔 옆구리, 가드 중엔 정면으로
@@ -324,14 +422,70 @@ func _update_visuals(delta: float) -> void:
 	_shield_sprite.position = _shield_sprite.position.lerp(shield_pos, w)
 	_shield_sprite.scale = _shield_sprite.scale.lerp(shield_scale, w)
 	_shield_sprite.modulate = Color(0.5, 0.5, 0.5, 0.6) if _guard.is_broken() else Color.WHITE
+	# 평소엔 몸 뒤(무기·활을 가리지 않게), 가드 중엔 몸 앞
+	_shield_sprite.z_index = 0 if guarding else -1
 
 	# 카메라 흔들림
 	_shake_strength = move_toward(_shake_strength, 0.0, delta * 20.0)
 	_camera.offset = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * _shake_strength
 
 
+func _setup_windup_visuals() -> void:
+	_bow_string.hide()
+	_nocked_arrow.hide()
+	_charge_orb.hide()
+	_charge_orb.material = Fx.additive_material()
+	_chant_label.hide()
+	# 지팡이 구슬로 빨려 들어가는 마력 입자 (구슬 위치 기준 로컬 좌표)
+	_charge_particles = CPUParticles2D.new()
+	_charge_particles.texture = Fx.SPARK_TEXTURE
+	_charge_particles.material = Fx.additive_material()
+	_charge_particles.emitting = false
+	_charge_particles.local_coords = true
+	_charge_particles.lifetime = 0.35
+	_charge_particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE_SURFACE
+	_charge_particles.emission_sphere_radius = 14.0
+	_charge_particles.spread = 180.0
+	_charge_particles.gravity = Vector2.ZERO
+	_charge_particles.radial_accel_min = -220.0
+	_charge_particles.radial_accel_max = -160.0
+	_charge_particles.scale_amount_min = 0.4
+	_charge_particles.scale_amount_max = 0.9
+	_charge_orb.add_sibling.call_deferred(_charge_particles)
+	_charge_particles.position = _charge_orb.position
+
+
+func _update_bow_string(progress: float) -> void:
+	if _windup_weapon != null and not _windup_weapon.is_bow() and progress > 0.0:
+		return
+	var base := _weapon_sprite.position
+	var top := base + BOW_TIP_TOP
+	var bottom := base + BOW_TIP_BOTTOM
+	var nock := Vector2(top.x - BOW_MAX_PULL * progress, 0.0)
+	_bow_string.points = PackedVector2Array([top, nock, bottom])
+	# arrow.png 는 꼬리가 텍스처 중심에서 -6.5px 에 있음
+	_nocked_arrow.position = Vector2(nock.x + 6.5, 0.0)
+
+
 func _on_weapon_equipped(weapon: WeaponData) -> void:
-	_weapon_sprite.texture = weapon.icon if weapon != null else null
+	if _windup_weapon != null:
+		end_windup(false)
+	if weapon == null:
+		_weapon_sprite.texture = null
+		_bow_string.hide()
+		return
+	var uses_held := weapon.held_texture != null
+	_weapon_sprite.texture = weapon.held_texture if uses_held else weapon.icon
+	_weapon_rest_angle = 0.0 if uses_held else WEAPON_REST_ANGLE
+	_weapon_sprite.rotation = _weapon_rest_angle
+	_bow_string.visible = weapon.is_bow()
+	if weapon.is_bow():
+		_update_bow_string(0.0)
+
+
+func _on_helmet_equipped(helmet: HelmetData) -> void:
+	_helmet_sprite.texture = helmet.worn_texture if helmet != null else null
+	_helmet_sprite.visible = helmet != null
 
 
 func _on_shield_equipped(shield: ShieldData) -> void:

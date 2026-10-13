@@ -15,12 +15,18 @@ extends Node
 ##
 ## 무기 종류별 동작:
 ##   - 근접(검/단검): 투사체 없음. 조준 방향 부채꼴(melee_range, melee_arc_degrees) 안의 적을 즉시 타격
-##   - 원거리(활/지팡이): ProjectilePool 에서 투사체 발사
+##   - 활    : 좌클릭 유지 → windup_time 동안 시위를 당김 → 다 당기면 발사 (중간에 떼면 취소)
+##   - 지팡이: 좌클릭 유지 → windup_time 동안 영창, 구슬에 마력이 모임 → 시전 (중간에 떼면 취소)
+##   - 등급(fx level 0~3)이 높을수록 베기 잔상 / 파티클 / 폭발 이펙트가 화려해집니다.
 
 ## 근접 판정 시 적의 몸 크기를 감안해 사거리에 더해 주는 여유(px)
 const MELEE_BODY_MARGIN := 6.0
 ## 이 거리 안에 붙은 적은 각도와 상관없이 맞습니다 (몸에 겹친 적이 빗나가지 않도록)
 const MELEE_POINT_BLANK := 10.0
+## 시위 당기기 / 영창 중 이동속도 배율
+const WINDUP_MOVE_MULTIPLIER := 0.6
+## 등급별(0~3) 근접 명중 파티클 수
+const HIT_SPARKS := [4, 8, 14, 22]
 
 ## 비워두면 부모 노드를 Player 로 사용합니다.
 @export var player: Player
@@ -28,6 +34,8 @@ const MELEE_POINT_BLANK := 10.0
 var _cooldown_left: float = 0.0
 var _pool: ProjectilePool
 var _melee_shape := CircleShape2D.new()
+var _windup_weapon: WeaponData
+var _windup_elapsed: float = 0.0
 
 
 func _ready() -> void:
@@ -38,21 +46,69 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	_cooldown_left = maxf(_cooldown_left - delta, 0.0)
+	if _windup_weapon != null:
+		_update_windup(delta)
+		return
 	if player == null or not player.can_attack():
 		return
 	if Input.is_action_pressed(&"attack") and _cooldown_left <= 0.0:
-		attack()
+		var weapon := GameManager.equipped_weapon
+		if weapon == null:
+			return
+		if not weapon.is_melee() and weapon.windup_time > 0.0:
+			_start_windup(weapon)
+		else:
+			perform_attack(weapon)
 
 
-## 현재 장착 무기로 1회 공격. 공격이 나갔으면 true. (근접은 빗나가도 true)
-func attack() -> bool:
-	var weapon := GameManager.equipped_weapon
+func is_winding_up() -> bool:
+	return _windup_weapon != null
+
+
+func get_move_multiplier() -> float:
+	return WINDUP_MOVE_MULTIPLIER if _windup_weapon != null else 1.0
+
+
+## 준비 동작 없이 즉시 1회 공격. 공격이 나갔으면 true. (근접은 빗나가도 true)
+func perform_attack(weapon: WeaponData = null) -> bool:
+	if weapon == null:
+		weapon = GameManager.equipped_weapon
 	if weapon == null:
 		return false
 	var did_attack := _melee_attack(weapon) if weapon.is_melee() else _ranged_attack(weapon)
 	if did_attack:
 		_cooldown_left = weapon.attack_cooldown
 	return did_attack
+
+
+## 진행 중인 시위 당기기 / 영창 취소
+func cancel_windup() -> void:
+	if _windup_weapon == null:
+		return
+	_windup_weapon = null
+	player.end_windup(false)
+
+
+# ============================================================ 시위 당기기 / 영창
+func _start_windup(weapon: WeaponData) -> void:
+	_windup_weapon = weapon
+	_windup_elapsed = 0.0
+	player.begin_windup(weapon)
+
+
+func _update_windup(delta: float) -> void:
+	var weapon := _windup_weapon
+	var still_valid := GameManager.equipped_weapon == weapon and player.can_attack() and Input.is_action_pressed(&"attack")
+	if not still_valid:
+		cancel_windup()
+		return
+	_windup_elapsed += delta
+	var progress := clampf(_windup_elapsed / maxf(weapon.windup_time, 0.01), 0.0, 1.0)
+	player.set_windup_progress(progress)
+	if progress >= 1.0:
+		_windup_weapon = null
+		player.end_windup(true)
+		perform_attack(weapon)
 
 
 # ============================================================ 근접
@@ -63,6 +119,7 @@ func _melee_attack(weapon: WeaponData) -> bool:
 	var reach := weapon.melee_range + MELEE_BODY_MARGIN
 
 	player.play_melee_swing(weapon)
+	_play_swing_fx(weapon, origin, aim, half_arc)
 
 	# 1) 원형 범위 안의 적 Area2D 를 물리 엔진에 즉시 질의
 	_melee_shape.radius = reach
@@ -88,11 +145,32 @@ func _melee_attack(weapon: WeaponData) -> bool:
 		var roll := weapon.roll_damage(GameManager.damage_multiplier)
 		var push := to_enemy.normalized() if to_enemy != Vector2.ZERO else aim
 		enemy.take_damage(roll["amount"], push * weapon.knockback, roll["crit"])
+		var level := weapon.get_fx_level()
+		Fx.burst(player, enemy.get_hit_center(), weapon.effect_color, HIT_SPARKS[clampi(level, 0, 3)], 60.0 + 20.0 * level, 0.35, Elements.gravity_of(weapon.element))
 		hit_count += 1
 
 	if hit_count > 0:
 		player.shake_camera(1.5 + 0.5 * hit_count)
 	return true
+
+
+## 등급이 높을수록 화려한 베기 이펙트 (희귀: 불티 / 레어: 원소 파티클 / 전설: 빛의 폭발 + 충격파)
+func _play_swing_fx(weapon: WeaponData, origin: Vector2, aim: Vector2, half_arc: float) -> void:
+	var level := weapon.get_fx_level()
+	if level <= 0:
+		return
+	var color := weapon.effect_color
+	var gravity := Elements.gravity_of(weapon.element)
+	var points := 1 + level * 2
+	for i in points:
+		var t := 0.0 if points == 1 else float(i) / float(points - 1) - 0.5
+		var pos := origin + aim.rotated(half_arc * 2.0 * t) * weapon.melee_range * 0.85
+		Fx.burst(player, pos, color, 2 + level * 2, 30.0 + 15.0 * level, 0.3 + 0.1 * level, gravity, 0.8 + 0.2 * level)
+	if level >= 2:
+		Fx.flash(player, origin + aim * weapon.melee_range * 0.6, color, weapon.melee_range * 0.6, 0.18)
+	if level >= 3:
+		Fx.shockwave(player, origin, color, weapon.melee_range * 1.2, 0.25)
+		player.shake_camera(2.0)
 
 
 # ============================================================ 원거리
@@ -113,6 +191,9 @@ func _ranged_attack(weapon: WeaponData) -> bool:
 		var dir := base_dir.rotated(spread * t)
 		pool.spawn(ProjectileSpec.from_weapon(weapon, origin, dir, GameManager.damage_multiplier))
 
+	var level := weapon.get_fx_level()
+	if level >= 2:
+		Fx.flash(player, origin, weapon.effect_color, 6.0 + 4.0 * level, 0.15)
 	player.play_attack_feedback()
 	return true
 

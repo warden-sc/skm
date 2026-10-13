@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/stage_data.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/tiles/floor_ruins.png" id="2_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/boss_archeon.tscn" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/golem_fire.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/golem_ice.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/golem_lightning.tscn" id="6_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/golem_earth.tscn" id="7_res"]
+
+[resource]
+script = ExtResource("1_res")
+stage_name = "원소의 유적"
+floor_texture = ExtResource("2_res")
+wall_tint = Color(0.82, 0.88, 1, 1)
+enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res"), ExtResource("7_res")])
+enemy_weights = Array[float]([1.0, 1.0, 1.0, 1.0])
+boss_scene = ExtResource("3_res")
+kill_target = 16
+spawn_interval = 1.8
+max_alive = 7

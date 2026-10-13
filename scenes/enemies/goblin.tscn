@@ -19,7 +19,7 @@ knockback_resistance = 0.2
 gold_min = 4
 gold_max = 8
 item_drop_chance = 0.12
-item_drop_ids = Array[StringName]([&"goblin_dagger", &"goblin_buckler", &"hunter_bow", &"iron_sword"])
+item_drop_ids = Array[StringName]([&"goblin_dagger", &"goblin_buckler", &"hunter_bow", &"iron_sword", &"leather_cap"])
 
 [node name="Shadow" type="Sprite2D" parent="."]
 position = Vector2(0, -1)

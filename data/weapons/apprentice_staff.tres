@@ -1,28 +1,33 @@
 [gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://assets/sprites/weapons/apprentice_staff.png" id="2_icon"]
-[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/orb.png" id="3_proj"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/apprentice_staff.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/orb.png" id="3_res"]
 
 [resource]
 script = ExtResource("1_script")
 weapon_type = 2
+element = 7
 effect_color = Color(0.5, 0.9, 1, 1)
-damage = 7
+damage = 9
 crit_chance = 0.05
 crit_multiplier = 1.5
 knockback = 80.0
-attack_cooldown = 0.55
-projectile_texture = ExtResource("3_proj")
-projectile_speed = 220.0
+attack_cooldown = 0.2
+windup_time = 0.4
+chant_text = "마력이여, 모여라…"
+projectile_texture = ExtResource("3_res")
+projectile_speed = 240.0
 projectile_range = 190.0
 projectiles_per_shot = 3
 spread_degrees = 24.0
 pierce = 0
 projectile_scale = 1.0
+explosion_radius = 0.0
+slow_duration = 0.0
 id = &"apprentice_staff"
 display_name = "견습 지팡이"
 description = "마력 구슬 3발을 부채꼴로 발사한다."
 rarity = 0
-icon = ExtResource("2_icon")
+icon = ExtResource("2_res")
 price = 110

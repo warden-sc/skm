@@ -30,6 +30,45 @@ func _enemy_pos_for_hit_center(target: Vector2) -> Vector2:
 	return target + Vector2(0, 5)
 
 
+## 현재 씬에 떠 있는 파티클 / 장판 개수 (이펙트 확인용)
+func _count_nodes_of(type_name: String) -> int:
+	var count := 0
+	for child in get_tree().current_scene.get_children():
+		if child.get_class() == type_name or (type_name == "AoeStrike" and child is AoeStrike):
+			count += 1
+	return count
+
+
+## 보스 패턴을 n 프레임 동안 돌려보기 (플레이어는 매 프레임 회복)
+func _survive(frames: int, on_frame: Callable = Callable()) -> void:
+	for i in frames:
+		_gm.heal_full()
+		await get_tree().physics_frame
+		if on_frame.is_valid():
+			on_frame.call()
+
+
+## 상점 판매 목록 i 번째 줄의 배경색 / 버튼
+func _row_bg(rows: Array, i: int) -> Color:
+	return ((rows[i] as PanelContainer).get_theme_stylebox(&"panel") as StyleBoxFlat).bg_color
+
+
+func _row_button(rows: Array, i: int) -> Button:
+	return (rows[i] as PanelContainer).get_child(0).get_child(2) as Button
+
+
+func _find_boss() -> Enemy:
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if (e as Enemy).is_boss:
+			return e
+	return null
+
+
+func _clear_enemies() -> void:
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		(e as Enemy).despawn()
+
+
 func _run() -> void:
 	_gm = get_node("/root/GameManager")
 	var main: Node2D = load("res://scenes/main/main.tscn").instantiate()
@@ -81,6 +120,7 @@ func _run() -> void:
 	front.move_speed = 0.0
 	front.max_hp = 999  # 뒤의 활 테스트 화살에 맞아도 죽지 않도록
 	front.item_drop_chance = 1.0
+	front.item_drop_ids = [&"slime_staff"]
 	stage._add_enemy(front, _enemy_pos_for_hit_center(origin + aim * 18.0))
 	var behind := slime_scene.instantiate() as Enemy
 	behind.move_speed = 0.0
@@ -93,7 +133,7 @@ func _run() -> void:
 	var hp_front := front.hp
 	var hp_behind := behind.hp
 	var hp_far := far.hp
-	_check(attack.attack(), "AttackController.attack() (녹슨 검)")
+	_check(attack.perform_attack(), "AttackController.attack() (녹슨 검)")
 	_check(pool.get_available_count() == avail, "검은 투사체를 쓰지 않음 (풀 그대로)")
 	var rusty_damage := hp_front - front.hp
 	_check(rusty_damage >= 8, "정면 적 타격 (데미지 %d)" % rusty_damage)
@@ -103,14 +143,45 @@ func _run() -> void:
 	behind.despawn()
 	far.despawn()
 
-	print("[원거리 공격 - 활은 투사체]")
+	print("[활 - 시위를 당긴 뒤 발사]")
 	var bow := ItemDB.get_weapon(&"hunter_bow")
 	_gm.add_item(bow)
 	_gm.equip_item(bow)
-	_check(attack.attack(), "활 발사")
-	_check(pool.get_available_count() == avail - 1, "풀에서 투사체 1개 꺼냄")
-	await _frames(60)
+	await _frames(30)  # 직전 근접 공격 쿨타임 대기
+	var bow_string := player.get_node("WeaponPivot/SwingPivot/BowString") as Line2D
+	_check(bow_string.visible, "활 장착 시 시위 표시")
+	Input.action_press(&"attack")
+	await _frames(6)
+	_check(attack.is_winding_up() and pool.get_available_count() == avail, "시위 당기는 중 (아직 발사 안 됨)")
+	_check(bow_string.points[1].x < 2.0, "시위가 뒤로 당겨짐 (x=%.1f)" % bow_string.points[1].x)
+	_check(player.get_node("WeaponPivot/SwingPivot/NockedArrow").visible, "화살이 시위에 걸림")
+	await _frames(16)
+	Input.action_release(&"attack")
+	_check(pool.get_available_count() < avail, "끝까지 당기면 발사")
+	await _frames(70)
 	_check(pool.get_available_count() == avail, "사거리 끝에서 풀로 반환")
+	Input.action_press(&"attack")
+	await _frames(5)
+	Input.action_release(&"attack")
+	await _frames(2)
+	_check(not attack.is_winding_up() and pool.get_available_count() == avail, "중간에 떼면 발사 취소")
+
+	print("[마법 지팡이 - 영창 후 시전]")
+	var staff := ItemDB.get_weapon(&"apprentice_staff")
+	_gm.add_item(staff)
+	_gm.equip_item(staff)
+	await _frames(12)
+	Input.action_press(&"attack")
+	await _frames(10)
+	var chant := player.get_node("ChantLabel") as Label
+	_check(chant.visible and chant.text == staff.chant_text, "영창 대사 표시: %s" % chant.text)
+	_check(player.get_node("WeaponPivot/ChargeOrb").visible and player.is_winding_up(), "지팡이 구슬에 마력이 모임")
+	_check(pool.get_available_count() == avail, "영창 중 (아직 시전 안 됨)")
+	await _frames(16)
+	Input.action_release(&"attack")
+	_check(pool.get_available_count() <= avail - 3, "영창 완료 → 마력탄 3발 시전")
+	_check(not chant.visible, "시전 후 영창 대사 사라짐")
+	await _frames(70)
 
 	print("[드랍/줍기]")
 	var gold_before: int = _gm.gold
@@ -139,11 +210,54 @@ func _run() -> void:
 	stage._add_enemy(dummy, _enemy_pos_for_hit_center(origin + aim * 20.0))
 	await _frames(3)
 	var dhp := dummy.hp
-	attack.attack()
+	attack.perform_attack()
 	_check(dhp - dummy.hp >= 15, "강철 검 데미지 %d (녹슨 검 %d)" % [dhp - dummy.hp, rusty_damage])
 	dummy.despawn()
 
+	print("[등급별 이펙트]")
+	var flame := ItemDB.get_weapon(&"flame_blade")
+	var holy := ItemDB.get_weapon(&"holy_sword")
+	_gm.add_item(flame)
+	_gm.add_item(holy)
+	await _frames(30)
+	var base_particles := _count_nodes_of("CPUParticles2D")
+	_gm.equip_item(ItemDB.get_weapon(&"rusty_sword"))
+	attack.perform_attack()
+	var common_fx := _count_nodes_of("CPUParticles2D") - base_particles
+	_gm.equip_item(flame)
+	attack.perform_attack()
+	var epic_fx := _count_nodes_of("CPUParticles2D") - base_particles - common_fx
+	_gm.equip_item(holy)
+	attack.perform_attack()
+	var legend_fx := _count_nodes_of("CPUParticles2D") - base_particles - common_fx - epic_fx
+	_check(common_fx == 0 and epic_fx > 0 and legend_fx > epic_fx, "일반 %d < 레어(화염검) %d < 전설(성검) %d 이펙트" % [common_fx, epic_fx, legend_fx])
+
+	var ignis := ItemDB.get_weapon(&"ignis_staff")
+	_gm.add_item(ignis)
+	_gm.equip_item(ignis)
+	await _frames(2)
+	aim = player.get_aim_direction()
+	origin = player.get_attack_origin()
+	var g1 := goblin_scene.instantiate() as Enemy
+	var g2 := goblin_scene.instantiate() as Enemy
+	g1.move_speed = 0.0
+	g2.move_speed = 0.0
+	g1.max_hp = 999
+	g2.max_hp = 999
+	stage._add_enemy(g1, _enemy_pos_for_hit_center(origin + aim * 60.0))
+	stage._add_enemy(g2, _enemy_pos_for_hit_center(origin + aim * 60.0 + aim.orthogonal() * 22.0))
+	await _frames(3)
+	var g1_hp := g1.hp
+	var g2_hp := g2.hp
+	attack.perform_attack()
+	await _frames(25)
+	_check(g1.hp < g1_hp and g2.hp < g2_hp, "이그니스 화염구 폭발: 주변 적까지 피해 (%d, %d)" % [g1_hp - g1.hp, g2_hp - g2.hp])
+	g1.despawn()
+	g2.despawn()
+	_gm.equip_item(iron)
+
 	print("[방패 가드]")
+	player.global_position = Vector2(200, 100)
 	_check(hud.get_node("%GuardBar").value == 40.0, "HUD 가드 게이지 표시")
 	await _frames(40)
 	aim = player.get_aim_direction()
@@ -199,34 +313,48 @@ func _run() -> void:
 	await _frames(90)
 	_check(_gm.guard > 0.0, "가드를 내리면 게이지 회복")
 
-	print("[상점]")
-	_gm.add_gold(2000)
-	var gold_pre: int = _gm.gold
-	_gm.request_shop("테스트 상점", [&"rapid_crossbow", &"iron_shield"])
+	print("[상점 - 스테이지별 입고 / 등급 배경색 / 투구]")
+	_gm.add_gold(5000)
+	_gm.request_shop("테스트 상점", [&"rapid_crossbow", &"iron_shield", &"iron_helm", &"royal_aegis", &"solaris_bow"])
 	await get_tree().process_frame
+	var gold_pre: int = _gm.gold
 	_check(shop.is_open() and get_tree().paused, "상점 열림 + 일시정지")
-	_check(shop.get_node("%BuyList").get_child_count() == 2, "판매 목록 2개 (무기 + 방패)")
+	var rows := shop.get_node("%BuyList").get_children()
+	_check(rows.size() == 5, "판매 목록 5개 (무기/방패/투구)")
+	_check(_row_bg(rows, 0) == ItemData.RARITY_BG_COLORS[ItemData.Rarity.RARE], "희귀 = 파란 배경")
+	_check(_row_bg(rows, 3) == ItemData.RARITY_BG_COLORS[ItemData.Rarity.EPIC], "레어 = 보라 배경")
+	_check(_row_bg(rows, 4) == ItemData.RARITY_BG_COLORS[ItemData.Rarity.LEGENDARY], "전설 = 노란 배경")
+	_check(_row_button(rows, 3).disabled and _row_button(rows, 3).text == "2스테이지", "1스테이지: 레어 등급 잠김")
+	_check(_row_button(rows, 4).disabled and _row_button(rows, 4).text == "3스테이지", "1스테이지: 전설 등급 잠김")
 	var crossbow := ItemDB.get_weapon(&"rapid_crossbow")
 	var iron_shield := ItemDB.get_shield(&"iron_shield")
+	var iron_helm := ItemDB.get_helmet(&"iron_helm")
 	shop._on_buy_pressed(crossbow)
 	shop._on_buy_pressed(iron_shield)
+	shop._on_buy_pressed(iron_helm)
 	await get_tree().process_frame
-	_check(_gm.equipped_weapon == crossbow and _gm.equipped_shield == iron_shield, "구매 후 무기/방패 자동 장착")
-	_check(_gm.gold == gold_pre - crossbow.price - iron_shield.price, "골드 차감 %d" % (crossbow.price + iron_shield.price))
+	_check(_gm.equipped_weapon == crossbow and _gm.equipped_shield == iron_shield and _gm.equipped_helmet == iron_helm, "구매 후 무기/방패/투구 자동 장착")
+	_check(_gm.gold == gold_pre - crossbow.price - iron_shield.price - iron_helm.price, "골드 차감 %d" % (crossbow.price + iron_shield.price + iron_helm.price))
 	_check(not _gm.buy_item(iron_shield), "중복 구매 불가")
 	_check(hud.get_node("%GuardBar").max_value == iron_shield.max_guard, "방패 교체 → 가드 게이지 최대치 변경")
-	_check(shop.get_node("%InventoryList").get_child_count() == _gm.weapons.size() + _gm.shields.size(), "보유 장비 목록 (무기 + 방패)")
+	_check(_gm.max_hp == 100 + iron_helm.bonus_max_hp, "투구 체력 보너스 (최대 HP %d)" % _gm.max_hp)
+	_check(_gm.get_total_defense() == iron_shield.defense + iron_helm.defense, "방어력 합산 (방패 %d + 투구 %d)" % [iron_shield.defense, iron_helm.defense])
+	var helmet_sprite := player.get_node("BodySprite/HelmetSprite") as Sprite2D
+	_check(helmet_sprite.visible and helmet_sprite.texture == iron_helm.worn_texture, "플레이어 머리에 투구 표시")
+	_check((hud.get_node("%HelmetLabel") as Label).text.contains(iron_helm.display_name), "HUD 투구 표시")
+	_check(shop.get_node("%InventoryList").get_child_count() == _gm.weapons.size() + _gm.shields.size() + _gm.helmets.size(), "보유 장비 목록 (무기 + 방패 + 투구)")
 	shop.close()
 	_check(not shop.is_open() and not get_tree().paused, "상점 닫힘 + 재개")
 	_gm.cycle_weapon(1)
 	_check(_gm.equipped_weapon != crossbow, "Q 무기 순환")
 
 	print("[적 탄환/플레이어 피격]")
+	player.global_position = Vector2(-200, 100)  # 상인(벽 판정)에 탄이 가로막히지 않는 빈 공간
 	await _frames(40)
 	var hp_before: int = _gm.hp
 	pool.spawn(ProjectileSpec.enemy_bullet(player.global_position + Vector2(30, -4), Vector2.LEFT, 200.0, 7, null))
 	await _frames(20)
-	_check(_gm.hp == hp_before - (7 - iron_shield.defense), "적 탄환 피격, 방패 방어력 적용 (HP %d → %d)" % [hp_before, _gm.hp])
+	_check(_gm.hp == hp_before - (7 - _gm.get_total_defense()), "적 탄환 피격, 방패+투구 방어력 적용 (HP %d → %d)" % [hp_before, _gm.hp])
 	_check(hud.get_node("%HPLabel").text == "%d / %d" % [_gm.hp, _gm.max_hp], "HUD HP 라벨 갱신")
 
 	print("[보스]")
@@ -265,8 +393,95 @@ func _run() -> void:
 	var boss_drop := entities.get_children().filter(func(n: Node) -> bool: return n is Pickup and n.kind == Pickup.Kind.ITEM)
 	_check(boss_drop.size() >= 1, "보스 장비 확정 드랍")
 
+	print("[2스테이지 - 불타는 지옥문]")
+	_check(_gm.stage == 2 and _gm.stage_name == "불타는 지옥문", "스테이지 2 「%s」" % _gm.stage_name)
+	_check((main.get_node("Ground/Floor") as Sprite2D).texture.resource_path.ends_with("floor_hell.png"), "바닥이 지옥 타일로 변경")
+	_check((hud.get_node("%StageLabel") as Label).text.contains("불타는 지옥문"), "HUD 스테이지 이름")
+	_gm.request_shop("테스트 상점", [&"royal_aegis", &"solaris_bow"])
+	await get_tree().process_frame
+	rows = shop.get_node("%BuyList").get_children()
+	_check(not _row_button(rows, 0).disabled and _row_button(rows, 1).disabled, "2스테이지: 레어 해금, 전설은 아직 잠김")
+	shop.close()
+	_gm.max_hp = 99999  # 보스 패턴 관찰용으로 버티기
+	_gm.heal_full()
+	stage._begin_wave()
+	for i in 8:
+		stage._spawn_regular_enemy()
+	await _frames(3)
+	var names := {}
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		names[(e as Enemy).display_name] = true
+	_check(names.keys().all(func(n: String) -> bool: return n in ["헬하운드", "오크"]), "일반 몹: %s" % ", ".join(names.keys()))
+	await _survive(240)
+	_check(not _gm.is_player_dead, "헬하운드/오크 패턴 4초 실행")
+	_clear_enemies()
+	await _frames(20)
+	stage._kills = 0
+	stage._begin_boss()
+	await _frames(3)
+	var gatekeeper := _find_boss()
+	_check(gatekeeper != null and gatekeeper.display_name == "지옥의 수문장", "2스테이지 보스: 지옥의 수문장")
+	var seen := {"aoe": false, "fire": false, "hounds": false}
+	await _survive(720, func() -> void:
+		if _count_nodes_of("AoeStrike") > 0:
+			seen["aoe"] = true
+		for c in pool.get_children():
+			if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+				seen["fire"] = true
+		for e in get_tree().get_nodes_in_group(&"enemies"):
+			if (e as Enemy).display_name == "헬하운드":
+				seen["hounds"] = true)
+	_check(seen["fire"], "수문장: 화염구 고리")
+	_check(seen["aoe"], "수문장: 화염 기둥 장판")
+	_check(seen["hounds"], "수문장: 헬하운드 소환")
+	gatekeeper.take_damage(99999)
+	await _frames(3)
+
+	print("[3스테이지 - 원소의 유적]")
+	_check(_gm.stage == 3 and _gm.stage_name == "원소의 유적", "스테이지 3 「%s」" % _gm.stage_name)
+	_check((main.get_node("Ground/Floor") as Sprite2D).texture.resource_path.ends_with("floor_ruins.png"), "바닥이 유적 타일로 변경")
+	_clear_enemies()
+	stage._begin_wave()
+	# 4속성 골렘을 하나씩 확실히 소환해 모든 패턴을 실행
+	for scene in stage.get_stage_data().enemy_scenes:
+		var golem := scene.instantiate() as Enemy
+		stage._add_enemy(golem, stage._pick_spawn_position())
+	await _frames(3)
+	names = {}
+	for e in get_tree().get_nodes_in_group(&"enemies"):
+		names[(e as Enemy).display_name] = true
+	_check(names.size() == 4 and names.keys().all(func(n: String) -> bool: return n.ends_with("골렘")), "속성 골렘 4종: %s" % ", ".join(names.keys()))
+	await _survive(360)
+	_check(not _gm.is_player_dead, "골렘 속성 패턴 6초 실행")
+	_clear_enemies()
+	await _frames(20)
+	stage._kills = 0
+	stage._begin_boss()
+	await _frames(3)
+	var archeon := _find_boss() as BossArcheon
+	_check(archeon != null and archeon.display_name == "원소의 거신 아르케온", "3스테이지 보스: 원소의 거신 아르케온")
+	var elements_seen := {}
+	seen = {"aoe": false, "slowed": false}
+	await _survive(1200, func() -> void:
+		if is_instance_valid(archeon):
+			elements_seen[archeon.get_current_element()] = true
+		if _count_nodes_of("AoeStrike") > 0:
+			seen["aoe"] = true
+		if player.is_slowed():
+			seen["slowed"] = true)
+	_check(elements_seen.size() == 4, "4원소 순환 (%d종)" % elements_seen.size())
+	_check(seen["aoe"], "아르케온: 낙뢰/대지 장판")
+	archeon.take_damage(roundi(archeon.max_hp * 0.6))
+	_check(archeon._phase_two, "체력 50% 이하 → 원소 융합")
+	await _survive(300)
+	archeon.take_damage(999999)
+	await _frames(3)
+	_check(_gm.stage == 4 and _gm.stage_name.contains("+1"), "마지막 스테이지 이후 강화 반복: %s" % _gm.stage_name)
+	var legend_drop := entities.get_children().filter(func(n: Node) -> bool: return n is Pickup and n.kind == Pickup.Kind.ITEM and n.item.rarity == ItemData.Rarity.LEGENDARY)
+	_check(legend_drop.size() >= 1, "아르케온 전설 장비 드랍")
+
 	print("[사망/재시작]")
-	_gm.damage_player(9999)
+	_gm.damage_player(_gm.hp)
 	await _frames(2)
 	_check(_gm.is_player_dead and hud.get_node("%GameOver").visible, "사망 → GAME OVER 표시")
 	var ev := InputEventAction.new()

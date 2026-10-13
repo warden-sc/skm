@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/frost_staff.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/ice_shard.png" id="3_res"]
+
+[resource]
+script = ExtResource("1_script")
+weapon_type = 2
+element = 2
+effect_color = Color(0.6, 0.9, 1, 1)
+damage = 12
+crit_chance = 0.08
+crit_multiplier = 1.6
+knockback = 70.0
+attack_cooldown = 0.2
+windup_time = 0.45
+chant_text = "얼어붙어라, 서리의 창이여!"
+projectile_texture = ExtResource("3_res")
+projectile_speed = 280.0
+projectile_range = 220.0
+projectiles_per_shot = 3
+spread_degrees = 18.0
+pierce = 1
+projectile_scale = 1.0
+explosion_radius = 0.0
+slow_duration = 1.5
+id = &"frost_staff"
+display_name = "서리 지팡이"
+description = "얼음 창을 날려 맞은 적을 느리게 만든다."
+rarity = 1
+icon = ExtResource("2_res")
+price = 240

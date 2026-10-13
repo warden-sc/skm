@@ -1,11 +1,12 @@
 [gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://assets/sprites/weapons/goblin_dagger.png" id="2_icon"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/goblin_dagger.png" id="2_res"]
 
 [resource]
 script = ExtResource("1_script")
 weapon_type = 3
+element = 5
 effect_color = Color(0.7, 1, 0.6, 1)
 damage = 7
 crit_chance = 0.3
@@ -16,8 +17,8 @@ melee_range = 20.0
 melee_arc_degrees = 70.0
 id = &"goblin_dagger"
 display_name = "고블린 단검"
-description = "고블린이 쓰던 단검. 리치는 짧지만 매우 빠르고 치명타가 잘 터진다.
+description = "고블린이 쓰던 독 묻은 단검. 리치는 짧지만 매우 빠르고 치명타가 잘 터진다.
 (고블린 드랍 전용)"
 rarity = 1
-icon = ExtResource("2_icon")
+icon = ExtResource("2_res")
 price = 160

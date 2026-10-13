@@ -85,10 +85,10 @@ def put(img, pts, col):
 PLAYER = [
     "................",
     ".....kkkkkk.....",
-    "....kllllllk....",
-    "...kllWllllmk...",
-    "...kmllllllmk...",
-    "...kkkkkkkkkk...",
+    "....kTTTTTTk....",
+    "...kTTtTTTTTk...",
+    "...kTTTTTTTTk...",
+    "...kTTssssTTk...",
     "....kssssksk....",
     "....ksssssskk...",
     "...kkBBBBBBkk...",
@@ -411,11 +411,329 @@ def bar_under(w=64, h=8):
     return img
 
 
+# ---------------------------------------------------------------- 2스테이지 몬스터
+HELLHOUND = [
+    "................",
+    "................",
+    "...........oy...",
+    "..........kook..",
+    "..o......knnnkk.",
+    ".oyo....knnnyknk",
+    "..ok...knnnnnnnk",
+    "...knnnnnnnnnWk.",
+    "..knnnnnnnnnkk..",
+    "..knnnnnnnnnk...",
+    "..knrnnnnnrnk...",
+    "..knk.knk.knk...",
+    "..kk..kk..kk....",
+    "................",
+    "................",
+    "................",
+]
+
+ORC = [
+    "................",
+    "....kkkkkk......",
+    "...kGGGGGGk.....",
+    "..kGGrGGrGGk....",
+    "..kGGGGGGGGk....",
+    "..kGWGGGGWGk....",
+    "...kGGGGGGk.....",
+    "..kmmTTTTmmk....",
+    ".kGmTTTTTTmGk...",
+    ".kGkTTyTTTkGk...",
+    ".kGkTTTTTTkGk...",
+    "..k.kTTTTk.k....",
+    "....kTkkTk......",
+    "....kdk.kdk.....",
+    "....kkk.kkk.....",
+    "................",
+]
+
+
+def rect(img, x0, y0, x1, y1, col):
+    for y in range(y0, y1 + 1):
+        for x in range(x0, x1 + 1):
+            if 0 <= x < img.size[0] and 0 <= y < img.size[1]:
+                img.putpixel((x, y), PAL[col] if isinstance(col, str) else col)
+
+
+def ellipse(img, cx, cy, rx, ry, col):
+    for y in range(img.size[1]):
+        for x in range(img.size[0]):
+            if ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1.0:
+                img.putpixel((x, y), PAL[col] if isinstance(col, str) else col)
+
+
+def hell_gatekeeper():
+    """지옥의 수문장: 불을 두른 거대한 오크 킹 (32x32)"""
+    img = canvas(32)
+    # 다리
+    rect(img, 10, 25, 13, 30, "T")
+    rect(img, 18, 25, 21, 30, "T")
+    rect(img, 9, 29, 14, 30, "n")
+    rect(img, 17, 29, 22, 30, "n")
+    # 팔 (녹색 피부 + 불타는 팔찌)
+    rect(img, 3, 14, 7, 24, "G")
+    rect(img, 24, 14, 28, 24, "G")
+    rect(img, 3, 21, 7, 23, "o")
+    rect(img, 24, 21, 28, 23, "o")
+    # 몸통 갑옷 (흑철 + 금 테두리)
+    ellipse(img, 15.5, 19.5, 9.5, 7.5, "n")
+    rect(img, 9, 15, 22, 15, "y")
+    rect(img, 15, 13, 16, 26, "r")
+    ellipse(img, 15.5, 20, 2.5, 2.5, "o")
+    put(img, [(15, 20), (16, 20)], "y")
+    # 머리
+    ellipse(img, 15.5, 9.5, 6.5, 5.5, "G")
+    put(img, [(12, 9), (13, 9), (18, 9), (19, 9)], "y")
+    put(img, [(12, 10), (19, 10)], "r")
+    put(img, [(12, 13), (12, 12), (19, 13), (19, 12)], "W")
+    rect(img, 13, 13, 18, 13, "d")
+    # 뿔 왕관
+    rect(img, 10, 4, 21, 5, "y")
+    for hx in (9, 10, 21, 22):
+        put(img, [(hx, 1), (hx, 2), (hx, 3)], "W")
+    put(img, [(13, 2), (13, 3), (18, 2), (18, 3), (15, 1), (16, 1), (15, 2), (16, 2), (15, 3), (16, 3)], "y")
+    put(img, [(15, 4), (16, 4)], "r")
+    # 어깨의 불꽃
+    for base_x in (5, 26):
+        for i, h in enumerate((5, 8, 6, 9, 4)):
+            x = base_x - 2 + i
+            for y in range(14 - h, 15):
+                t = (14 - y) / h
+                col = "y" if t > 0.75 else ("o" if t > 0.35 else "r")
+                if 0 <= x < 32:
+                    img.putpixel((x, y), PAL[col])
+    return outline(img)
+
+
+# ---------------------------------------------------------------- 3스테이지: 속성 골렘
+GOLEM_PALETTES = {
+    "fire":      ((92, 52, 44), (58, 30, 28), (255, 150, 60), (255, 230, 120)),
+    "ice":       ((160, 205, 235), (90, 130, 180), (230, 250, 255), (255, 255, 255)),
+    "lightning": ((96, 96, 120), (52, 52, 72), (255, 230, 80), (255, 255, 200)),
+    "earth":     ((150, 112, 72), (96, 68, 42), (120, 220, 90), (210, 255, 170)),
+}
+
+
+def golem(body, dark, core, core_hi, size=20):
+    img = canvas(size)
+    b, d, c, h = body + (255,), dark + (255,), core + (255,), core_hi + (255,)
+    s = size / 20.0
+    R = lambda x0, y0, x1, y1, col: rect(img, int(x0 * s), int(y0 * s), int(x1 * s), int(y1 * s), col)
+    R(5, 17, 8, 19, d)       # 다리
+    R(11, 17, 14, 19, d)
+    R(4, 8, 15, 16, b)       # 몸통
+    R(4, 15, 15, 16, d)
+    R(1, 8, 4, 15, d)        # 팔
+    R(15, 8, 18, 15, d)
+    R(1, 14, 4, 16, b)       # 주먹
+    R(15, 14, 18, 16, b)
+    R(7, 3, 12, 7, b)        # 머리
+    R(8, 5, 8, 5, c)         # 눈
+    R(11, 5, 11, 5, c)
+    ellipse(img, 9.5 * s, 11.5 * s, 2.2 * s, 2.2 * s, c)   # 핵
+    put(img, [(int(9 * s), int(11 * s))], h)
+    put(img, [(int(6 * s), int(9 * s)), (int(13 * s), int(14 * s)), (int(5 * s), int(13 * s))], d)  # 균열
+    return outline(img)
+
+
+def archeon():
+    """원소의 거신 아르케온 (40x40): 4원소 핵이 박힌 고대 거신 골렘"""
+    img = canvas(40)
+    stone, dark, gold = (78, 82, 104, 255), (44, 46, 64, 255), PAL["y"]
+    rect(img, 9, 33, 16, 38, dark)
+    rect(img, 23, 33, 30, 38, dark)
+    rect(img, 8, 14, 31, 33, stone)
+    rect(img, 8, 31, 31, 33, dark)
+    rect(img, 1, 13, 8, 29, dark)
+    rect(img, 31, 13, 38, 29, dark)
+    rect(img, 0, 26, 8, 32, stone)
+    rect(img, 31, 26, 39, 32, stone)
+    rect(img, 8, 14, 31, 15, gold)
+    rect(img, 19, 15, 20, 33, gold)
+    rect(img, 13, 4, 26, 13, stone)
+    rect(img, 15, 8, 17, 9, (120, 230, 255, 255))
+    rect(img, 22, 8, 24, 9, (120, 230, 255, 255))
+    # 수정 왕관
+    for i, hgt in enumerate((3, 6, 4, 8, 4, 6, 3)):
+        x = 13 + i * 2
+        rect(img, x, 4 - hgt, x + 1, 3, (170, 120, 255, 255))
+    # 4원소 핵 (십자 배치)
+    cores = [((19.5, 19.5), GOLEM_PALETTES["fire"][2]), ((14.5, 24.0), GOLEM_PALETTES["ice"][2]),
+             ((24.5, 24.0), GOLEM_PALETTES["lightning"][2]), ((19.5, 28.5), GOLEM_PALETTES["earth"][2])]
+    for (cx, cy), col in cores:
+        ellipse(img, cx, cy, 2.4, 2.4, col + (255,))
+    put(img, [(19, 19), (14, 23), (24, 23), (19, 28)], "W")
+    return outline(img)
+
+
+# ---------------------------------------------------------------- 투구 (착용 오버레이 = 플레이어 머리 위치에 정확히 맞춤)
+HELMETS_WORN = {
+    "leather_cap": [
+        "................",
+        ".....kkkkkk.....",
+        "....kttttttk....",
+        "...kttTttttTk...",
+        "...kTTTTTTTTk...",
+        "...kTT....TTk...",
+    ],
+    "iron_helm": [
+        "................",
+        ".....kkkkkk.....",
+        "....kllllllk....",
+        "...kllWllllmk...",
+        "...kmllllllmk...",
+        "...kmm....mmk...",
+    ],
+    "orc_warhelm": [
+        "..k........k....",
+        "..klkkkkkkklk...",
+        "...knnnnnnnnk...",
+        "...knnmnnnnnk...",
+        "...krrrrrrrrk...",
+        "...knn....nnk...",
+    ],
+    "gatekeeper_horns": [
+        ".kk..........kk.",
+        ".kyk.kkkkkk.kyk.",
+        "..kykrrrrrrkyk..",
+        "...krroyyorrk...",
+        "...krrrrrrrrk...",
+        "...kro....ork...",
+    ],
+}
+
+
+def helmet_icon(worn):
+    img = canvas(16)
+    img.paste(worn, (0, 5), worn)
+    return img
+
+
+# ---------------------------------------------------------------- 들고 있는 활 (세로, 시위는 코드에서 Line2D 로 그림)
+def bow_held(wood, accent, crossbow=False):
+    img = canvas(16)
+    for y in range(1, 15):
+        t = (y - 7.5) / 6.5
+        x = round(5 + 5 * (1 - t * t))
+        put(img, [(x, y)], wood)
+        if 5 <= y <= 10:
+            put(img, [(x - 1, y)], wood)
+    put(img, [(9, 7), (9, 8), (10, 7), (10, 8)], accent)
+    if crossbow:
+        rect(img, 2, 7, 13, 8, "T")
+    return outline(img)
+
+
+# ---------------------------------------------------------------- 이펙트
+def spark():
+    img = canvas(4)
+    for y in range(4):
+        for x in range(4):
+            edge = (x in (0, 3)) and (y in (0, 3))
+            img.putpixel((x, y), (255, 255, 255, 0 if edge else 255))
+    return img
+
+
+def glow(size=32):
+    img = canvas(size)
+    c = (size - 1) / 2
+    for y in range(size):
+        for x in range(size):
+            d = math.hypot(x - c, y - c) / (size / 2)
+            if d < 1.0:
+                img.putpixel((x, y), (255, 255, 255, int(255 * (1.0 - d) ** 2)))
+    return img
+
+
+def ring(size=32, width=2.5):
+    img = canvas(size)
+    c = (size - 1) / 2
+    r = size / 2 - width
+    for y in range(size):
+        for x in range(size):
+            d = abs(math.hypot(x - c, y - c) - r)
+            if d < width:
+                img.putpixel((x, y), (255, 255, 255, int(255 * (1.0 - d / width))))
+    return img
+
+
+def fireball():
+    img = canvas(12)
+    for y in range(12):
+        for x in range(12):
+            d = math.hypot(x - 6.5, y - 5.5)
+            if d <= 5.2 and not (x < 3 and abs(y - 5.5) > 2):
+                col = (255, 250, 200) if d < 1.8 else ((255, 200, 70) if d < 3.3 else (235, 90, 40))
+                img.putpixel((x, y), col + (255,))
+    return img
+
+
+def ice_shard():
+    img = canvas(14, 6)
+    for x in range(14):
+        half = 2.6 * (1 - abs(x - 6) / 7.5) if x < 13 else 0.4
+        for y in range(6):
+            if abs(y - 2.5) <= half:
+                col = (240, 255, 255) if abs(y - 2.5) < 0.8 else (130, 210, 250)
+                img.putpixel((x, y), col + (255,))
+    return img
+
+
+def rock():
+    img = canvas(8)
+    ellipse(img, 3.5, 3.5, 3.4, 3.0, (130, 100, 70, 255))
+    put(img, [(2, 2), (3, 2)], (180, 150, 110, 255))
+    return outline(img)
+
+
+# ---------------------------------------------------------------- 스테이지 바닥
+def floor_hell():
+    rnd = random.Random(11)
+    img = canvas(32)
+    for y in range(32):
+        for x in range(32):
+            v = rnd.randint(-6, 6)
+            img.putpixel((x, y), (72 + v, 34 + v // 2, 34 + v // 2, 255))
+    for _ in range(4):  # 용암 균열
+        x, y = rnd.randint(0, 31), rnd.randint(0, 31)
+        for _ in range(9):
+            img.putpixel((x % 32, y % 32), (255, 120, 40, 255))
+            if rnd.random() < 0.5:
+                img.putpixel(((x + 1) % 32, y % 32), (200, 60, 30, 255))
+            x += rnd.choice((-1, 0, 1))
+            y += 1
+    return img
+
+
+def floor_ruins():
+    rnd = random.Random(5)
+    img = canvas(32)
+    for y in range(32):
+        for x in range(32):
+            v = rnd.randint(-5, 5)
+            grout = x % 16 == 0 or y % 16 == 0 or (y % 16 == 8 and (x // 8) % 2 == 0)
+            base = (70, 72, 82) if grout else (104 + v, 108 + v, 118 + v)
+            img.putpixel((x, y), base + (255,))
+    for _ in range(14):  # 이끼
+        x, y = rnd.randint(0, 31), rnd.randint(0, 31)
+        img.putpixel((x, y), (80, 130, 80, 255))
+    return img
+
+
 def main():
     save(from_map(PLAYER), "characters", "player.png")
     save(from_map(SLIME), "characters", "slime.png")
     save(from_map(GOBLIN), "characters", "goblin.png")
     save(from_map(MERCHANT), "characters", "merchant.png")
+    save(from_map(HELLHOUND), "characters", "hellhound.png")
+    save(from_map(ORC), "characters", "orc.png")
+    save(hell_gatekeeper(), "characters", "hell_gatekeeper.png")
+    for name, pal in GOLEM_PALETTES.items():
+        save(golem(*pal), "characters", f"golem_{name}.png")
+    save(archeon(), "characters", "archeon.png")
     save(slime_king(), "characters", "slime_king.png")
     save(shadow(), "characters", "shadow.png")
 
@@ -428,6 +746,21 @@ def main():
     save(staff_icon("C"), "weapons", "apprentice_staff.png")
     save(staff_icon("g", "G"), "weapons", "slime_staff.png")
     save(staff_icon("P", "y"), "weapons", "king_scepter.png")
+    save(sword_icon("W", "y", "y", "B"), "weapons", "holy_sword.png")
+    save(bow_icon("G", "W"), "weapons", "windrunner_bow.png")
+    save(bow_icon("y", "o"), "weapons", "solaris_bow.png")
+    save(staff_icon("C", "l"), "weapons", "frost_staff.png")
+    save(staff_icon("o", "T"), "weapons", "ignis_staff.png")
+    save(staff_icon("v", "B"), "weapons", "arcana_staff.png")
+    save(bow_held("t", "T"), "weapons", "hunter_bow_held.png")
+    save(bow_held("n", "m", crossbow=True), "weapons", "rapid_crossbow_held.png")
+    save(bow_held("G", "g"), "weapons", "windrunner_bow_held.png")
+    save(bow_held("y", "o"), "weapons", "solaris_bow_held.png")
+
+    for name, rows in HELMETS_WORN.items():
+        worn = from_map(rows)
+        save(worn, "helmets", f"{name}_worn.png")
+        save(helmet_icon(worn), "helmets", f"{name}.png")
 
     save(slash(), "projectiles", "slash.png")
     save(arrow(), "projectiles", "arrow.png")
@@ -437,12 +770,21 @@ def main():
     save(kite_shield("l", "m", "B"), "shields", "iron_shield.png")
     save(round_shield("G", "T", "r"), "shields", "goblin_buckler.png")
     save(kite_shield("y", "o", "P"), "shields", "royal_aegis.png")
+    save(kite_shield("n", "y", "C"), "shields", "colossus_bulwark.png")
+    save(spark(), "effects", "spark.png")
+    save(glow(), "effects", "glow.png")
+    save(ring(), "effects", "ring.png")
+    save(fireball(), "projectiles", "fireball.png")
+    save(ice_shard(), "projectiles", "ice_shard.png")
+    save(rock(), "projectiles", "rock.png")
     save(orb(), "projectiles", "orb.png")
     save(orb((255, 255, 255), (230, 60, 110)), "projectiles", "enemy_bullet.png")
 
     save(coin(), "items", "coin.png")
 
     save(floor_tile(), "tiles", "floor.png")
+    save(floor_hell(), "tiles", "floor_hell.png")
+    save(floor_ruins(), "tiles", "floor_ruins.png")
     save(wall_tile(), "tiles", "wall.png")
     save(rug(), "tiles", "rug.png")
 

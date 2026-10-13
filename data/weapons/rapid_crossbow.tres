@@ -1,28 +1,35 @@
-[gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="WeaponData" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://assets/sprites/weapons/rapid_crossbow.png" id="2_icon"]
-[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/arrow.png" id="3_proj"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/rapid_crossbow.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/arrow.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/rapid_crossbow_held.png" id="4_res"]
 
 [resource]
 script = ExtResource("1_script")
 weapon_type = 1
+element = 0
 effect_color = Color(0.7, 0.85, 1, 1)
-damage = 6
+held_texture = ExtResource("4_res")
+damage = 8
 crit_chance = 0.08
 crit_multiplier = 1.5
 knockback = 50.0
-attack_cooldown = 0.13
-projectile_texture = ExtResource("3_proj")
-projectile_speed = 460.0
+attack_cooldown = 0.08
+windup_time = 0.12
+chant_text = ""
+projectile_texture = ExtResource("3_res")
+projectile_speed = 480.0
 projectile_range = 240.0
 projectiles_per_shot = 1
-spread_degrees = 6.0
+spread_degrees = 4.0
 pierce = 0
 projectile_scale = 0.9
+explosion_radius = 0.0
+slow_duration = 0.0
 id = &"rapid_crossbow"
 display_name = "연사 석궁"
-description = "볼트를 쉴 새 없이 쏘아대는 석궁."
+description = "장전이 빠른 석궁. 짧게 당겨 볼트를 연달아 쏜다."
 rarity = 1
-icon = ExtResource("2_icon")
+icon = ExtResource("2_res")
 price = 220

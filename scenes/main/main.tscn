@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://scripts/main/main.gd" id="1_main"]
 [ext_resource type="Texture2D" path="res://assets/sprites/tiles/floor.png" id="2_floor"]
@@ -11,10 +11,11 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="9_hud"]
 [ext_resource type="PackedScene" path="res://scenes/ui/shop_ui.tscn" id="10_shop_ui"]
 [ext_resource type="Script" path="res://scripts/world/stage_manager.gd" id="11_stage"]
-[ext_resource type="PackedScene" path="res://scenes/enemies/slime.tscn" id="12_slime"]
-[ext_resource type="PackedScene" path="res://scenes/enemies/goblin.tscn" id="13_goblin"]
-[ext_resource type="PackedScene" path="res://scenes/enemies/boss_slime_king.tscn" id="14_boss"]
+[ext_resource type="Resource" path="res://data/stages/stage_1.tres" id="12_stage1"]
+[ext_resource type="Resource" path="res://data/stages/stage_2.tres" id="13_stage2"]
+[ext_resource type="Resource" path="res://data/stages/stage_3.tres" id="14_stage3"]
 [ext_resource type="PackedScene" path="res://scenes/world/pickup.tscn" id="15_pickup"]
+[ext_resource type="Script" path="res://scripts/data/stage_data.gd" id="16_stagedata"]
 
 [sub_resource type="RectangleShape2D" id="Rect_horizontal"]
 size = Vector2(960, 16)
@@ -103,11 +104,11 @@ initial_size = 128
 
 [node name="ShopUI" parent="." instance=ExtResource("10_shop_ui")]
 
-[node name="StageManager" type="Node" parent="." node_paths=PackedStringArray("entities_root", "player")]
+[node name="StageManager" type="Node" parent="." node_paths=PackedStringArray("entities_root", "player", "floor_sprite", "walls")]
 script = ExtResource("11_stage")
 entities_root = NodePath("../Entities")
 player = NodePath("../Entities/Player")
-slime_scene = ExtResource("12_slime")
-goblin_scene = ExtResource("13_goblin")
-boss_scene = ExtResource("14_boss")
+floor_sprite = NodePath("../Ground/Floor")
+walls = NodePath("../Walls")
+stages = Array[ExtResource("16_stagedata")]([ExtResource("12_stage1"), ExtResource("13_stage2"), ExtResource("14_stage3")])
 pickup_scene = ExtResource("15_pickup")

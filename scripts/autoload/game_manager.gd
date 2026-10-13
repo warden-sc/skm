@@ -1,7 +1,7 @@
 extends Node
 ## 전역 게임 상태 관리자 (Autoload 이름: GameManager)
 ##
-## - 플레이어 체력 / 대시 쿨타임 / 가드 게이지 / 골드 / 인벤토리 / 장착 무기·방패 / 스테이지 진행 데이터를 보관합니다.
+## - 플레이어 체력 / 대시 쿨타임 / 가드 게이지 / 골드 / 인벤토리 / 장착 무기·방패·투구 / 스테이지 진행 데이터를 보관합니다.
 ## - 값이 바뀌면 항상 시그널을 발행하므로 HUD/상점 UI 는 시그널만 구독하면 실시간으로 갱신됩니다.
 ##
 ## ⚠️ Autoload 스크립트에는 class_name 을 붙이지 않습니다.
@@ -21,6 +21,7 @@ signal gold_changed(gold: int)
 signal inventory_changed
 signal weapon_equipped(weapon: WeaponData)
 signal shield_equipped(shield: ShieldData)
+signal helmet_equipped(helmet: HelmetData)
 
 # --- 스테이지 / 보스 ---
 signal stage_changed(stage: int)
@@ -52,12 +53,15 @@ var max_guard: float = 0.0
 var gold: int = 0
 var weapons: Array[WeaponData] = []
 var shields: Array[ShieldData] = []
+var helmets: Array[HelmetData] = []
 var equipped_weapon: WeaponData
 var equipped_shield: ShieldData
+var equipped_helmet: HelmetData
 ## 플레이어 쪽 공격력 배율 (버프/패시브 확장용)
 var damage_multiplier: float = 1.0
 
 var stage: int = 1
+var stage_name: String = ""
 var kills: int = 0
 var kill_target: int = 0
 var is_boss_active: bool = false
@@ -77,13 +81,16 @@ func reset_game() -> void:
 	gold = STARTING_GOLD
 	damage_multiplier = 1.0
 	stage = 1
+	stage_name = ""
 	kills = 0
 	kill_target = 0
 	is_boss_active = false
 	weapons.clear()
 	shields.clear()
+	helmets.clear()
 	equipped_weapon = null
 	equipped_shield = null
+	equipped_helmet = null
 	add_item(ItemDB.get_item(STARTING_WEAPON_ID))
 	add_item(ItemDB.get_item(STARTING_SHIELD_ID))
 	equip_item(ItemDB.get_item(STARTING_WEAPON_ID))
@@ -100,6 +107,7 @@ func emit_all() -> void:
 	inventory_changed.emit()
 	weapon_equipped.emit(equipped_weapon)
 	shield_equipped.emit(equipped_shield)
+	helmet_equipped.emit(equipped_helmet)
 	stage_changed.emit(stage)
 	kill_progress_changed.emit(kills, kill_target)
 
@@ -125,6 +133,27 @@ func heal_player(amount: int) -> void:
 
 func heal_full() -> void:
 	heal_player(max_hp)
+
+
+## 방패 + 투구 방어력 합계. 모든 피해에서 이만큼 빠집니다 (최소 1은 들어감).
+func get_total_defense() -> int:
+	var total := 0
+	if equipped_shield != null:
+		total += equipped_shield.defense
+	if equipped_helmet != null:
+		total += equipped_helmet.defense
+	return total
+
+
+## 투구 보너스를 반영해 최대 체력을 다시 계산. 늘어난 만큼은 현재 체력도 함께 늘어납니다.
+func _recalculate_max_hp() -> void:
+	var new_max := BASE_MAX_HP + (equipped_helmet.bonus_max_hp if equipped_helmet != null else 0)
+	if new_max == max_hp:
+		return
+	var diff := new_max - max_hp
+	max_hp = new_max
+	hp = clampi(hp + maxi(diff, 0), 1 if not is_player_dead else 0, max_hp)
+	player_hp_changed.emit(hp, max_hp)
 
 
 # ============================================================ 대시
@@ -186,6 +215,9 @@ func owns_item(item_id: StringName) -> bool:
 	for sh in shields:
 		if sh.id == item_id:
 			return true
+	for h in helmets:
+		if h.id == item_id:
+			return true
 	return false
 
 
@@ -197,6 +229,8 @@ func add_item(item: ItemData) -> bool:
 		weapons.append(item as WeaponData)
 	elif item is ShieldData:
 		shields.append(item as ShieldData)
+	elif item is HelmetData:
+		helmets.append(item as HelmetData)
 	else:
 		push_error("GameManager.add_item: 지원하지 않는 아이템 타입 (%s)" % item.id)
 		return false
@@ -214,7 +248,7 @@ func buy_item(item: ItemData) -> bool:
 	return true
 
 
-## 무기면 무기 칸, 방패면 방패 칸에 장착
+## 무기면 무기 칸, 방패면 방패 칸, 투구면 투구 칸에 장착
 func equip_item(item: ItemData) -> void:
 	if item == null or not owns_item(item.id):
 		return
@@ -226,10 +260,15 @@ func equip_item(item: ItemData) -> void:
 		if equipped_shield != item:
 			equipped_shield = item as ShieldData
 			shield_equipped.emit(equipped_shield)
+	elif item is HelmetData:
+		if equipped_helmet != item:
+			equipped_helmet = item as HelmetData
+			_recalculate_max_hp()
+			helmet_equipped.emit(equipped_helmet)
 
 
 func is_equipped(item: ItemData) -> bool:
-	return item != null and (item == equipped_weapon or item == equipped_shield)
+	return item != null and (item == equipped_weapon or item == equipped_shield or item == equipped_helmet)
 
 
 ## Q / 마우스 휠로 장착 무기 순환
@@ -242,8 +281,9 @@ func cycle_weapon(step: int) -> void:
 
 
 # ============================================================ 스테이지
-func set_stage(value: int) -> void:
+func set_stage(value: int, new_stage_name: String = "") -> void:
 	stage = value
+	stage_name = new_stage_name
 	stage_changed.emit(stage)
 
 

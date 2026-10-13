@@ -1,17 +1,24 @@
 class_name ItemDB
-## 모든 장비 리소스(무기/방패)를 id(StringName)로 조회하는 정적 데이터베이스.
+## 모든 장비 리소스(무기/방패/투구)를 id(StringName)로 조회하는 정적 데이터베이스.
 ## 새 장비를 추가하려면 .tres 를 만들고 ITEM_PATHS 에 경로만 추가하세요.
 
 const ITEM_PATHS: Array[String] = [
-	# 무기 - 근접
+	# 검 / 단검 (근접)
 	"res://data/weapons/rusty_sword.tres",
 	"res://data/weapons/iron_sword.tres",
 	"res://data/weapons/flame_blade.tres",
+	"res://data/weapons/holy_sword.tres",
 	"res://data/weapons/goblin_dagger.tres",
-	# 무기 - 원거리
+	# 활
 	"res://data/weapons/hunter_bow.tres",
 	"res://data/weapons/rapid_crossbow.tres",
+	"res://data/weapons/windrunner_bow.tres",
+	"res://data/weapons/solaris_bow.tres",
+	# 마법 지팡이
 	"res://data/weapons/apprentice_staff.tres",
+	"res://data/weapons/frost_staff.tres",
+	"res://data/weapons/ignis_staff.tres",
+	"res://data/weapons/arcana_staff.tres",
 	"res://data/weapons/slime_staff.tres",
 	"res://data/weapons/king_scepter.tres",
 	# 방패
@@ -19,6 +26,12 @@ const ITEM_PATHS: Array[String] = [
 	"res://data/shields/iron_shield.tres",
 	"res://data/shields/goblin_buckler.tres",
 	"res://data/shields/royal_aegis.tres",
+	"res://data/shields/colossus_bulwark.tres",
+	# 투구
+	"res://data/helmets/leather_cap.tres",
+	"res://data/helmets/iron_helm.tres",
+	"res://data/helmets/orc_warhelm.tres",
+	"res://data/helmets/gatekeeper_horns.tres",
 ]
 
 static var _cache: Dictionary = {}
@@ -38,6 +51,10 @@ static func get_weapon(item_id: StringName) -> WeaponData:
 
 static func get_shield(item_id: StringName) -> ShieldData:
 	return get_item(item_id) as ShieldData
+
+
+static func get_helmet(item_id: StringName) -> HelmetData:
+	return get_item(item_id) as HelmetData
 
 
 static func has_item(item_id: StringName) -> bool:

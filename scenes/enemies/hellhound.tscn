@@ -1,0 +1,37 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/hellhound.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/hellhound.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/shadow.png" id="3_res"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 6.0
+
+[node name="Hellhound" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_res")
+display_name = "헬하운드"
+max_hp = 45
+move_speed = 70.0
+contact_damage = 14
+knockback_resistance = 0.1
+aura_element = 1
+aura_amount = 8
+gold_min = 8
+gold_max = 14
+item_drop_chance = 0.1
+item_drop_ids = Array[StringName]([&"iron_helm", &"rapid_crossbow", &"frost_staff"])
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(1.0, 1.0)
+texture = ExtResource("3_res")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -8)
+texture = ExtResource("2_res")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -5)
+shape = SubResource("CircleShape2D_hit")

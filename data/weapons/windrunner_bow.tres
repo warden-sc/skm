@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/windrunner_bow.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/arrow.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/windrunner_bow_held.png" id="4_res"]
+
+[resource]
+script = ExtResource("1_script")
+weapon_type = 1
+element = 5
+effect_color = Color(0.55, 1, 0.6, 1)
+held_texture = ExtResource("4_res")
+damage = 15
+crit_chance = 0.15
+crit_multiplier = 1.8
+knockback = 110.0
+attack_cooldown = 0.15
+windup_time = 0.35
+chant_text = ""
+projectile_texture = ExtResource("3_res")
+projectile_speed = 520.0
+projectile_range = 300.0
+projectiles_per_shot = 3
+spread_degrees = 14.0
+pierce = 2
+projectile_scale = 1.1
+explosion_radius = 0.0
+slow_duration = 0.0
+id = &"windrunner_bow"
+display_name = "질풍의 활"
+description = "바람의 정령이 깃든 활. 화살 세 발이 바람을 타고 적을 꿰뚫는다."
+rarity = 2
+icon = ExtResource("2_res")
+price = 650

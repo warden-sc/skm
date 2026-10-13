@@ -19,7 +19,7 @@ knockback_resistance = 0.0
 gold_min = 2
 gold_max = 5
 item_drop_chance = 0.08
-item_drop_ids = Array[StringName]([&"slime_staff", &"apprentice_staff"])
+item_drop_ids = Array[StringName]([&"slime_staff", &"apprentice_staff", &"leather_cap"])
 
 [node name="Shadow" type="Sprite2D" parent="."]
 position = Vector2(0, -1)

@@ -1,0 +1,43 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/golem.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/golem_earth.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/shadow.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/rock.png" id="4_res"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 9.0
+
+[node name="GolemEarth" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_res")
+display_name = "대지 골렘"
+max_hp = 200
+move_speed = 22.0
+contact_damage = 20
+knockback_resistance = 0.8
+aura_element = 4
+aura_amount = 10
+gold_min = 20
+gold_max = 32
+item_drop_chance = 0.12
+item_drop_ids = Array[StringName]([&"orc_warhelm", &"royal_aegis"])
+element = 4
+attack_damage = 18
+preferred_range = 40.0
+projectile_texture = ExtResource("4_res")
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(1.8, 1.8)
+texture = ExtResource("3_res")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -12)
+scale = Vector2(1.2, 1.2)
+texture = ExtResource("2_res")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -9)
+shape = SubResource("CircleShape2D_hit")

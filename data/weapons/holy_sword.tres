@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/holy_sword.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+weapon_type = 0
+element = 6
+effect_color = Color(1, 0.92, 0.6, 1)
+damage = 42
+crit_chance = 0.2
+crit_multiplier = 2.0
+knockback = 260.0
+attack_cooldown = 0.3
+melee_range = 42.0
+melee_arc_degrees = 170.0
+id = &"holy_sword"
+display_name = "성검 루멘"
+description = "빛의 가호를 받은 전설의 성검. 거대한 빛의 참격이 주위를 휩쓴다."
+rarity = 3
+icon = ExtResource("2_res")
+price = 1600
