@@ -17,6 +17,21 @@
 
 ---
 
+## 팀원과 함께 플레이하기
+
+| 방법 | 대상 | 하는 법 |
+| --- | --- | --- |
+| **Windows 실행 파일** | Godot 없이 바로 플레이 | `Crusader_Windows.zip` 압축 해제 → `Crusader.exe` 더블클릭 (파란 경고창이 뜨면 [추가 정보] → [실행]) |
+| **웹 버전** | 링크로 브라우저에서 플레이 | `Crusader_Web.zip` 을 [itch.io](https://itch.io) 에 HTML5 게임으로 업로드 (또는 GitHub Pages / 정적 웹 서버에 올리기) |
+| **Godot 프로젝트** | 같이 개발 | GitHub 에서 Code → Download ZIP (또는 `git clone`) → Godot 4.3+ 로 `project.godot` Import |
+
+직접 빌드하기: Godot 에디터 → 프로젝트 → 내보내기 → `Windows Desktop` / `Web` 프리셋 (`export_presets.cfg` 포함, 처음 한 번 "내보내기 템플릿 관리"에서 템플릿 다운로드 필요).
+헤드리스: `godot --headless --path . --export-release "Windows Desktop" build/windows/Crusader.exe`
+
+> 한글 폰트는 게임에 내장되어 있습니다 (갈무리 Galmuri11, SIL OFL 1.1 — `assets/fonts/`). 그래서 웹이나 한글 폰트가 없는 PC 에서도 글자가 깨지지 않습니다.
+
+---
+
 ## 실행 방법
 
 1. Godot 4.3+ 실행 → **Import** → 이 폴더의 `project.godot` 선택
