@@ -7,7 +7,7 @@ extends CanvasLayer
 ##   방어구 3칸 (방패 / 투구 / 갑옷)
 ##   보석 3칸
 ##   → 칸을 클릭하면 장착 해제 (마지막 무기는 해제 불가)
-## 오른쪽: 가방 (보유 장비 전체) — 장착 / 해제 버튼
+## 오른쪽: 가방 (회복 포션 + 보유 장비 전체) — 포션 사용 / 장비 장착·해제 버튼
 ## 아래: 마우스를 올린 장비의 상세 정보
 
 const SLOT_SIZE := Vector2(28, 28)
@@ -29,6 +29,7 @@ func _ready() -> void:
 	GameManager.inventory_changed.connect(_on_data_changed)
 	GameManager.equipment_changed.connect(_on_data_changed)
 	GameManager.stats_changed.connect(_on_data_changed)
+	GameManager.potions_changed.connect(_on_data_changed)
 	GameManager.gold_changed.connect(_on_data_changed.unbind(1))
 	_close_button.pressed.connect(close)
 
@@ -85,6 +86,12 @@ func _refresh() -> void:
 		_gem_slots.add_child(_make_slot(GameManager.gem_slots[i], "보석 %d" % (i + 1), false))
 
 	_stats.text = _stats_text()
+
+	for potion in GameManager.get_owned_potions():
+		var count := GameManager.get_potion_count(potion.id)
+		var use_button := ItemRow.make_button("사용", GameManager.hp >= GameManager.max_hp, _on_use_potion_pressed.bind(potion), 40.0)
+		var potion_line := "보유 %d개 · 체력 +%d  ([H] 자동 사용)" % [count, potion.get_heal(GameManager.max_hp)]
+		_bag_list.add_child(ItemRow.build(potion, [use_button], _show_detail.bind(potion), false, potion_line))
 
 	for item in _sorted_items():
 		var equipped := GameManager.is_equipped(item)
@@ -160,6 +167,10 @@ func _show_detail(item: ItemData) -> void:
 
 func _on_equip_pressed(item: ItemData) -> void:
 	GameManager.equip_item(item)
+
+
+func _on_use_potion_pressed(potion: PotionData) -> void:
+	GameManager.use_potion(potion)
 
 
 func _on_unequip_pressed(item: ItemData) -> void:

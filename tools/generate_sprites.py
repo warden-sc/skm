@@ -804,6 +804,25 @@ def gem_icon(base, light, size_scale):
     return outline(img)
 
 
+# ---------------------------------------------------------------- 회복 포션
+POTIONS = {
+    "small_potion": ((230, 60, 70), (255, 150, 150), 0.8),
+    "potion": ((220, 40, 60), (255, 130, 140), 1.0),
+    "greater_potion": ((170, 60, 220), (230, 160, 255), 1.15),
+}
+
+
+def potion_icon(liquid, light, sc):
+    img = canvas(16)
+    cx, cy, r = 7.5, 10.0, 4.6 * sc
+    ellipse(img, cx, cy, r, r, (200, 230, 240, 255))                 # 유리병
+    ellipse(img, cx, cy + 0.6, r - 1.0, r - 1.2, liquid + (255,))    # 물약
+    rect(img, 6, int(cy - r) - 3, 9, int(cy - r) + 1, (200, 230, 240, 255))  # 병목
+    rect(img, 6, int(cy - r) - 4, 9, int(cy - r) - 3, (140, 90, 50, 255))    # 코르크
+    put(img, [(5, int(cy) - 1), (5, int(cy)), (6, int(cy) - 2)], light + (255,))
+    return outline(img)
+
+
 # ---------------------------------------------------------------- 월드 오브젝트
 def portal(core, rim):
     img = canvas(32)
@@ -1001,6 +1020,8 @@ def main():
         save(armor_icon(*cols), "armors", f"{name}.png")
     for name, (base, light, sc) in GEMS.items():
         save(gem_icon(base, light, sc), "gems", f"{name}.png")
+    for name, (liquid, light, sc) in POTIONS.items():
+        save(potion_icon(liquid, light, sc), "items", f"{name}.png")
     save(portal((255, 255, 255), (80, 170, 255)), "world", "portal_blue.png")
     save(portal((255, 240, 200), (255, 70, 60)), "world", "portal_red.png")
     save(portal((255, 255, 230), (255, 190, 60)), "world", "portal_gold.png")

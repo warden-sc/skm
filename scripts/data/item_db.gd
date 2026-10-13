@@ -43,6 +43,10 @@ const ITEM_PATHS: Array[String] = [
 	"res://data/gems/sapphire.tres",
 	"res://data/gems/blood_ruby.tres",
 	"res://data/gems/star_diamond.tres",
+	# 회복 포션 (소모품)
+	"res://data/potions/small_potion.tres",
+	"res://data/potions/potion.tres",
+	"res://data/potions/greater_potion.tres",
 ]
 
 static var _cache: Dictionary = {}
@@ -87,6 +91,10 @@ static func get_chest_candidates(rarity: ItemData.Rarity) -> Array[ItemData]:
 		if is_chest_weapon or item is ShieldData or item is HelmetData or item is ArmorData:
 			result.append(item)
 	return result
+
+
+static func get_potion(item_id: StringName) -> PotionData:
+	return get_item(item_id) as PotionData
 
 
 static func has_item(item_id: StringName) -> bool:

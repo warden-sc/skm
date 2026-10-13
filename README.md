@@ -6,6 +6,7 @@
 - **맵 흐름**: 야영지(상인) → 텔레포트 → 사냥터(처치 목표 달성 시 **보스방 봉인 해제**) → 보스방 → **보물상자** + 다음 스테이지 텔레포트
 - **장비 칸**: 무기 3칸(**검 / 활 / 지팡이**, 1·2·3·Q 로 전환) · 방어구 3칸(**방패 / 투구 / 갑옷**) · **보석 3칸**(치명타 확률·치명타 피해·공격력)
 - **인벤토리**(I / Tab): 장비 칸 + 가방 + 능력치 요약. 상인에게 **장비 판매** 가능
+- **회복 포션**: 상점에서 여러 개 구매(종류별 최대 5개), **H** 키로 잃은 체력에 맞는 포션 자동 사용
 - 검(근접): 부채꼴 범위 타격 / 활: **시위 당겨 발사** / 지팡이: **영창 → 구슬에 마력 집중 → 시전**
 - 등급(일반·희귀·레어·전설)이 높을수록 공격력·방어력뿐 아니라 **이펙트도 화려**
 - 방패 가드 · 퍼펙트 가드(탄 반사, 적 기절) · 가드 브레이크
@@ -29,6 +30,7 @@
 | 마우스 오른쪽 / `F` (누르고 있기) | 방패 가드 — 올린 직후 맞으면 퍼펙트 가드 |
 | `Space` / `Shift` | 대시 (무적) |
 | `1` / `2` / `3`, `Q` / 마우스 휠 | 무기 칸 전환 (검 · 활 · 지팡이) |
+| `H` | 회복 포션 사용 (잃은 체력에 맞는 포션 자동 선택) |
 | `E` | 상호작용 — 상인 · 텔레포트 · 보스문 · 보물상자 |
 | `I` / `Tab` | 인벤토리 |
 | `ESC` | 창 닫기 |
@@ -87,6 +89,19 @@
 - 마지막으로 남은 무기는 해제할 수 없습니다.
 - **판매**: 야영지 상인 → 오른쪽 「보유 장비 · 판매」 → 판매 (가격의 40%). 장착 중인 장비는 인벤토리에서 해제 후 판매.
 - 이미 가진 장비를 다시 주우면 판매가만큼 골드로 자동 환전됩니다.
+
+### 회복 포션 (소모품)
+
+| 포션 | 등급 | 회복량 | 가격 | 구매 가능 |
+| --- | --- | --- | --- | --- |
+| 작은 회복 포션 | 일반 | +30 | 25G | 1스테이지 |
+| 회복 포션 | 희귀 | 최대 체력의 40% | 60G | 1스테이지 |
+| 고급 회복 포션 | 레어 | 최대 체력의 80% | 140G | 2스테이지 |
+
+- 장비와 달리 **여러 개** 가질 수 있습니다 (종류별 최대 5개, 시작 시 작은 포션 2개).
+- `H`: 잃은 체력을 다 채우는 포션 중 가장 작은 것을, 없으면 가장 큰 것을 자동으로 마십니다 (연타 방지 0.8초).
+- 인벤토리에서 원하는 포션을 직접 골라 마실 수도 있습니다. HUD 단축바 맨 오른쪽에 다음에 마실 포션과 총 개수가 표시됩니다.
+- 체력이 가득 차 있으면 소모되지 않습니다. 수치는 `data/potions/*.tres`, 최대 개수는 `GameManager.POTION_MAX_STACK`.
 
 ### 등급 & 상점
 
@@ -155,6 +170,7 @@ assets/sprites/…               ← 플레이스홀더 도트 그래픽 (tools/
                                   effects / items / world(텔레포트·보스문·상자·모닥불) / tiles / ui(타이틀 배경)
 data/
   weapons/ shields/ helmets/ armors/ gems/*.tres   ← 장비 데이터
+  potions/*.tres               ← 회복 포션 (소모품)
   stages/stage_1~3.tres        ← 스테이지 구성 (몬스터·보스·바닥·처치 목표)
 scenes/
   title/title.tscn             ← 타이틀 (난이도 선택 · 조작 안내)
@@ -166,7 +182,7 @@ scripts/
   autoload/game_manager.gd     ← Autoload "GameManager" (class_name 없음!)
   core/  layers.gd, elements.gd, floating_text.gd
   fx/    fx.gd (파티클·빛·충격파 static 헬퍼), aoe_strike.gd (예고 장판)
-  data/  item_data.gd (공통) / weapon_data / shield_data / helmet_data / armor_data / gem_data / stage_data / item_db
+  data/  item_data.gd (공통) / weapon_data / shield_data / helmet_data / armor_data / gem_data / potion_data / stage_data / item_db
   player/ player.gd, attack_controller.gd (Node), guard_controller.gd (Node)
   projectile/ projectile_spec.gd, projectile.gd, projectile_pool.gd
   enemies/ enemy.gd (기반) + slime, goblin, boss_slime_king, hellhound, orc, boss_hell_gatekeeper, golem, boss_archeon
@@ -249,7 +265,7 @@ ShopKeeper (Area2D) ← shop_keeper.gd
 HUD (CanvasLayer)  ← hud.gd
 ├─ StatusPanel: HP / DASH / GUARD (TextureProgressBar), 골드
 ├─ TopCenter: %StageLabel("[하드] STAGE 1 · 초록 들판"), %LocationLabel("사냥터"), %ProgressLabel("보스방 해방까지 처치 3 / 12"), %BossBox
-├─ %Hotbar (아래 가운데): 무기 3칸(1/2/3) | 방패·투구·갑옷 | 보석 3칸   ← 코드로 생성
+├─ %Hotbar (아래 가운데): 무기 3칸(1/2/3) | 방패·투구·갑옷 | 보석 3칸 | 포션(H, 개수)   ← 코드로 생성
 └─ %NoticeLabel, ControlsHint, %GameOver
 
 InventoryUI (CanvasLayer, Always)  ← inventory_ui.gd
@@ -291,12 +307,13 @@ ShopUI (CanvasLayer, Always)  ← shop_ui.gd
 [E]      Interactable ─ ShopKeeper → GameManager.request_shop → ShopUI
                      ├ Portal / BossGate.interacted → StageManager (ScreenFade 로 방 이동)
                      └ Chest.opened → StageManager → 다음 등급 장비 Pickup
-[I]      InventoryUI → GameManager.equip_item / unequip_item
+[I]      InventoryUI → GameManager.equip_item / unequip_item / use_potion
+[H]      Player → GameManager.use_potion() → potion_used → 회복 이펙트 · HUD 포션 칸
 Enemy.died → StageManager → 골드/장비 Pickup, 처치 수 → BossGate.open()
 
 GameManager signals ─▶ HUD / ShopUI / InventoryUI / Player(무기·방패·투구·갑옷 그림)
   player_hp_changed, player_damaged, player_died, dash_cooldown_changed, guard_changed, guard_broken,
-  gold_changed, inventory_changed, equipment_changed, weapon_equipped, shield_equipped,
+  gold_changed, inventory_changed, equipment_changed, potions_changed, potion_used, weapon_equipped, shield_equipped,
   helmet_equipped, armor_equipped, stats_changed, stage_changed, location_changed,
   kill_progress_changed, boss_spawned, boss_hp_changed, boss_defeated, notice_requested, shop_open_requested
 ```
@@ -338,9 +355,9 @@ GameManager signals ─▶ HUD / ShopUI / InventoryUI / Player(무기·방패·�
 
 ## 테스트
 
-모든 시스템을 실제로 구동해 검증하는 헤드리스 통합 테스트 (103개 항목):
+모든 시스템을 실제로 구동해 검증하는 헤드리스 통합 테스트 (113개 항목):
 타이틀·난이도 / 이동·대시 / 근접 / 무기 칸 3개(중복 장착 없음) / 활 시위 / 지팡이 영창 / 스테이지별 드랍 등급 /
-보석 치명타 / 등급 이펙트 / 가드·퍼펙트 가드 / 인벤토리 / 상점 구매·판매·잠금·갑옷 /
+보석 치명타 / 등급 이펙트 / 가드·퍼펙트 가드 / 회복 포션 / 인벤토리 / 상점 구매·판매·잠금·갑옷 /
 야영지 → 사냥터 → 보스문 해방 → 보스방 → 상자(레어/전설) → 다음 스테이지 / 2·3스테이지 보스 패턴 / 난이도 배율 / 사망·재시작
 
 ```bash

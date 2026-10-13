@@ -53,6 +53,10 @@ const SWING_FX_ARC := 124.0     # swing_arc.png 가 그리는 각도(도)
 @export var block_push_force: float = 220.0
 @export var parry_stun_time: float = 1.0
 
+@export_group("Potion")
+## 포션을 연달아 마실 수 없는 대기 시간
+@export var potion_cooldown: float = 0.8
+
 @onready var _body_sprite: Sprite2D = $BodySprite
 @onready var _helmet_sprite: Sprite2D = $BodySprite/HelmetSprite
 @onready var _armor_sprite: Sprite2D = $BodySprite/ArmorSprite
@@ -87,6 +91,7 @@ var _weapon_rest_angle: float = WEAPON_REST_ANGLE
 var _slow_left: float = 0.0
 var _slow_multiplier: float = 1.0
 var _windup_weapon: WeaponData
+var _potion_cooldown_left: float = 0.0
 var _charge_particles: CPUParticles2D
 
 
@@ -102,6 +107,7 @@ func _ready() -> void:
 	GameManager.player_damaged.connect(_on_player_damaged)
 	GameManager.player_died.connect(_on_player_died)
 	GameManager.guard_broken.connect(_on_guard_broken)
+	GameManager.potion_used.connect(_on_potion_used)
 	_on_weapon_equipped(GameManager.equipped_weapon)
 	_on_shield_equipped(GameManager.equipped_shield)
 	_on_helmet_equipped(GameManager.equipped_helmet)
@@ -145,7 +151,10 @@ func _physics_process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if _is_dead:
 		return
-	if event.is_action_pressed(&"weapon_next"):
+	if event.is_action_pressed(&"use_potion"):
+		if _potion_cooldown_left <= 0.0 and GameManager.use_potion():
+			_potion_cooldown_left = potion_cooldown
+	elif event.is_action_pressed(&"weapon_next"):
 		GameManager.cycle_weapon(1)
 	elif event.is_action_pressed(&"weapon_prev"):
 		GameManager.cycle_weapon(-1)
@@ -384,6 +393,7 @@ func _update_aim(delta: float) -> void:
 
 func _update_timers(delta: float) -> void:
 	_invincible_left = maxf(_invincible_left - delta, 0.0)
+	_potion_cooldown_left = maxf(_potion_cooldown_left - delta, 0.0)
 	_slow_left = maxf(_slow_left - delta, 0.0)
 	_dash_time_left = maxf(_dash_time_left - delta, 0.0)
 	if _dash_cooldown_left > 0.0:
@@ -526,6 +536,13 @@ func _on_shield_equipped(shield: ShieldData) -> void:
 
 func _on_player_damaged(_amount: int) -> void:
 	shake_camera(4.0)
+
+
+func _on_potion_used(_potion: PotionData, healed: int) -> void:
+	var heal_color := Color(0.45, 1.0, 0.5)
+	FloatingText.spawn(self, global_position + Vector2(0, -18), "+%d HP" % healed, heal_color, true)
+	Fx.burst(self, global_position + Vector2(0, -8), heal_color, 16, 40.0, 0.6, Vector2(0, -60))
+	Fx.flash(self, global_position + Vector2(0, -8), heal_color, 14.0, 0.3)
 
 
 func _on_guard_broken() -> void:

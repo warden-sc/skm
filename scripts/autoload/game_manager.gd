@@ -1,7 +1,7 @@
 extends Node
 ## 전역 게임 상태 관리자 (Autoload 이름: GameManager)
 ##
-## - 난이도 / 플레이어 체력 / 대시 쿨타임 / 가드 게이지 / 골드 / 인벤토리 / 장비 칸 / 스테이지 진행 데이터를 보관합니다.
+## - 난이도 / 플레이어 체력 / 대시 쿨타임 / 가드 게이지 / 골드 / 인벤토리 / 장비 칸 / 회복 포션 / 스테이지 진행 데이터를 보관합니다.
 ## - 값이 바뀌면 항상 시그널을 발행하므로 HUD/상점/인벤토리 UI 는 시그널만 구독하면 실시간으로 갱신됩니다.
 ##
 ## 장비 칸
@@ -33,6 +33,9 @@ signal helmet_equipped(helmet: HelmetData)
 signal armor_equipped(armor: ArmorData)
 ## 방어력 / 최대 체력 / 치명타 등 파생 능력치가 바뀌었을 때
 signal stats_changed
+## 회복 포션 개수가 바뀌었을 때 / 포션을 마셨을 때
+signal potions_changed
+signal potion_used(potion: PotionData, healed: int)
 
 # --- 스테이지 / 보스 ---
 signal stage_changed(stage: int)
@@ -71,6 +74,10 @@ const WEAPON_SLOT_NAMES := ["검", "활", "지팡이"]
 const GEM_SLOT_COUNT := 3
 
 const STARTING_ITEM_IDS: Array[StringName] = [&"rusty_sword", &"wooden_shield"]
+## 시작 시 지급하는 포션 { id: 개수 }
+const STARTING_POTIONS := {&"small_potion": 2}
+## 포션 종류별 최대 보유 개수
+const POTION_MAX_STACK := 5
 const BASE_MAX_HP := 100
 const STARTING_GOLD := 60
 
@@ -99,6 +106,8 @@ var equipped_helmet: HelmetData
 var equipped_armor: ArmorData
 ## 보석 칸 3개. 빈 칸은 null
 var gem_slots: Array[GemData] = [null, null, null]
+## 회복 포션 보유 개수 { 포션 id: 개수 } (소모품이라 items 와 따로 보관)
+var potions: Dictionary = {}
 ## 플레이어 쪽 공격력 배율 (보석 공격력 보너스 반영)
 var damage_multiplier: float = 1.0
 
@@ -147,6 +156,7 @@ func reset_game() -> void:
 		var item := ItemDB.get_item(item_id)
 		add_item(item)
 		equip_item(item)
+	potions = STARTING_POTIONS.duplicate()
 	_recalculate_stats()
 	hp = max_hp
 	emit_all()
@@ -165,6 +175,7 @@ func emit_all() -> void:
 	helmet_equipped.emit(equipped_helmet)
 	armor_equipped.emit(equipped_armor)
 	stats_changed.emit()
+	potions_changed.emit()
 	stage_changed.emit(stage)
 	kill_progress_changed.emit(kills, kill_target)
 
@@ -372,6 +383,8 @@ func get_gems() -> Array[GemData]:
 
 ## 새 장비를 가방에 추가. null 이거나 이미 가지고 있으면 false.
 func add_item(item: ItemData) -> bool:
+	if item is PotionData:
+		return add_potion(item as PotionData, 1) > 0  # 포션은 개수로 보관
 	if item == null or owns_item(item.id):
 		return false
 	items.append(item)
@@ -381,6 +394,8 @@ func add_item(item: ItemData) -> bool:
 
 ## 상점 구매: 골드 차감 + 가방 추가 + 자동 장착
 func buy_item(item: ItemData) -> bool:
+	if item is PotionData:
+		return buy_potion(item as PotionData)
 	if item == null or owns_item(item.id) or not can_afford(item.price):
 		return false
 	if stage < item.get_unlock_stage():
@@ -405,6 +420,83 @@ func sell_item(item: ItemData) -> int:
 	add_gold(value)
 	inventory_changed.emit()
 	return value
+
+
+# ============================================================ 회복 포션
+func get_potion_count(potion_id: StringName) -> int:
+	return int(potions.get(potion_id, 0))
+
+
+func get_total_potions() -> int:
+	var total := 0
+	for count in potions.values():
+		total += int(count)
+	return total
+
+
+## 보유 중인 포션 목록 (회복량 작은 순)
+func get_owned_potions() -> Array[PotionData]:
+	var result: Array[PotionData] = []
+	for potion_id in potions:
+		if int(potions[potion_id]) > 0:
+			var potion := ItemDB.get_potion(potion_id)
+			if potion != null:
+				result.append(potion)
+	result.sort_custom(func(a: PotionData, b: PotionData) -> bool: return a.get_heal(max_hp) < b.get_heal(max_hp))
+	return result
+
+
+## [H] 로 마실 포션 고르기: 잃은 체력을 다 채우는 것 중 가장 작은 것, 없으면 가장 큰 것
+func choose_potion() -> PotionData:
+	var owned := get_owned_potions()
+	if owned.is_empty():
+		return null
+	var missing := max_hp - hp
+	for potion in owned:
+		if potion.get_heal(max_hp) >= missing:
+			return potion
+	return owned[owned.size() - 1]
+
+
+func can_buy_potion(potion: PotionData) -> bool:
+	return potion != null and stage >= potion.get_unlock_stage() \
+		and get_potion_count(potion.id) < POTION_MAX_STACK and can_afford(potion.price)
+
+
+func buy_potion(potion: PotionData) -> bool:
+	if not can_buy_potion(potion):
+		return false
+	spend_gold(potion.price)
+	add_potion(potion, 1)
+	return true
+
+
+func add_potion(potion: PotionData, count: int = 1) -> int:
+	var before := get_potion_count(potion.id)
+	var after := mini(before + count, POTION_MAX_STACK)
+	potions[potion.id] = after
+	potions_changed.emit()
+	return after - before
+
+
+## 포션 마시기. potion 을 지정하지 않으면 choose_potion() 으로 자동 선택. 실제로 마셨으면 true.
+func use_potion(potion: PotionData = null) -> bool:
+	if is_player_dead:
+		return false
+	if potion == null:
+		potion = choose_potion()
+	if potion == null or get_potion_count(potion.id) <= 0:
+		show_notice("회복 포션이 없습니다! 야영지 상인에게서 구매하세요", Color(1.0, 0.6, 0.5))
+		return false
+	if hp >= max_hp:
+		show_notice("체력이 가득 차 있습니다", Color(0.8, 0.9, 1.0))
+		return false
+	var before := hp
+	heal_player(potion.get_heal(max_hp))
+	potions[potion.id] = get_potion_count(potion.id) - 1
+	potions_changed.emit()
+	potion_used.emit(potion, hp - before)
+	return true
 
 
 # ============================================================ 장비 칸

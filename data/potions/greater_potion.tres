@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="PotionData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/potion_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/items/greater_potion.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+heal_amount = 0
+heal_percent = 0.8
+id = &"greater_potion"
+display_name = "고급 회복 포션"
+description = "정제된 마력이 깃든 고급 물약. 체력을 크게 회복한다."
+rarity = 2
+icon = ExtResource("2_res")
+price = 140

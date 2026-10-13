@@ -2,7 +2,7 @@ class_name ShopUI
 extends CanvasLayer
 ## 상점 UI. 열려 있는 동안 게임을 일시정지하고(get_tree().paused), 이 노드만 PROCESS_MODE_ALWAYS 로 동작합니다.
 ##
-## - 왼쪽 「구매」: 골드로 장비 구매 → 가방 추가 + 자동 장착
+## - 왼쪽 「구매」: 회복 포션(여러 개 구매, 종류별 최대 5개) / 골드로 장비 구매 → 가방 추가 + 자동 장착
 ##   · 스테이지별 입고: 1스테이지 일반·희귀 / 2스테이지 레어 / 3스테이지 전설 (그 전에는 잠김 표시)
 ##   · 등급별 배경색: 일반 회색 / 희귀 파랑 / 레어 보라 / 전설 노랑
 ## - 오른쪽 「보유 장비 · 판매」: 장착 / 판매 (장착 중인 장비는 팔 수 없음 — 인벤토리에서 해제 후 판매)
@@ -25,6 +25,7 @@ func _ready() -> void:
 	GameManager.gold_changed.connect(_on_data_changed.unbind(1))
 	GameManager.inventory_changed.connect(_on_data_changed)
 	GameManager.equipment_changed.connect(_on_data_changed)
+	GameManager.potions_changed.connect(_on_data_changed)
 	_close_button.pressed.connect(close)
 
 
@@ -74,6 +75,9 @@ func _refresh() -> void:
 
 	for item in _stock:
 		var locked := GameManager.stage < item.get_unlock_stage()
+		if item is PotionData:
+			_buy_list.add_child(_make_potion_row(item as PotionData, locked))
+			continue
 		var button: Button
 		if GameManager.owns_item(item.id):
 			button = ItemRow.make_button("보유중", true)
@@ -88,6 +92,20 @@ func _refresh() -> void:
 		var equip_button := ItemRow.make_button("장착중" if equipped else "장착", equipped, _on_equip_pressed.bind(item), 40.0)
 		var sell_button := ItemRow.make_button("판매불가" if equipped else "판매 %dG" % item.get_sell_value(), equipped, _on_sell_pressed.bind(item), 58.0)
 		_inventory_list.add_child(ItemRow.build(item, [equip_button, sell_button], _show_detail.bind(item, false)))
+
+
+## 포션 줄: 여러 번 살 수 있고 보유 개수를 표시
+func _make_potion_row(potion: PotionData, locked: bool) -> Control:
+	var count := GameManager.get_potion_count(potion.id)
+	var button: Button
+	if locked:
+		button = ItemRow.make_button("%d스테이지" % potion.get_unlock_stage(), true)
+	elif count >= GameManager.POTION_MAX_STACK:
+		button = ItemRow.make_button("가득 참", true)
+	else:
+		button = ItemRow.make_button("%d G" % potion.price, not GameManager.can_afford(potion.price), _on_buy_pressed.bind(potion))
+	var subtitle := "체력 +%d · 보유 %d / %d" % [potion.get_heal(GameManager.max_hp), count, GameManager.POTION_MAX_STACK]
+	return ItemRow.build(potion, [button], _show_detail.bind(potion, locked), locked, subtitle)
 
 
 func _show_detail(item: ItemData, locked: bool) -> void:

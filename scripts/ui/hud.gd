@@ -4,7 +4,7 @@ extends CanvasLayer
 ##
 ## - 왼쪽 위: HP / DASH / GUARD 게이지(TextureProgressBar), 골드
 ## - 위 가운데: 스테이지·난이도, 현재 위치(야영지/사냥터/보스방), 보스방 해방 진행도, 보스 체력
-## - 아래 가운데 단축바: 무기 3칸(1/2/3, 손에 든 무기 강조) + 방어구 3칸 + 보석 3칸
+## - 아래 가운데 단축바: 무기 3칸(1/2/3, 손에 든 무기 강조) + 방어구 3칸 + 보석 3칸 + 회복 포션(H)
 ##
 ## hud.tscn 의 노드들은 "고유 이름(%)" 으로 접근하므로 레이아웃을 바꿔도 경로가 깨지지 않습니다.
 
@@ -32,6 +32,7 @@ const SMALL_SLOT_SIZE := Vector2(20, 20)
 
 var _hp_tween: Tween
 var _notice_tween: Tween
+var _shown_potion: PotionData
 
 
 func _ready() -> void:
@@ -42,6 +43,8 @@ func _ready() -> void:
 	GameManager.guard_changed.connect(_on_guard_changed)
 	GameManager.gold_changed.connect(_on_gold_changed)
 	GameManager.equipment_changed.connect(_rebuild_hotbar)
+	GameManager.potions_changed.connect(_rebuild_hotbar)
+	GameManager.player_hp_changed.connect(_on_hp_changed_for_potion.unbind(2))
 	GameManager.stage_changed.connect(_on_stage_changed)
 	GameManager.location_changed.connect(_on_location_changed)
 	GameManager.kill_progress_changed.connect(_on_kill_progress_changed)
@@ -175,6 +178,32 @@ func _rebuild_hotbar() -> void:
 	_hotbar.add_child(_make_spacer())
 	for gem in GameManager.gem_slots:
 		_hotbar.add_child(_make_slot(gem, SMALL_SLOT_SIZE, "", false))
+	_hotbar.add_child(_make_spacer())
+	_hotbar.add_child(_make_potion_slot())
+
+
+## 포션 칸: [H] 로 마실 포션 아이콘 + 총 개수
+func _make_potion_slot() -> Control:
+	var potion := GameManager.choose_potion()
+	_shown_potion = potion
+	var slot := _make_slot(potion, WEAPON_SLOT_SIZE, "H", false)
+	var count := Label.new()
+	count.name = "PotionCount"
+	count.text = "x%d" % GameManager.get_total_potions()
+	count.add_theme_font_size_override(&"font_size", 9)
+	count.add_theme_constant_override(&"outline_size", 3)
+	count.add_theme_color_override(&"font_outline_color", Color(0.05, 0.05, 0.1))
+	count.add_theme_color_override(&"font_color", Color(0.6, 1.0, 0.6) if potion != null else Color(0.7, 0.5, 0.5))
+	count.size_flags_horizontal = Control.SIZE_SHRINK_END
+	count.size_flags_vertical = Control.SIZE_SHRINK_END
+	slot.add_child(count)
+	return slot
+
+
+## 체력에 따라 [H] 로 고를 포션이 바뀌므로 아이콘을 갱신
+func _on_hp_changed_for_potion() -> void:
+	if GameManager.choose_potion() != _shown_potion:
+		_rebuild_hotbar()
 
 
 func _make_slot(item: ItemData, slot_size: Vector2, key: String, active: bool) -> Control:

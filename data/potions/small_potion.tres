@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="PotionData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/potion_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/items/small_potion.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+heal_amount = 30
+heal_percent = 0.0
+id = &"small_potion"
+display_name = "작은 회복 포션"
+description = "작은 병에 담긴 회복 물약."
+rarity = 0
+icon = ExtResource("2_res")
+price = 25

@@ -132,7 +132,8 @@ func _run() -> void:
 	_check(_gm.equipped_shield != null and _gm.equipped_shield.id == &"wooden_shield", "방패 칸: 나무 방패")
 	_check(stage.get_state() == StageManager.State.CAMP and _gm.location_name == "야영지", "야영지에서 시작")
 	_check(stage.camp_room.get_bounds().has_point(player.global_position), "플레이어가 야영지 안에 있음")
-	_check(hud.get_node("%Hotbar").get_child_count() == 11, "HUD 단축바 (무기 3 + 방어구 3 + 보석 3)")
+	_check(hud.get_node("%Hotbar").get_child_count() == 13, "HUD 단축바 (무기 3 + 방어구 3 + 보석 3 + 포션)")
+	_check(_gm.get_potion_count(&"small_potion") == 2, "시작 포션: 작은 회복 포션 2개")
 
 	print("[이동/대시]")
 	var start_x := player.global_position.x
@@ -304,11 +305,35 @@ func _run() -> void:
 	Input.action_release(&"guard")
 	await _frames(30)
 
+	print("[회복 포션]")
+	var small := ItemDB.get_potion(&"small_potion")
+	var medium := ItemDB.get_potion(&"potion")
+	var greater := ItemDB.get_potion(&"greater_potion")
+	_gm.heal_full()
+	_check(not _gm.use_potion() and _gm.get_potion_count(&"small_potion") == 2, "체력이 가득 차 있으면 사용되지 않음")
+	_gm.damage_player(20)
+	var hp_low: int = _gm.hp
+	await _press_action(&"use_potion")
+	_check(_gm.hp == mini(hp_low + small.get_heal(_gm.max_hp), _gm.max_hp) and _gm.get_potion_count(&"small_potion") == 1, "H 키 → 작은 포션 사용 (HP %d → %d)" % [hp_low, _gm.hp])
+	_gm.add_gold(1000)
+	_check(_gm.buy_item(medium) and _gm.buy_item(medium) and _gm.get_potion_count(&"potion") == 2, "회복 포션 여러 개 구매")
+	_check(not _gm.buy_item(greater), "고급 회복 포션(레어)은 2스테이지부터")
+	for i in 10:
+		_gm.buy_potion(small)
+	_check(_gm.get_potion_count(&"small_potion") == _gm.POTION_MAX_STACK, "종류별 최대 %d개" % _gm.POTION_MAX_STACK)
+	_gm.damage_player(roundi(_gm.max_hp * 0.35))
+	_check(_gm.choose_potion() == medium, "많이 잃으면 큰 포션 자동 선택")
+	await _frames(60)
+	_gm.use_potion()
+	_check(_gm.hp == _gm.max_hp and _gm.get_potion_count(&"potion") == 1, "회복 포션: 최대 체력의 %d%% 회복" % roundi(medium.heal_percent * 100.0))
+	var potion_slot := hud.get_node("%Hotbar").get_child(hud.get_node("%Hotbar").get_child_count() - 1)
+	_check((potion_slot.get_node("PotionCount") as Label).text == "x%d" % _gm.get_total_potions(), "HUD 포션 개수 표시 x%d" % _gm.get_total_potions())
+
 	print("[인벤토리]")
 	await _press_action(&"inventory")
 	_check(inventory.is_open() and get_tree().paused, "I 키 → 인벤토리 열림 + 일시정지")
 	_check(inventory.get_node("%WeaponSlots").get_child_count() == 3 and inventory.get_node("%ArmorSlots").get_child_count() == 3 and inventory.get_node("%GemSlots").get_child_count() == 3, "장비 칸: 무기 3 · 방어구 3 · 보석 3")
-	_check(inventory.get_node("%BagList").get_child_count() == _gm.items.size(), "가방 목록 %d개" % _gm.items.size())
+	_check(inventory.get_node("%BagList").get_child_count() == _gm.items.size() + _gm.get_owned_potions().size(), "가방 목록: 포션 %d종 + 장비 %d개" % [_gm.get_owned_potions().size(), _gm.items.size()])
 	inventory._on_unequip_pressed(ruby)
 	await get_tree().process_frame
 	_check(not _gm.is_equipped(ruby) and _gm.get_crit_chance_bonus() < 0.2, "보석 칸 해제 → 치명타 보너스 감소")
@@ -320,13 +345,14 @@ func _run() -> void:
 
 	print("[상점 - 구매 / 판매 / 스테이지 잠금 / 갑옷]")
 	_gm.add_gold(5000)
-	_gm.request_shop("테스트 상점", [&"rapid_crossbow", &"iron_shield", &"leather_armor", &"royal_aegis", &"solaris_bow"])
+	_gm.request_shop("테스트 상점", [&"rapid_crossbow", &"iron_shield", &"leather_armor", &"royal_aegis", &"solaris_bow", &"small_potion"])
 	await get_tree().process_frame
 	_check(shop.is_open() and get_tree().paused, "상점 열림 + 일시정지")
 	var rows := shop.get_node("%BuyList").get_children()
 	_check(_row_bg(rows, 0) == ItemData.RARITY_BG_COLORS[ItemData.Rarity.RARE] and _row_bg(rows, 3) == ItemData.RARITY_BG_COLORS[ItemData.Rarity.EPIC] and _row_bg(rows, 4) == ItemData.RARITY_BG_COLORS[ItemData.Rarity.LEGENDARY], "등급 배경색: 희귀 파랑 / 레어 보라 / 전설 노랑")
 	_check(_row_button(rows, 3).disabled and _row_button(rows, 3).text == "2스테이지", "1스테이지: 레어 잠김")
 	_check(not _gm.buy_item(ItemDB.get_item(&"royal_aegis")), "잠긴 장비는 구매 불가")
+	_check(_row_button(rows, 5).text == "가득 참" and _row_button(rows, 5).disabled, "상점: 포션이 가득 차면 구매 불가 표시")
 	var leather := ItemDB.get_item(&"leather_armor") as ArmorData
 	var max_hp_before: int = _gm.max_hp
 	var gold_pre: int = _gm.gold
@@ -488,7 +514,7 @@ func _run() -> void:
 	await _press_action(&"restart")
 	await _frames(10)
 	_check(get_tree().current_scene != main and get_tree().current_scene != null, "씬 재시작")
-	_check(_gm.hp == _gm.max_hp and _gm.stage == 1 and not _gm.is_player_dead and _gm.items.size() == 2, "GameManager 초기화")
+	_check(_gm.hp == _gm.max_hp and _gm.stage == 1 and not _gm.is_player_dead and _gm.items.size() == 2 and _gm.get_total_potions() == 2, "GameManager 초기화")
 	await _frames(10)
 
 	print("")
