@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c81ydes0hd8a"
-path="res://.godot/imported/ruby.png-1424a39c51b40e19c5f9229461b6ec5e.ctex"
+uid="uid://4bc0d5xurqud"
+path="res://.godot/imported/leather_bracelet.png-1ec74ce74808c89e9ba5a2b5f25851f9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/gems/ruby.png"
-dest_files=["res://.godot/imported/ruby.png-1424a39c51b40e19c5f9229461b6ec5e.ctex"]
+source_file="res://assets/sprites/accessories/leather_bracelet.png"
+dest_files=["res://.godot/imported/leather_bracelet.png-1ec74ce74808c89e9ba5a2b5f25851f9.ctex"]
 
 [params]
 

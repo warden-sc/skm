@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cx7r8cndlbxbt"
-path="res://.godot/imported/rough_ruby.png-72b65c89c652345f5268c4e3b5dfceb5.ctex"
+uid="uid://cdy1dnh1oqt73"
+path="res://.godot/imported/wooden_pendant.png-4d7313acfde1091ec024d696a071b961.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/gems/rough_ruby.png"
-dest_files=["res://.godot/imported/rough_ruby.png-72b65c89c652345f5268c4e3b5dfceb5.ctex"]
+source_file="res://assets/sprites/accessories/wooden_pendant.png"
+dest_files=["res://.godot/imported/wooden_pendant.png-4d7313acfde1091ec024d696a071b961.ctex"]
 
 [params]
 

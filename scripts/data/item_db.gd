@@ -1,5 +1,5 @@
 class_name ItemDB
-## 모든 장비 리소스(무기/방패/투구/갑옷/보석)를 id(StringName)로 조회하는 정적 데이터베이스.
+## 모든 장비 리소스(무기/방패/투구/갑옷/장신구/포션)를 id(StringName)로 조회하는 정적 데이터베이스.
 ## 새 장비를 추가하려면 .tres 를 만들고 ITEM_PATHS 에 경로만 추가하세요.
 
 const ITEM_PATHS: Array[String] = [
@@ -37,12 +37,19 @@ const ITEM_PATHS: Array[String] = [
 	"res://data/armors/chain_mail.tres",
 	"res://data/armors/hellsteel_plate.tres",
 	"res://data/armors/paladin_plate.tres",
-	# 보석
-	"res://data/gems/rough_ruby.tres",
-	"res://data/gems/ruby.tres",
-	"res://data/gems/sapphire.tres",
-	"res://data/gems/blood_ruby.tres",
-	"res://data/gems/star_diamond.tres",
+	# 장신구 (팔찌 / 반지 / 펜던트)
+	"res://data/accessories/leather_bracelet.tres",
+	"res://data/accessories/silver_bracelet.tres",
+	"res://data/accessories/obsidian_bracelet.tres",
+	"res://data/accessories/dragonscale_bracelet.tres",
+	"res://data/accessories/copper_ring.tres",
+	"res://data/accessories/ruby_ring.tres",
+	"res://data/accessories/blood_ruby_ring.tres",
+	"res://data/accessories/star_ring.tres",
+	"res://data/accessories/wooden_pendant.tres",
+	"res://data/accessories/sapphire_pendant.tres",
+	"res://data/accessories/guardian_pendant.tres",
+	"res://data/accessories/life_pendant.tres",
 	# 회복 포션 (소모품)
 	"res://data/potions/small_potion.tres",
 	"res://data/potions/potion.tres",
@@ -91,6 +98,10 @@ static func get_chest_candidates(rarity: ItemData.Rarity) -> Array[ItemData]:
 		if is_chest_weapon or item is ShieldData or item is HelmetData or item is ArmorData:
 			result.append(item)
 	return result
+
+
+static func get_accessory(item_id: StringName) -> AccessoryData:
+	return get_item(item_id) as AccessoryData
 
 
 static func get_potion(item_id: StringName) -> PotionData:

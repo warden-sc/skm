@@ -13,13 +13,14 @@ collision_mask = 2
 script = ExtResource("1_res")
 display_name = "오크"
 max_hp = 120
+defense = 6
 move_speed = 30.0
 contact_damage = 16
 knockback_resistance = 0.6
 gold_min = 12
 gold_max = 20
 item_drop_chance = 0.14
-item_drop_ids = Array[StringName]([&"orc_warhelm", &"iron_shield", &"iron_sword"])
+item_drop_ids = Array[StringName]([&"orc_warhelm", &"iron_shield", &"iron_sword", &"sapphire_pendant", &"ruby_ring"])
 smash_damage = 24
 
 [node name="Shadow" type="Sprite2D" parent="."]

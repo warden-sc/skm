@@ -132,7 +132,7 @@ func _run() -> void:
 	_check(_gm.equipped_shield != null and _gm.equipped_shield.id == &"wooden_shield", "방패 칸: 나무 방패")
 	_check(stage.get_state() == StageManager.State.CAMP and _gm.location_name == "야영지", "야영지에서 시작")
 	_check(stage.camp_room.get_bounds().has_point(player.global_position), "플레이어가 야영지 안에 있음")
-	_check(hud.get_node("%Hotbar").get_child_count() == 13, "HUD 단축바 (무기 3 + 방어구 3 + 보석 3 + 포션)")
+	_check(hud.get_node("%Hotbar").get_child_count() == 13, "HUD 단축바 (무기 3 + 방어구 3 + 장신구 3 + 포션)")
 	_check(_gm.get_potion_count(&"small_potion") == 2, "시작 포션: 작은 회복 포션 2개")
 
 	print("[이동/대시]")
@@ -173,9 +173,68 @@ func _run() -> void:
 	_check(attack.perform_attack(), "녹슨 검 휘두르기")
 	_check(pool.get_available_count() == avail, "검은 투사체를 쓰지 않음")
 	var rusty_damage := hp_front - front.hp
-	_check(rusty_damage >= 8, "정면 적 타격 (데미지 %d)" % rusty_damage)
+	var rusty_weapon := ItemDB.get_weapon(&"rusty_sword")
+	_check(rusty_damage >= rusty_weapon.damage - front.defense, "정면 적 타격 (데미지 %d, 슬라임 방어력 %d)" % [rusty_damage, front.defense])
 	_check(behind.hp == hp_behind, "등 뒤 적은 맞지 않음")
 	behind.despawn()
+	# 슬라임이 뛰어드는 거리보다 검이 멀리 닿아야 함 (예전 리치 26 → 지금 38)
+	var far := slime_scene.instantiate() as Enemy
+	far.move_speed = 0.0
+	far.max_hp = 999
+	stage._add_enemy(far, _enemy_pos_for_hit_center(origin + aim * 36.0), camp_arena)
+	await _frames(3)
+	var hp_far := far.hp
+	await _frames(25)
+	attack.perform_attack()
+	_check(far.hp < hp_far, "녹슨 검 사거리 %d — 36px 떨어진 슬라임도 맞음" % roundi(rusty_weapon.melee_range))
+	far.despawn()
+
+	print("[몬스터 방어력 / 방어력 관통]")
+	var orc_test := (load("res://scenes/enemies/orc.tscn") as PackedScene).instantiate() as Enemy
+	_check(orc_test.defense > front.defense and front.defense > 0, "잡몹에 방어력 (슬라임 %d · 오크 %d)" % [front.defense, orc_test.defense])
+	_check(orc_test.calc_damage(20) == 20 - orc_test.defense, "방어력만큼 피해 감소 (20 → %d)" % orc_test.calc_damage(20))
+	_check(orc_test.calc_damage(20, 4) == 20 - (orc_test.defense - 4), "방깍 4 → 방어력 무시 (20 → %d)" % orc_test.calc_damage(20, 4))
+	_check(orc_test.calc_damage(20, 99) == 20, "방깍이 방어력보다 크면 피해 그대로")
+	_check(orc_test.calc_damage(5) >= 1, "방어력이 높아도 최소 피해는 들어감")
+	orc_test.free()
+	for boss_path in ["res://scenes/enemies/boss_slime_king.tscn", "res://scenes/enemies/boss_hell_gatekeeper.tscn", "res://scenes/enemies/boss_archeon.tscn"]:
+		var boss_test := (load(boss_path) as PackedScene).instantiate() as Enemy
+		_check(boss_test.defense > 0, "보스 방어력: %s %d" % [boss_test.display_name, boss_test.defense])
+		boss_test.free()
+
+	print("[무기 특화]")
+	var swords: Array[WeaponData] = []
+	var bows: Array[WeaponData] = []
+	var staffs: Array[WeaponData] = []
+	for item in ItemDB.get_all():
+		var w := item as WeaponData
+		if w == null:
+			continue
+		if w.weapon_type == WeaponData.WeaponType.SWORD:
+			swords.append(w)
+		elif w.is_bow():
+			bows.append(w)
+		elif w.is_staff():
+			staffs.append(w)
+	var specialized := true
+	for b in bows:
+		for sw in swords:
+			if sw.rarity == b.rarity and (b.damage >= sw.damage or b.attack_cooldown + b.windup_time >= sw.attack_cooldown):
+				specialized = false
+		if b.armor_pen <= 0:
+			specialized = false
+	_check(specialized, "활: 같은 등급 검보다 공격력 낮고 공속 빠름 + 방깍 보유")
+	var all_aoe := true
+	for st in staffs:
+		if st.explosion_radius <= 0.0:
+			all_aoe = false
+	_check(all_aoe and staffs.size() == 6, "지팡이 %d종 모두 범위(폭발) 공격" % staffs.size())
+	var sword_max := 0
+	for item in ItemDB.get_all():
+		var w2 := item as WeaponData
+		if w2 != null and w2.rarity == ItemData.Rarity.LEGENDARY:
+			sword_max = maxi(sword_max, w2.damage)
+	_check(ItemDB.get_weapon(&"holy_sword").damage == sword_max, "검: 같은 등급 최고 공격력")
 
 	print("[무기 칸 3개 - 종류별 1개씩, 중복 장착 없음]")
 	var bow := ItemDB.get_weapon(&"hunter_bow")
@@ -241,17 +300,32 @@ func _run() -> void:
 	_check(_gm.gold > gold_before, "골드 확정 드랍 획득")
 	_check(_gm.items.size() == items_before + 1, "드랍 장비 가방에 추가")
 
-	print("[보석 - 치명타]")
+	print("[장신구 - 팔찌 · 반지 · 펜던트]")
 	_gm.select_weapon_slot(0)
-	var ruby := ItemDB.get_item(&"ruby") as GemData
-	var diamond := ItemDB.get_item(&"star_diamond") as GemData
-	_gm.add_item(ruby)
-	_gm.add_item(diamond)
+	var ruby := ItemDB.get_accessory(&"ruby_ring")
+	var star := ItemDB.get_accessory(&"star_ring")
+	var bracelet := ItemDB.get_accessory(&"obsidian_bracelet")
+	var pendant := ItemDB.get_accessory(&"guardian_pendant")
+	for acc in [ruby, star, bracelet, pendant]:
+		_gm.add_item(acc)
 	_gm.equip_item(ruby)
-	_gm.equip_item(diamond)
-	_check(_gm.gem_slots.count(null) == 1, "보석 칸 2개 사용")
-	_check(is_equal_approx(_gm.get_crit_chance_bonus(), ruby.crit_chance_bonus + diamond.crit_chance_bonus), "치명타 확률 +%d%%" % roundi(_gm.get_crit_chance_bonus() * 100.0))
-	_check(is_equal_approx(_gm.damage_multiplier, 1.0 + diamond.attack_bonus), "공격력 보너스 반영")
+	_gm.equip_item(star)
+	_check(_gm.accessory_slots[AccessoryData.SlotType.RING] == star and not _gm.is_equipped(ruby), "반지 칸은 1개 — 별의 반지가 루비 반지를 교체")
+	_gm.equip_item(ruby)
+	_gm.equip_item(bracelet)
+	_check(_gm.accessory_slots[AccessoryData.SlotType.BRACELET] == bracelet and _gm.accessory_slots.count(null) == 1, "팔찌 칸 · 반지 칸 사용")
+	_check(is_equal_approx(_gm.get_crit_chance_bonus(), ruby.crit_chance_bonus), "반지: 치명타 확률 +%d%%" % roundi(_gm.get_crit_chance_bonus() * 100.0))
+	_check(is_equal_approx(_gm.damage_multiplier, 1.0 + ruby.attack_bonus), "반지: 공격력 +%d%%" % roundi(ruby.attack_bonus * 100.0))
+	_check(is_equal_approx(_gm.get_crit_damage_bonus(), bracelet.crit_damage_bonus) and _gm.get_armor_pen(iron) == iron.armor_pen + bracelet.armor_pen, "팔찌: 치명타 피해 +%d%% · 방깍 %d" % [roundi(bracelet.crit_damage_bonus * 100.0), bracelet.armor_pen])
+	_check(_gm.roll_weapon_damage(bow)["armor_pen"] == bow.armor_pen + bracelet.armor_pen, "활 방깍 + 팔찌 방깍 합산 (%d)" % (bow.armor_pen + bracelet.armor_pen))
+	var spec := ProjectileSpec.from_weapon(bow, Vector2.ZERO, Vector2.RIGHT, _gm.roll_weapon_damage(bow))
+	_check(spec.armor_pen == bow.armor_pen + bracelet.armor_pen, "화살 투사체에 방깍 전달")
+	var def_before: int = _gm.get_total_defense()
+	var hp_cap_before: int = _gm.max_hp
+	_gm.equip_item(pendant)
+	_check(_gm.get_total_defense() == def_before + pendant.defense and _gm.max_hp == hp_cap_before + pendant.bonus_max_hp, "펜던트: 최대 체력 +%d · 방어력 +%d" % [pendant.bonus_max_hp, pendant.defense])
+	_gm.unequip_item(pendant)
+	_check(_gm.max_hp == hp_cap_before and _gm.get_total_defense() == def_before, "펜던트 해제 → 원래 능력치")
 	var crits := 0
 	var crit_amount := 0
 	for i in 2000:
@@ -262,7 +336,7 @@ func _run() -> void:
 	var expected_rate: float = _gm.get_crit_chance(iron)
 	_check(absf(crits / 2000.0 - expected_rate) < 0.05, "치명타 발생률 %.2f (기대 %.2f)" % [crits / 2000.0, expected_rate])
 	var expected_crit := roundi(iron.damage * _gm.damage_multiplier * (iron.crit_multiplier + _gm.get_crit_damage_bonus()))
-	_check(crit_amount == expected_crit, "치명타 피해 %d (보석 치피 반영)" % crit_amount)
+	_check(crit_amount == expected_crit, "치명타 피해 %d (팔찌 치피 반영)" % crit_amount)
 
 	print("[등급별 이펙트]")
 	var flame := ItemDB.get_weapon(&"flame_blade")
@@ -297,11 +371,13 @@ func _run() -> void:
 	Input.action_release(&"guard")
 	await _frames(45)
 	Input.action_press(&"guard")
-	await _frames(1)
+	await _frames(2)
+	_check(player.get_node("WeaponPivot/ShieldSprite").modulate.r > 1.2, "패링 판정 중 방패가 금빛으로 빛남")
+	await _frames(10)
 	var hp3: int = _gm.hp
 	var bullet := pool.spawn(ProjectileSpec.enemy_bullet(player.global_position + aim * 12.0, -aim, 200.0, 10, null))
 	await _frames(6)
-	_check(_gm.hp == hp3 and bullet.is_active and bullet.get_team() == ProjectileSpec.Team.PLAYER, "퍼펙트 가드: 피해 0 + 탄 반사")
+	_check(_gm.hp == hp3 and bullet.is_active and bullet.get_team() == ProjectileSpec.Team.PLAYER, "퍼펙트 가드 (가드 0.2초 뒤 맞아도 성공): 피해 0 + 탄 반사")
 	Input.action_release(&"guard")
 	await _frames(30)
 
@@ -332,11 +408,11 @@ func _run() -> void:
 	print("[인벤토리]")
 	await _press_action(&"inventory")
 	_check(inventory.is_open() and get_tree().paused, "I 키 → 인벤토리 열림 + 일시정지")
-	_check(inventory.get_node("%WeaponSlots").get_child_count() == 3 and inventory.get_node("%ArmorSlots").get_child_count() == 3 and inventory.get_node("%GemSlots").get_child_count() == 3, "장비 칸: 무기 3 · 방어구 3 · 보석 3")
+	_check(inventory.get_node("%WeaponSlots").get_child_count() == 3 and inventory.get_node("%ArmorSlots").get_child_count() == 3 and inventory.get_node("%AccessorySlots").get_child_count() == 3, "장비 칸: 무기 3 · 방어구 3 · 장신구 3")
 	_check(inventory.get_node("%BagList").get_child_count() == _gm.items.size() + _gm.get_owned_potions().size(), "가방 목록: 포션 %d종 + 장비 %d개" % [_gm.get_owned_potions().size(), _gm.items.size()])
 	inventory._on_unequip_pressed(ruby)
 	await get_tree().process_frame
-	_check(not _gm.is_equipped(ruby) and _gm.get_crit_chance_bonus() < 0.2, "보석 칸 해제 → 치명타 보너스 감소")
+	_check(not _gm.is_equipped(ruby) and is_zero_approx(_gm.get_crit_chance_bonus()), "반지 칸 해제 → 치명타 보너스 제거")
 	_gm.unequip_item(bow)
 	_gm.unequip_item(staff)
 	_check(not _gm.unequip_item(iron) and _gm.equipped_weapon == iron, "마지막 무기는 해제 불가")
@@ -417,7 +493,7 @@ func _run() -> void:
 	var chest_drop := _item_pickups(entities).filter(func(p: Pickup) -> bool: return p.global_position.distance_to(chest.global_position) < 40.0)
 	var chest_item: ItemData = (chest_drop[0] as Pickup).item if chest_drop.size() == 1 else null
 	_check(chest_item != null and chest_item.rarity == ItemData.Rarity.EPIC, "1스테이지 보스 상자 → 레어 등급: %s" % (chest_item.display_name if chest_item else "없음"))
-	_check(chest_item != null and not (chest_item is GemData) and not (chest_item is WeaponData and (chest_item as WeaponData).weapon_type == WeaponData.WeaponType.DAGGER), "상자 장비 종류: 검/활/지팡이/방패/투구/갑옷")
+	_check(chest_item != null and not (chest_item is AccessoryData) and not (chest_item is WeaponData and (chest_item as WeaponData).weapon_type == WeaponData.WeaponType.DAGGER), "상자 장비 종류: 검/활/지팡이/방패/투구/갑옷")
 	next_portal.interacted.emit()
 	await _frames(3)
 	_check(_gm.stage == 2 and stage.get_state() == StageManager.State.CAMP and _gm.location_name == "야영지", "다음 스테이지 텔레포트 → 2스테이지 야영지")

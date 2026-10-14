@@ -778,30 +778,56 @@ def armor_icon(main_col, light, dark, deco):
     return outline(img)
 
 
-# ---------------------------------------------------------------- 보석
-GEMS = {
-    "rough_ruby": ((170, 60, 70), (220, 120, 120), 0.75),
-    "ruby": ((220, 40, 60), (255, 150, 160), 1.0),
-    "sapphire": ((50, 90, 230), (150, 190, 255), 1.0),
-    "blood_ruby": ((140, 10, 30), (255, 80, 90), 1.15),
-    "star_diamond": ((180, 235, 255), (255, 255, 255), 1.25),
-}
+# ---------------------------------------------------------------- 장신구 (팔찌 / 반지 / 펜던트)
+# 등급별 (금속 색, 금속 어두운 색, 보석 색)
+ACCESSORY_TIERS = [
+    ((170, 110, 70), (110, 70, 45), (200, 80, 80)),      # 일반: 구리 / 가죽
+    ((200, 210, 225), (130, 140, 160), (70, 140, 240)),  # 희귀: 은
+    ((70, 60, 90), (40, 34, 56), (210, 30, 60)),         # 레어: 흑요석
+    ((255, 205, 90), (190, 130, 40), (180, 240, 255)),   # 전설: 금 + 다이아
+]
 
 
-def gem_icon(base, light, size_scale):
+def bracelet_icon(metal, dark, gem):
     img = canvas(16)
-    r = 5.5 * size_scale
     for y in range(16):
         for x in range(16):
-            dx, dy = x - 7.5, y - 8.0
-            if abs(dx) / r + abs(dy) / (r * 1.1) <= 1.0:  # 마름모(브릴리언트 컷 느낌)
-                t = (dy + r) / (2 * r)
-                col = tuple(int(light[i] * (1 - t) + base[i] * t) for i in range(3))
-                if dy < -r * 0.35:
-                    col = tuple(min(255, c + 40) for c in col)
-                img.putpixel((x, y), col + (255,))
-    put(img, [(6, 5), (6, 6), (7, 5)], (255, 255, 255, 255))
+            d = ((x - 7.5) / 6.5) ** 2 + ((y - 8.5) / 4.5) ** 2
+            if 0.45 <= d <= 1.0:
+                img.putpixel((x, y), (dark if y > 9 else metal) + (255,))
+    for gx in (4, 7, 10):
+        put(img, [(gx, 4), (gx + 1, 4), (gx, 5), (gx + 1, 5)], gem + (255,))
+    put(img, [(5, 5)], (255, 255, 255, 255))
     return outline(img)
+
+
+def ring_icon(metal, dark, gem):
+    img = canvas(16)
+    for y in range(16):
+        for x in range(16):
+            d = math.hypot(x - 7.5, y - 10.0)
+            if 3.0 <= d <= 4.8:
+                img.putpixel((x, y), (dark if y > 11 else metal) + (255,))
+    ellipse(img, 7.5, 4.5, 2.8, 2.6, gem + (255,))
+    put(img, [(6, 3), (7, 3)], (255, 255, 255, 255))
+    return outline(img)
+
+
+def pendant_icon(metal, dark, gem):
+    img = canvas(16)
+    for i in range(6):  # V 자 사슬
+        put(img, [(2 + i, 1 + i), (13 - i, 1 + i)], metal + (255,))
+    ellipse(img, 7.5, 10.5, 3.6, 3.8, dark + (255,))
+    ellipse(img, 7.5, 10.5, 2.5, 2.7, gem + (255,))
+    put(img, [(6, 9)], (255, 255, 255, 255))
+    return outline(img)
+
+
+ACCESSORIES = {
+    "bracelet": (["leather_bracelet", "silver_bracelet", "obsidian_bracelet", "dragonscale_bracelet"], bracelet_icon),
+    "ring": (["copper_ring", "ruby_ring", "blood_ruby_ring", "star_ring"], ring_icon),
+    "pendant": (["wooden_pendant", "sapphire_pendant", "guardian_pendant", "life_pendant"], pendant_icon),
+}
 
 
 # ---------------------------------------------------------------- 회복 포션
@@ -1018,8 +1044,9 @@ def main():
     for name, cols in ARMOR_COLORS.items():
         save(armor_worn(*cols), "armors", f"{name}_worn.png")
         save(armor_icon(*cols), "armors", f"{name}.png")
-    for name, (base, light, sc) in GEMS.items():
-        save(gem_icon(base, light, sc), "gems", f"{name}.png")
+    for _kind, (names, painter) in ACCESSORIES.items():
+        for name, (metal, dark, gem) in zip(names, ACCESSORY_TIERS):
+            save(painter(metal, dark, gem), "accessories", f"{name}.png")
     for name, (liquid, light, sc) in POTIONS.items():
         save(potion_icon(liquid, light, sc), "items", f"{name}.png")
     save(portal((255, 255, 255), (80, 170, 255)), "world", "portal_blue.png")

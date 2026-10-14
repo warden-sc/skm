@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bn1h5ygpmvyg5"
-path="res://.godot/imported/blood_ruby.png-eeccd3e71305952c61932af233716319.ctex"
+uid="uid://dflo3qfni5wbp"
+path="res://.godot/imported/star_ring.png-05bedd51123d1a5b0589425b6a5b732b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/gems/blood_ruby.png"
-dest_files=["res://.godot/imported/blood_ruby.png-eeccd3e71305952c61932af233716319.ctex"]
+source_file="res://assets/sprites/accessories/star_ring.png"
+dest_files=["res://.godot/imported/star_ring.png-05bedd51123d1a5b0589425b6a5b732b.ctex"]
 
 [params]
 

@@ -7,16 +7,17 @@
 
 [resource]
 script = ExtResource("1_script")
+armor_pen = 3
 weapon_type = 1
 element = 0
 effect_color = Color(0.7, 0.85, 1, 1)
 held_texture = ExtResource("4_res")
-damage = 8
+damage = 6
 crit_chance = 0.08
 crit_multiplier = 1.5
 knockback = 50.0
-attack_cooldown = 0.08
-windup_time = 0.12
+attack_cooldown = 0.06
+windup_time = 0.08
 chant_text = ""
 projectile_texture = ExtResource("3_res")
 projectile_speed = 480.0

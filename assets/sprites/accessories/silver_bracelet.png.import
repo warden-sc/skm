@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://3ck4ru4a7jkx"
-path="res://.godot/imported/star_diamond.png-8269b703d2207b00acef459ac1dca856.ctex"
+uid="uid://dq36cg8eeul6r"
+path="res://.godot/imported/silver_bracelet.png-d075d44a5e110c1fe95f9c6e964a556a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/gems/star_diamond.png"
-dest_files=["res://.godot/imported/star_diamond.png-8269b703d2207b00acef459ac1dca856.ctex"]
+source_file="res://assets/sprites/accessories/silver_bracelet.png"
+dest_files=["res://.godot/imported/silver_bracelet.png-d075d44a5e110c1fe95f9c6e964a556a.ctex"]
 
 [params]
 

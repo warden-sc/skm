@@ -7,7 +7,7 @@ extends Node
 ## 장비 칸
 ##   무기 3칸   : 검(단검 포함) / 활 / 지팡이 — 종류별로 1개씩. 1/2/3·Q 로 사용할 무기를 고릅니다.
 ##   방어구 3칸 : 방패 / 투구 / 갑옷
-##   보석 3칸   : 치명타 확률·치명타 피해·공격력 보너스 (합산)
+##   장신구 3칸 : 팔찌(치명타 피해·방어력 관통) / 반지(치명타 확률·공격력) / 펜던트(최대 체력·방어력)
 ##
 ## ⚠️ Autoload 스크립트에는 class_name 을 붙이지 않습니다.
 ##    (붙이면 "Class 'GameManager' hides an autoload singleton" 에러가 납니다.)
@@ -56,22 +56,22 @@ enum WeaponSlot { MELEE, BOW, STAFF }
 const DIFFICULTY_INFO := {
 	Difficulty.NORMAL: {
 		"name": "노멀", "color": Color(0.55, 1.0, 0.6),
-		"enemy_hp": 1.0, "enemy_damage": 1.0, "enemy_speed": 1.0, "gold": 1.0, "max_alive_bonus": 0,
+		"enemy_hp": 1.0, "enemy_defense": 0, "enemy_damage": 1.0, "enemy_speed": 1.0, "gold": 1.0, "max_alive_bonus": 0,
 		"desc": "처음 모험을 떠나는 분께 추천합니다.",
 	},
 	Difficulty.HARD: {
 		"name": "하드", "color": Color(1.0, 0.75, 0.35),
-		"enemy_hp": 1.5, "enemy_damage": 1.4, "enemy_speed": 1.1, "gold": 1.25, "max_alive_bonus": 2,
-		"desc": "몬스터 체력 x1.5 · 공격력 x1.4 · 골드 x1.25",
+		"enemy_hp": 1.5, "enemy_defense": 1, "enemy_damage": 1.4, "enemy_speed": 1.1, "gold": 1.25, "max_alive_bonus": 2,
+		"desc": "몬스터 체력 x1.5 · 공격력 x1.4 · 방어력 +1 · 골드 x1.25",
 	},
 	Difficulty.VERY_HARD: {
 		"name": "베리하드", "color": Color(1.0, 0.35, 0.4),
-		"enemy_hp": 2.2, "enemy_damage": 1.9, "enemy_speed": 1.2, "gold": 1.6, "max_alive_bonus": 4,
-		"desc": "몬스터 체력 x2.2 · 공격력 x1.9 · 더 많고 빠름 · 골드 x1.6",
+		"enemy_hp": 2.2, "enemy_defense": 3, "enemy_damage": 1.9, "enemy_speed": 1.2, "gold": 1.6, "max_alive_bonus": 4,
+		"desc": "몬스터 체력 x2.2 · 공격력 x1.9 · 방어력 +3 · 더 많고 빠름 · 골드 x1.6",
 	},
 }
 const WEAPON_SLOT_NAMES := ["검", "활", "지팡이"]
-const GEM_SLOT_COUNT := 3
+const ACCESSORY_SLOT_NAMES := ["팔찌", "반지", "펜던트"]
 
 const STARTING_ITEM_IDS: Array[StringName] = [&"rusty_sword", &"wooden_shield"]
 ## 시작 시 지급하는 포션 { id: 개수 }
@@ -104,11 +104,11 @@ var equipped_weapon: WeaponData
 var equipped_shield: ShieldData
 var equipped_helmet: HelmetData
 var equipped_armor: ArmorData
-## 보석 칸 3개. 빈 칸은 null
-var gem_slots: Array[GemData] = [null, null, null]
+## 장신구 칸 3개 (AccessoryData.SlotType 순서: 팔찌 / 반지 / 펜던트). 빈 칸은 null
+var accessory_slots: Array[AccessoryData] = [null, null, null]
 ## 회복 포션 보유 개수 { 포션 id: 개수 } (소모품이라 items 와 따로 보관)
 var potions: Dictionary = {}
-## 플레이어 쪽 공격력 배율 (보석 공격력 보너스 반영)
+## 플레이어 쪽 공격력 배율 (반지 공격력 보너스 반영)
 var damage_multiplier: float = 1.0
 
 var stage: int = 1
@@ -146,7 +146,7 @@ func reset_game() -> void:
 	is_boss_active = false
 	items.clear()
 	weapon_slots = [null, null, null]
-	gem_slots = [null, null, null]
+	accessory_slots = [null, null, null]
 	active_weapon_slot = WeaponSlot.MELEE
 	equipped_weapon = null
 	equipped_shield = null
@@ -242,7 +242,7 @@ func report_guard_broken() -> void:
 
 
 # ============================================================ 능력치
-## 방패 + 투구 + 갑옷 방어력 합계. 모든 피해에서 이만큼 빠집니다 (최소 1은 들어감).
+## 방패 + 투구 + 갑옷 + 펜던트 방어력 합계. 모든 피해에서 이만큼 빠집니다 (최소 1은 들어감).
 func get_total_defense() -> int:
 	var total := 0
 	if equipped_shield != null:
@@ -251,6 +251,9 @@ func get_total_defense() -> int:
 		total += equipped_helmet.defense
 	if equipped_armor != null:
 		total += equipped_armor.defense
+	for accessory in accessory_slots:
+		if accessory != null:
+			total += accessory.defense
 	return total
 
 
@@ -260,35 +263,57 @@ func get_bonus_max_hp() -> int:
 		total += equipped_helmet.bonus_max_hp
 	if equipped_armor != null:
 		total += equipped_armor.bonus_max_hp
+	for accessory in accessory_slots:
+		if accessory != null:
+			total += accessory.bonus_max_hp
 	return total
 
 
-## 보석으로 더해지는 치명타 확률 (0.1 = +10%)
+## 반지로 더해지는 치명타 확률 (0.1 = +10%)
 func get_crit_chance_bonus() -> float:
 	var total := 0.0
-	for gem in gem_slots:
-		if gem != null:
-			total += gem.crit_chance_bonus
+	for accessory in accessory_slots:
+		if accessory != null:
+			total += accessory.crit_chance_bonus
 	return total
 
 
+## 팔찌로 더해지는 치명타 피해 배율
 func get_crit_damage_bonus() -> float:
 	var total := 0.0
-	for gem in gem_slots:
-		if gem != null:
-			total += gem.crit_damage_bonus
+	for accessory in accessory_slots:
+		if accessory != null:
+			total += accessory.crit_damage_bonus
 	return total
 
 
+## 반지로 더해지는 공격력 (0.1 = +10%)
 func get_attack_bonus() -> float:
 	var total := 0.0
-	for gem in gem_slots:
-		if gem != null:
-			total += gem.attack_bonus
+	for accessory in accessory_slots:
+		if accessory != null:
+			total += accessory.attack_bonus
 	return total
 
 
-## 무기 + 보석을 합친 최종 치명타 확률
+## 팔찌로 더해지는 방어력 관통(방깍)
+func get_armor_pen_bonus() -> int:
+	var total := 0
+	for accessory in accessory_slots:
+		if accessory != null:
+			total += accessory.armor_pen
+	return total
+
+
+## 무기 + 팔찌를 합친 최종 방어력 관통
+func get_armor_pen(weapon: WeaponData = null) -> int:
+	if weapon == null:
+		weapon = equipped_weapon
+	var base := weapon.armor_pen if weapon != null else 0
+	return base + get_armor_pen_bonus()
+
+
+## 무기 + 반지를 합친 최종 치명타 확률
 func get_crit_chance(weapon: WeaponData = null) -> float:
 	if weapon == null:
 		weapon = equipped_weapon
@@ -296,9 +321,11 @@ func get_crit_chance(weapon: WeaponData = null) -> float:
 	return minf(base + get_crit_chance_bonus(), 1.0)
 
 
-## 장착 무기로 1타 데미지 굴리기 (공격력·치명타 보석 반영)
+## 장착 무기로 1타 데미지 굴리기 (반지·팔찌 반영). 결과에 방어력 관통("armor_pen")도 담아 줍니다.
 func roll_weapon_damage(weapon: WeaponData) -> Dictionary:
-	return weapon.roll_damage(damage_multiplier, get_crit_chance_bonus(), get_crit_damage_bonus())
+	var roll := weapon.roll_damage(damage_multiplier, get_crit_chance_bonus(), get_crit_damage_bonus())
+	roll["armor_pen"] = get_armor_pen(weapon)
+	return roll
 
 
 func _recalculate_stats() -> void:
@@ -373,11 +400,11 @@ func get_armors() -> Array[ArmorData]:
 	return result
 
 
-func get_gems() -> Array[GemData]:
-	var result: Array[GemData] = []
+func get_accessories() -> Array[AccessoryData]:
+	var result: Array[AccessoryData] = []
 	for item in items:
-		if item is GemData:
-			result.append(item as GemData)
+		if item is AccessoryData:
+			result.append(item as AccessoryData)
 	return result
 
 
@@ -514,14 +541,14 @@ func is_equipped(item: ItemData) -> bool:
 	# 타입이 지정된 배열(Array[WeaponData] 등)에 다른 타입을 넣어 검색하면 엔진 에러가 나므로 먼저 종류를 확인
 	if item is WeaponData:
 		return weapon_slots.has(item)
-	if item is GemData:
-		return gem_slots.has(item)
+	if item is AccessoryData:
+		return accessory_slots.has(item)
 	return item != null and (item == equipped_shield or item == equipped_helmet or item == equipped_armor)
 
 
 ## 장비를 알맞은 칸에 장착 (같은 칸의 기존 장비는 가방으로).
-## 무기는 장착하면서 바로 손에 듭니다. 보석은 gem_slot(0~2)을 지정하지 않으면 빈 칸 → 없으면 1번 칸을 교체.
-func equip_item(item: ItemData, gem_slot: int = -1) -> bool:
+## 무기는 장착하면서 바로 손에 듭니다. 장신구는 종류(팔찌/반지/펜던트)에 맞는 칸에 들어갑니다.
+func equip_item(item: ItemData) -> bool:
 	if item == null or not owns_item(item.id):
 		return false
 	if item is WeaponData:
@@ -538,12 +565,9 @@ func equip_item(item: ItemData, gem_slot: int = -1) -> bool:
 	elif item is ArmorData:
 		equipped_armor = item as ArmorData
 		armor_equipped.emit(equipped_armor)
-	elif item is GemData:
-		if gem_slots.has(item):
-			return true
-		if gem_slot < 0:
-			gem_slot = gem_slots.find(null)
-		gem_slots[clampi(gem_slot, 0, GEM_SLOT_COUNT - 1)] = item as GemData
+	elif item is AccessoryData:
+		var accessory := item as AccessoryData
+		accessory_slots[accessory.slot_type] = accessory
 	else:
 		return false
 	_recalculate_stats()
@@ -572,8 +596,8 @@ func unequip_item(item: ItemData) -> bool:
 	elif item == equipped_armor:
 		equipped_armor = null
 		armor_equipped.emit(null)
-	elif item is GemData:
-		gem_slots[gem_slots.find(item)] = null
+	elif item is AccessoryData:
+		accessory_slots[accessory_slots.find(item)] = null
 	_recalculate_stats()
 	equipment_changed.emit()
 	return true

@@ -5,9 +5,17 @@ extends ItemData
 ## - 원거리 무기(활/지팡이): ProjectilePool 에서 투사체 발사
 ##   · 활      : windup_time 동안 시위를 당긴 뒤 발사
 ##   · 지팡이  : windup_time 동안 영창(chant_text) → 지팡이 구슬에 마력이 모인 뒤 시전
+## - 무기 특화: 검 = 가장 높은 공격력 / 활 = 낮은 공격력 대신 빠른 공속 + 방어력 관통(방깍) / 지팡이 = 폭발 범위 공격
 ## - 등급이 높을수록(get_fx_level) 잔상 / 파티클 / 폭발 이펙트가 화려해집니다.
 
 enum WeaponType { SWORD, BOW, STAFF, DAGGER }
+
+const SPECIALTY_TEXT := {
+	WeaponType.SWORD: "특화: 강력한 한 방 (가장 높은 공격력)",
+	WeaponType.BOW: "특화: 빠른 공속 · 방어력 관통(방깍)",
+	WeaponType.STAFF: "특화: 범위 공격 (명중 지점 폭발)",
+	WeaponType.DAGGER: "특화: 빠른 연타 · 방어력 관통(방깍)",
+}
 
 const TYPE_NAMES := {
 	WeaponType.SWORD: "검",
@@ -28,6 +36,8 @@ const TYPE_NAMES := {
 @export_range(0.0, 1.0) var crit_chance: float = 0.05
 @export var crit_multiplier: float = 1.5
 @export var knockback: float = 120.0
+## 방어력 관통(방깍): 적 방어력을 이만큼 무시합니다.
+@export var armor_pen: int = 0
 ## 다음 공격까지의 대기 시간(초)
 @export var attack_cooldown: float = 0.35
 
@@ -72,7 +82,7 @@ func is_staff() -> bool:
 
 
 ## 실제 1타의 데미지를 굴립니다. (치명타 포함)
-## crit_bonus / crit_damage_bonus: 보석 등으로 더해지는 치명타 확률 / 치명타 배율
+## crit_bonus / crit_damage_bonus: 반지·팔찌 등으로 더해지는 치명타 확률 / 치명타 배율
 func roll_damage(multiplier: float = 1.0, crit_bonus: float = 0.0, crit_damage_bonus: float = 0.0) -> Dictionary:
 	var amount := float(damage) * multiplier
 	var is_crit := randf() < crit_chance + crit_bonus
@@ -89,14 +99,22 @@ func get_dps() -> float:
 
 
 func get_summary() -> String:
-	return "%s · ATK %d · DPS %.0f" % [TYPE_NAMES.get(weapon_type, "?"), damage, get_dps()]
+	var extra := ""
+	if armor_pen > 0:
+		extra += " · 방깍 %d" % armor_pen
+	if explosion_radius > 0.0:
+		extra += " · 범위"
+	return "%s · ATK %d · DPS %.0f%s" % [TYPE_NAMES.get(weapon_type, "?"), damage, get_dps(), extra]
 
 
 func get_stat_text() -> String:
 	var lines := PackedStringArray()
 	var element_text := "" if element == Elements.Type.NONE else " · %s 속성" % Elements.name_of(element)
 	lines.append("[%s] %s (%s)%s" % [get_rarity_name(), TYPE_NAMES.get(weapon_type, "?"), "근접" if is_melee() else "원거리", element_text])
+	lines.append(SPECIALTY_TEXT.get(weapon_type, ""))
 	lines.append("공격력 %d  쿨타임 %.2fs  치명타 %d%% (x%.1f)" % [damage, attack_cooldown, roundi(crit_chance * 100.0), crit_multiplier])
+	if armor_pen > 0:
+		lines.append("방어력 관통(방깍) %d" % armor_pen)
 	if is_melee():
 		lines.append("리치 %d  범위 %d°  (범위 안의 모든 적 타격)" % [roundi(melee_range), roundi(melee_arc_degrees)])
 	else:

@@ -11,6 +11,8 @@ var direction: Vector2 = Vector2.RIGHT
 var speed: float = 300.0
 var damage: int = 1
 var is_crit: bool = false
+## 적 방어력을 이만큼 무시 (무기 + 팔찌 방어력 관통)
+var armor_pen: int = 0
 var max_distance: float = 200.0
 var pierce: int = 0
 var knockback: float = 0.0
@@ -28,7 +30,7 @@ var slow_duration: float = 0.0
 
 
 ## 플레이어 무기 데이터로부터 1발 분량의 명세를 만듭니다.
-## roll: WeaponData.roll_damage() 결과 { "amount", "crit" } — 보통 GameManager.roll_weapon_damage(weapon)
+## roll: { "amount", "crit", "armor_pen"(선택) } — 보통 GameManager.roll_weapon_damage(weapon)
 static func from_weapon(weapon: WeaponData, from: Vector2, dir: Vector2, roll: Dictionary) -> ProjectileSpec:
 	var spec := ProjectileSpec.new()
 	spec.team = Team.PLAYER
@@ -37,6 +39,7 @@ static func from_weapon(weapon: WeaponData, from: Vector2, dir: Vector2, roll: D
 	spec.speed = weapon.projectile_speed
 	spec.damage = roll["amount"]
 	spec.is_crit = roll["crit"]
+	spec.armor_pen = int(roll.get("armor_pen", weapon.armor_pen))
 	spec.max_distance = weapon.projectile_range
 	spec.pierce = weapon.pierce
 	spec.knockback = weapon.knockback

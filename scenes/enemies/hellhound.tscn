@@ -13,6 +13,7 @@ collision_mask = 2
 script = ExtResource("1_res")
 display_name = "헬하운드"
 max_hp = 45
+defense = 3
 move_speed = 70.0
 contact_damage = 14
 knockback_resistance = 0.1
@@ -21,7 +22,7 @@ aura_amount = 8
 gold_min = 8
 gold_max = 14
 item_drop_chance = 0.1
-item_drop_ids = Array[StringName]([&"iron_helm", &"rapid_crossbow", &"frost_staff"])
+item_drop_ids = Array[StringName]([&"iron_helm", &"rapid_crossbow", &"frost_staff", &"silver_bracelet"])
 
 [node name="Shadow" type="Sprite2D" parent="."]
 position = Vector2(0, -1)

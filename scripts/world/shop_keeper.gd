@@ -13,7 +13,9 @@ extends Interactable
 	&"iron_shield", &"royal_aegis", &"colossus_bulwark",
 	&"leather_cap", &"iron_helm", &"orc_warhelm", &"gatekeeper_horns",
 	&"leather_armor", &"chain_mail", &"hellsteel_plate", &"paladin_plate",
-	&"rough_ruby", &"ruby", &"sapphire", &"blood_ruby", &"star_diamond",
+	&"leather_bracelet", &"silver_bracelet", &"obsidian_bracelet", &"dragonscale_bracelet",
+	&"copper_ring", &"ruby_ring", &"blood_ruby_ring", &"star_ring",
+	&"wooden_pendant", &"sapphire_pendant", &"guardian_pendant", &"life_pendant",
 ]
 
 

@@ -101,12 +101,12 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="GemHeader" type="Label" parent="Panel/Margin/VBox/Columns/EquipColumn"]
+[node name="AccessoryHeader" type="Label" parent="Panel/Margin/VBox/Columns/EquipColumn"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.6, 0.7, 1)
-text = "보석 칸  (치명타 · 공격력 보너스)"
+text = "장신구 칸  (팔찌 · 반지 · 펜던트)"
 
-[node name="GemSlots" type="HBoxContainer" parent="Panel/Margin/VBox/Columns/EquipColumn"]
+[node name="AccessorySlots" type="HBoxContainer" parent="Panel/Margin/VBox/Columns/EquipColumn"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 6

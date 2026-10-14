@@ -60,8 +60,8 @@ func _get_move_velocity(delta: float) -> Vector2:
 	return Vector2.ZERO
 
 
-func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool = false) -> void:
-	super.take_damage(amount, knockback, is_crit)
+func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool = false, armor_pen: int = 0) -> void:
+	super.take_damage(amount, knockback, is_crit, armor_pen)
 	if not _phase_two and not is_dead() and float(hp) <= max_hp * 0.5:
 		_phase_two = true
 		GameManager.show_notice("슬라임 킹이 분노했다!", Color(1.0, 0.4, 0.6))

@@ -15,6 +15,7 @@ collision_mask = 2
 script = ExtResource("1_script")
 display_name = "슬라임 킹"
 max_hp = 700
+defense = 4
 move_speed = 26.0
 contact_damage = 18
 knockback_resistance = 0.9

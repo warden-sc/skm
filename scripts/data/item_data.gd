@@ -1,6 +1,6 @@
 class_name ItemData
 extends Resource
-## 장비 아이템 공통 데이터 (무기 / 방패 / 투구 / 갑옷 / 보석의 부모 클래스).
+## 장비 아이템 공통 데이터 (무기 / 방패 / 투구 / 갑옷 / 장신구 / 포션의 부모 클래스).
 ## 상점·드랍·인벤토리는 이 타입만 알면 되므로, 새 장비 종류를 추가해도 UI 코드가 그대로 동작합니다.
 
 enum Rarity { COMMON, RARE, EPIC, LEGENDARY }

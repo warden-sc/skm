@@ -239,7 +239,7 @@ func _spawn_boss() -> void:
 	boss.health_changed.connect(_on_boss_health_changed)
 	_add_enemy(boss, boss_spawn.global_position, boss_room.get_arena_rect())
 	Fx.explosion(player, boss_spawn.global_position, Color(1.0, 0.4, 0.4), 50.0, 3)
-	GameManager.report_boss_spawned(boss.display_name, boss.max_hp)
+	GameManager.report_boss_spawned("%s  · 방어력 %d" % [boss.display_name, boss.defense], boss.max_hp)
 	GameManager.show_notice("보스 등장: %s" % boss.display_name, Color(1.0, 0.4, 0.5))
 
 

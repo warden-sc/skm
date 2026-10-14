@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AccessoryData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/accessory_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/accessories/silver_bracelet.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+slot_type = 0
+crit_damage_bonus = 0.25
+armor_pen = 2
+id = &"silver_bracelet"
+display_name = "은 팔찌"
+description = "날카롭게 세공된 은 팔찌. 갑옷의 틈을 꿰뚫는다."
+rarity = 1
+icon = ExtResource("2_res")
+price = 170

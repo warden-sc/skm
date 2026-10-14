@@ -457,7 +457,13 @@ func _update_visuals(delta: float) -> void:
 	var w := 1.0 - exp(-30.0 * delta)
 	_shield_sprite.position = _shield_sprite.position.lerp(shield_pos, w)
 	_shield_sprite.scale = _shield_sprite.scale.lerp(shield_scale, w)
-	_shield_sprite.modulate = Color(0.5, 0.5, 0.5, 0.6) if _guard.is_broken() else Color.WHITE
+	# 퍼펙트 가드(패링) 판정 중에는 방패가 금빛으로 빛나서 타이밍을 알려 줌
+	if _guard.is_broken():
+		_shield_sprite.modulate = Color(0.5, 0.5, 0.5, 0.6)
+	elif _guard.is_in_perfect_window():
+		_shield_sprite.modulate = Color(1.6, 1.5, 0.9)
+	else:
+		_shield_sprite.modulate = Color.WHITE
 	# 평소엔 몸 뒤(무기·활을 가리지 않게), 가드 중엔 몸 앞
 	_shield_sprite.z_index = 0 if guarding else -1
 

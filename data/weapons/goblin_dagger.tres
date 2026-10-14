@@ -5,16 +5,17 @@
 
 [resource]
 script = ExtResource("1_script")
+armor_pen = 2
 weapon_type = 3
 element = 5
 effect_color = Color(0.7, 1, 0.6, 1)
-damage = 7
+damage = 10
 crit_chance = 0.3
 crit_multiplier = 2.2
 knockback = 70.0
 attack_cooldown = 0.16
-melee_range = 20.0
-melee_arc_degrees = 70.0
+melee_range = 30.0
+melee_arc_degrees = 90.0
 id = &"goblin_dagger"
 display_name = "고블린 단검"
 description = "고블린이 쓰던 독 묻은 단검. 리치는 짧지만 매우 빠르고 치명타가 잘 터진다.

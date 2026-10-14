@@ -13,13 +13,14 @@ collision_mask = 2
 script = ExtResource("1_script")
 display_name = "고블린"
 max_hp = 28
+defense = 2
 move_speed = 55.0
 contact_damage = 10
 knockback_resistance = 0.2
 gold_min = 4
 gold_max = 8
 item_drop_chance = 0.12
-item_drop_ids = Array[StringName]([&"goblin_dagger", &"goblin_buckler", &"hunter_bow", &"iron_sword", &"leather_cap"])
+item_drop_ids = Array[StringName]([&"goblin_dagger", &"goblin_buckler", &"hunter_bow", &"iron_sword", &"leather_cap", &"copper_ring", &"leather_bracelet"])
 
 [node name="Shadow" type="Sprite2D" parent="."]
 position = Vector2(0, -1)

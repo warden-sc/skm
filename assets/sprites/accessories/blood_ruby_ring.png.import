@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dmfg1uljsvkcr"
-path="res://.godot/imported/sapphire.png-d1a689da02a3a9229577492a62ac9727.ctex"
+uid="uid://ccnfa1vfkwybp"
+path="res://.godot/imported/blood_ruby_ring.png-82367443703c54af005f0c33862b542b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/gems/sapphire.png"
-dest_files=["res://.godot/imported/sapphire.png-d1a689da02a3a9229577492a62ac9727.ctex"]
+source_file="res://assets/sprites/accessories/blood_ruby_ring.png"
+dest_files=["res://.godot/imported/blood_ruby_ring.png-82367443703c54af005f0c33862b542b.ctex"]
 
 [params]
 

@@ -22,7 +22,7 @@ extends Node
 ## 근접 판정 시 적의 몸 크기를 감안해 사거리에 더해 주는 여유(px)
 const MELEE_BODY_MARGIN := 6.0
 ## 이 거리 안에 붙은 적은 각도와 상관없이 맞습니다 (몸에 겹친 적이 빗나가지 않도록)
-const MELEE_POINT_BLANK := 10.0
+const MELEE_POINT_BLANK := 14.0
 ## 시위 당기기 / 영창 중 이동속도 배율
 const WINDUP_MOVE_MULTIPLIER := 0.6
 ## 등급별(0~3) 근접 명중 파티클 수
@@ -144,7 +144,7 @@ func _melee_attack(weapon: WeaponData) -> bool:
 		hit_ids[enemy.get_instance_id()] = true
 		var roll := GameManager.roll_weapon_damage(weapon)
 		var push := to_enemy.normalized() if to_enemy != Vector2.ZERO else aim
-		enemy.take_damage(roll["amount"], push * weapon.knockback, roll["crit"])
+		enemy.take_damage(roll["amount"], push * weapon.knockback, roll["crit"], roll["armor_pen"])
 		var level := weapon.get_fx_level()
 		Fx.burst(player, enemy.get_hit_center(), weapon.effect_color, HIT_SPARKS[clampi(level, 0, 3)], 60.0 + 20.0 * level, 0.35, Elements.gravity_of(weapon.element))
 		hit_count += 1

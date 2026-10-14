@@ -20,6 +20,7 @@ collision_mask = 2
 script = ExtResource("1_res")
 display_name = "원소의 거신 아르케온"
 max_hp = 5200
+defense = 12
 move_speed = 22.0
 contact_damage = 30
 knockback_resistance = 0.97

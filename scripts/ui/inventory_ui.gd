@@ -5,7 +5,7 @@ extends CanvasLayer
 ## 왼쪽: 장비 칸
 ##   무기 3칸 (검 / 활 / 지팡이) — 손에 든 무기는 노란 테두리
 ##   방어구 3칸 (방패 / 투구 / 갑옷)
-##   보석 3칸
+##   장신구 3칸 (팔찌 / 반지 / 펜던트)
 ##   → 칸을 클릭하면 장착 해제 (마지막 무기는 해제 불가)
 ## 오른쪽: 가방 (회복 포션 + 보유 장비 전체) — 포션 사용 / 장비 장착·해제 버튼
 ## 아래: 마우스를 올린 장비의 상세 정보
@@ -16,7 +16,7 @@ const ARMOR_SLOT_NAMES := ["방패", "투구", "갑옷"]
 @onready var _gold_label: Label = %InvGold
 @onready var _weapon_slots: HBoxContainer = %WeaponSlots
 @onready var _armor_slots: HBoxContainer = %ArmorSlots
-@onready var _gem_slots: HBoxContainer = %GemSlots
+@onready var _accessory_slots: HBoxContainer = %AccessorySlots
 @onready var _stats: Label = %Stats
 @onready var _bag_list: VBoxContainer = %BagList
 @onready var _detail: Label = %InvDetail
@@ -72,7 +72,7 @@ func _on_data_changed() -> void:
 
 func _refresh() -> void:
 	_gold_label.text = "보유 골드: %d G" % GameManager.gold
-	for container in [_weapon_slots, _armor_slots, _gem_slots, _bag_list]:
+	for container in [_weapon_slots, _armor_slots, _accessory_slots, _bag_list]:
 		for child in (container as Node).get_children():
 			child.queue_free()
 
@@ -82,8 +82,8 @@ func _refresh() -> void:
 	var armors: Array[ItemData] = [GameManager.equipped_shield, GameManager.equipped_helmet, GameManager.equipped_armor]
 	for i in armors.size():
 		_armor_slots.add_child(_make_slot(armors[i], ARMOR_SLOT_NAMES[i], false))
-	for i in GameManager.gem_slots.size():
-		_gem_slots.add_child(_make_slot(GameManager.gem_slots[i], "보석 %d" % (i + 1), false))
+	for i in GameManager.accessory_slots.size():
+		_accessory_slots.add_child(_make_slot(GameManager.accessory_slots[i], GameManager.ACCESSORY_SLOT_NAMES[i], false))
 
 	_stats.text = _stats_text()
 
@@ -135,11 +135,12 @@ func _stats_text() -> String:
 	if weapon != null:
 		lines.append("손에 든 무기: %s (ATK %d)" % [weapon.display_name, roundi(weapon.damage * GameManager.damage_multiplier)])
 		lines.append("치명타 확률 %d%% · 치명타 피해 x%.1f" % [roundi(GameManager.get_crit_chance(weapon) * 100.0), weapon.crit_multiplier + GameManager.get_crit_damage_bonus()])
-	lines.append("공격력 +%d%% · 방어력 %d · 최대 HP %d" % [roundi(GameManager.get_attack_bonus() * 100.0), GameManager.get_total_defense(), GameManager.max_hp])
+		lines.append("방어력 관통(방깍) %d · 공격력 +%d%%" % [GameManager.get_armor_pen(weapon), roundi(GameManager.get_attack_bonus() * 100.0)])
+	lines.append("방어력 %d · 최대 HP %d" % [GameManager.get_total_defense(), GameManager.max_hp])
 	return "\n".join(lines)
 
 
-## 가방 정렬: 무기 → 방패 → 투구 → 갑옷 → 보석, 같은 종류는 등급 높은 순
+## 가방 정렬: 무기 → 방패 → 투구 → 갑옷 → 장신구(팔찌·반지·펜던트), 같은 종류는 등급 높은 순
 func _sorted_items() -> Array[ItemData]:
 	var sorted: Array[ItemData] = GameManager.items.duplicate()
 	sorted.sort_custom(func(a: ItemData, b: ItemData) -> bool:
@@ -158,7 +159,9 @@ func _type_order(item: ItemData) -> int:
 		return 4
 	if item is ArmorData:
 		return 5
-	return 6
+	if item is AccessoryData:
+		return 6 + (item as AccessoryData).slot_type
+	return 9
 
 
 func _show_detail(item: ItemData) -> void:

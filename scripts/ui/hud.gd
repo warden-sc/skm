@@ -4,7 +4,7 @@ extends CanvasLayer
 ##
 ## - 왼쪽 위: HP / DASH / GUARD 게이지(TextureProgressBar), 골드
 ## - 위 가운데: 스테이지·난이도, 현재 위치(야영지/사냥터/보스방), 보스방 해방 진행도, 보스 체력
-## - 아래 가운데 단축바: 무기 3칸(1/2/3, 손에 든 무기 강조) + 방어구 3칸 + 보석 3칸 + 회복 포션(H)
+## - 아래 가운데 단축바: 무기 3칸(1/2/3, 손에 든 무기 강조) + 방어구 3칸 + 장신구 3칸(팔찌/반지/펜던트) + 회복 포션(H)
 ##
 ## hud.tscn 의 노드들은 "고유 이름(%)" 으로 접근하므로 레이아웃을 바꿔도 경로가 깨지지 않습니다.
 
@@ -176,8 +176,8 @@ func _rebuild_hotbar() -> void:
 	for item in [GameManager.equipped_shield, GameManager.equipped_helmet, GameManager.equipped_armor]:
 		_hotbar.add_child(_make_slot(item, SMALL_SLOT_SIZE, "", false))
 	_hotbar.add_child(_make_spacer())
-	for gem in GameManager.gem_slots:
-		_hotbar.add_child(_make_slot(gem, SMALL_SLOT_SIZE, "", false))
+	for accessory in GameManager.accessory_slots:
+		_hotbar.add_child(_make_slot(accessory, SMALL_SLOT_SIZE, "", false))
 	_hotbar.add_child(_make_spacer())
 	_hotbar.add_child(_make_potion_slot())
 

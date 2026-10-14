@@ -3,6 +3,8 @@ extends Area2D
 ## 모든 몬스터의 기반 클래스 (Area2D)
 ##
 ## - 플레이어의 근접 공격(AttackController 의 형상 질의)과 투사체(area_entered)가 take_damage() 를 호출합니다.
+## - 방어력(defense)만큼 받는 피해가 줄어듭니다. 무기·팔찌의 방어력 관통(방깍)이 그만큼 방어력을 무시합니다.
+##   (아무리 방어력이 높아도 원래 피해의 MIN_DAMAGE_RATIO 만큼은 들어감)
 ## - 플레이어 몸체와 겹쳐 있는 동안 contact_damage 를 줍니다 (플레이어 무적시간으로 연타 방지).
 ##   방패로 막히면 apply_knockback() 으로 밀려나고, 퍼펙트 가드면 stun() 으로 기절합니다.
 ## - 사망 시 died 시그널 발행 → StageManager 가 골드(확정) / 장비(확률) 드랍을 처리합니다.
@@ -16,6 +18,8 @@ signal summon_requested(scene: PackedScene, at_global: Vector2)
 
 @export var display_name: String = "몬스터"
 @export var max_hp: int = 20
+## 받는 피해에서 빠지는 방어력 (방어력 관통만큼 무시됨)
+@export var defense: int = 0
 @export var move_speed: float = 40.0
 @export var contact_damage: int = 8
 @export_range(0.0, 1.0) var knockback_resistance: float = 0.0
@@ -32,6 +36,8 @@ signal summon_requested(scene: PackedScene, at_global: Vector2)
 @export_range(0.0, 1.0) var item_drop_chance: float = 0.1
 ## ItemDB 의 장비 id 목록 (무기/방패). 드랍 시 이 중 하나가 무작위로 선택됩니다.
 @export var item_drop_ids: Array[StringName] = []
+
+const MIN_DAMAGE_RATIO := 0.2
 
 var hp: int = 0
 ## 반복 스테이지 강화 배율 (탄/장판 피해에 곱해짐)
@@ -79,6 +85,7 @@ func _ready() -> void:
 func apply_scaling(level: int) -> void:
 	level = maxi(level, 0)
 	max_hp = roundi(max_hp * (1.0 + 0.5 * level))
+	defense += 2 * level
 	contact_damage = roundi(contact_damage * (1.0 + 0.25 * level))
 	gold_min = roundi(gold_min * (1.0 + 0.3 * level))
 	gold_max = roundi(gold_max * (1.0 + 0.3 * level))
@@ -89,6 +96,7 @@ func apply_scaling(level: int) -> void:
 ## 난이도 배율 적용 (StageManager 가 add_child 전에 호출)
 func apply_difficulty(info: Dictionary) -> void:
 	max_hp = roundi(max_hp * float(info["enemy_hp"]))
+	defense += int(info.get("enemy_defense", 0))
 	contact_damage = roundi(contact_damage * float(info["enemy_damage"]))
 	power *= float(info["enemy_damage"])
 	move_speed *= float(info["enemy_speed"])
@@ -223,9 +231,19 @@ func request_summon(scene: PackedScene, at_global: Vector2) -> void:
 	summon_requested.emit(scene, at_global)
 
 
-func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool = false) -> void:
+## 방어력 관통을 반영해 실제로 들어갈 피해 계산
+func calc_damage(amount: int, armor_pen: int = 0) -> int:
+	if amount <= 0:
+		return 0
+	var effective_defense := maxi(defense - maxi(armor_pen, 0), 0)
+	return maxi(amount - effective_defense, maxi(ceili(amount * MIN_DAMAGE_RATIO), 1))
+
+
+## amount 는 방어력 적용 전 피해. armor_pen 만큼 방어력을 무시합니다.
+func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool = false, armor_pen: int = 0) -> void:
 	if _dead or amount <= 0:
 		return
+	amount = calc_damage(amount, armor_pen)
 	hp = maxi(hp - amount, 0)
 	_knockback += knockback * (1.0 - knockback_resistance)
 	_hit_flash = 0.08
