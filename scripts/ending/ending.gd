@@ -1,0 +1,134 @@
+extends Control
+## 엔딩 화면 (모든 스테이지 클리어 후 StageManager 가 전환)
+##
+## 1) 이야기 문장이 한 줄씩 떠오름
+## 2) 모험 기록 (난이도 / 클리어 시간 / 처치 수 / 골드 / 최종 장비)
+## 3) 「난이도 선택으로」 → GameManager 초기화 후 타이틀(난이도 선택 화면)
+##
+## 아무 키나 누르면 연출을 건너뛰고 기록을 바로 보여 줍니다.
+
+const TITLE_SCENE := "res://scenes/title/title.tscn"
+const LINE_INTERVAL := 1.1
+const STORY := [
+	"초록 들판을 뒤덮던 슬라임 킹이 쓰러지고,",
+	"불타는 지옥문을 지키던 수문장의 업화가 꺼졌다.",
+	"마지막으로 원소의 거신 아르케온이 깊은 잠에 들자,",
+	"뒤틀렸던 세상의 원소는 다시 균형을 되찾았다.",
+	"이름 없는 성기사의 전설은 그렇게 시작되었다.",
+]
+
+@onready var _the_end: Label = %TheEnd
+@onready var _story_box: VBoxContainer = %StoryBox
+@onready var _record_panel: Control = %RecordPanel
+@onready var _record_title: Label = %RecordTitle
+@onready var _record: Label = %Record
+@onready var _return_button: Button = %ReturnButton
+
+var _story_labels: Array[Label] = []
+var _sequence: Tween
+var _finished: bool = false
+var _time: float = 0.0
+
+
+func _ready() -> void:
+	get_tree().paused = false
+	_return_button.pressed.connect(return_to_difficulty_select)
+	_record.text = build_record_text()
+	var info := GameManager.get_difficulty_info()
+	_record_title.text = "모험 기록 — 난이도: %s" % info["name"]
+	_record_title.add_theme_color_override(&"font_color", info["color"])
+	for line in STORY:
+		var label := Label.new()
+		label.text = line
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.add_theme_font_size_override(&"font_size", 11)
+		label.add_theme_constant_override(&"outline_size", 3)
+		label.add_theme_color_override(&"font_outline_color", Color(0.05, 0.04, 0.1))
+		label.modulate.a = 0.0
+		_story_box.add_child(label)
+		_story_labels.append(label)
+	_the_end.modulate.a = 0.0
+	_record_panel.modulate.a = 0.0
+	_record_panel.hide()
+	_add_light_particles()
+	_play_sequence()
+
+
+func _process(delta: float) -> void:
+	_time += delta
+	_the_end.modulate = Color(1.0, 0.92, 0.6, _the_end.modulate.a).lerp(Color(1, 1, 1, _the_end.modulate.a), (sin(_time * 2.0) + 1.0) * 0.3)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _finished:
+		return
+	if event.is_pressed() and not event.is_echo() and not event is InputEventMouseMotion:
+		get_viewport().set_input_as_handled()
+		skip()
+
+
+func _play_sequence() -> void:
+	_sequence = create_tween()
+	_sequence.tween_property(_the_end, "modulate:a", 1.0, 1.2)
+	for label in _story_labels:
+		_sequence.tween_interval(LINE_INTERVAL * 0.4)
+		_sequence.tween_property(label, "modulate:a", 1.0, LINE_INTERVAL * 0.6)
+	_sequence.tween_interval(0.6)
+	_sequence.tween_callback(_show_record)
+
+
+## 연출 건너뛰기: 모든 문장과 기록을 즉시 표시
+func skip() -> void:
+	if _sequence != null and _sequence.is_valid():
+		_sequence.kill()
+	_the_end.modulate.a = 1.0
+	for label in _story_labels:
+		label.modulate.a = 1.0
+	_show_record()
+
+
+func is_finished() -> bool:
+	return _finished
+
+
+func _show_record() -> void:
+	if _finished:
+		return
+	_finished = true
+	_record_panel.show()
+	create_tween().tween_property(_record_panel, "modulate:a", 1.0, 0.6)
+	_return_button.grab_focus()
+
+
+func build_record_text() -> String:
+	var lines := PackedStringArray()
+	lines.append("클리어 시간  %s" % GameManager.get_play_time_text())
+	lines.append("처치한 몬스터  %d마리" % GameManager.total_kills)
+	lines.append("보유 골드  %d G" % GameManager.gold)
+	var weapons := PackedStringArray()
+	for weapon in GameManager.weapon_slots:
+		if weapon != null:
+			weapons.append(weapon.display_name)
+	lines.append("최종 무기  %s" % (" · ".join(weapons) if not weapons.is_empty() else "-"))
+	return "\n".join(lines)
+
+
+## 새 모험을 위해 데이터를 초기화하고 난이도 선택 화면(타이틀)으로
+func return_to_difficulty_select() -> void:
+	GameManager.reset_game()
+	get_tree().change_scene_to_file(TITLE_SCENE)
+
+
+## 화면 아래에서 떠오르는 금빛 빛가루
+func _add_light_particles() -> void:
+	var lights := Fx.make_aura(Color(1.0, 0.85, 0.4), 50, 4.0, Vector2(0, -18), 5.0)
+	lights.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	lights.emission_rect_extents = Vector2(330, 6)
+	lights.initial_velocity_min = 8.0
+	lights.initial_velocity_max = 24.0
+	lights.scale_amount_min = 0.6
+	lights.scale_amount_max = 1.4
+	lights.position = Vector2(320, 368)
+	add_child(lights)
+	move_child(lights, 2)
+	lights.emitting = true

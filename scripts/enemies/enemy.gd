@@ -9,7 +9,7 @@ extends Area2D
 ##   방패로 막히면 apply_knockback() 으로 밀려나고, 퍼펙트 가드면 stun() 으로 기절합니다.
 ## - 사망 시 died 시그널 발행 → StageManager 가 골드(확정) / 장비(확률) 드랍을 처리합니다.
 ## - 이동 패턴은 자식 클래스에서 _get_move_velocity() 를 오버라이드해서 만듭니다.
-## - 원거리/장판 공격은 shoot() / telegraph_strike() 헬퍼를 쓰면 풀·이펙트·강화 배율이 자동 적용됩니다.
+## - 원거리/장판 공격은 shoot() / telegraph_strike() 헬퍼를 쓰면 풀·이펙트·난이도 배율이 자동 적용됩니다.
 
 signal died(enemy: Enemy)
 signal health_changed(current: int, max_hp: int)
@@ -40,7 +40,7 @@ signal summon_requested(scene: PackedScene, at_global: Vector2)
 const MIN_DAMAGE_RATIO := 0.2
 
 var hp: int = 0
-## 반복 스테이지 강화 배율 (탄/장판 피해에 곱해짐)
+## 난이도 공격력 배율 (탄/장판 피해에 곱해짐)
 var power: float = 1.0
 ## StageManager 가 지정. 크기가 0 이 아니면 이 영역 밖으로 밀려나지 않습니다.
 var arena_rect: Rect2 = Rect2()
@@ -77,20 +77,6 @@ func _ready() -> void:
 	# 스폰 연출
 	sprite.modulate.a = 0.0
 	create_tween().tween_property(sprite, "modulate:a", 1.0, 0.25)
-
-
-## StageManager 가 add_child 전에 호출.
-## 스테이지별 몬스터는 각자 씬에서 수치가 설계되어 있으므로, level 은
-## "마지막 스테이지를 몇 바퀴째 반복 중인지" 입니다 (0 = 강화 없음).
-func apply_scaling(level: int) -> void:
-	level = maxi(level, 0)
-	max_hp = roundi(max_hp * (1.0 + 0.5 * level))
-	defense += 2 * level
-	contact_damage = roundi(contact_damage * (1.0 + 0.25 * level))
-	gold_min = roundi(gold_min * (1.0 + 0.3 * level))
-	gold_max = roundi(gold_max * (1.0 + 0.3 * level))
-	move_speed *= 1.0 + 0.05 * level
-	power = 1.0 + 0.25 * level
 
 
 ## 난이도 배율 적용 (StageManager 가 add_child 전에 호출)
@@ -190,7 +176,7 @@ func distance_to_player() -> float:
 	return global_position.distance_to(_player.global_position)
 
 
-## 적 탄 발사 (ProjectilePool 사용, 반복 강화 배율 적용)
+## 적 탄 발사 (ProjectilePool 사용, 난이도 배율 적용)
 func shoot(dir: Vector2, speed: float, damage: int, texture: Texture2D, slow: float = 0.0,
 		element: Elements.Type = Elements.Type.NONE, from: Vector2 = Vector2.INF) -> void:
 	var pool := ProjectilePool.find(get_tree())
@@ -200,7 +186,7 @@ func shoot(dir: Vector2, speed: float, damage: int, texture: Texture2D, slow: fl
 	pool.spawn(ProjectileSpec.enemy_bullet(origin, dir, speed, roundi(damage * power), texture, slow, element))
 
 
-## 예고 후 폭발하는 장판 공격 (반복 강화 배율 적용)
+## 예고 후 폭발하는 장판 공격 (난이도 배율 적용)
 func telegraph_strike(at_global: Vector2, radius: float, delay: float, damage: int,
 		element: Elements.Type = Elements.Type.FIRE, slow: float = 0.0) -> AoeStrike:
 	return AoeStrike.spawn(self, at_global, radius, delay, roundi(damage * power), Elements.color_of(element), slow, Elements.gravity_of(element))

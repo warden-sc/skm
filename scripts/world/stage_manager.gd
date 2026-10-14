@@ -8,6 +8,7 @@ extends Node
 ##   보스방(BOSS)  : 보스문[E]으로 입장 → 보스 등장
 ##   토벌(CLEARED) : 보스 처치 → 보물상자(다음 스테이지 등급 장비 1개) + 다음 스테이지 텔레포트 등장
 ##   다음 스테이지 텔레포트[E] → 다음 스테이지 야영지
+##   마지막 스테이지 보스 토벌 → 「모든 스테이지 클리어」 → ending_delay 초 뒤 엔딩 화면 → 난이도 선택으로
 ##
 ## 드랍 등급
 ##   일반 몬스터: 스테이지 등급까지만 (1스테이지 일반·희귀 / 2스테이지 레어까지 / 3스테이지 전설까지)
@@ -20,6 +21,7 @@ enum State { CAMP, FIELD, BOSS, CLEARED, GAME_OVER }
 const LOCATION_CAMP := "야영지"
 const LOCATION_FIELD := "사냥터"
 const LOCATION_BOSS := "보스방"
+const ENDING_SCENE := "res://scenes/ending/ending.tscn"
 
 @export var entities_root: Node2D
 @export var player: Player
@@ -51,6 +53,8 @@ const LOCATION_BOSS := "보스방"
 ## 무기 드랍이 여러 개 겹치지 않도록 금화 개수 상한
 @export var max_coin_pickups_per_kill: int = 4
 @export var boss_entry_delay: float = 1.2
+## 마지막 보스를 쓰러뜨린 뒤 엔딩 화면으로 넘어가기까지의 시간(초)
+@export var ending_delay: float = 4.0
 
 ## true 면 텔레포트 시 화면 전환 없이 즉시 이동 (테스트용)
 var instant_travel: bool = false
@@ -61,6 +65,7 @@ var _kills: int = 0
 var _kill_target: int = 0
 var _boss: Enemy
 var _chest: Chest
+var _ending_timer: Timer
 
 
 func _ready() -> void:
@@ -72,9 +77,18 @@ func _ready() -> void:
 	camp_portal.interacted.connect(return_to_camp)
 	boss_gate.interacted.connect(enter_boss_room)
 	next_stage_portal.interacted.connect(go_to_next_stage)
+	_ending_timer = Timer.new()
+	_ending_timer.one_shot = true
+	_ending_timer.timeout.connect(go_to_ending)
+	add_child(_ending_timer)
 	_setup_stage(GameManager.stage)
 	_arrive_at_camp()
 	_notice_later("STAGE %d 「%s」 — 상인에게서 장비를 갖추고 텔레포트[E]로 사냥터에 가세요" % [GameManager.stage, GameManager.stage_name], Color(0.6, 1.0, 0.7), 0.3)
+
+
+func _process(delta: float) -> void:
+	if _state != State.GAME_OVER and not GameManager.is_game_cleared:
+		GameManager.play_time += delta
 
 
 func _physics_process(delta: float) -> void:
@@ -92,18 +106,22 @@ func get_state() -> State:
 	return _state
 
 
-## 현재 스테이지의 구성 데이터 (마지막 이후에는 마지막 데이터를 반복)
+## 현재 스테이지의 구성 데이터
 func get_stage_data(stage: int = -1) -> StageData:
 	if stage < 0:
 		stage = GameManager.stage
 	return stages[clampi(stage - 1, 0, stages.size() - 1)]
 
 
-## 마지막 스테이지를 몇 바퀴째 반복 중인지 (몬스터 강화 단계)
-func get_scaling_level(stage: int = -1) -> int:
+## 전체 스테이지 수 (= 엔딩까지 쓰러뜨려야 할 보스 수)
+func get_final_stage() -> int:
+	return stages.size()
+
+
+func is_final_stage(stage: int = -1) -> bool:
 	if stage < 0:
 		stage = GameManager.stage
-	return maxi(stage - stages.size(), 0)
+	return stage >= get_final_stage()
 
 
 func get_max_alive() -> int:
@@ -137,14 +155,28 @@ func enter_boss_room() -> void:
 		_travel(_do_enter_boss_room)
 
 
-## 보스방 → 다음 스테이지 야영지 (보스 토벌 후)
+## 보스방 → 다음 스테이지 야영지 (보스 토벌 후, 마지막 스테이지가 아닐 때)
 func go_to_next_stage() -> void:
-	if _state == State.CLEARED:
+	if _state == State.CLEARED and not is_final_stage():
 		_travel(_do_go_to_next_stage)
+
+
+## 모든 스테이지 클리어 → 엔딩 화면 (엔딩에서 난이도 선택 화면으로 돌아감)
+func go_to_ending() -> void:
+	if not GameManager.is_game_cleared or GameManager.is_player_dead:
+		return
+	_ending_timer.stop()
+	_travel(_do_go_to_ending)
+
+
+func _do_go_to_ending() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file(ENDING_SCENE)
 
 
 ## 지정 스테이지의 야영지로 즉시 이동 (디버그 / 테스트용)
 func go_to_stage(stage: int) -> void:
+	stage = clampi(stage, 1, get_final_stage())
 	_clear_enemies()
 	if _boss != null and is_instance_valid(_boss):
 		GameManager.report_boss_defeated()
@@ -213,10 +245,7 @@ func _arrive_at_camp() -> void:
 # ============================================================ 스테이지 준비
 func _setup_stage(stage: int) -> void:
 	var data := get_stage_data(stage)
-	var title := data.stage_name
-	if get_scaling_level(stage) > 0:
-		title += " +%d" % get_scaling_level(stage)
-	GameManager.set_stage(stage, title)
+	GameManager.set_stage(stage, data.stage_name)
 	for room in [camp_room, field_room, boss_room]:
 		(room as Room).apply_theme(data.floor_texture, data.wall_tint)
 	_kills = 0
@@ -250,6 +279,9 @@ func _on_boss_defeated() -> void:
 	_release_projectiles()
 	GameManager.heal_full()
 	_clear_enemies()
+	if is_final_stage():
+		_on_final_boss_defeated()
+		return
 	# 보물상자 + 다음 스테이지 텔레포트
 	var chest := chest_scene.instantiate() as Chest
 	chest.opened.connect(_on_chest_opened)
@@ -258,6 +290,15 @@ func _on_boss_defeated() -> void:
 	next_stage_portal.set_prompt("[E] STAGE %d 로 이동" % (GameManager.stage + 1))
 	next_stage_portal.enabled = true
 	GameManager.show_notice("보스 토벌! 보물상자를 열고 텔레포트로 다음 스테이지로 가세요", Color(1.0, 0.85, 0.4))
+
+
+## 마지막 보스 토벌: 상자/텔레포트 대신 잠시 뒤 엔딩
+func _on_final_boss_defeated() -> void:
+	next_stage_portal.enabled = false
+	GameManager.report_game_cleared()
+	Fx.explosion(player, player.global_position, Color(1.0, 0.9, 0.5), 80.0, 3)
+	GameManager.show_notice("모든 스테이지 클리어! 세상에 평화가 찾아옵니다…", Color(1.0, 0.9, 0.45))
+	_ending_timer.start(maxf(ending_delay, 0.05))
 
 
 func _on_chest_opened(chest: Chest) -> void:
@@ -298,9 +339,8 @@ func _spawn_regular_enemy() -> void:
 	_add_enemy(enemy, _pick_spawn_position(arena), arena)
 
 
-## 모든 몬스터는 여기서 강화(반복 스테이지) + 난이도 배율을 적용받고 트리에 들어갑니다.
+## 모든 몬스터는 여기서 난이도 배율을 적용받고 트리에 들어갑니다.
 func _add_enemy(enemy: Enemy, at_global: Vector2, arena: Rect2) -> void:
-	enemy.apply_scaling(get_scaling_level())
 	enemy.apply_difficulty(GameManager.get_difficulty_info())
 	enemy.arena_rect = arena
 	enemy.died.connect(_on_enemy_died)
@@ -352,6 +392,7 @@ func _release_projectiles() -> void:
 # ============================================================ 사망 / 드랍
 func _on_enemy_died(enemy: Enemy) -> void:
 	_spawn_drops(enemy.global_position, enemy)
+	GameManager.report_kill()
 	if enemy == _boss:
 		_on_boss_defeated()
 		return

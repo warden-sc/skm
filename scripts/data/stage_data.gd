@@ -1,7 +1,7 @@
 class_name StageData
 extends Resource
 ## 스테이지 1개의 구성 (data/stages/*.tres).
-## StageManager 가 순서대로 사용하고, 마지막 스테이지 이후에는 마지막 데이터를 반복하면서 몬스터를 강화합니다.
+## StageManager 가 순서대로 사용합니다. 마지막 스테이지의 보스를 쓰러뜨리면 엔딩입니다.
 
 @export var stage_name: String = "스테이지"
 @export var floor_texture: Texture2D

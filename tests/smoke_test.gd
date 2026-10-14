@@ -565,11 +565,17 @@ func _run() -> void:
 	archeon.take_damage(roundi(archeon.max_hp * 0.6))
 	_check(archeon._phase_two, "체력 50% 이하 → 원소 융합")
 	await _survive(240)
+	print("[엔딩 - 3스테이지 보스 토벌]")
+	var kills_before: int = _gm.total_kills
+	stage.ending_delay = 600.0  # 아래 테스트가 끝난 뒤 엔딩 화면을 따로 검사
 	archeon.take_damage(999999)
 	await _frames(4)
-	next_portal.interacted.emit()
+	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막 보스 토벌 → 모든 스테이지 클리어")
+	_check(_gm.total_kills > kills_before and _gm.play_time > 0.0, "엔딩 기록: 처치 %d마리 · 플레이 %s" % [_gm.total_kills, _gm.get_play_time_text()])
+	_check(stage.get_chest() == null and not next_portal.enabled, "마지막 스테이지: 상자 / 다음 스테이지 텔레포트 없음")
+	stage.go_to_next_stage()
 	await _frames(3)
-	_check(_gm.stage == 4 and _gm.stage_name.contains("+1"), "마지막 스테이지 이후 강화 반복: %s" % _gm.stage_name)
+	_check(_gm.stage == 3, "3스테이지 이후 「+1」 반복 스테이지 없음")
 
 	print("[난이도 배율]")
 	_gm.difficulty = _gm.Difficulty.VERY_HARD
@@ -578,8 +584,7 @@ func _run() -> void:
 	stage._add_enemy(tough, player.global_position + Vector2(0, -80), camp_arena)
 	await _frames(2)
 	var hp_mult: float = _gm.DIFFICULTY_INFO[_gm.Difficulty.VERY_HARD]["enemy_hp"]
-	var level_mult := 1.0 + 0.5 * stage.get_scaling_level()
-	_check(tough.max_hp == roundi(roundi(base_hp * level_mult) * hp_mult), "베리하드: 몬스터 체력 %d → %d" % [base_hp, tough.max_hp])
+	_check(tough.max_hp == roundi(base_hp * hp_mult), "베리하드: 몬스터 체력 %d → %d" % [base_hp, tough.max_hp])
 	tough.despawn()
 	_gm.difficulty = _gm.Difficulty.NORMAL
 
@@ -591,7 +596,30 @@ func _run() -> void:
 	await _frames(10)
 	_check(get_tree().current_scene != main and get_tree().current_scene != null, "씬 재시작")
 	_check(_gm.hp == _gm.max_hp and _gm.stage == 1 and not _gm.is_player_dead and _gm.items.size() == 2 and _gm.get_total_potions() == 2, "GameManager 초기화")
+	_check(not _gm.is_game_cleared and _gm.total_kills == 0, "엔딩 기록 초기화")
 	await _frames(10)
+
+	print("[엔딩 화면 → 난이도 선택]")
+	var new_stage := get_tree().current_scene.get_node("StageManager") as StageManager
+	new_stage.go_to_ending()
+	await _frames(5)
+	_check(get_tree().current_scene.name != "Ending", "클리어 전에는 엔딩으로 갈 수 없음")
+	_gm.total_kills = 77
+	_gm.report_game_cleared()
+	new_stage.go_to_ending()
+	await _frames(90)
+	var ending := get_tree().current_scene
+	_check(ending != null and ending.name == "Ending", "모든 스테이지 클리어 → 엔딩 화면")
+	if ending != null and ending.name == "Ending":
+		await _press_action(&"interact")
+		await _frames(2)
+		_check(ending.is_finished() and (ending.get_node("%RecordPanel") as Control).visible, "아무 키 → 연출 건너뛰고 모험 기록 표시")
+		_check((ending.get_node("%Record") as Label).text.contains("77마리"), "기록: 처치 수 · 클리어 시간 · 골드 · 무기")
+		(ending.get_node("%ReturnButton") as Button).pressed.emit()
+		await _frames(10)
+		var title_after := get_tree().current_scene
+		_check(title_after != null and title_after.name == "Title" and (title_after.get_node("%DifficultyPanel") as Control).visible, "엔딩 → 난이도 선택 화면")
+		_check(not _gm.is_game_cleared and _gm.stage == 1 and _gm.total_kills == 0, "새 모험을 위해 GameManager 초기화")
 
 	print("")
 	if _failures == 0:

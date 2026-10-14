@@ -44,6 +44,8 @@ signal kill_progress_changed(kills: int, target: int)
 signal boss_spawned(boss_name: String, max_hp: int)
 signal boss_hp_changed(current: int, max_hp: int)
 signal boss_defeated
+## 마지막 스테이지까지 모두 클리어
+signal game_cleared
 
 # --- UI ---
 signal notice_requested(text: String, color: Color)
@@ -118,6 +120,14 @@ var kills: int = 0
 var kill_target: int = 0
 var is_boss_active: bool = false
 
+# --- 엔딩용 기록 ---
+## 모든 스테이지의 보스를 쓰러뜨렸는지
+var is_game_cleared: bool = false
+## 이번 모험에서 처치한 몬스터 수 (보스·소환된 졸개 포함)
+var total_kills: int = 0
+## 이번 모험의 플레이 시간(초). 일시정지(상점·인벤토리) 중에는 늘지 않음
+var play_time: float = 0.0
+
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -144,6 +154,9 @@ func reset_game() -> void:
 	kills = 0
 	kill_target = 0
 	is_boss_active = false
+	is_game_cleared = false
+	total_kills = 0
+	play_time = 0.0
 	items.clear()
 	weapon_slots = [null, null, null]
 	accessory_slots = [null, null, null]
@@ -662,6 +675,30 @@ func report_boss_spawned(boss_name: String, boss_max_hp: int) -> void:
 
 func report_boss_hp(current: int, boss_max_hp: int) -> void:
 	boss_hp_changed.emit(current, boss_max_hp)
+
+
+## 몬스터 1마리 처치 기록 (엔딩 통계)
+func report_kill() -> void:
+	total_kills += 1
+
+
+## 마지막 스테이지 보스 토벌 → 엔딩
+func report_game_cleared() -> void:
+	is_game_cleared = true
+	game_cleared.emit()
+
+
+## 플레이 시간을 "mm:ss" (1시간 이상이면 "h:mm:ss") 로
+func get_play_time_text() -> String:
+	var total := int(play_time)
+	@warning_ignore("integer_division")
+	var hours := total / 3600
+	@warning_ignore("integer_division")
+	var minutes := (total % 3600) / 60
+	var seconds := total % 60
+	if hours > 0:
+		return "%d:%02d:%02d" % [hours, minutes, seconds]
+	return "%02d:%02d" % [minutes, seconds]
 
 
 func report_boss_defeated() -> void:

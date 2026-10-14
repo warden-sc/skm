@@ -19,7 +19,7 @@ const CONTROLS := [
 	["ESC", "창 닫기"],
 	["R / T", "쓰러졌을 때 다시 시작 / 타이틀로"],
 ]
-const FLOW_TEXT := "진행: 야영지 상인에게서 장비 구매·판매 → 텔레포트로 사냥터 → 몬스터를 처치해 보스방 봉인 해제 → 보스 토벌 → 보물상자(다음 등급 장비) → 텔레포트로 다음 스테이지"
+const FLOW_TEXT := "진행: 야영지 상인에게서 장비 구매·판매 → 텔레포트로 사냥터 → 몬스터를 처치해 보스방 봉인 해제 → 보스 토벌 → 보물상자(다음 등급 장비) → 다음 스테이지 … 3스테이지 보스를 쓰러뜨리면 엔딩"
 
 @onready var _title_label: Label = %TitleLabel
 @onready var _difficulty_panel: Control = %DifficultyPanel
