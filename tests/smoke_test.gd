@@ -280,6 +280,28 @@ func _run() -> void:
 	_check(pool.get_available_count() <= avail - 3, "영창 완료 → 마력탄 3발")
 	await _frames(70)
 
+	print("[지팡이 - 모든 지팡이가 범위(폭발) 공격]")
+	var staff_aim := player.get_aim_direction()
+	var staff_from := player.get_muzzle_position()
+	var staff_arena := stage.camp_room.get_arena_rect()
+	for staff_id in [&"apprentice_staff", &"frost_staff", &"slime_staff", &"ignis_staff", &"king_scepter", &"arcana_staff"]:
+		var test_staff := ItemDB.get_weapon(staff_id)
+		var direct := slime_scene.instantiate() as Enemy
+		var side := slime_scene.instantiate() as Enemy
+		for target in [direct, side]:
+			(target as Enemy).move_speed = 0.0
+			(target as Enemy).max_hp = 9999
+		var center := staff_from + staff_aim * 60.0
+		stage._add_enemy(direct, _enemy_pos_for_hit_center(center), staff_arena)
+		stage._add_enemy(side, _enemy_pos_for_hit_center(center + staff_aim.orthogonal() * 22.0), staff_arena)
+		await _frames(3)
+		pool.spawn(ProjectileSpec.from_weapon(test_staff, staff_from, staff_aim, {"amount": test_staff.damage, "crit": false, "armor_pen": 0}))
+		await _frames(40)
+		_check(direct.hp < direct.max_hp and side.hp < side.max_hp, "%s(%s): 명중 지점 폭발로 옆의 적도 피해 (반경 %d)" % [test_staff.display_name, test_staff.get_rarity_name(), roundi(test_staff.explosion_radius)])
+		direct.despawn()
+		side.despawn()
+		await _frames(5)
+
 	print("[드랍 - 1스테이지는 일반·희귀까지만]")
 	var gold_before: int = _gm.gold
 	var items_before: int = _gm.items.size()
@@ -429,6 +451,19 @@ func _run() -> void:
 	_check(_row_button(rows, 3).disabled and _row_button(rows, 3).text == "2스테이지", "1스테이지: 레어 잠김")
 	_check(not _gm.buy_item(ItemDB.get_item(&"royal_aegis")), "잠긴 장비는 구매 불가")
 	_check(_row_button(rows, 5).text == "가득 참" and _row_button(rows, 5).disabled, "상점: 포션이 가득 차면 구매 불가 표시")
+	# 아래쪽 장비에 마우스를 올려 긴 설명이 나와도 목록·버튼 위치가 바뀌면 안 됨 (설명칸 높이 고정)
+	await get_tree().process_frame
+	var buy_scroll := shop.get_node("%BuyList").get_parent() as Control
+	var list_rect_before := buy_scroll.get_global_rect()
+	var bottom_button := _row_button(rows, 4)
+	var button_rect_before := bottom_button.get_global_rect()
+	bottom_button.mouse_entered.emit()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(shop.get_node("%Detail").text.contains(ItemDB.get_item(&"solaris_bow").display_name), "아래쪽 장비에 마우스 → 설명 표시")
+	_check(buy_scroll.get_global_rect() == list_rect_before and bottom_button.get_global_rect() == button_rect_before, "설명이 길어도 구매 목록·버튼 위치 그대로 (가려지지 않음)")
+	var shop_panel := shop.get_node("Panel") as Control
+	_check(Rect2(Vector2.ZERO, shop_panel.get_viewport_rect().size).encloses(shop_panel.get_global_rect()), "상점 창이 화면 밖으로 늘어나지 않음")
 	var leather := ItemDB.get_item(&"leather_armor") as ArmorData
 	var max_hp_before: int = _gm.max_hp
 	var gold_pre: int = _gm.gold

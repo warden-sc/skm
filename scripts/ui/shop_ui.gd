@@ -109,8 +109,9 @@ func _make_potion_row(potion: PotionData, locked: bool) -> Control:
 
 
 func _show_detail(item: ItemData, locked: bool) -> void:
-	var lock_text := "\n※ %d스테이지부터 구매 가능" % item.get_unlock_stage() if locked else ""
-	_detail.text = "%s  (판매가 %dG)\n%s\n%s%s" % [item.display_name, item.get_sell_value(), item.get_stat_text(), item.description, lock_text]
+	var lock_text := "※ %d스테이지부터 구매 가능" % item.get_unlock_stage() if locked else ""
+	_detail.text = ItemRow.detail_text(item, "  (판매가 %dG)" % item.get_sell_value(), lock_text)
+	(_detail.get_parent() as ScrollContainer).scroll_vertical = 0
 
 
 func _on_buy_pressed(item: ItemData) -> void:

@@ -165,7 +165,8 @@ func _type_order(item: ItemData) -> int:
 
 
 func _show_detail(item: ItemData) -> void:
-	_detail.text = "%s\n%s\n%s" % [item.display_name, item.get_stat_text(), item.description]
+	_detail.text = ItemRow.detail_text(item)
+	(_detail.get_parent() as ScrollContainer).scroll_vertical = 0
 
 
 func _on_equip_pressed(item: ItemData) -> void:

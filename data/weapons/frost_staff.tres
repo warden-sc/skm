@@ -6,7 +6,7 @@
 
 [resource]
 script = ExtResource("1_script")
-explosion_damage_ratio = 0.5
+explosion_damage_ratio = 0.8
 weapon_type = 2
 element = 2
 effect_color = Color(0.6, 0.9, 1, 1)
@@ -24,7 +24,7 @@ projectiles_per_shot = 3
 spread_degrees = 18.0
 pierce = 1
 projectile_scale = 1.0
-explosion_radius = 22.0
+explosion_radius = 30.0
 slow_duration = 1.5
 id = &"frost_staff"
 display_name = "서리 지팡이"

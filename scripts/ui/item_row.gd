@@ -42,6 +42,16 @@ static func build(item: ItemData, buttons: Array[Button], on_hover: Callable, lo
 	return panel
 
 
+## 상세 정보 문구 (상점 / 인벤토리 공용).
+## 스탯 줄들을 " · " 로 이어 붙여 짧게 만들어서, 고정 높이 설명칸 안에 들어가도록 합니다.
+static func detail_text(item: ItemData, title_suffix: String = "", footer: String = "") -> String:
+	var stats := item.get_stat_text().split("\n", false)
+	var text := "%s%s\n%s\n%s" % [item.display_name, title_suffix, "  ·  ".join(stats), item.description.replace("\n", " ")]
+	if footer != "":
+		text += "\n" + footer
+	return text
+
+
 static func make_button(text: String, disabled: bool, on_pressed: Callable = Callable(), min_width: float = 52.0) -> Button:
 	var button := Button.new()
 	button.text = text

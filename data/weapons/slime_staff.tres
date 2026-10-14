@@ -6,7 +6,7 @@
 
 [resource]
 script = ExtResource("1_script")
-explosion_damage_ratio = 0.5
+explosion_damage_ratio = 0.8
 weapon_type = 2
 element = 5
 effect_color = Color(0.6, 1, 0.45, 1)
@@ -24,7 +24,7 @@ projectiles_per_shot = 5
 spread_degrees = 50.0
 pierce = 1
 projectile_scale = 1.1
-explosion_radius = 18.0
+explosion_radius = 26.0
 slow_duration = 0.0
 id = &"slime_staff"
 display_name = "슬라임 지팡이"

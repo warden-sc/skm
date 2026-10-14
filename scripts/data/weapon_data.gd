@@ -121,7 +121,7 @@ func get_stat_text() -> String:
 		var prep := "시위 당기기" if is_bow() else "영창"
 		lines.append("x%d발  관통 %d  사거리 %d  %s %.2fs" % [maxi(projectiles_per_shot, 1), pierce, roundi(projectile_range), prep, windup_time])
 		if explosion_radius > 0.0:
-			lines.append("폭발 반경 %d (%d%% 피해)" % [roundi(explosion_radius), roundi(explosion_damage_ratio * 100.0)])
+			lines.append("범위 공격: 명중 지점 폭발 반경 %d (주변 적에게 %d%% 피해)" % [roundi(explosion_radius), roundi(explosion_damage_ratio * 100.0)])
 		if slow_duration > 0.0:
 			lines.append("적 감속 %.1f초" % slow_duration)
 	lines.append("DPS 약 %.1f" % get_dps())
