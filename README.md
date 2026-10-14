@@ -29,6 +29,16 @@
 직접 빌드하기: Godot 에디터 → 프로젝트 → 내보내기 → `Windows Desktop` / `Web` 프리셋 (`export_presets.cfg` 포함, 처음 한 번 "내보내기 템플릿 관리"에서 템플릿 다운로드 필요).
 헤드리스: `godot --headless --path . --export-release "Windows Desktop" build/windows/Crusader.exe`
 
+**Windows 실행이 안 될 때** (`Crusader_Windows.zip` 안의 `HOW_TO_RUN.txt` 와 같은 내용)
+
+1. zip 을 **압축 풀기** 한 뒤 실행 (zip 안에서 바로 실행하면 안 될 수 있음)
+2. 파란 「Windows의 PC 보호」 창 → **[추가 정보] → [실행]**
+3. 백신이 `Crusader.exe` 를 지웠다면 검역소에서 복원 + 예외 추가
+4. 그래도 안 되면 `run_opengl.bat`(다른 그래픽 방식) 또는 `run_debug.bat`(오류 기록 `crusader_log.txt` 저장)
+
+> Windows 에서는 그래픽 드라이버 호환성을 위해 OpenGL 대신 **ANGLE(Direct3D 11)** 로 그립니다
+> (`project.godot` → `rendering/gl_compatibility/driver.windows="opengl3_angle"`). 도우미 파일 원본은 `tools/windows_extra/`.
+
 > 한글 폰트는 게임에 내장되어 있습니다 (갈무리 Galmuri11, SIL OFL 1.1 — `assets/fonts/`). 그래서 웹이나 한글 폰트가 없는 PC 에서도 글자가 깨지지 않습니다.
 
 ---
