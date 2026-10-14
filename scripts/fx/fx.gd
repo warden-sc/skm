@@ -5,6 +5,8 @@ class_name Fx
 const SPARK_TEXTURE: Texture2D = preload("res://assets/sprites/effects/spark.png")
 const GLOW_TEXTURE: Texture2D = preload("res://assets/sprites/effects/glow.png")
 const RING_TEXTURE: Texture2D = preload("res://assets/sprites/effects/ring.png")
+const ICE_SHARD_TEXTURE: Texture2D = preload("res://assets/sprites/projectiles/ice_shard.png")
+const STAR_TEXTURE: Texture2D = preload("res://assets/sprites/projectiles/star.png")
 
 static var _additive: CanvasItemMaterial
 
@@ -133,3 +135,116 @@ static func fade_ramp(color: Color) -> Gradient:
 	g.set_color(0, Color(color.lightened(0.4), 1.0))
 	g.set_color(1, Color(color, 0.0))
 	return g
+
+
+# ============================================================ 지팡이 마법 이펙트
+## 마력 폭발 (견습 지팡이): 보랏빛 링 두 겹 + 반짝이
+static func arcane_burst(context: Node, at_global: Vector2, color: Color, radius: float, level: int = 0) -> void:
+	flash(context, at_global, color, radius, 0.22)
+	shockwave(context, at_global, color, radius, 0.28)
+	shockwave(context, at_global, Color(1, 1, 1, 0.8), radius * 0.55, 0.2)
+	burst(context, at_global, color.lightened(0.3), 10 + 6 * level, radius * 2.5, 0.4, Vector2.ZERO, 0.9)
+
+
+## 서리 폭발 (서리 지팡이): 얼음 파편이 사방으로 튀고, 눈가루가 천천히 내려앉음
+static func frost_nova(context: Node, at_global: Vector2, radius: float, level: int = 1) -> void:
+	var ice := Color(0.65, 0.9, 1.0)
+	flash(context, at_global, ice, radius, 0.3)
+	shockwave(context, at_global, Color(0.85, 0.97, 1.0), radius, 0.35)
+	flying_sprites(context, at_global, ICE_SHARD_TEXTURE, 8 + 2 * level, radius, ice, 0.35, true)
+	burst(context, at_global, Color(0.92, 0.98, 1.0), 14 + 6 * level, radius * 1.4, 0.9, Vector2(0, 14), 0.8)
+
+
+## 점액 폭발 (슬라임 지팡이 / 거대 슬라임 착지): 초록 점액 방울이 튀었다가 떨어짐
+static func slime_splash(context: Node, at_global: Vector2, radius: float, level: int = 1) -> void:
+	var slime := Color(0.45, 0.95, 0.4)
+	flash(context, at_global, slime, radius, 0.25)
+	shockwave(context, at_global, slime.lightened(0.2), radius, 0.3)
+	burst(context, at_global, slime, 14 + 8 * level, radius * 3.0, 0.55, Vector2(0, 160), 1.3)
+	burst(context, at_global, Color(0.75, 1.0, 0.6), 6 + 4 * level, radius * 1.5, 0.4, Vector2(0, 80), 0.8)
+
+
+## 업화 폭발 (이그니스): 큰 번쩍임 + 두 겹 충격파 + 하늘로 솟는 불기둥 + 불티
+static func fire_blast(context: Node, at_global: Vector2, radius: float, level: int = 2) -> void:
+	var fire := Color(1.0, 0.5, 0.15)
+	flash(context, at_global, Color(1.0, 0.75, 0.3), radius * 1.2, 0.35)
+	shockwave(context, at_global, fire, radius, 0.35)
+	shockwave(context, at_global, Color(1.0, 0.9, 0.5), radius * 0.6, 0.25)
+	burst(context, at_global, fire, 24 + 10 * level, radius * 2.2, 0.6, Vector2(0, -90), 1.4)
+	burst(context, at_global, Color(0.35, 0.3, 0.3), 10, radius * 1.2, 0.9, Vector2(0, -30), 1.6)
+	pillar(context, at_global, fire, radius * 0.5, radius * 1.6, 0.45)
+
+
+## 별 폭발 (아르카나 별똥별): 금빛 번쩍임 + 보랏빛 링 + 십자 섬광
+static func star_burst(context: Node, at_global: Vector2, radius: float) -> void:
+	flash(context, at_global, Color(1.0, 0.9, 0.55), radius, 0.3)
+	shockwave(context, at_global, Color(0.85, 0.6, 1.0), radius, 0.3)
+	shockwave(context, at_global, Color(1.0, 0.95, 0.7), radius * 0.6, 0.22)
+	burst(context, at_global, Color(1.0, 0.9, 0.6), 18, radius * 2.4, 0.5, Vector2.ZERO, 1.0)
+	cross_glint(context, at_global, Color(1.0, 0.95, 0.8), radius * 1.3, 0.3)
+
+
+## 텍스처 조각들이 중심에서 바깥으로 날아가며 사라짐 (얼음 파편 등)
+static func flying_sprites(context: Node, at_global: Vector2, texture: Texture2D, count: int, distance: float,
+		color: Color, duration: float = 0.35, point_outward: bool = true) -> void:
+	var root := _root_of(context)
+	if root == null:
+		return
+	for i in count:
+		var dir := Vector2.RIGHT.rotated(TAU * float(i) / float(count) + randf_range(-0.2, 0.2))
+		var s := Sprite2D.new()
+		s.texture = texture
+		s.modulate = color
+		s.z_index = 56
+		if point_outward:
+			s.rotation = dir.angle()
+		root.add_child(s)
+		s.global_position = at_global
+		var tween := s.create_tween()
+		tween.set_parallel(true)
+		tween.tween_property(s, "global_position", at_global + dir * distance * randf_range(0.8, 1.1), duration).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+		tween.tween_property(s, "modulate:a", 0.0, duration).set_delay(duration * 0.4)
+		tween.chain().tween_callback(s.queue_free)
+
+
+## 위로 길게 솟았다 사라지는 빛기둥 (업화의 불기둥)
+static func pillar(context: Node, at_global: Vector2, color: Color, width: float, height: float, duration: float = 0.4) -> void:
+	var root := _root_of(context)
+	if root == null:
+		return
+	var s := Sprite2D.new()
+	s.texture = GLOW_TEXTURE
+	s.material = additive_material()
+	s.modulate = color
+	s.z_index = 57
+	s.offset = Vector2(0, -16)
+	root.add_child(s)
+	s.global_position = at_global
+	s.scale = Vector2(width / 32.0, 0.1)
+	var tween := s.create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(s, "scale", Vector2(width / 32.0, height / 32.0), duration * 0.4).set_ease(Tween.EASE_OUT)
+	tween.tween_property(s, "modulate:a", 0.0, duration).set_delay(duration * 0.3)
+	tween.chain().tween_callback(s.queue_free)
+
+
+## 가로·세로로 번쩍이는 십자 섬광 (별)
+static func cross_glint(context: Node, at_global: Vector2, color: Color, length: float, duration: float = 0.3) -> void:
+	var root := _root_of(context)
+	if root == null:
+		return
+	for angle in [0.0, PI / 2.0]:
+		var s := Sprite2D.new()
+		s.texture = GLOW_TEXTURE
+		s.material = additive_material()
+		s.modulate = color
+		s.z_index = 58
+		s.rotation = angle
+		root.add_child(s)
+		s.global_position = at_global
+		s.scale = Vector2(length / 16.0, 0.12)
+		var tween := s.create_tween()
+		tween.set_parallel(true)
+		tween.tween_property(s, "scale", Vector2(length / 32.0, 0.04), duration)
+		tween.tween_property(s, "modulate:a", 0.0, duration)
+		tween.chain().tween_callback(s.queue_free)

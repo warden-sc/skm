@@ -6,6 +6,9 @@
 
 [resource]
 script = ExtResource("1_script")
+zone_tick_ratio = 0.2
+zone_duration = 2.5
+spell = 3
 weapon_type = 2
 element = 1
 effect_color = Color(1, 0.55, 0.2, 1)
@@ -24,11 +27,11 @@ spread_degrees = 0.0
 pierce = 0
 projectile_scale = 1.6
 explosion_radius = 52.0
-explosion_damage_ratio = 1.0
+explosion_damage_ratio = 0.8
 slow_duration = 0.0
 id = &"ignis_staff"
 display_name = "업화의 지팡이 이그니스"
-description = "거대한 화염구를 쏘아 적진 한가운데서 폭발시킨다."
+description = "거대한 화염구를 쏘아 조준한 곳을 불기둥과 함께 폭발시키고, 땅을 불태운다."
 rarity = 2
 icon = ExtResource("2_res")
 price = 700

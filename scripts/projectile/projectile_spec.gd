@@ -27,6 +27,8 @@ var explosion_radius: float = 0.0
 var explosion_damage: int = 0
 ## 0 보다 크면 맞은 대상 감속 (초)
 var slow_duration: float = 0.0
+## 플레이어 지팡이 투사체면 그 지팡이 (터질 때 마법별 이펙트·장판은 Spells.projectile_impact 가 처리)
+var source_weapon: WeaponData
 
 
 ## 플레이어 무기 데이터로부터 1발 분량의 명세를 만듭니다.
@@ -51,6 +53,8 @@ static func from_weapon(weapon: WeaponData, from: Vector2, dir: Vector2, roll: D
 	spec.explosion_radius = weapon.explosion_radius
 	spec.explosion_damage = maxi(1, roundi(spec.damage * weapon.explosion_damage_ratio))
 	spec.slow_duration = weapon.slow_duration
+	if weapon.is_staff():
+		spec.source_weapon = weapon
 	return spec
 
 

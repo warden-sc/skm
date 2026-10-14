@@ -163,6 +163,9 @@ func _reflect() -> void:
 
 ## 명중 이펙트 + (있다면) 폭발 피해. direct_target 은 이미 직접 맞은 적이라 폭발 피해에서 제외.
 func _impact(at_global: Vector2, direct_target: Enemy) -> void:
+	if _spec.source_weapon != null and _spec.team == ProjectileSpec.Team.PLAYER and _spec.explosion_radius > 0.0:
+		Spells.projectile_impact(self, _spec, at_global, direct_target)
+		return
 	var level := clampi(_spec.fx_level, 0, 3)
 	var fx_gravity := Elements.gravity_of(_spec.element)
 	if _spec.explosion_radius <= 0.0:

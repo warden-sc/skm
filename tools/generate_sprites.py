@@ -671,6 +671,36 @@ def fireball():
     return img
 
 
+def star():
+    """아르카나의 별똥별: 16x16 다섯 갈래 별 (흰 중심 → 금색 → 보라 테두리)"""
+    img = canvas(16)
+    cx, cy = 7.5, 8.0
+    pts = []
+    for i in range(10):
+        ang = -math.pi / 2 + i * math.pi / 5
+        r = 7.4 if i % 2 == 0 else 3.1
+        pts.append((cx + r * math.cos(ang), cy + r * math.sin(ang)))
+
+    def inside(x, y):
+        hit = False
+        j = len(pts) - 1
+        for i in range(len(pts)):
+            xi, yi = pts[i]
+            xj, yj = pts[j]
+            if (yi > y) != (yj > y) and x < (xj - xi) * (y - yi) / (yj - yi + 1e-9) + xi:
+                hit = not hit
+            j = i
+        return hit
+
+    for y in range(16):
+        for x in range(16):
+            if inside(x + 0.5, y + 0.5):
+                d = math.hypot(x + 0.5 - cx, y + 0.5 - cy)
+                col = (255, 255, 240) if d < 2.2 else ((255, 225, 110) if d < 4.6 else (240, 170, 255))
+                img.putpixel((x, y), col + (255,))
+    return outline(img, (70, 30, 110, 255))
+
+
 def ice_shard():
     img = canvas(14, 6)
     for x in range(14):
@@ -1063,6 +1093,7 @@ def main():
     save(ring(), "effects", "ring.png")
     save(fireball(), "projectiles", "fireball.png")
     save(ice_shard(), "projectiles", "ice_shard.png")
+    save(star(), "projectiles", "star.png")
     save(rock(), "projectiles", "rock.png")
     save(orb(), "projectiles", "orb.png")
     save(orb((255, 255, 255), (230, 60, 110)), "projectiles", "enemy_bullet.png")

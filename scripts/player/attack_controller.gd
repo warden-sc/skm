@@ -16,7 +16,8 @@ extends Node
 ## 무기 종류별 동작:
 ##   - 근접(검/단검): 투사체 없음. 조준 방향 부채꼴(melee_range, melee_arc_degrees) 안의 적을 즉시 타격
 ##   - 활    : 좌클릭 유지 → windup_time 동안 시위를 당김 → 다 당기면 발사 (중간에 떼면 취소)
-##   - 지팡이: 좌클릭 유지 → windup_time 동안 영창, 구슬에 마력이 모임 → 시전 (중간에 떼면 취소)
+##   - 지팡이: 좌클릭 유지 → windup_time 동안 영창, 구슬에 마력이 모이고 조준한 곳에 범위 원 표시 → 시전
+##             (지팡이마다 마법이 다름: 마력 폭발 / 서리 폭발 / 점액 웅덩이 / 업화 / 거대 슬라임 / 별똥별)
 ##   - 등급(fx level 0~3)이 높을수록 베기 잔상 / 파티클 / 폭발 이펙트가 화려해집니다.
 
 ## 근접 판정 시 적의 몸 크기를 감안해 사거리에 더해 주는 여유(px)
@@ -181,6 +182,15 @@ func _ranged_attack(weapon: WeaponData) -> bool:
 		return false
 
 	var origin := player.get_muzzle_position()
+	if weapon.is_staff():
+		# 지팡이: 조준한 곳을 향해 지팡이별 마법 시전 (Spells 참고)
+		Spells.cast_staff(player, weapon, player.get_aim_point(weapon.projectile_range))
+		var staff_level := weapon.get_fx_level()
+		if staff_level >= 2:
+			Fx.flash(player, origin, weapon.effect_color, 6.0 + 4.0 * staff_level, 0.15)
+		player.play_attack_feedback()
+		return true
+
 	var base_dir := player.get_aim_direction()
 	var count := maxi(weapon.projectiles_per_shot, 1)
 	var spread := deg_to_rad(weapon.spread_degrees)

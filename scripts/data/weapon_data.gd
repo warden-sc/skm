@@ -9,6 +9,23 @@ extends ItemData
 ## - 등급이 높을수록(get_fx_level) 잔상 / 파티클 / 폭발 이펙트가 화려해집니다.
 
 enum WeaponType { SWORD, BOW, STAFF, DAGGER }
+## 지팡이 마법 종류 (지팡이마다 컨셉에 맞는 범위 공격과 이펙트)
+##   BOLT         : 마력 폭발 — 구슬이 조준한 곳에서 터짐 (견습)
+##   FROST_NOVA   : 서리 폭발 — 터진 자리의 적을 모두 얼려 감속 (서리)
+##   SLIME_POOL   : 점액 웅덩이 — 끈적한 웅덩이가 남아 적을 느리게 (슬라임)
+##   FIREBALL     : 업화 — 거대한 화염 폭발 후 땅이 불탐 (이그니스)
+##   SLIME_METEOR : 거대 슬라임 낙하 — 하늘에서 슬라임 왕이 떨어져 짓누름 (슬라임 왕의 홀)
+##   STARFALL     : 별똥별 — 조준한 곳 주변에 별이 무작위로 쏟아짐 (아르카나)
+enum Spell { BOLT, FROST_NOVA, SLIME_POOL, FIREBALL, SLIME_METEOR, STARFALL }
+
+const SPELL_TEXT := {
+	Spell.BOLT: "마력 폭발 — 구슬이 조준한 곳에서 터짐",
+	Spell.FROST_NOVA: "서리 폭발 — 터진 자리의 적을 모두 얼려 감속",
+	Spell.SLIME_POOL: "점액 웅덩이 — 끈적한 웅덩이가 남아 적을 느리게",
+	Spell.FIREBALL: "업화 — 거대한 화염 폭발 후 땅이 불탐",
+	Spell.SLIME_METEOR: "거대 슬라임 낙하 — 하늘에서 슬라임 왕이 떨어져 짓누름",
+	Spell.STARFALL: "별똥별 — 조준한 곳 주변에 별이 무작위로 쏟아짐",
+}
 
 const SPECIALTY_TEXT := {
 	WeaponType.SWORD: "특화: 강력한 한 방 (가장 높은 공격력)",
@@ -68,6 +85,18 @@ const TYPE_NAMES := {
 ## 0 보다 크면 맞은 적을 이 시간 동안 감속 (빙결)
 @export var slow_duration: float = 0.0
 
+@export_group("Spell (지팡이)")
+@export var spell: Spell = Spell.BOLT
+## 바닥 장판 (점액 웅덩이 / 불타는 땅) 지속 시간(초). 0 이면 장판 없음
+@export var zone_duration: float = 0.0
+## 장판 위의 적이 0.5초마다 받는 피해 (공격력 대비 비율)
+@export var zone_tick_ratio: float = 0.0
+## 하늘에서 떨어지는 마법(거대 슬라임 / 별똥별)의 개수 · 흩뿌림 반경 · 간격 · 낙하 시간
+@export var strike_count: int = 1
+@export var strike_scatter: float = 0.0
+@export var strike_interval: float = 0.1
+@export var strike_fall_time: float = 0.45
+
 
 func is_melee() -> bool:
 	return weapon_type == WeaponType.SWORD or weapon_type == WeaponType.DAGGER
@@ -79,6 +108,18 @@ func is_bow() -> bool:
 
 func is_staff() -> bool:
 	return weapon_type == WeaponType.STAFF
+
+
+## 투사체 없이 하늘에서 떨어지는 지팡이 마법인지 (거대 슬라임 / 별똥별)
+func is_sky_spell() -> bool:
+	return is_staff() and (spell == Spell.SLIME_METEOR or spell == Spell.STARFALL)
+
+
+## 조준 원에 표시할 반경 (별똥별은 흩뿌림 범위까지 포함)
+func get_target_radius() -> float:
+	if is_staff() and spell == Spell.STARFALL:
+		return strike_scatter + explosion_radius
+	return explosion_radius
 
 
 ## 실제 1타의 데미지를 굴립니다. (치명타 포함)
@@ -95,6 +136,8 @@ func roll_damage(multiplier: float = 1.0, crit_bonus: float = 0.0, crit_damage_b
 func get_dps() -> float:
 	var avg_hit := float(damage) * (1.0 + crit_chance * (crit_multiplier - 1.0))
 	var hits := 1 if is_melee() else maxi(projectiles_per_shot, 1)
+	if is_sky_spell():
+		hits = maxi(strike_count, 1)
 	return avg_hit * hits / maxf(attack_cooldown + windup_time, 0.01)
 
 
@@ -117,9 +160,19 @@ func get_stat_text() -> String:
 		lines.append("방어력 관통(방깍) %d" % armor_pen)
 	if is_melee():
 		lines.append("리치 %d  범위 %d°  (범위 안의 모든 적 타격)" % [roundi(melee_range), roundi(melee_arc_degrees)])
+	elif is_staff():
+		lines.append("마법: %s" % SPELL_TEXT.get(spell, ""))
+		if is_sky_spell():
+			lines.append("조준한 곳에 %d개 낙하%s  사거리 %d  영창 %.2fs" % [maxi(strike_count, 1), " (흩뿌림 반경 %d)" % roundi(strike_scatter) if strike_scatter > 0.0 else "", roundi(projectile_range), windup_time])
+		else:
+			lines.append("x%d발  사거리 %d  영창 %.2fs (조준한 곳에서 폭발)" % [maxi(projectiles_per_shot, 1), roundi(projectile_range), windup_time])
+		lines.append("범위 공격: 폭발 반경 %d (주변 적에게 %d%% 피해)" % [roundi(explosion_radius), roundi(explosion_damage_ratio * 100.0)])
+		if slow_duration > 0.0:
+			lines.append("폭발 범위 안의 적 감속 %.1f초" % slow_duration)
+		if zone_duration > 0.0:
+			lines.append("바닥 장판 %.1f초 (0.5초마다 %d%% 피해%s)" % [zone_duration, roundi(zone_tick_ratio * 100.0), " · 감속" if spell == Spell.SLIME_POOL or spell == Spell.SLIME_METEOR else ""])
 	else:
-		var prep := "시위 당기기" if is_bow() else "영창"
-		lines.append("x%d발  관통 %d  사거리 %d  %s %.2fs" % [maxi(projectiles_per_shot, 1), pierce, roundi(projectile_range), prep, windup_time])
+		lines.append("x%d발  관통 %d  사거리 %d  시위 당기기 %.2fs" % [maxi(projectiles_per_shot, 1), pierce, roundi(projectile_range), windup_time])
 		if explosion_radius > 0.0:
 			lines.append("범위 공격: 명중 지점 폭발 반경 %d (주변 적에게 %d%% 피해)" % [roundi(explosion_radius), roundi(explosion_damage_ratio * 100.0)])
 		if slow_duration > 0.0:

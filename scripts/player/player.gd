@@ -93,6 +93,8 @@ var _slow_multiplier: float = 1.0
 var _windup_weapon: WeaponData
 var _potion_cooldown_left: float = 0.0
 var _charge_particles: CPUParticles2D
+## 지팡이 영창 중 조준한 곳의 범위 표시
+var _target_ring: TargetRing
 
 
 func _ready() -> void:
@@ -181,6 +183,15 @@ func get_muzzle_position() -> Vector2:
 	return _muzzle.global_position
 
 
+## 마우스로 조준한 지점 (무즐에서 max_range 이내로 제한). 지팡이 마법이 터질 곳.
+func get_aim_point(max_range: float) -> Vector2:
+	var origin := get_muzzle_position()
+	var offset := get_global_mouse_position() - origin
+	if offset.length() < 1.0:
+		offset = _aim_direction * max_range
+	return origin + offset.limit_length(max_range)
+
+
 func can_attack() -> bool:
 	return not _is_dead and _dash_time_left <= 0.0 and not _guard.is_guarding()
 
@@ -248,6 +259,11 @@ func begin_windup(weapon: WeaponData) -> void:
 		_chant_label.add_theme_color_override(&"font_color", weapon.effect_color.lightened(0.3))
 		_chant_label.visible_ratio = 0.0
 		_chant_label.show()
+		_target_ring.radius = weapon.get_target_radius()
+		_target_ring.color = weapon.effect_color
+		_target_ring.progress = 0.0
+		_target_ring.global_position = get_aim_point(weapon.projectile_range)
+		_target_ring.show()
 	set_windup_progress(0.0)
 
 
@@ -262,6 +278,8 @@ func set_windup_progress(progress: float) -> void:
 		var pulse := 1.0 + sin(_anim_time * 30.0) * 0.08 * progress
 		_charge_orb.scale = Vector2.ONE * (0.15 + 0.35 * progress + 0.08 * level) * pulse
 		_chant_label.visible_ratio = clampf(progress * 1.3, 0.0, 1.0)
+		_target_ring.progress = progress
+		_target_ring.global_position = get_aim_point(_windup_weapon.projectile_range)
 
 
 ## fired: true 면 발사(시위가 튕겨 돌아감 / 구슬이 터짐), false 면 취소
@@ -271,6 +289,7 @@ func end_windup(fired: bool) -> void:
 	var weapon := _windup_weapon
 	_windup_weapon = null
 	_nocked_arrow.hide()
+	_target_ring.hide()
 	_charge_particles.emitting = false
 	_chant_label.hide()
 	if weapon.is_bow():
@@ -473,6 +492,9 @@ func _update_visuals(delta: float) -> void:
 
 
 func _setup_windup_visuals() -> void:
+	_target_ring = TargetRing.new()
+	_target_ring.name = "TargetRing"
+	add_child(_target_ring)
 	_bow_string.hide()
 	_nocked_arrow.hide()
 	_charge_orb.hide()

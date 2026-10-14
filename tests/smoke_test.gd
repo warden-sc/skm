@@ -280,27 +280,67 @@ func _run() -> void:
 	_check(pool.get_available_count() <= avail - 3, "영창 완료 → 마력탄 3발")
 	await _frames(70)
 
-	print("[지팡이 - 모든 지팡이가 범위(폭발) 공격]")
-	var staff_aim := player.get_aim_direction()
+	print("[지팡이 - 지팡이마다 다른 범위 마법]")
 	var staff_from := player.get_muzzle_position()
+	var staff_aim := player.get_aim_direction()
 	var staff_arena := stage.camp_room.get_arena_rect()
+	var ratios_ok := true
 	for staff_id in [&"apprentice_staff", &"frost_staff", &"slime_staff", &"ignis_staff", &"king_scepter", &"arcana_staff"]:
 		var test_staff := ItemDB.get_weapon(staff_id)
+		if not is_equal_approx(test_staff.explosion_damage_ratio, 0.8):
+			ratios_ok = false
 		var direct := slime_scene.instantiate() as Enemy
 		var side := slime_scene.instantiate() as Enemy
 		for target in [direct, side]:
 			(target as Enemy).move_speed = 0.0
 			(target as Enemy).max_hp = 9999
-		var center := staff_from + staff_aim * 60.0
+		var center := staff_from + staff_aim * 70.0
 		stage._add_enemy(direct, _enemy_pos_for_hit_center(center), staff_arena)
 		stage._add_enemy(side, _enemy_pos_for_hit_center(center + staff_aim.orthogonal() * 22.0), staff_arena)
 		await _frames(3)
-		pool.spawn(ProjectileSpec.from_weapon(test_staff, staff_from, staff_aim, {"amount": test_staff.damage, "crit": false, "armor_pen": 0}))
-		await _frames(40)
-		_check(direct.hp < direct.max_hp and side.hp < side.max_hp, "%s(%s): 명중 지점 폭발로 옆의 적도 피해 (반경 %d)" % [test_staff.display_name, test_staff.get_rarity_name(), roundi(test_staff.explosion_radius)])
+		Spells.cast_staff(player, test_staff, center)
+		var sky_count := get_tree().get_nodes_in_group(&"sky_strikes").size()
+		var saw_fire := false
+		var saw_slime := false
+		var side_slowed := false
+		for f in 110:
+			await get_tree().physics_frame
+			for zone in get_tree().get_nodes_in_group(&"ground_zones"):
+				if (zone as GroundZone).kind == GroundZone.Kind.FIRE:
+					saw_fire = true
+				else:
+					saw_slime = true
+			if is_instance_valid(side) and side.is_slowed():
+				side_slowed = true
+		_check(direct.hp < direct.max_hp and side.hp < side.max_hp, "%s(%s): %s — 옆의 적도 범위 피해" % [test_staff.display_name, test_staff.get_rarity_name(), WeaponData.SPELL_TEXT[test_staff.spell].get_slice(" —", 0)])
+		match test_staff.spell:
+			WeaponData.Spell.FROST_NOVA:
+				_check(side_slowed, "서리 폭발: 범위 안의 적 모두 감속")
+			WeaponData.Spell.SLIME_POOL:
+				_check(saw_slime and side_slowed, "점액 웅덩이: 바닥 장판 + 감속")
+			WeaponData.Spell.FIREBALL:
+				_check(saw_fire, "업화: 폭발 후 불타는 땅")
+			WeaponData.Spell.SLIME_METEOR:
+				_check(sky_count == 1 and saw_slime, "거대 슬라임: 하늘에서 1개 낙하 + 점액 웅덩이")
+			WeaponData.Spell.STARFALL:
+				_check(sky_count == test_staff.strike_count, "별똥별: 하늘에서 %d개 낙하" % sky_count)
 		direct.despawn()
 		side.despawn()
 		await _frames(5)
+	_check(ratios_ok, "지팡이 6종 주변 피해 모두 80%")
+	# 영창 중 조준한 곳에 범위 원 표시
+	_gm.add_item(ItemDB.get_item(&"ignis_staff"))
+	_gm.equip_item(ItemDB.get_item(&"ignis_staff"))
+	await _frames(12)
+	Input.action_press(&"attack")
+	await _frames(10)
+	var ring := player.get_node("TargetRing") as TargetRing
+	_check(ring.visible and is_equal_approx(ring.radius, ItemDB.get_weapon(&"ignis_staff").explosion_radius), "영창 중 조준한 곳에 폭발 범위 원 표시 (반경 %d)" % roundi(ring.radius))
+	Input.action_release(&"attack")
+	await _frames(3)
+	_check(not ring.visible, "영창 취소 → 범위 원 숨김")
+	_gm.equip_item(staff)
+	await _frames(40)
 
 	print("[드랍 - 1스테이지는 일반·희귀까지만]")
 	var gold_before: int = _gm.gold
