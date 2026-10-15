@@ -364,16 +364,19 @@ func _pick_spawn_position(arena: Rect2) -> Vector2:
 	return best
 
 
-func _on_summon_requested(scene: PackedScene, at_global: Vector2) -> void:
+func _on_summon_requested(scene: PackedScene, at_global: Vector2, summoner: Enemy) -> void:
 	if scene == null or _state == State.GAME_OVER:
 		return
 	var minion := scene.instantiate() as Enemy
 	if minion == null:
 		return
+	minion.commander = summoner
 	# 소환된 졸개는 드랍이 적습니다
 	minion.item_drop_chance *= 0.3
 	var arena := boss_room.get_arena_rect() if _state == State.BOSS else field_room.get_arena_rect()
 	_add_enemy(minion, at_global.clamp(arena.position, arena.end), arena)
+	if summoner != null and is_instance_valid(summoner):
+		summoner.register_minion(minion)
 
 
 func _clear_enemies() -> void:

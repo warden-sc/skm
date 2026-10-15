@@ -753,6 +753,146 @@ def floor_ruins():
     return img
 
 
+
+# ---------------------------------------------------------------- 4스테이지: 숲
+FOREST_WOLF = [
+    "................",
+    "................",
+    "...........kk...",
+    "..........kddk..",
+    "..d......kdmmkk.",
+    ".kdd....kmmmmkmk",
+    "..kdk..kmmmmmmmk",
+    "...kmmmmmmmmmWk.",
+    "..kmmmmmmmmmkk..",
+    "..kmGmmGmmmmk...",
+    "..kmmmmmmmmmk...",
+    "..kmk.kmk.kmk...",
+    "..kk..kk..kk....",
+    "................",
+    "................",
+    "................",
+]
+
+MUSHROOM = [
+    "................",
+    "................",
+    ".....kkkkkk.....",
+    "...kkrrWrrrkk...",
+    "..krrrrrrWrrrk..",
+    ".krWrrrrrrrrWrk.",
+    ".krrrrrWrrrrrrk.",
+    ".kkkkkkkkkkkkkk.",
+    "....kWWWWWWk....",
+    "....kWkWWkWk....",
+    "....kWWWWWWk....",
+    "....kWWrrWWk....",
+    "...kWWWWWWWWk...",
+    "...kkk.kk.kkk...",
+    "................",
+    "................",
+]
+
+
+def treant():
+    """덩굴 트렌트 (20x20): 이끼 낀 나무 몸통 + 잎 왕관 + 빛나는 눈"""
+    img = canvas(20)
+    bark, dark, leaf, leaf2 = (110, 74, 48, 255), (70, 46, 30, 255), (70, 150, 60, 255), (120, 200, 80, 255)
+    ellipse(img, 10, 5, 8.5, 4.5, leaf)
+    ellipse(img, 7, 4, 3.5, 2.5, leaf2)
+    ellipse(img, 13, 3.5, 3, 2, leaf2)
+    rect(img, 6, 7, 13, 16, bark)
+    rect(img, 6, 15, 13, 16, dark)
+    rect(img, 2, 9, 5, 11, bark)      # 팔
+    rect(img, 1, 11, 2, 13, dark)
+    rect(img, 14, 9, 17, 11, bark)
+    rect(img, 17, 11, 18, 13, dark)
+    rect(img, 6, 17, 8, 19, dark)     # 뿌리 다리
+    rect(img, 11, 17, 13, 19, dark)
+    put(img, [(8, 10), (11, 10)], (230, 255, 120, 255))
+    put(img, [(9, 13), (10, 13)], dark)
+    put(img, [(7, 8), (12, 12), (6, 14)], leaf)
+    return outline(img)
+
+
+def dryad():
+    """숲의 주인 드라이어드 (24x32): 잎 머리카락 · 꽃 왕관 · 덩굴 드레스 · 나무 지팡이"""
+    img = canvas(24, 32)
+    skin, hair, hair2 = (150, 210, 140, 255), (60, 140, 60, 255), (110, 200, 80, 255)
+    dress, dress2, wood = (40, 110, 60, 255), (80, 170, 90, 255), (120, 80, 50, 255)
+    flower, flower2 = (255, 140, 190, 255), (255, 230, 120, 255)
+    # 머리카락 (잎사귀 갈래)
+    ellipse(img, 11.5, 7, 6.5, 6, hair)
+    for x, y in ((5, 12), (6, 15), (17, 12), (16, 15), (5, 17)):
+        ellipse(img, x, y, 1.6, 2.4, hair)
+    ellipse(img, 9, 4, 2.5, 1.6, hair2)
+    # 얼굴
+    rect(img, 9, 6, 14, 11, skin)
+    put(img, [(10, 8), (13, 8)], (40, 90, 40, 255))
+    put(img, [(11, 10), (12, 10)], (110, 160, 100, 255))
+    # 꽃 왕관
+    for x in (7, 11, 15):
+        put(img, [(x, 2), (x + 1, 2), (x, 3), (x + 1, 3)], flower)
+        put(img, [(x, 2)], flower2)
+    # 몸 / 덩굴 드레스 (아래로 퍼짐)
+    rect(img, 9, 12, 14, 17, dress2)
+    for y in range(17, 30):
+        half = 3 + (y - 17) * 0.55
+        for x in range(int(11.5 - half), int(11.5 + half) + 1):
+            img.putpixel((x, y), dress if (x + y) % 5 else dress2)
+    for x, y in ((8, 20), (14, 23), (10, 26), (16, 28), (6, 28)):
+        put(img, [(x, y), (x + 1, y)], flower if (x + y) % 2 else flower2)
+    # 팔 + 나무 지팡이
+    rect(img, 6, 13, 8, 15, skin)
+    rect(img, 15, 13, 17, 15, skin)
+    rect(img, 19, 4, 19, 30, wood)
+    ellipse(img, 19, 3, 2.2, 2.2, hair2)
+    put(img, [(19, 3)], flower2)
+    return outline(img)
+
+
+def thorn():
+    """드라이어드의 가시 탄 (10x5)"""
+    img = canvas(10, 5)
+    for x in range(10):
+        half = 2.0 * (1 - x / 10.0)
+        for y in range(5):
+            if abs(y - 2) <= half:
+                img.putpixel((x, y), (120, 200, 70, 255) if abs(y - 2) < 0.8 else (60, 120, 40, 255))
+    put(img, [(9, 2)], (230, 255, 160, 255))
+    return img
+
+
+def spore():
+    """포자 버섯의 포자 탄 (8x8)"""
+    img = canvas(8)
+    ellipse(img, 3.5, 3.5, 3.2, 3.2, (170, 120, 210, 255))
+    ellipse(img, 3, 3, 1.6, 1.6, (230, 200, 255, 255))
+    return img
+
+
+def floor_forest():
+    """숲 바닥 (32x32): 짙은 풀 + 낙엽 + 작은 꽃"""
+    rnd = random.Random(11)
+    img = canvas(32)
+    for y in range(32):
+        for x in range(32):
+            v = rnd.randint(-6, 6)
+            img.putpixel((x, y), (34 + v, 82 + v, 44 + v, 255))
+    for _ in range(26):  # 풀잎
+        x, y = rnd.randint(0, 31), rnd.randint(1, 31)
+        img.putpixel((x, y), (60, 120, 58, 255))
+        img.putpixel((x, y - 1), (78, 140, 66, 255))
+    for _ in range(8):  # 낙엽
+        x, y = rnd.randint(0, 30), rnd.randint(0, 30)
+        col = rnd.choice([(150, 100, 50, 255), (170, 130, 60, 255)])
+        put(img, [(x, y), (x + 1, y)], col)
+    for _ in range(1):  # 꽃
+        x, y = rnd.randint(1, 30), rnd.randint(1, 30)
+        put(img, [(x, y)], (255, 230, 120, 255))
+        put(img, [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)], (240, 150, 200, 255))
+    return img
+
 # ---------------------------------------------------------------- 갑옷 (착용 오버레이 = 플레이어 몸통 위치에 정확히 맞춤)
 ARMOR_COLORS = {
     # 이름: (주색, 밝은 포인트, 어두운 색, 장식)
@@ -1103,6 +1243,13 @@ def main():
     save(floor_tile(), "tiles", "floor.png")
     save(floor_hell(), "tiles", "floor_hell.png")
     save(floor_ruins(), "tiles", "floor_ruins.png")
+    save(floor_forest(), "tiles", "floor_forest.png")
+    save(outline(from_map(FOREST_WOLF)), "characters", "forest_wolf.png")
+    save(outline(from_map(MUSHROOM)), "characters", "mushroom.png")
+    save(treant(), "characters", "treant.png")
+    save(dryad(), "characters", "dryad.png")
+    save(thorn(), "projectiles", "thorn.png")
+    save(spore(), "projectiles", "spore.png")
     save(wall_tile(), "tiles", "wall.png")
     save(rug(), "tiles", "rug.png")
 

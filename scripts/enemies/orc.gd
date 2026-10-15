@@ -9,6 +9,9 @@ enum State { CHASE, SMASH, RECOVER }
 @export var smash_radius: float = 26.0
 @export var smash_windup: float = 0.75
 @export var recover_time: float = 0.7
+## 내려찍기 장판 속성 / 맞으면 감속 시간 (트렌트: 자연 · 뿌리 휘감기)
+@export var smash_element: Elements.Type = Elements.Type.EARTH
+@export var smash_slow: float = 0.0
 
 var _state: State = State.CHASE
 var _state_timer: float = 0.0
@@ -30,7 +33,7 @@ func _get_move_velocity(delta: float) -> Vector2:
 				_state = State.SMASH
 				_state_timer = smash_windup
 				var dir := direction_to_player()
-				telegraph_strike(global_position + dir * 18.0, smash_radius, smash_windup, smash_damage, Elements.Type.EARTH)
+				telegraph_strike(global_position + dir * 18.0, smash_radius, smash_windup, smash_damage, smash_element, smash_slow)
 				return Vector2.ZERO
 			return global_position.direction_to(_player.global_position) * move_speed
 		State.SMASH:

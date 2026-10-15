@@ -640,17 +640,126 @@ func _run() -> void:
 	archeon.take_damage(roundi(archeon.max_hp * 0.6))
 	_check(archeon._phase_two, "체력 50% 이하 → 원소 융합")
 	await _survive(240)
-	print("[엔딩 - 3스테이지 보스 토벌]")
+	archeon.take_damage(999999)
+	await _frames(4)
+	_check(not _gm.is_game_cleared and stage.get_chest() != null and next_portal.enabled, "3스테이지 보스 토벌 → 상자 + 4스테이지 텔레포트 (아직 엔딩 아님)")
+	next_portal.interacted.emit()
+	await _frames(3)
+
+	print("[4스테이지 - 드라이어드의 숲]")
+	_check(_gm.stage == 4 and _gm.stage_name == "드라이어드의 숲", "스테이지 4 「%s」" % _gm.stage_name)
+	field_portal.interacted.emit()
+	await _frames(2)
+	for scene in stage.get_stage_data().enemy_scenes:
+		stage._add_enemy(scene.instantiate() as Enemy, stage._pick_spawn_position(stage.field_room.get_arena_rect()), stage.field_room.get_arena_rect())
+	await _frames(3)
+	var forest_names := _enemy_names()
+	_check(forest_names.has("숲 늑대") and forest_names.has("포자 버섯") and forest_names.has("덩굴 트렌트"), "숲 몬스터 3종: 숲 늑대, 포자 버섯, 덩굴 트렌트")
+	var near_mushroom := (load("res://scenes/enemies/mushroom.tscn") as PackedScene).instantiate() as Enemy
+	stage._add_enemy(near_mushroom, player.global_position + Vector2(90, 0), stage.field_room.get_arena_rect())
+	var forest_seen := {"spores": false}
+	await _survive(420, func() -> void:
+		for c in pool.get_children():
+			if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+				forest_seen["spores"] = true)
+	_check(not _gm.is_player_dead and forest_seen["spores"], "숲 몬스터 패턴 실행 (포자 버섯의 포자 탄막)")
+	gate.open()
+	gate.interacted.emit()
+	await _frames(int(stage.boss_entry_delay * 60) + 10)
+	var dryad := _find_boss() as BossDryad
+	_check(dryad != null and dryad.display_name == "숲의 주인 드라이어드", "4스테이지 보스: 숲의 주인 드라이어드")
+	dryad.set_physics_process(false)  # 지휘 명령을 하나씩 검사하는 동안 자동 패턴 정지
+	var boss_center := stage.boss_room.get_arena_rect().get_center()
+	player.global_position = boss_center + Vector2(0, 40)
+	dryad._summon()
+	await _frames(4)
+	var minions := dryad.get_minions()
+	var all_linked := minions.size() == 3
+	for m in minions:
+		if m.commander != dryad:
+			all_linked = false
+	_check(all_linked, "숲 몬스터 소환 → 덩굴로 연결되어 드라이어드가 지휘 (%d마리)" % minions.size())
+	# 돌격 명령
+	var start_dist := {}
+	for i in minions.size():
+		minions[i].global_position = player.global_position + Vector2.RIGHT.rotated(TAU * i / minions.size()) * 90.0
+		start_dist[i] = 90.0
+	dryad.command_charge()
+	var all_charging := true
+	for m in minions:
+		if m.get_command() != Enemy.Command.CHARGE:
+			all_charging = false
+	_check(all_charging and dryad.get_shout_text() == "돌격하라!", "「돌격하라!」 — 지휘 중인 몬스터 전부에게 돌격 명령")
+	await _survive(36)
+	var closed := 0
+	for i in minions.size():
+		if is_instance_valid(minions[i]) and minions[i].global_position.distance_to(player.global_position) < 60.0:
+			closed += 1
+	_check(closed == minions.size(), "돌격: 몬스터들이 일제히 플레이어에게 달려듦 (%d/%d)" % [closed, minions.size()])
+	await _survive(60)
+	# 포위 명령 (벽에 붙지 않도록 방 가운데에서)
+	player.global_position = boss_center + Vector2(0, 40)
+	for i in minions.size():
+		minions[i].global_position = player.global_position + Vector2(-20.0 + 20.0 * i, 70.0)
+	var surround_center := player.global_position
+	dryad.command_surround()
+	await _survive(62)
+	var ring_ok := dryad.get_shout_text() == "포위하라!"
+	var min_gap := INF
+	for i in minions.size():
+		var spot: Vector2 = minions[i]._command_point
+		var radius_ok := absf(spot.distance_to(surround_center) - 58.0) < 1.0
+		if not radius_ok or minions[i].global_position.distance_to(spot) > 12.0:
+			ring_ok = false
+		for j in range(i + 1, minions.size()):
+			min_gap = minf(min_gap, minions[i].global_position.distance_to(minions[j].global_position))
+	_check(ring_ok and min_gap > 40.0, "「포위하라!」 — 몬스터들이 플레이어를 둥글게 에워쌈 (반경 58)")
+	await _survive(20)
+	var closing := 0
+	for m in minions:
+		if m.get_command() == Enemy.Command.CHARGE:
+			closing += 1
+	_check(closing == minions.size(), "포위 후 한꺼번에 덮침")
+	await _survive(60)
+	# 2페이즈: 호위 + 생명 흡수
+	dryad.take_damage(roundi(dryad.max_hp * 0.55))
+	_check(dryad._phase_two, "체력 50% 이하 → 숲의 분노")
+	var hp_before_drain := dryad.hp
+	var count_before := dryad.get_minions().size()
+	dryad.command_guard()
+	await _survive(100)
+	var guarding := 0
+	for m in dryad.get_minions():
+		if m.global_position.distance_to(dryad.global_position) < 45.0:
+			guarding += 1
+	_check(guarding == count_before, "「나를 지켜라!」 — 몬스터들이 드라이어드 곁으로 돌아와 호위")
+	await _survive(40)
+	_check(dryad.hp > hp_before_drain and dryad.get_minions().size() == count_before - 1, "2페이즈: 호위하던 몬스터의 생명을 흡수해 회복 (+%d)" % (dryad.hp - hp_before_drain))
+	# 자동 패턴 순환
+	dryad.set_physics_process(true)
+	var shouts := {}
+	var dryad_seen := {"roots": false, "thorns": false}
+	await _survive(1100, func() -> void:
+		if is_instance_valid(dryad) and dryad.get_shout_text() != "":
+			shouts[dryad.get_shout_text()] = true
+		if _count_nodes_of("AoeStrike") > 0:
+			dryad_seen["roots"] = true
+		for c in pool.get_children():
+			if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+				dryad_seen["thorns"] = true)
+	_check(shouts.has("돌격하라!") and shouts.has("포위하라!") and dryad_seen["roots"] and dryad_seen["thorns"], "자동 패턴: 소환 · 돌격 · 포위 · 가시 · 뿌리 (%s)" % ", ".join(shouts.keys()))
+
+	print("[엔딩 - 4스테이지 보스 토벌]")
 	var kills_before: int = _gm.total_kills
 	stage.ending_delay = 600.0  # 아래 테스트가 끝난 뒤 엔딩 화면을 따로 검사
-	archeon.take_damage(999999)
+	dryad.take_damage(999999)
 	await _frames(4)
 	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막 보스 토벌 → 모든 스테이지 클리어")
 	_check(_gm.total_kills > kills_before and _gm.play_time > 0.0, "엔딩 기록: 처치 %d마리 · 플레이 %s" % [_gm.total_kills, _gm.get_play_time_text()])
-	_check(stage.get_chest() == null and not next_portal.enabled, "마지막 스테이지: 상자 / 다음 스테이지 텔레포트 없음")
+	_check(stage.get_chest() == null and not next_portal.enabled and get_tree().get_nodes_in_group(&"enemies").is_empty(), "마지막 스테이지: 상자 / 텔레포트 없음, 남은 졸개 정리")
 	stage.go_to_next_stage()
 	await _frames(3)
-	_check(_gm.stage == 3, "3스테이지 이후 「+1」 반복 스테이지 없음")
+	_check(_gm.stage == 4, "4스테이지 이후 반복 스테이지 없음")
 
 	print("[난이도 배율]")
 	_gm.difficulty = _gm.Difficulty.VERY_HARD

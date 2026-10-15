@@ -9,6 +9,8 @@ enum State { CIRCLE, WINDUP, LUNGE, RECOVER }
 @export var lunge_time: float = 0.3
 @export var lunge_speed_multiplier: float = 4.2
 @export var recover_time: float = 0.45
+## 돌진할 때 흩뿌리는 불티 속성 (NONE 이면 없음 — 숲 늑대)
+@export var trail_element: Elements.Type = Elements.Type.FIRE
 
 var _state: State = State.CIRCLE
 var _state_timer: float = 0.0
@@ -45,9 +47,9 @@ func _get_move_velocity(delta: float) -> Vector2:
 			return Vector2.ZERO
 		State.LUNGE:
 			_trail_timer -= delta
-			if _trail_timer <= 0.0:
+			if _trail_timer <= 0.0 and trail_element != Elements.Type.NONE:
 				_trail_timer = 0.05
-				Fx.burst(self, get_hit_center(), Elements.color_of(Elements.Type.FIRE), 3, 25.0, 0.4, Vector2(0, -60))
+				Fx.burst(self, get_hit_center(), Elements.color_of(trail_element), 3, 25.0, 0.4, Elements.gravity_of(trail_element))
 			if _state_timer <= 0.0:
 				_state = State.RECOVER
 				_state_timer = recover_time
