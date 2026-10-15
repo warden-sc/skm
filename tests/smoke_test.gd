@@ -132,7 +132,7 @@ func _run() -> void:
 	_check(_gm.equipped_shield != null and _gm.equipped_shield.id == &"wooden_shield", "방패 칸: 나무 방패")
 	_check(stage.get_state() == StageManager.State.CAMP and _gm.location_name == "야영지", "야영지에서 시작")
 	_check(stage.camp_room.get_bounds().has_point(player.global_position), "플레이어가 야영지 안에 있음")
-	_check(hud.get_node("%Hotbar").get_child_count() == 13, "HUD 단축바 (무기 3 + 방어구 3 + 장신구 3 + 포션)")
+	_check(hud.get_node("%Hotbar").get_child_count() == 14, "HUD 단축바 (무기 3 + 방어구 4 + 장신구 3 + 포션)")
 	_check(_gm.get_potion_count(&"small_potion") == 2, "시작 포션: 작은 회복 포션 2개")
 
 	print("[이동/대시]")
@@ -385,9 +385,34 @@ func _run() -> void:
 	var def_before: int = _gm.get_total_defense()
 	var hp_cap_before: int = _gm.max_hp
 	_gm.equip_item(pendant)
-	_check(_gm.get_total_defense() == def_before + pendant.defense and _gm.max_hp == hp_cap_before + pendant.bonus_max_hp, "펜던트: 최대 체력 +%d · 방어력 +%d" % [pendant.bonus_max_hp, pendant.defense])
+	_check(_gm.get_total_defense() == def_before and _gm.max_hp == hp_cap_before + pendant.bonus_max_hp and is_equal_approx(_gm.get_hp_regen(), pendant.hp_regen), "펜던트: 최대 체력 +%d · 체력 재생 초당 %.1f (방어력 없음)" % [pendant.bonus_max_hp, pendant.hp_regen])
+	_gm.hp = _gm.max_hp - 30
+	var hp_before_regen: int = _gm.hp
+	await _frames(122)
+	_check(_gm.hp >= hp_before_regen + 2, "펜던트 체력 재생: 2초 동안 %d 회복" % (_gm.hp - hp_before_regen))
 	_gm.unequip_item(pendant)
-	_check(_gm.max_hp == hp_cap_before and _gm.get_total_defense() == def_before, "펜던트 해제 → 원래 능력치")
+	_check(_gm.max_hp == hp_cap_before and is_zero_approx(_gm.get_hp_regen()), "펜던트 해제 → 원래 능력치")
+	print("[신발 - 방어력 + 이동 속도]")
+	var boots := ItemDB.get_item(&"iron_greaves") as BootsData
+	_gm.add_item(boots)
+	var def_no_boots: int = _gm.get_total_defense()
+	_gm.equip_item(boots)
+	_check(_gm.equipped_boots == boots and _gm.get_total_defense() == def_no_boots + boots.defense and is_equal_approx(_gm.get_move_speed_bonus(), boots.move_bonus), "신발 칸 장착: 방어력 +%d · 이동 속도 +%d%%" % [boots.defense, roundi(boots.move_bonus * 100.0)])
+	_check((player.get_node("BodySprite/BootsSprite") as Sprite2D).visible, "플레이어 발에 신발 표시")
+	var speed_start := player.global_position.x
+	Input.action_press(&"move_right")
+	await _frames(60)
+	Input.action_release(&"move_right")
+	var boots_dist := player.global_position.x - speed_start
+	_gm.unequip_item(boots)
+	await _frames(30)
+	speed_start = player.global_position.x
+	Input.action_press(&"move_left")
+	await _frames(60)
+	Input.action_release(&"move_left")
+	var plain_dist := speed_start - player.global_position.x
+	_check(boots_dist > plain_dist * 1.04, "신발을 신으면 더 빨리 달림 (%.0f px > %.0f px)" % [boots_dist, plain_dist])
+	await _frames(30)
 	var crits := 0
 	var crit_amount := 0
 	for i in 2000:
@@ -470,7 +495,7 @@ func _run() -> void:
 	print("[인벤토리]")
 	await _press_action(&"inventory")
 	_check(inventory.is_open() and get_tree().paused, "I 키 → 인벤토리 열림 + 일시정지")
-	_check(inventory.get_node("%WeaponSlots").get_child_count() == 3 and inventory.get_node("%ArmorSlots").get_child_count() == 3 and inventory.get_node("%AccessorySlots").get_child_count() == 3, "장비 칸: 무기 3 · 방어구 3 · 장신구 3")
+	_check(inventory.get_node("%WeaponSlots").get_child_count() == 3 and inventory.get_node("%ArmorSlots").get_child_count() == 4 and inventory.get_node("%AccessorySlots").get_child_count() == 3, "장비 칸: 무기 3 · 방어구 4 · 장신구 3")
 	_check(inventory.get_node("%BagList").get_child_count() == _gm.items.size() + _gm.get_owned_potions().size(), "가방 목록: 포션 %d종 + 장비 %d개" % [_gm.get_owned_potions().size(), _gm.items.size()])
 	inventory._on_unequip_pressed(ruby)
 	await get_tree().process_frame
@@ -557,6 +582,16 @@ func _run() -> void:
 	await _frames(int(stage.boss_entry_delay * 60) + 10)
 	var slime_king := _find_boss()
 	_check(slime_king != null and slime_king.display_name == "슬라임 킹" and hud.get_node("%BossBox").visible, "보스 등장: 슬라임 킹")
+	# [기믹] 점액 분출 → 점액 바닥을 밟으면 느려짐
+	(slime_king as BossSlimeKing).spew_slime()
+	await _survive(70)
+	var slime_floors := get_tree().get_nodes_in_group(&"hostile_zones")
+	_check(slime_floors.size() >= 5, "[기믹] 슬라임 킹 점액 분출 → 바닥에 점액 웅덩이 %d개" % slime_floors.size())
+	if not slime_floors.is_empty():
+		player.global_position = (slime_floors[0] as Node2D).global_position
+		await _survive(4)
+		_check(player.is_slowed() and _gm.player_status.contains("점액"), "점액 바닥을 밟으면 이동 속도 감소 + 상태 표시 (%s)" % _gm.player_status)
+		_check(hud.get_node("StatusLabel").visible, "HUD 에 상태 이상 표시")
 	slime_king.take_damage(999999)
 	await _frames(4)
 	_check(stage.get_state() == StageManager.State.CLEARED and next_portal.visible and next_portal.enabled, "보스 토벌 → 다음 스테이지 텔레포트 등장")
@@ -607,6 +642,33 @@ func _run() -> void:
 		if _enemy_names().has("헬하운드"):
 			seen["hounds"] = true)
 	_check(seen["fire"] and seen["aoe"] and seen["hounds"], "수문장: 화염구 / 화염 기둥 / 헬하운드 소환")
+	# [기믹] 화상: 방어력이 높을수록 지속 피해 감소
+	_check(gatekeeper.burn_damage > 0, "[기믹] 수문장의 불 공격에 화상 부여 (0.5초마다 %d)" % gatekeeper.burn_damage)
+	player.apply_burn(10, 2.0)
+	var burn_low_def := player.get_burn_tick_damage()
+	var def_items := [ItemDB.get_item(&"paladin_plate"), ItemDB.get_item(&"gatekeeper_horns"), ItemDB.get_item(&"windwalker_boots")]
+	var worn_before := [_gm.equipped_armor, _gm.equipped_helmet, _gm.equipped_boots]
+	for it in def_items:
+		_gm.add_item(it)
+		_gm.equip_item(it)
+	var burn_high_def := player.get_burn_tick_damage()
+	_check(burn_high_def < burn_low_def, "화상 피해는 방어력이 높을수록 감소 (방어력 낮음 %d → 높음 %d)" % [burn_low_def, burn_high_def])
+	_gm.hp = _gm.max_hp
+	var hp_burn_start: int = _gm.hp
+	await _frames(70)
+	_check(_gm.hp < hp_burn_start, "화상: 가드·무적으로 막을 수 없는 지속 피해 (-%d)" % (hp_burn_start - _gm.hp))
+	for i in def_items.size():
+		if worn_before[i] != null:
+			_gm.equip_item(worn_before[i])
+		else:
+			_gm.unequip_item(def_items[i])
+	var fire_hit := {"burned": false}
+	gatekeeper.global_position = player.global_position + Vector2(60, 0)
+	gatekeeper.shoot(Vector2.LEFT, 160.0, 5, null, 0.0, Elements.Type.FIRE, player.global_position + Vector2(30, 0))
+	await _survive(30, func() -> void:
+		if player.is_burning():
+			fire_hit["burned"] = true)
+	_check(fire_hit["burned"], "수문장의 화염구에 맞으면 화상")
 	gatekeeper.take_damage(999999)
 	await _frames(4)
 	stage.get_chest()._interact()
@@ -639,6 +701,19 @@ func _run() -> void:
 	_check(elements_seen.size() == 4, "4원소 순환 (%d종)" % elements_seen.size())
 	archeon.take_damage(roundi(archeon.max_hp * 0.6))
 	_check(archeon._phase_two, "체력 50% 이하 → 원소 융합")
+	# [기믹] 원소 강화
+	var base_def := archeon.defense
+	archeon.apply_element_buff(Elements.Type.EARTH)
+	_check(archeon.defense >= base_def + archeon.earth_defense_bonus - 0 and archeon.get_buff_text().contains("대지의 갑주"), "[기믹] 대지: 대지의 갑주 — 방어력 %d → %d" % [base_def, archeon.defense])
+	archeon.apply_element_buff(Elements.Type.ICE)
+	var shield_start := archeon.ice_shield
+	var hp_ice := archeon.hp
+	archeon.take_damage(50, Vector2.ZERO, false, 999)
+	_check(shield_start > 0 and archeon.ice_shield == shield_start - 50 and archeon.hp == hp_ice, "[기믹] 빙결: 얼음 보호막 %d 이 피해를 먼저 흡수" % shield_start)
+	archeon.apply_element_buff(Elements.Type.LIGHTNING)
+	_check(archeon.move_speed > archeon._base_speed * 1.5 and archeon.ice_shield == 0, "[기믹] 뇌전: 뇌신 — 이동 속도 x%.1f + 순간이동" % (archeon.move_speed / archeon._base_speed))
+	archeon.apply_element_buff(Elements.Type.FIRE)
+	_check(archeon.burn_damage > 0 and archeon.defense == archeon._base_defense, "[기믹] 화염: 작열 — 공격에 화상, 이전 속성 능력은 사라짐")
 	await _survive(240)
 	archeon.take_damage(999999)
 	await _frames(4)
@@ -749,17 +824,107 @@ func _run() -> void:
 				dryad_seen["thorns"] = true)
 	_check(shouts.has("돌격하라!") and shouts.has("포위하라!") and dryad_seen["roots"] and dryad_seen["thorns"], "자동 패턴: 소환 · 돌격 · 포위 · 가시 · 뿌리 (%s)" % ", ".join(shouts.keys()))
 
-	print("[엔딩 - 4스테이지 보스 토벌]")
+	dryad.take_damage(999999)
+	await _frames(4)
+	_check(not _gm.is_game_cleared and stage.get_chest() != null and next_portal.enabled, "4스테이지 보스 토벌 → 상자 + 5스테이지 텔레포트 (아직 엔딩 아님)")
+	next_portal.interacted.emit()
+	await _frames(3)
+
+	print("[5스테이지 - 어둠의 성]")
+	_check(_gm.stage == 5 and _gm.stage_name == "어둠의 성", "스테이지 5 「%s」" % _gm.stage_name)
+	var ambient := stage.get_node("Ambient") as CanvasModulate
+	_check(ambient.color.v < 0.95 and ambient.color.b > ambient.color.r, "어둡고 푸르스름한 분위기 (화면 색 %s)" % ambient.color)
+	_check(stage.get_boss_decor() != null and stage.get_boss_decor().texture.resource_path.ends_with("throne.png"), "보스방에 빈 옥좌")
+	field_portal.interacted.emit()
+	await _frames(2)
+	for scene in stage.get_stage_data().enemy_scenes:
+		stage._add_enemy(scene.instantiate() as Enemy, stage._pick_spawn_position(stage.field_room.get_arena_rect()), stage.field_room.get_arena_rect())
+	await _frames(3)
+	var knight_names := _enemy_names()
+	_check(knight_names.has("기사") and knight_names.has("중기사") and knight_names.has("궁수"), "기사 3종: 기사, 중기사, 궁수")
+	# 중기사: 정면 공격은 방패로 막고, 뒤에서 치면 그대로 들어감
+	var heavy := (load("res://scenes/enemies/heavy_knight.tscn") as PackedScene).instantiate() as HeavyKnight
+	heavy.max_hp = 9999
+	heavy.move_speed = 0.0
+	stage._add_enemy(heavy, player.global_position + Vector2(60, 0), stage.field_room.get_arena_rect())
+	await _survive(40)
+	var hp_h := heavy.hp
+	heavy.take_damage(100, -heavy.get_facing() * 50.0, false, 999)
+	var front_dmg := hp_h - heavy.hp
+	hp_h = heavy.hp
+	heavy.take_damage(100, heavy.get_facing() * 50.0, false, 999)
+	var back_dmg := hp_h - heavy.hp
+	_check(front_dmg < back_dmg * 0.5, "중기사: 정면은 방패로 막음 (정면 %d / 뒤 %d)" % [front_dmg, back_dmg])
+	heavy.despawn()
+	var arrows := {"shot": false}
+	await _survive(360, func() -> void:
+		for c in pool.get_children():
+			if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+				arrows["shot"] = true)
+	_check(not _gm.is_player_dead and arrows["shot"], "기사 패턴 실행 (궁수의 화살)")
+	gate.open()
+	gate.interacted.emit()
+	await _frames(int(stage.boss_entry_delay * 60) + 10)
+	var dullahan := _find_boss() as BossDullahan
+	_check(dullahan != null and dullahan.display_name == "기사단장 듀라한", "5스테이지 보스: 기사단장 듀라한")
+	var throne := stage.get_boss_decor()
+	_check(dullahan != null and throne != null and dullahan.global_position.distance_to(throne.global_position) < 90.0, "빈 옥좌 옆에서 듀라한 등장 (옥좌와 거리 %d)" % roundi(dullahan.global_position.distance_to(throne.global_position)))
+	dullahan.set_physics_process(false)
+	player.global_position = stage.boss_room.get_arena_rect().get_center() + Vector2(0, 60)
+	var body_def := dullahan.defense
+	dullahan.throw_head()
+	await _survive(4)
+	var head := dullahan.get_thrown_head()
+	_check(head != null and dullahan.is_headless() and dullahan.defense >= body_def + BossDullahan.HEADLESS_DEFENSE_BONUS, "[기믹] 머리 던지기 → 머리 없는 몸은 방어력 %d → %d" % [body_def, dullahan.defense])
+	var hp_body := dullahan.hp
+	dullahan.take_damage(60)
+	_check(hp_body - dullahan.hp <= 12, "머리 없는 동안 몸에는 피해가 거의 안 들어감 (-%d)" % (hp_body - dullahan.hp))
+	_check(head != null and head.defense == 0 and head.max_hp < dullahan.max_hp * 0.1, "약점인 머리는 방어력 0 · 체력 %d" % (head.max_hp if head != null else 0))
+	if head != null:
+		head.take_damage(999999)
+	await _frames(3)
+	_check(dullahan.is_exposed() and dullahan.defense == 0 and dullahan.get_status_text().contains("약점 노출"), "머리를 쓰러뜨리면 무릎 꿇음 + 약점 노출 (방어력 0)")
+	hp_body = dullahan.hp
+	dullahan.take_damage(100)
+	_check(hp_body - dullahan.hp == 150, "약점 노출 중 받는 피해 x1.5 (100 → %d)" % (hp_body - dullahan.hp))
+	dullahan.set_physics_process(true)
+	await _survive(int(dullahan.kneel_time * 60) + 10)
+	_check(not dullahan.is_exposed() and dullahan.defense == body_def, "시간이 지나면 머리가 다시 생겨 원래대로")
+	# 머리를 못 잡으면 돌아가서 회복
+	dullahan.set_physics_process(false)
+	dullahan.take_damage(1500)
+	dullahan.head_time = 0.5
+	dullahan.throw_head()
+	await _frames(4)
+	var hp_before_return := dullahan.hp
+	dullahan.set_physics_process(true)
+	await _survive(50)
+	_check(not dullahan.is_headless() and dullahan.hp > hp_before_return, "머리를 놓치면 몸으로 돌아가 회복 (+%d)" % (dullahan.hp - hp_before_return))
+	dullahan.head_time = 12.0
+	var dl_seen := {"slash": false, "wave": false}
+	await _survive(900, func() -> void:
+		if _count_nodes_of("AoeStrike") > 0:
+			dl_seen["slash"] = true
+		for c in pool.get_children():
+			if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+				dl_seen["wave"] = true)
+	_check(dl_seen["slash"] and dl_seen["wave"], "듀라한 패턴: 대검 베기 · 암흑 검기 · 돌진 · 기사 소환 · 머리 던지기")
+
+	print("[엔딩 - 5스테이지 보스 토벌]")
 	var kills_before: int = _gm.total_kills
 	stage.ending_delay = 600.0  # 아래 테스트가 끝난 뒤 엔딩 화면을 따로 검사
-	dryad.take_damage(999999)
+	dullahan.take_damage(999999, Vector2.ZERO, false, 9999)
+	if not dullahan.is_dead() and dullahan.get_thrown_head() != null:
+		dullahan.get_thrown_head().take_damage(999999)
+		await _frames(2)
+		dullahan.take_damage(999999)
 	await _frames(4)
 	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막 보스 토벌 → 모든 스테이지 클리어")
 	_check(_gm.total_kills > kills_before and _gm.play_time > 0.0, "엔딩 기록: 처치 %d마리 · 플레이 %s" % [_gm.total_kills, _gm.get_play_time_text()])
 	_check(stage.get_chest() == null and not next_portal.enabled and get_tree().get_nodes_in_group(&"enemies").is_empty(), "마지막 스테이지: 상자 / 텔레포트 없음, 남은 졸개 정리")
 	stage.go_to_next_stage()
 	await _frames(3)
-	_check(_gm.stage == 4, "4스테이지 이후 반복 스테이지 없음")
+	_check(_gm.stage == 5, "5스테이지 이후 반복 스테이지 없음")
 
 	print("[난이도 배율]")
 	_gm.difficulty = _gm.Difficulty.VERY_HARD

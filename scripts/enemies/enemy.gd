@@ -45,6 +45,11 @@ const COMMAND_GUARD_SPEED := 180.0
 @export var aura_element: Elements.Type = Elements.Type.NONE
 @export var aura_amount: int = 0
 
+@export_group("Burn")
+## 0 보다 크면 이 적의 공격(접촉·탄·장판)에 맞은 플레이어가 화상을 입음 (0.5초마다 이 피해, 방어력으로 감소)
+@export var burn_damage: int = 0
+@export var burn_duration: float = 3.0
+
 @export_group("Drops")
 @export var gold_min: int = 3
 @export var gold_max: int = 6
@@ -132,7 +137,8 @@ func _physics_process(delta: float) -> void:
 		global_position = global_position.clamp(arena_rect.position, arena_rect.end)
 
 	if _touching_player and _stun_left <= 0.0 and _player != null and is_instance_valid(_player):
-		_player.take_hit(contact_damage, get_hit_center(), self)
+		if _player.take_hit(contact_damage, get_hit_center(), self) == Player.HitResult.DAMAGED and burn_damage > 0:
+			_player.apply_burn(burn_damage, burn_duration)
 
 	_hit_flash = maxf(_hit_flash - delta, 0.0)
 	if _hit_flash > 0.0:
@@ -209,13 +215,20 @@ func shoot(dir: Vector2, speed: float, damage: int, texture: Texture2D, slow: fl
 	if pool == null:
 		return
 	var origin := get_hit_center() if from == Vector2.INF else from
-	pool.spawn(ProjectileSpec.enemy_bullet(origin, dir, speed, roundi(damage * power), texture, slow, element))
+	var spec := ProjectileSpec.enemy_bullet(origin, dir, speed, roundi(damage * power), texture, slow, element)
+	spec.burn_damage = burn_damage
+	spec.burn_duration = burn_duration
+	pool.spawn(spec)
 
 
 ## 예고 후 폭발하는 장판 공격 (난이도 배율 적용)
 func telegraph_strike(at_global: Vector2, radius: float, delay: float, damage: int,
 		element: Elements.Type = Elements.Type.FIRE, slow: float = 0.0) -> AoeStrike:
-	return AoeStrike.spawn(self, at_global, radius, delay, roundi(damage * power), Elements.color_of(element), slow, Elements.gravity_of(element))
+	var strike := AoeStrike.spawn(self, at_global, radius, delay, roundi(damage * power), Elements.color_of(element), slow, Elements.gravity_of(element))
+	if strike != null:
+		strike.burn_damage = burn_damage
+		strike.burn_duration = burn_duration
+	return strike
 
 
 func _aura_radius() -> float:

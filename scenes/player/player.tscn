@@ -34,6 +34,9 @@ visible = false
 [node name="HelmetSprite" type="Sprite2D" parent="BodySprite"]
 visible = false
 
+[node name="BootsSprite" type="Sprite2D" parent="BodySprite"]
+visible = false
+
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(0, -4)
 shape = SubResource("CircleShape2D_body")

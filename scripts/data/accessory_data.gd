@@ -5,7 +5,7 @@ extends ItemData
 ##
 ## - 팔찌  : 치명타 피해 + 방어력 관통(방깍)
 ## - 반지  : 치명타 확률 + 공격력
-## - 펜던트: 최대 체력 + 방어력
+## - 펜던트: 최대 체력 + 체력 재생 (화상 같은 지속 피해를 버티는 데 유용)
 
 enum SlotType { BRACELET, RING, PENDANT }
 
@@ -27,7 +27,8 @@ const SLOT_NAMES := ["팔찌", "반지", "펜던트"]
 
 @export_group("Pendant")
 @export var bonus_max_hp: int = 0
-@export var defense: int = 0
+## 초당 체력 재생량
+@export var hp_regen: float = 0.0
 
 
 func get_slot_name() -> String:
@@ -46,8 +47,8 @@ func _stat_parts(long_form: bool) -> PackedStringArray:
 		parts.append(("공격력 +%d%%" if long_form else "공격 +%d%%") % roundi(attack_bonus * 100.0))
 	if bonus_max_hp > 0:
 		parts.append(("최대 체력 +%d" if long_form else "HP +%d") % bonus_max_hp)
-	if defense > 0:
-		parts.append(("방어력 +%d" if long_form else "방어 +%d") % defense)
+	if hp_regen > 0.0:
+		parts.append(("체력 재생 초당 +%.1f" if long_form else "재생 %.1f/s") % hp_regen)
 	return parts
 
 

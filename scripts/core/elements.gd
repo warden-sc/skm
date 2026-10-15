@@ -1,7 +1,7 @@
 class_name Elements
 ## 속성 정의. 무기 이펙트 색 / 몬스터 오라 / 골렘 패턴이 모두 이 값을 공유합니다.
 
-enum Type { NONE, FIRE, ICE, LIGHTNING, EARTH, NATURE, HOLY, ARCANE }
+enum Type { NONE, FIRE, ICE, LIGHTNING, EARTH, NATURE, HOLY, ARCANE, DARK }
 
 const NAMES := {
 	Type.NONE: "무속성",
@@ -12,6 +12,7 @@ const NAMES := {
 	Type.NATURE: "자연",
 	Type.HOLY: "신성",
 	Type.ARCANE: "비전",
+	Type.DARK: "암흑",
 }
 
 const COLORS := {
@@ -23,6 +24,7 @@ const COLORS := {
 	Type.NATURE: Color(0.5, 1.0, 0.4),
 	Type.HOLY: Color(1.0, 0.92, 0.6),
 	Type.ARCANE: Color(0.78, 0.5, 1.0),
+	Type.DARK: Color(0.62, 0.3, 0.95),
 }
 
 
@@ -45,4 +47,6 @@ static func gravity_of(element: Type) -> Vector2:
 			return Vector2(0, 40)
 		Type.HOLY:
 			return Vector2(0, -40)
+		Type.DARK:
+			return Vector2(0, -25)
 	return Vector2.ZERO

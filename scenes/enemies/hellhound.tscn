@@ -22,7 +22,7 @@ aura_amount = 8
 gold_min = 8
 gold_max = 14
 item_drop_chance = 0.1
-item_drop_ids = Array[StringName]([&"iron_helm", &"rapid_crossbow", &"frost_staff", &"silver_bracelet"])
+item_drop_ids = Array[StringName]([&"iron_helm", &"rapid_crossbow", &"frost_staff", &"silver_bracelet", &"iron_greaves"])
 
 [node name="Shadow" type="Sprite2D" parent="."]
 position = Vector2(0, -1)

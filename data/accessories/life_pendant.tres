@@ -7,10 +7,10 @@
 script = ExtResource("1_script")
 slot_type = 2
 bonus_max_hp = 80
-defense = 5
+hp_regen = 2.5
 id = &"life_pendant"
 display_name = "생명의 펜던트"
-description = "생명의 나무 수액을 담은 전설의 펜던트."
+description = "생명의 나무 수액을 담은 전설의 펜던트. 상처가 눈에 띄게 아문다."
 rarity = 3
 icon = ExtResource("2_res")
 price = 1350

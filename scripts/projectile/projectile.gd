@@ -130,6 +130,8 @@ func _on_body_entered(body: Node2D) -> void:
 			Player.HitResult.DAMAGED:
 				if _spec.slow_duration > 0.0:
 					player.apply_slow(0.5, _spec.slow_duration)
+				if _spec.burn_damage > 0:
+					player.apply_burn(_spec.burn_damage, _spec.burn_duration)
 				_impact(global_position, null)
 				release()
 			Player.HitResult.BLOCKED:

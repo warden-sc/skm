@@ -1,6 +1,8 @@
 class_name GroundZone
 extends Node2D
-## 지팡이 마법이 남기는 바닥 장판 (점액 웅덩이 / 불타는 땅).
+## 바닥 장판 (점액 웅덩이 / 불타는 땅).
+## - 플레이어 지팡이 마법이 남기면 적에게 피해·감속
+## - hostile = true 이면 적(보스)이 깐 장판: 밟은 플레이어가 느려지거나(점액) 화상을 입음(불)
 ##
 ## - duration 동안 TICK_TIME 마다 반경 안의 적에게 tick_damage 피해 (+ 점액은 감속)
 ## - 바닥 위 · 캐릭터 아래(z_index -5)에 그려지고, 끝나기 직전에 서서히 사라집니다.
@@ -17,6 +19,12 @@ var duration: float = 2.0
 var tick_damage: int = 0
 var armor_pen: int = 0
 var slow_duration: float = 0.0
+## 적이 깐 장판이면 true → 플레이어에게 작용
+var hostile: bool = false
+## (hostile) 밟으면 이동 속도 배율 / 화상 피해(0.5초마다) / 화상 지속시간
+var player_slow: float = 1.0
+var player_burn: int = 0
+var player_burn_duration: float = 2.0
 
 var _elapsed: float = 0.0
 var _tick_left: float = 0.0
@@ -42,6 +50,19 @@ static func spawn(context: Node, at_global: Vector2, zone_kind: Kind, zone_radiu
 	return zone
 
 
+## 보스가 까는 장판 (슬라임 킹의 점액 바닥 / 수문장의 불바다). 밟은 플레이어에게 작용
+static func spawn_hostile(context: Node, at_global: Vector2, zone_kind: Kind, zone_radius: float, zone_duration: float,
+		slow_multiplier: float = 1.0, burn_tick: int = 0, burn_time: float = 2.0) -> GroundZone:
+	var zone := spawn(context, at_global, zone_kind, zone_radius, zone_duration, 0)
+	if zone != null:
+		zone.hostile = true
+		zone.player_slow = slow_multiplier
+		zone.player_burn = burn_tick
+		zone.player_burn_duration = burn_time
+		zone.add_to_group(&"hostile_zones")
+	return zone
+
+
 func _ready() -> void:
 	add_to_group(&"ground_zones")
 	_tick_left = TICK_TIME * 0.5
@@ -62,6 +83,15 @@ func get_color() -> Color:
 func _physics_process(delta: float) -> void:
 	_elapsed += delta
 	_tick_left -= delta
+	if hostile:
+		if _elapsed < duration:
+			_affect_player()
+		queue_redraw()
+		if _elapsed >= duration:
+			_particles.emitting = false
+			if _elapsed >= duration + FADE_TIME:
+				queue_free()
+		return
 	if _tick_left <= 0.0 and _elapsed < duration:
 		_tick_left = TICK_TIME
 		_tick()
@@ -70,6 +100,17 @@ func _physics_process(delta: float) -> void:
 		_particles.emitting = false
 		if _elapsed >= duration + FADE_TIME:
 			queue_free()
+
+
+func _affect_player() -> void:
+	var player := get_tree().get_first_node_in_group(&"player") as Player
+	if player == null or player.is_dashing() or player.global_position.distance_to(global_position) > radius:
+		return
+	if player_slow < 1.0:
+		player.apply_slow(player_slow, 0.25)
+		player.mark_floor_status("점액 바닥 (이동 속도 -%d%%)" % roundi((1.0 - player_slow) * 100.0))
+	if player_burn > 0:
+		player.apply_burn(player_burn, player_burn_duration)
 
 
 func _tick() -> void:

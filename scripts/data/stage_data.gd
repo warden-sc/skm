@@ -6,6 +6,17 @@ extends Resource
 @export var stage_name: String = "스테이지"
 @export var floor_texture: Texture2D
 @export var wall_tint: Color = Color.WHITE
+## 화면 전체 밝기/색조 (CanvasModulate). 어두운 스테이지는 낮게
+@export var ambient_color: Color = Color.WHITE
+
+@export_group("Boss Room")
+## 보스방 장식 (예: 5스테이지 빈 옥좌). 보스 등장 지점 뒤에 놓임
+@export var boss_decor_texture: Texture2D
+@export var boss_decor_offset: Vector2 = Vector2.ZERO
+## 보스가 실제로 나타나는 위치 (보스 등장 지점 기준)
+@export var boss_spawn_offset: Vector2 = Vector2.ZERO
+## 보스 등장 문구 (비워두면 "보스 등장: 이름")
+@export var boss_intro_text: String = ""
 
 @export_group("Enemies")
 @export var enemy_scenes: Array[PackedScene] = []

@@ -10,7 +10,7 @@ extends CharacterBody2D
 ## - 활 시위 당기기 / 지팡이 영창(구슬에 마력이 모임) 연출은 AttackController 가 begin_windup() 등으로 요청
 ##
 ## 필요한 자식 노드 (player.tscn):
-##   BodySprite(Sprite2D) ├ ArmorSprite(Sprite2D) └ HelmetSprite(Sprite2D)
+##   BodySprite(Sprite2D) ├ ArmorSprite(Sprite2D) ├ HelmetSprite(Sprite2D) └ BootsSprite(Sprite2D)
 ##   CollisionShape2D, ChantLabel(Label)
 ##   WeaponPivot(Node2D)
 ##   ├ SwingPivot(Node2D) ├ WeaponSprite(Sprite2D) ├ BowString(Line2D) └ NockedArrow(Sprite2D)
@@ -60,6 +60,7 @@ const SWING_FX_ARC := 124.0     # swing_arc.png 가 그리는 각도(도)
 @onready var _body_sprite: Sprite2D = $BodySprite
 @onready var _helmet_sprite: Sprite2D = $BodySprite/HelmetSprite
 @onready var _armor_sprite: Sprite2D = $BodySprite/ArmorSprite
+@onready var _boots_sprite: Sprite2D = $BodySprite/BootsSprite
 @onready var _chant_label: Label = $ChantLabel
 @onready var _bow_string: Line2D = $WeaponPivot/SwingPivot/BowString
 @onready var _nocked_arrow: Sprite2D = $WeaponPivot/SwingPivot/NockedArrow
@@ -90,6 +91,15 @@ var _body_base_y: float = 0.0
 var _weapon_rest_angle: float = WEAPON_REST_ANGLE
 var _slow_left: float = 0.0
 var _slow_multiplier: float = 1.0
+## 화상 (지속 피해): 남은 시간 / 0.5초마다의 기본 피해 (방어력에 따라 줄어듦)
+var _burn_left: float = 0.0
+var _burn_tick_damage: int = 0
+var _burn_tick_timer: float = 0.0
+var _burn_particles: CPUParticles2D
+## 지금 서 있는 적 장판 (점액 바닥 등) 표시용
+var _floor_status: String = ""
+var _floor_status_left: float = 0.0
+var _status_text: String = ""
 var _windup_weapon: WeaponData
 var _potion_cooldown_left: float = 0.0
 var _charge_particles: CPUParticles2D
@@ -106,6 +116,7 @@ func _ready() -> void:
 	GameManager.shield_equipped.connect(_on_shield_equipped)
 	GameManager.helmet_equipped.connect(_on_helmet_equipped)
 	GameManager.armor_equipped.connect(_on_armor_equipped)
+	GameManager.boots_equipped.connect(_on_boots_equipped)
 	GameManager.player_damaged.connect(_on_player_damaged)
 	GameManager.player_died.connect(_on_player_died)
 	GameManager.guard_broken.connect(_on_guard_broken)
@@ -114,6 +125,7 @@ func _ready() -> void:
 	_on_shield_equipped(GameManager.equipped_shield)
 	_on_helmet_equipped(GameManager.equipped_helmet)
 	_on_armor_equipped(GameManager.equipped_armor)
+	_on_boots_equipped(GameManager.equipped_boots)
 	GameManager.set_dash_cooldown(0.0, dash_cooldown)
 
 
@@ -125,6 +137,8 @@ func _physics_process(delta: float) -> void:
 
 	_update_aim(delta)
 	_update_timers(delta)
+	_update_status(delta)
+	GameManager.tick_regen(delta)
 
 	if _dash_time_left > 0.0:
 		velocity = _dash_direction * dash_speed
@@ -135,7 +149,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		# get_vector 는 이미 길이 1 이하로 정규화되어 대각선도 속도가 같습니다.
 		var input_dir := Input.get_vector(&"move_left", &"move_right", &"move_up", &"move_down")
-		var speed := max_speed * _guard.get_move_multiplier() * _attack.get_move_multiplier()
+		var speed := max_speed * (1.0 + GameManager.get_move_speed_bonus()) * _guard.get_move_multiplier() * _attack.get_move_multiplier()
 		if _slow_left > 0.0:
 			speed *= _slow_multiplier
 		if input_dir != Vector2.ZERO:
@@ -334,6 +348,61 @@ func is_slowed() -> bool:
 	return _slow_left > 0.0
 
 
+const BURN_TICK_TIME := 0.5
+
+
+## 화상: duration 동안 0.5초마다 tick_damage 의 지속 피해.
+## 실제 피해 = tick_damage × GameManager.get_dot_multiplier() (방어력이 높을수록 덜 들어옴, 최소 1).
+## 가드·대시 무적으로 막을 수 없고, 펜던트의 체력 재생으로 버팁니다.
+func apply_burn(tick_damage: int, duration: float) -> void:
+	if _is_dead or tick_damage <= 0:
+		return
+	if _burn_left <= 0.0:
+		_burn_tick_timer = BURN_TICK_TIME
+	_burn_tick_damage = maxi(_burn_tick_damage if _burn_left > 0.0 else 0, tick_damage)
+	_burn_left = maxf(_burn_left, duration)
+
+
+func is_burning() -> bool:
+	return _burn_left > 0.0
+
+
+## 화상 1회분 실제 피해 (방어력 반영)
+func get_burn_tick_damage() -> int:
+	return maxi(1, roundi(_burn_tick_damage * GameManager.get_dot_multiplier()))
+
+
+## 적 장판(점액 바닥 등) 위에 있는 동안 매 프레임 호출 → 상태 표시
+func mark_floor_status(text: String) -> void:
+	_floor_status = text
+	_floor_status_left = 0.15
+
+
+func _update_status(delta: float) -> void:
+	if _burn_left > 0.0:
+		_burn_left = maxf(_burn_left - delta, 0.0)
+		_burn_tick_timer -= delta
+		if _burn_tick_timer <= 0.0:
+			_burn_tick_timer += BURN_TICK_TIME
+			var dmg := get_burn_tick_damage()
+			GameManager.damage_player(dmg)
+			FloatingText.spawn(self, global_position + Vector2(randf_range(-6, 6), -18), str(dmg), Color(1.0, 0.55, 0.2))
+	_floor_status_left = maxf(_floor_status_left - delta, 0.0)
+	if _burn_particles != null:
+		_burn_particles.emitting = _burn_left > 0.0
+	var parts := PackedStringArray()
+	if _burn_left > 0.0:
+		parts.append("화상 %.1f초 (0.5초마다 -%d)" % [_burn_left, get_burn_tick_damage()])
+	if _floor_status_left > 0.0:
+		parts.append(_floor_status)
+	elif _slow_left > 0.0:
+		parts.append("감속")
+	var text := "  ·  ".join(parts)
+	if text != _status_text:
+		_status_text = text
+		GameManager.set_player_status(text)
+
+
 func shake_camera(strength: float) -> void:
 	_shake_strength = maxf(_shake_strength, strength)
 
@@ -408,6 +477,7 @@ func _update_aim(delta: float) -> void:
 	_body_sprite.flip_h = _aim_direction.x < 0.0
 	_helmet_sprite.flip_h = _body_sprite.flip_h
 	_armor_sprite.flip_h = _body_sprite.flip_h
+	_boots_sprite.flip_h = _body_sprite.flip_h
 
 
 func _update_timers(delta: float) -> void:
@@ -459,6 +529,10 @@ func _update_visuals(delta: float) -> void:
 	# 피격 무적 깜빡임
 	if _invincible_left > 0.0:
 		_body_sprite.modulate = Color(1, 0.5, 0.5, 0.45 if int(_anim_time * 20.0) % 2 == 0 else 1.0)
+	elif _burn_left > 0.0:
+		_body_sprite.modulate = Color(1.0, 0.7, 0.5)  # 화상
+	elif _floor_status_left > 0.0:
+		_body_sprite.modulate = Color(0.7, 1.0, 0.6)  # 점액 바닥
 	elif _slow_left > 0.0:
 		_body_sprite.modulate = Color(0.6, 0.85, 1.0)  # 빙결 감속
 	else:
@@ -492,6 +566,11 @@ func _update_visuals(delta: float) -> void:
 
 
 func _setup_windup_visuals() -> void:
+	_burn_particles = Fx.make_aura(Elements.color_of(Elements.Type.FIRE), 10, 5.0, Vector2(0, -60), 0.5)
+	_burn_particles.position = Vector2(0, -6)
+	_burn_particles.z_index = 3
+	_burn_particles.emitting = false
+	add_child(_burn_particles)
 	_target_ring = TargetRing.new()
 	_target_ring.name = "TargetRing"
 	add_child(_target_ring)
@@ -545,6 +624,11 @@ func _on_weapon_equipped(weapon: WeaponData) -> void:
 	_bow_string.visible = weapon.is_bow()
 	if weapon.is_bow():
 		_update_bow_string(0.0)
+
+
+func _on_boots_equipped(boots: BootsData) -> void:
+	_boots_sprite.texture = boots.worn_texture if boots != null else null
+	_boots_sprite.visible = boots != null
 
 
 func _on_armor_equipped(armor: ArmorData) -> void:

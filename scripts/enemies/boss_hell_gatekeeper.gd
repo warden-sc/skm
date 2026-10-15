@@ -8,6 +8,10 @@ extends Enemy
 ##   PILLARS : 플레이어 주변에 예고 후 솟아오르는 화염 기둥
 ##   SUMMON  : 헬하운드 소환
 ## 체력 50% 이하: 업화 각성 — 이동/돌진 강화, 탄막·기둥 수 증가, 오라 강화
+##
+## [기믹] 화상: 수문장의 모든 불 공격(몸통·화염구·화염 기둥)에 맞으면 화상 (지속 피해).
+##   화상 피해는 방어력이 높을수록 줄어들고, 펜던트의 체력 재생으로 버틸 수 있습니다.
+##   화염 기둥이 솟은 자리는 잠시 불바다가 되어, 밟으면 화상을 입습니다.
 
 enum State { CHASE, CHARGE_WINDUP, CHARGE, RECOVER, CASTING }
 enum Pattern { CHARGE, RING, PILLARS, SUMMON }
@@ -20,6 +24,8 @@ const PATTERN_ORDER := [Pattern.CHARGE, Pattern.RING, Pattern.SUMMON, Pattern.PI
 @export var charge_speed_multiplier: float = 5.0
 @export var minion_scene: PackedScene
 @export var chase_time: float = 2.0
+## 화염 기둥이 남기는 불바다 지속 시간
+@export var fire_floor_time: float = 3.0
 
 var _state: State = State.CHASE
 var _state_timer: float = 0.0
@@ -118,9 +124,19 @@ func _cast_pillars() -> void:
 		return
 	var count := 8 if _phase_two else 5
 	telegraph_strike(_player.global_position, 22.0, 0.9, pillar_damage, Elements.Type.FIRE)
+	_after(0.9, _spawn_fire_floor.bind(_player.global_position, 22.0))
 	for i in count - 1:
 		var offset := Vector2.from_angle(randf() * TAU) * randf_range(25.0, 75.0)
-		telegraph_strike(_player.global_position + offset, 20.0, randf_range(0.9, 1.3), pillar_damage, Elements.Type.FIRE)
+		var delay := randf_range(0.9, 1.3)
+		telegraph_strike(_player.global_position + offset, 20.0, delay, pillar_damage, Elements.Type.FIRE)
+		_after(delay, _spawn_fire_floor.bind(_player.global_position + offset, 20.0))
+
+
+## 화염 기둥이 솟은 자리에 불바다 (밟으면 화상)
+func _spawn_fire_floor(at: Vector2, radius: float) -> void:
+	if is_dead():
+		return
+	GroundZone.spawn_hostile(self, at, GroundZone.Kind.FIRE, radius, fire_floor_time, 1.0, burn_damage, burn_duration)
 
 
 func _enter(state: State, duration: float) -> void:

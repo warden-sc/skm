@@ -29,6 +29,9 @@ var explosion_damage: int = 0
 var slow_duration: float = 0.0
 ## 플레이어 지팡이 투사체면 그 지팡이 (터질 때 마법별 이펙트·장판은 Spells.projectile_impact 가 처리)
 var source_weapon: WeaponData
+## 적 탄: 맞은 플레이어에게 화상 (0.5초마다 피해 / 지속 시간)
+var burn_damage: int = 0
+var burn_duration: float = 0.0
 
 
 ## 플레이어 무기 데이터로부터 1발 분량의 명세를 만듭니다.

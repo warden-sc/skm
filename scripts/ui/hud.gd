@@ -4,7 +4,7 @@ extends CanvasLayer
 ##
 ## - 왼쪽 위: HP / DASH / GUARD 게이지(TextureProgressBar), 골드
 ## - 위 가운데: 스테이지·난이도, 현재 위치(야영지/사냥터/보스방), 보스방 해방 진행도, 보스 체력
-## - 아래 가운데 단축바: 무기 3칸(1/2/3, 손에 든 무기 강조) + 방어구 3칸 + 장신구 3칸(팔찌/반지/펜던트) + 회복 포션(H)
+## - 아래 가운데 단축바: 무기 3칸(1/2/3, 손에 든 무기 강조) + 방어구 4칸(방패/투구/갑옷/신발) + 장신구 3칸(팔찌/반지/펜던트) + 회복 포션(H)
 ##
 ## hud.tscn 의 노드들은 "고유 이름(%)" 으로 접근하므로 레이아웃을 바꿔도 경로가 깨지지 않습니다.
 
@@ -33,6 +33,7 @@ const SMALL_SLOT_SIZE := Vector2(20, 20)
 var _hp_tween: Tween
 var _notice_tween: Tween
 var _shown_potion: PotionData
+var _status_label: Label
 
 
 func _ready() -> void:
@@ -52,6 +53,16 @@ func _ready() -> void:
 	GameManager.boss_hp_changed.connect(_on_boss_hp_changed)
 	GameManager.boss_defeated.connect(_on_boss_defeated)
 	GameManager.notice_requested.connect(_on_notice_requested)
+	GameManager.player_status_changed.connect(_on_player_status_changed)
+	_status_label = Label.new()
+	_status_label.name = "StatusLabel"
+	_status_label.position = Vector2(10, 62)
+	_status_label.add_theme_font_size_override(&"font_size", 9)
+	_status_label.add_theme_color_override(&"font_color", Color(1.0, 0.7, 0.4))
+	_status_label.add_theme_color_override(&"font_outline_color", Color(0.1, 0.05, 0.05))
+	_status_label.add_theme_constant_override(&"outline_size", 3)
+	add_child(_status_label)
+	_on_player_status_changed(GameManager.player_status)
 
 	_boss_box.hide()
 	_game_over.hide()
@@ -150,6 +161,12 @@ func _on_boss_defeated() -> void:
 	_progress_label.text = "보스 토벌 완료!"
 
 
+## 화상 / 점액 바닥 / 감속 등 상태 이상 표시 (HP 바 아래)
+func _on_player_status_changed(text: String) -> void:
+	_status_label.text = text
+	_status_label.visible = text != ""
+
+
 func _on_notice_requested(text: String, color: Color) -> void:
 	_notice_label.text = text
 	_notice_label.add_theme_color_override(&"font_color", color)
@@ -173,7 +190,7 @@ func _rebuild_hotbar() -> void:
 		var weapon := GameManager.weapon_slots[i]
 		_hotbar.add_child(_make_slot(weapon, WEAPON_SLOT_SIZE, str(i + 1), i == GameManager.active_weapon_slot))
 	_hotbar.add_child(_make_spacer())
-	for item in [GameManager.equipped_shield, GameManager.equipped_helmet, GameManager.equipped_armor]:
+	for item in [GameManager.equipped_shield, GameManager.equipped_helmet, GameManager.equipped_armor, GameManager.equipped_boots]:
 		_hotbar.add_child(_make_slot(item, SMALL_SLOT_SIZE, "", false))
 	_hotbar.add_child(_make_spacer())
 	for accessory in GameManager.accessory_slots:

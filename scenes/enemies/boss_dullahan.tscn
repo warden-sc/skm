@@ -1,0 +1,50 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/boss_dullahan.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/dullahan.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/shadow.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/dullahan_headless.png" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/dullahan_head.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/dark_knight.tscn" id="6_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/heavy_knight.tscn" id="7_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/dark_slash.png" id="8_res"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 14.0
+
+[node name="BossDullahan" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_res")
+display_name = "기사단장 듀라한"
+max_hp = 9000
+defense = 16
+move_speed = 38.0
+contact_damage = 36
+knockback_resistance = 0.95
+is_boss = true
+aura_element = 8
+aura_amount = 16
+gold_min = 500
+gold_max = 600
+item_drop_chance = 1.0
+item_drop_ids = Array[StringName]([&"holy_sword"])
+headless_texture = ExtResource("4_res")
+head_scene = ExtResource("5_res")
+knight_scene = ExtResource("6_res")
+heavy_knight_scene = ExtResource("7_res")
+wave_texture = ExtResource("8_res")
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(2.8, 2.8)
+texture = ExtResource("3_res")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -24)
+scale = Vector2(1.35, 1.35)
+texture = ExtResource("2_res")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -16)
+shape = SubResource("CircleShape2D_hit")

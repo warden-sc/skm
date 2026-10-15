@@ -37,6 +37,11 @@ const ITEM_PATHS: Array[String] = [
 	"res://data/armors/chain_mail.tres",
 	"res://data/armors/hellsteel_plate.tres",
 	"res://data/armors/paladin_plate.tres",
+	# 신발
+	"res://data/boots/leather_boots.tres",
+	"res://data/boots/iron_greaves.tres",
+	"res://data/boots/shadow_boots.tres",
+	"res://data/boots/windwalker_boots.tres",
 	# 장신구 (팔찌 / 반지 / 펜던트)
 	"res://data/accessories/leather_bracelet.tres",
 	"res://data/accessories/silver_bracelet.tres",
@@ -87,7 +92,7 @@ static func get_all() -> Array[ItemData]:
 	return result
 
 
-## 보스 상자용: 검 / 활 / 지팡이 / 방패 / 투구 / 갑옷 중 해당 등급 장비 목록
+## 보스 상자용: 검 / 활 / 지팡이 / 방패 / 투구 / 갑옷 / 신발 중 해당 등급 장비 목록
 static func get_chest_candidates(rarity: ItemData.Rarity) -> Array[ItemData]:
 	var result: Array[ItemData] = []
 	for item in get_all():
@@ -95,7 +100,7 @@ static func get_chest_candidates(rarity: ItemData.Rarity) -> Array[ItemData]:
 			continue
 		var weapon := item as WeaponData
 		var is_chest_weapon := weapon != null and weapon.weapon_type != WeaponData.WeaponType.DAGGER
-		if is_chest_weapon or item is ShieldData or item is HelmetData or item is ArmorData:
+		if is_chest_weapon or item is ShieldData or item is HelmetData or item is ArmorData or item is BootsData:
 			result.append(item)
 	return result
 

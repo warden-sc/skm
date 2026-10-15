@@ -12,6 +12,9 @@ var damage: int = 10
 var color: Color = Color(1.0, 0.3, 0.2)
 var slow_duration: float = 0.0
 var fx_gravity: Vector2 = Vector2.ZERO
+## 맞으면 화상 (0.5초마다 피해 / 지속 시간)
+var burn_damage: int = 0
+var burn_duration: float = 0.0
 
 var _elapsed: float = 0.0
 var _done: bool = false
@@ -60,6 +63,8 @@ func _detonate() -> void:
 		var result := player.take_hit(damage, global_position)
 		if result == Player.HitResult.DAMAGED and slow_duration > 0.0:
 			player.apply_slow(0.5, slow_duration)
+		if result == Player.HitResult.DAMAGED and burn_damage > 0:
+			player.apply_burn(burn_damage, burn_duration)
 	var tween := create_tween()
 	tween.tween_property(self, "modulate:a", 0.0, 0.15)
 	tween.tween_callback(queue_free)

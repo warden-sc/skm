@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BootsData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/boots_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/boots/windwalker_boots.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/boots/windwalker_boots_worn.png" id="3_res"]
+
+[resource]
+script = ExtResource("1_script")
+defense = 5
+move_bonus = 0.18
+worn_texture = ExtResource("3_res")
+id = &"windwalker_boots"
+display_name = "질풍의 신발"
+description = "바람의 날개가 달린 전설의 신발. 바람처럼 달린다."
+rarity = 3
+icon = ExtResource("2_res")
+price = 1450

@@ -6,8 +6,8 @@ extends Node
 ##
 ## 장비 칸
 ##   무기 3칸   : 검(단검 포함) / 활 / 지팡이 — 종류별로 1개씩. 1/2/3·Q 로 사용할 무기를 고릅니다.
-##   방어구 3칸 : 방패 / 투구 / 갑옷
-##   장신구 3칸 : 팔찌(치명타 피해·방어력 관통) / 반지(치명타 확률·공격력) / 펜던트(최대 체력·방어력)
+##   방어구 4칸 : 방패 / 투구 / 갑옷 / 신발(방어력 + 이동 속도)
+##   장신구 3칸 : 팔찌(치명타 피해·방어력 관통) / 반지(치명타 확률·공격력) / 펜던트(최대 체력·체력 재생)
 ##
 ## ⚠️ Autoload 스크립트에는 class_name 을 붙이지 않습니다.
 ##    (붙이면 "Class 'GameManager' hides an autoload singleton" 에러가 납니다.)
@@ -31,11 +31,14 @@ signal weapon_equipped(weapon: WeaponData)
 signal shield_equipped(shield: ShieldData)
 signal helmet_equipped(helmet: HelmetData)
 signal armor_equipped(armor: ArmorData)
+signal boots_equipped(boots: BootsData)
 ## 방어력 / 최대 체력 / 치명타 등 파생 능력치가 바뀌었을 때
 signal stats_changed
 ## 회복 포션 개수가 바뀌었을 때 / 포션을 마셨을 때
 signal potions_changed
 signal potion_used(potion: PotionData, healed: int)
+## 플레이어 상태 이상 문구 (화상 / 점액 바닥 / 감속). 없으면 빈 문자열
+signal player_status_changed(text: String)
 
 # --- 스테이지 / 보스 ---
 signal stage_changed(stage: int)
@@ -88,6 +91,7 @@ var difficulty: Difficulty = Difficulty.NORMAL
 var max_hp: int = BASE_MAX_HP
 var hp: int = BASE_MAX_HP
 var is_player_dead: bool = false
+var player_status: String = ""
 
 var dash_cooldown_remaining: float = 0.0
 var dash_cooldown_total: float = 1.0
@@ -106,6 +110,9 @@ var equipped_weapon: WeaponData
 var equipped_shield: ShieldData
 var equipped_helmet: HelmetData
 var equipped_armor: ArmorData
+var equipped_boots: BootsData
+## 체력 재생 누적값 (1 이 쌓일 때마다 1 회복)
+var _regen_buffer: float = 0.0
 ## 장신구 칸 3개 (AccessoryData.SlotType 순서: 팔찌 / 반지 / 펜던트). 빈 칸은 null
 var accessory_slots: Array[AccessoryData] = [null, null, null]
 ## 회복 포션 보유 개수 { 포션 id: 개수 } (소모품이라 items 와 따로 보관)
@@ -145,6 +152,7 @@ func reset_game() -> void:
 	max_hp = BASE_MAX_HP
 	hp = max_hp
 	is_player_dead = false
+	player_status = ""
 	dash_cooldown_remaining = 0.0
 	gold = STARTING_GOLD
 	damage_multiplier = 1.0
@@ -165,6 +173,8 @@ func reset_game() -> void:
 	equipped_shield = null
 	equipped_helmet = null
 	equipped_armor = null
+	equipped_boots = null
+	_regen_buffer = 0.0
 	for item_id in STARTING_ITEM_IDS:
 		var item := ItemDB.get_item(item_id)
 		add_item(item)
@@ -187,6 +197,7 @@ func emit_all() -> void:
 	shield_equipped.emit(equipped_shield)
 	helmet_equipped.emit(equipped_helmet)
 	armor_equipped.emit(equipped_armor)
+	boots_equipped.emit(equipped_boots)
 	stats_changed.emit()
 	potions_changed.emit()
 	stage_changed.emit(stage)
@@ -218,6 +229,13 @@ func heal_player(amount: int) -> void:
 		return
 	hp = mini(hp + amount, max_hp)
 	player_hp_changed.emit(hp, max_hp)
+
+
+func set_player_status(text: String) -> void:
+	if text == player_status:
+		return
+	player_status = text
+	player_status_changed.emit(text)
 
 
 func heal_full() -> void:
@@ -255,7 +273,8 @@ func report_guard_broken() -> void:
 
 
 # ============================================================ 능력치
-## 방패 + 투구 + 갑옷 + 펜던트 방어력 합계. 모든 피해에서 이만큼 빠집니다 (최소 1은 들어감).
+## 방패 + 투구 + 갑옷 + 신발 방어력 합계. 모든 피해에서 이만큼 빠집니다 (최소 1은 들어감).
+## 화상 같은 지속 피해도 방어력이 높을수록 덜 들어옵니다 (get_dot_multiplier).
 func get_total_defense() -> int:
 	var total := 0
 	if equipped_shield != null:
@@ -264,10 +283,45 @@ func get_total_defense() -> int:
 		total += equipped_helmet.defense
 	if equipped_armor != null:
 		total += equipped_armor.defense
+	if equipped_boots != null:
+		total += equipped_boots.defense
+	return total
+
+
+## 신발로 더해지는 이동 속도 (0.1 = +10%)
+func get_move_speed_bonus() -> float:
+	return equipped_boots.move_bonus if equipped_boots != null else 0.0
+
+
+## 펜던트로 얻는 초당 체력 재생
+func get_hp_regen() -> float:
+	var total := 0.0
 	for accessory in accessory_slots:
 		if accessory != null:
-			total += accessory.defense
+			total += accessory.hp_regen
 	return total
+
+
+## Player 가 매 프레임 호출. 재생량이 1 이상 쌓이면 회복
+func tick_regen(delta: float) -> void:
+	var regen := get_hp_regen()
+	if regen <= 0.0 or is_player_dead or hp >= max_hp:
+		_regen_buffer = 0.0
+		return
+	_regen_buffer += regen * delta
+	if _regen_buffer >= 1.0:
+		var amount := int(_regen_buffer)
+		_regen_buffer -= amount
+		heal_player(amount)
+
+
+## 지속 피해(화상 등) 배율: 방어력 15 에서 절반, 높을수록 덜 들어옴
+const DOT_DEFENSE_HALF := 15.0
+
+
+func get_dot_multiplier() -> float:
+	var defense := float(get_total_defense())
+	return DOT_DEFENSE_HALF / (DOT_DEFENSE_HALF + maxf(defense, 0.0))
 
 
 func get_bonus_max_hp() -> int:
@@ -402,6 +456,14 @@ func get_helmets() -> Array[HelmetData]:
 	for item in items:
 		if item is HelmetData:
 			result.append(item as HelmetData)
+	return result
+
+
+func get_boots_list() -> Array[BootsData]:
+	var result: Array[BootsData] = []
+	for item in items:
+		if item is BootsData:
+			result.append(item as BootsData)
 	return result
 
 
@@ -556,7 +618,7 @@ func is_equipped(item: ItemData) -> bool:
 		return weapon_slots.has(item)
 	if item is AccessoryData:
 		return accessory_slots.has(item)
-	return item != null and (item == equipped_shield or item == equipped_helmet or item == equipped_armor)
+	return item != null and (item == equipped_shield or item == equipped_helmet or item == equipped_armor or item == equipped_boots)
 
 
 ## 장비를 알맞은 칸에 장착 (같은 칸의 기존 장비는 가방으로).
@@ -578,6 +640,9 @@ func equip_item(item: ItemData) -> bool:
 	elif item is ArmorData:
 		equipped_armor = item as ArmorData
 		armor_equipped.emit(equipped_armor)
+	elif item is BootsData:
+		equipped_boots = item as BootsData
+		boots_equipped.emit(equipped_boots)
 	elif item is AccessoryData:
 		var accessory := item as AccessoryData
 		accessory_slots[accessory.slot_type] = accessory
@@ -609,6 +674,9 @@ func unequip_item(item: ItemData) -> bool:
 	elif item == equipped_armor:
 		equipped_armor = null
 		armor_equipped.emit(null)
+	elif item == equipped_boots:
+		equipped_boots = null
+		boots_equipped.emit(null)
 	elif item is AccessoryData:
 		accessory_slots[accessory_slots.find(item)] = null
 	_recalculate_stats()

@@ -66,6 +66,10 @@ var _kill_target: int = 0
 var _boss: Enemy
 var _chest: Chest
 var _ending_timer: Timer
+## 스테이지 분위기 (어두운 스테이지는 화면을 어둡게)
+var _ambient: CanvasModulate
+## 보스방 장식 (빈 옥좌 등)
+var _boss_decor: Sprite2D
 
 
 func _ready() -> void:
@@ -81,6 +85,9 @@ func _ready() -> void:
 	_ending_timer.one_shot = true
 	_ending_timer.timeout.connect(go_to_ending)
 	add_child(_ending_timer)
+	_ambient = CanvasModulate.new()
+	_ambient.name = "Ambient"
+	add_child(_ambient)
 	_setup_stage(GameManager.stage)
 	_arrive_at_camp()
 	_notice_later("STAGE %d 「%s」 — 상인에게서 장비를 갖추고 텔레포트[E]로 사냥터에 가세요" % [GameManager.stage, GameManager.stage_name], Color(0.6, 1.0, 0.7), 0.3)
@@ -248,6 +255,8 @@ func _setup_stage(stage: int) -> void:
 	GameManager.set_stage(stage, data.stage_name)
 	for room in [camp_room, field_room, boss_room]:
 		(room as Room).apply_theme(data.floor_texture, data.wall_tint)
+	_ambient.color = data.ambient_color
+	_set_boss_decor(data)
 	_kills = 0
 	_kill_target = data.kill_target
 	GameManager.set_kill_progress(_kills, _kill_target)
@@ -258,6 +267,24 @@ func _setup_stage(stage: int) -> void:
 	_chest = null
 
 
+## 보스방 장식 (5스테이지 빈 옥좌 등). 스테이지가 바뀌면 교체
+func _set_boss_decor(data: StageData) -> void:
+	if is_instance_valid(_boss_decor):
+		_boss_decor.queue_free()
+	_boss_decor = null
+	if data.boss_decor_texture == null:
+		return
+	_boss_decor = Sprite2D.new()
+	_boss_decor.name = "BossDecor"
+	_boss_decor.texture = data.boss_decor_texture
+	_boss_decor.z_index = -2
+	_add_entity(_boss_decor, boss_spawn.global_position + data.boss_decor_offset)
+
+
+func get_boss_decor() -> Sprite2D:
+	return _boss_decor if is_instance_valid(_boss_decor) else null
+
+
 # ============================================================ 보스
 func _spawn_boss() -> void:
 	if _state != State.BOSS or _boss != null:
@@ -266,10 +293,12 @@ func _spawn_boss() -> void:
 	assert(boss != null, "boss_scene 루트에는 Enemy 계열 스크립트가 필요합니다.")
 	_boss = boss
 	boss.health_changed.connect(_on_boss_health_changed)
-	_add_enemy(boss, boss_spawn.global_position, boss_room.get_arena_rect())
-	Fx.explosion(player, boss_spawn.global_position, Color(1.0, 0.4, 0.4), 50.0, 3)
+	var data := get_stage_data()
+	var at := boss_spawn.global_position + data.boss_spawn_offset
+	_add_enemy(boss, at, boss_room.get_arena_rect())
+	Fx.explosion(player, at, Color(1.0, 0.4, 0.4), 50.0, 3)
 	GameManager.report_boss_spawned("%s  · 방어력 %d" % [boss.display_name, boss.defense], boss.max_hp)
-	GameManager.show_notice("보스 등장: %s" % boss.display_name, Color(1.0, 0.4, 0.5))
+	GameManager.show_notice(data.boss_intro_text if data.boss_intro_text != "" else "보스 등장: %s" % boss.display_name, Color(1.0, 0.4, 0.5))
 
 
 func _on_boss_defeated() -> void:
@@ -384,6 +413,10 @@ func _clear_enemies() -> void:
 		var leftover := node as Enemy
 		if leftover != null and not leftover.is_dead():
 			leftover.despawn()
+	# 바닥 장판(점액·불바다·마법 장판)과 떨어지던 마법도 함께 정리
+	for group in [&"ground_zones", &"sky_strikes"]:
+		for node in get_tree().get_nodes_in_group(group):
+			node.queue_free()
 
 
 func _release_projectiles() -> void:

@@ -893,6 +893,181 @@ def floor_forest():
         put(img, [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)], (240, 150, 200, 255))
     return img
 
+
+# ---------------------------------------------------------------- 5스테이지: 어둠의 성
+DARK_PAL = dict(PAL)
+DARK_PAL.update({
+    "a": (58, 60, 74, 255),     # 어두운 강철
+    "A": (96, 100, 120, 255),   # 강철 하이라이트
+    "e": (36, 36, 48, 255),     # 그림자 강철
+    "x": (200, 60, 255, 255),   # 보랏빛 눈
+    "q": (120, 30, 50, 255),    # 핏빛 망토
+    "h": (70, 55, 90, 255),     # 어두운 천
+})
+
+DARK_KNIGHT = [
+    "................",
+    ".....kkkkkk.....",
+    "....kAAAAAak....",
+    "....kaxaxaak....",
+    "....kaaaaaak....",
+    ".....kaaaak.....",
+    "...kkqAAAAqkk...",
+    "..kAkqaaaaqkAk.k",
+    "..kakqaAAaqkakkA",
+    "..kak.aaaa.kakkA",
+    "...k.kaeeak.k.kA",
+    ".....kaeeak...kA",
+    "....kaak.kaak..k",
+    "....kek...kek...",
+    "....kkk...kkk...",
+    "................",
+]
+
+HEAVY_KNIGHT = [
+    ".....kkkkkk.....",
+    "....kAAAAAAk....",
+    "...kAaxaaxaAk...",
+    "...kaaaaaaaak...",
+    "...kkaaaaaakk...",
+    "kkkkqAAAAAAqk...",
+    "kAAkaaaAAaaaak..",
+    "kAqkaaaaaaaaak..",
+    "kAqkeaaaaaaeak..",
+    "kAAkeeaaaaeeak..",
+    "kkkk.kaeeak.k...",
+    "....kaaeeaak....",
+    "...kaaak.kaaak..",
+    "...keek...keek..",
+    "...kkkk...kkkk..",
+    "................",
+]
+
+DARK_ARCHER = [
+    "................",
+    ".....kkkkkk.....",
+    "....khhhhhhk....",
+    "...khhxhhxhhk...",
+    "...khheeeehhk...",
+    "....kheeeehk.k..",
+    "...kkhhhhhhkktk.",
+    "..khkhaaaahkkWtk",
+    "..khkhaAAahk.Wtk",
+    "..kk.haaaah..Wtk",
+    "....khhhhhhk.ktk",
+    "....khhkkhhk..k.",
+    "....khk..khk....",
+    "....kek..kek....",
+    "....kkk..kkk....",
+    "................",
+]
+
+
+def dullahan(with_head=True):
+    """기사단장 듀라한 (24x32): 머리 없는 흑기사, 핏빛 망토, 대검. with_head 면 옆구리에 투구 머리를 끼고 있음"""
+    img = canvas(24, 32)
+    steel, dark, hi = DARK_PAL["a"], DARK_PAL["e"], DARK_PAL["A"]
+    cape, eye = DARK_PAL["q"], DARK_PAL["x"]
+    # 망토 (뒤)
+    for y in range(8, 30):
+        half = 5 + (y - 8) * 0.3
+        for x in range(int(11.5 - half), int(11.5 + half) + 1):
+            img.putpixel((x, y), cape)
+    # 목에서 피어오르는 어둠
+    for x, y in ((11, 3), (12, 2), (10, 4), (13, 4), (11, 5), (12, 5)):
+        img.putpixel((x, y), (150, 60, 220, 255))
+    rect(img, 8, 6, 15, 7, hi)          # 목 가리개
+    rect(img, 7, 8, 16, 18, steel)      # 몸통
+    rect(img, 7, 8, 16, 9, hi)
+    rect(img, 11, 10, 12, 17, dark)
+    rect(img, 4, 8, 6, 11, hi)          # 어깨
+    rect(img, 17, 8, 19, 11, hi)
+    rect(img, 4, 12, 6, 18, steel)      # 팔
+    rect(img, 17, 12, 19, 18, steel)
+    rect(img, 8, 19, 15, 21, dark)      # 허리
+    rect(img, 8, 22, 10, 29, steel)     # 다리
+    rect(img, 13, 22, 15, 29, steel)
+    rect(img, 7, 29, 10, 31, dark)
+    rect(img, 13, 29, 16, 31, dark)
+    # 대검 (오른손, 아래로)
+    rect(img, 20, 6, 21, 27, (180, 185, 205, 255))
+    rect(img, 18, 18, 23, 19, DARK_PAL["y"])
+    put(img, [(20, 5), (21, 5)], (220, 225, 240, 255))
+    if with_head:
+        # 왼팔에 낀 투구 머리 (보라 눈)
+        ellipse(img, 3.5, 17.5, 3.4, 3.2, steel)
+        rect(img, 1, 15, 6, 15, hi)
+        put(img, [(2, 17), (5, 17)], eye)
+        put(img, [(3, 19), (4, 19)], dark)
+    return outline(img)
+
+
+def dullahan_head():
+    """던져진 듀라한의 머리 (14x14): 투구 + 빛나는 눈 + 어둠의 기운"""
+    img = canvas(14)
+    steel, hi, eye = DARK_PAL["a"], DARK_PAL["A"], DARK_PAL["x"]
+    ellipse(img, 6.5, 7, 6, 5.6, steel)
+    rect(img, 2, 3, 11, 4, hi)
+    rect(img, 6, 1, 7, 3, DARK_PAL["q"])   # 투구 장식
+    rect(img, 3, 7, 10, 7, DARK_PAL["e"])  # 눈 틈
+    put(img, [(4, 7), (5, 7), (8, 7), (9, 7)], eye)
+    for x in range(3, 11, 2):
+        put(img, [(x, 10)], DARK_PAL["e"])
+    return outline(img)
+
+
+def throne():
+    """빈 옥좌 (32x44): 검은 돌 옥좌 + 해진 핏빛 천 + 왕관 장식"""
+    img = canvas(32, 44)
+    stone, dark, hi = (52, 50, 66, 255), (32, 30, 42, 255), (86, 82, 104, 255)
+    gold, cloth = (200, 160, 70, 255), (110, 26, 44, 255)
+    rect(img, 6, 2, 25, 30, stone)       # 등받이
+    rect(img, 6, 2, 25, 3, hi)
+    for x in (6, 12, 19, 25):            # 뾰족한 장식
+        rect(img, x - 1, 0, x, 2, hi)
+    rect(img, 12, 6, 19, 24, cloth)      # 등받이 천
+    put(img, [(15, 8), (16, 8), (14, 9), (17, 9), (15, 10), (16, 10)], gold)  # 문장
+    rect(img, 2, 22, 29, 33, stone)      # 팔걸이 + 좌석
+    rect(img, 2, 22, 6, 24, hi)
+    rect(img, 25, 22, 29, 24, hi)
+    rect(img, 7, 26, 24, 28, cloth)      # 좌석 천
+    rect(img, 4, 34, 27, 40, dark)       # 계단
+    rect(img, 1, 40, 30, 43, stone)
+    rect(img, 1, 40, 30, 40, hi)
+    return outline(img)
+
+
+def floor_castle():
+    """어둠의 성 바닥 (32x32): 검푸른 석판 + 금 간 틈 + 핏빛 융단 가장자리"""
+    rnd = random.Random(21)
+    img = canvas(32)
+    for y in range(32):
+        for x in range(32):
+            v = rnd.randint(-4, 4)
+            grout = x % 16 == 0 or y % 16 == 0
+            base = (34, 33, 44) if grout else (66 + v, 64 + v, 80 + v)
+            img.putpixel((x, y), base + (255,))
+    for _ in range(3):  # 금
+        x, y = rnd.randint(2, 28), rnd.randint(2, 28)
+        for i in range(4):
+            put(img, [(x + i, y + (i % 2))], (30, 28, 40, 255))
+    for _ in range(5):  # 보랏빛 이끼
+        x, y = rnd.randint(0, 31), rnd.randint(0, 31)
+        img.putpixel((x, y), (80, 60, 100, 255))
+    return img
+
+
+def dark_slash():
+    """듀라한의 암흑 검기 (14x14 초승달)"""
+    img = canvas(14)
+    for y in range(14):
+        for x in range(14):
+            d1 = math.hypot(x - 4.0, y - 6.5)
+            d2 = math.hypot(x - 1.5, y - 6.5)
+            if d1 <= 6.2 and d2 > 6.0:
+                img.putpixel((x, y), (200, 120, 255, 255) if d1 > 4.8 else (120, 50, 190, 255))
+    return img
+
 # ---------------------------------------------------------------- 갑옷 (착용 오버레이 = 플레이어 몸통 위치에 정확히 맞춤)
 ARMOR_COLORS = {
     # 이름: (주색, 밝은 포인트, 어두운 색, 장식)
@@ -947,6 +1122,42 @@ def armor_icon(main_col, light, dark, deco):
         put(img, [(5, 6), (10, 6)], light)
     return outline(img)
 
+
+
+# ---------------------------------------------------------------- 신발 (착용 오버레이 = 플레이어 발 위치에 정확히 맞춤)
+# 이름: (주색, 밝은 포인트, 어두운 색, 날개 장식 여부)
+BOOTS_COLORS = {
+    "leather_boots": ((138, 90, 60, 255), (190, 140, 90, 255), (90, 58, 40, 255), False),
+    "iron_greaves": ((148, 176, 194, 255), (244, 244, 244, 255), (86, 108, 134, 255), False),
+    "shadow_boots": ((70, 50, 100, 255), (170, 120, 230, 255), (40, 28, 60, 255), False),
+    "windwalker_boots": ((235, 245, 250, 255), (255, 205, 117, 255), (115, 200, 220, 255), True),
+}
+
+
+def boots_worn(main_col, light, dark, wings):
+    img = canvas(16)
+    for y in range(13, 16):
+        for x, ch in enumerate(PLAYER[y]):
+            if ch in "tT":
+                put(img, [(x, y)], main_col if y < 15 else dark)
+            elif ch == "k" and y == 15:
+                put(img, [(x, y)], dark)
+    put(img, [(4, 13), (11, 13)], light)
+    if wings:
+        put(img, [(2, 13), (13, 13)], light)
+    return img
+
+
+def boots_icon(main_col, light, dark, wings):
+    img = canvas(16)
+    for ox in (1, 8):
+        rect(img, ox + 1, 3, ox + 4, 10, main_col)   # 목
+        rect(img, ox + 1, 10, ox + 6, 12, main_col)  # 발등
+        rect(img, ox + 1, 12, ox + 6, 13, dark)      # 밑창
+        rect(img, ox + 1, 3, ox + 4, 4, light)       # 윗단
+        if wings:
+            put(img, [(ox, 5), (ox - 1 if ox > 1 else ox, 4), (ox, 6)], light)
+    return outline(img)
 
 # ---------------------------------------------------------------- 장신구 (팔찌 / 반지 / 펜던트)
 # 등급별 (금속 색, 금속 어두운 색, 보석 색)
@@ -1214,6 +1425,9 @@ def main():
     for name, cols in ARMOR_COLORS.items():
         save(armor_worn(*cols), "armors", f"{name}_worn.png")
         save(armor_icon(*cols), "armors", f"{name}.png")
+    for name, cols in BOOTS_COLORS.items():
+        save(boots_worn(*cols), "boots", f"{name}_worn.png")
+        save(boots_icon(*cols), "boots", f"{name}.png")
     for _kind, (names, painter) in ACCESSORIES.items():
         for name, (metal, dark, gem) in zip(names, ACCESSORY_TIERS):
             save(painter(metal, dark, gem), "accessories", f"{name}.png")
@@ -1250,6 +1464,15 @@ def main():
     save(dryad(), "characters", "dryad.png")
     save(thorn(), "projectiles", "thorn.png")
     save(spore(), "projectiles", "spore.png")
+    save(outline(from_map(DARK_KNIGHT, pal=DARK_PAL)), "characters", "dark_knight.png")
+    save(outline(from_map(HEAVY_KNIGHT, pal=DARK_PAL)), "characters", "heavy_knight.png")
+    save(outline(from_map(DARK_ARCHER, pal=DARK_PAL)), "characters", "dark_archer.png")
+    save(dullahan(True), "characters", "dullahan.png")
+    save(dullahan(False), "characters", "dullahan_headless.png")
+    save(dullahan_head(), "characters", "dullahan_head.png")
+    save(throne(), "world", "throne.png")
+    save(floor_castle(), "tiles", "floor_castle.png")
+    save(dark_slash(), "projectiles", "dark_slash.png")
     save(wall_tile(), "tiles", "wall.png")
     save(rug(), "tiles", "rug.png")
 

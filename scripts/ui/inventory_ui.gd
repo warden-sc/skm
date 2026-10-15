@@ -4,14 +4,14 @@ extends CanvasLayer
 ##
 ## 왼쪽: 장비 칸
 ##   무기 3칸 (검 / 활 / 지팡이) — 손에 든 무기는 노란 테두리
-##   방어구 3칸 (방패 / 투구 / 갑옷)
+##   방어구 4칸 (방패 / 투구 / 갑옷 / 신발)
 ##   장신구 3칸 (팔찌 / 반지 / 펜던트)
 ##   → 칸을 클릭하면 장착 해제 (마지막 무기는 해제 불가)
 ## 오른쪽: 가방 (회복 포션 + 보유 장비 전체) — 포션 사용 / 장비 장착·해제 버튼
 ## 아래: 마우스를 올린 장비의 상세 정보
 
 const SLOT_SIZE := Vector2(28, 28)
-const ARMOR_SLOT_NAMES := ["방패", "투구", "갑옷"]
+const ARMOR_SLOT_NAMES := ["방패", "투구", "갑옷", "신발"]
 
 @onready var _gold_label: Label = %InvGold
 @onready var _weapon_slots: HBoxContainer = %WeaponSlots
@@ -79,7 +79,7 @@ func _refresh() -> void:
 	for i in GameManager.weapon_slots.size():
 		var caption := "%d %s" % [i + 1, GameManager.WEAPON_SLOT_NAMES[i]]
 		_weapon_slots.add_child(_make_slot(GameManager.weapon_slots[i], caption, i == GameManager.active_weapon_slot))
-	var armors: Array[ItemData] = [GameManager.equipped_shield, GameManager.equipped_helmet, GameManager.equipped_armor]
+	var armors: Array[ItemData] = [GameManager.equipped_shield, GameManager.equipped_helmet, GameManager.equipped_armor, GameManager.equipped_boots]
 	for i in armors.size():
 		_armor_slots.add_child(_make_slot(armors[i], ARMOR_SLOT_NAMES[i], false))
 	for i in GameManager.accessory_slots.size():
@@ -136,7 +136,7 @@ func _stats_text() -> String:
 		lines.append("손에 든 무기: %s (ATK %d)" % [weapon.display_name, roundi(weapon.damage * GameManager.damage_multiplier)])
 		lines.append("치명타 확률 %d%% · 치명타 피해 x%.1f" % [roundi(GameManager.get_crit_chance(weapon) * 100.0), weapon.crit_multiplier + GameManager.get_crit_damage_bonus()])
 		lines.append("방어력 관통(방깍) %d · 공격력 +%d%%" % [GameManager.get_armor_pen(weapon), roundi(GameManager.get_attack_bonus() * 100.0)])
-	lines.append("방어력 %d · 최대 HP %d" % [GameManager.get_total_defense(), GameManager.max_hp])
+	lines.append("방어력 %d · 최대 HP %d · 이속 +%d%% · 재생 %.1f/s" % [GameManager.get_total_defense(), GameManager.max_hp, roundi(GameManager.get_move_speed_bonus() * 100.0), GameManager.get_hp_regen()])
 	return "\n".join(lines)
 
 
@@ -159,9 +159,11 @@ func _type_order(item: ItemData) -> int:
 		return 4
 	if item is ArmorData:
 		return 5
+	if item is BootsData:
+		return 6
 	if item is AccessoryData:
-		return 6 + (item as AccessoryData).slot_type
-	return 9
+		return 7 + (item as AccessoryData).slot_type
+	return 10
 
 
 func _show_detail(item: ItemData) -> void:

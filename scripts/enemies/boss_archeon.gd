@@ -9,6 +9,12 @@ extends Enemy
 ##   뇌전 : 플레이어 주변에 시간차 낙뢰 6발
 ##   대지 : 자기 주변 대지 붕괴(거대 장판) + 돌 파편 고리
 ## 체력 50% 이하 「원소 융합」: 두 속성을 동시에 사용, 속성 골렘 소환
+##
+## [기믹] 원소 강화: 활성 핵의 속성에 따라 아르케온 자신에게 능력이 붙습니다 (머리 위에 표시).
+##   화염 「작열」      : 모든 공격(몸통·탄)에 맞으면 화상
+##   빙결 「얼음 보호막」: 최대 체력의 일정 비율만큼 피해를 먼저 흡수하는 보호막 (깨면 사라짐)
+##   뇌전 「뇌신」      : 이동 속도 대폭 증가 + 플레이어 근처로 순간이동
+##   대지 「대지의 갑주」: 방어력 대폭 증가 → 방깍이 높은 활·팔찌나, 다른 속성으로 바뀔 때를 노리세요
 
 enum State { CHASE, CASTING }
 
@@ -23,12 +29,28 @@ const CORE_ORBIT_RADIUS := 26.0
 ## CYCLE 과 같은 순서의 속성 골렘 씬 (원소 융합 단계에서 소환)
 @export var minion_scenes: Array[PackedScene] = []
 
+@export_group("Element Buffs")
+## 화염 「작열」: 화상 (0.5초마다 피해)
+@export var fire_burn_damage: int = 5
+## 빙결 「얼음 보호막」: 최대 체력 대비 보호막 크기
+@export var ice_shield_ratio: float = 0.06
+## 뇌전 「뇌신」: 이동 속도 배율
+@export var lightning_speed_multiplier: float = 2.0
+## 대지 「대지의 갑주」: 추가 방어력
+@export var earth_defense_bonus: int = 15
+
 var _state: State = State.CHASE
 var _state_timer: float = 0.0
 var _cycle_index: int = 0
 var _phase_two: bool = false
 var _cores: Array[Sprite2D] = []
 var _base_sprite_pos: Vector2
+var _base_defense: int = 0
+var _base_speed: float = 0.0
+## 빙결 「얼음 보호막」 남은 양
+var ice_shield: int = 0
+var _shield_ring: Sprite2D
+var _buff_label: Label
 
 
 func _ready() -> void:
@@ -45,6 +67,27 @@ func _ready() -> void:
 		core.z_index = 2
 		add_child(core)
 		_cores.append(core)
+	_base_defense = defense
+	_base_speed = move_speed
+	_shield_ring = Sprite2D.new()
+	_shield_ring.texture = Fx.RING_TEXTURE
+	_shield_ring.material = Fx.additive_material()
+	_shield_ring.modulate = Color(0.6, 0.9, 1.0, 0.85)
+	_shield_ring.position = get_hit_center() - global_position
+	_shield_ring.scale = Vector2.ONE * 2.6
+	_shield_ring.z_index = 3
+	_shield_ring.hide()
+	add_child(_shield_ring)
+	_buff_label = Label.new()
+	_buff_label.add_theme_font_size_override(&"font_size", 9)
+	_buff_label.add_theme_color_override(&"font_outline_color", Color(0.05, 0.05, 0.1))
+	_buff_label.add_theme_constant_override(&"outline_size", 4)
+	_buff_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_buff_label.position = Vector2(-60, -66)
+	_buff_label.size = Vector2(120, 12)
+	_buff_label.z_index = 70
+	add_child(_buff_label)
+	apply_element_buff(get_current_element())
 
 
 func get_current_element() -> Elements.Type:
@@ -65,13 +108,73 @@ func _get_move_velocity(delta: float) -> Vector2:
 			if _state_timer <= 0.0:
 				_cycle_index += 1
 				_set_aura(get_current_element())
+				apply_element_buff(get_current_element())
 				_state = State.CHASE
 				_state_timer = chase_time * (0.65 if _phase_two else 1.0)
 			return Vector2.ZERO
 	return Vector2.ZERO
 
 
+## [기믹] 활성 속성에 맞는 능력 부여 (이전 속성의 능력은 사라짐)
+func apply_element_buff(element: Elements.Type) -> void:
+	defense = _base_defense
+	move_speed = _base_speed
+	burn_damage = 0
+	ice_shield = 0
+	var text := ""
+	match element:
+		Elements.Type.FIRE:
+			burn_damage = fire_burn_damage
+			burn_duration = 3.0
+			text = "작열: 공격에 화상"
+		Elements.Type.ICE:
+			ice_shield = roundi(max_hp * ice_shield_ratio)
+			text = "얼음 보호막 %d" % ice_shield
+		Elements.Type.LIGHTNING:
+			move_speed = _base_speed * lightning_speed_multiplier
+			text = "뇌신: 이동 속도 x%.1f" % lightning_speed_multiplier
+			_blink_near_player()
+		Elements.Type.EARTH:
+			defense = _base_defense + earth_defense_bonus
+			text = "대지의 갑주: 방어력 +%d" % earth_defense_bonus
+	_buff_label.text = text
+	_buff_label.add_theme_color_override(&"font_color", Elements.color_of(element).lightened(0.2))
+	_shield_ring.visible = ice_shield > 0
+	Fx.shockwave(self, get_hit_center(), Elements.color_of(element), 46.0, 0.35)
+
+
+func get_buff_text() -> String:
+	return _buff_label.text
+
+
+## 뇌전: 번개처럼 플레이어 근처로 순간이동
+func _blink_near_player() -> void:
+	if not has_target() or not is_inside_tree():
+		return
+	var to := _player.global_position + Vector2.from_angle(randf() * TAU) * 80.0
+	if arena_rect.has_area():
+		to = to.clamp(arena_rect.position, arena_rect.end)
+	Fx.flash(self, get_hit_center(), Elements.color_of(Elements.Type.LIGHTNING), 40.0, 0.25)
+	global_position = to
+	Fx.explosion(self, get_hit_center(), Elements.color_of(Elements.Type.LIGHTNING), 36.0, 2)
+
+
 func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool = false, armor_pen: int = 0) -> void:
+	if ice_shield > 0 and not is_dead() and amount > 0:
+		# 얼음 보호막이 방어력 적용 후 피해를 먼저 흡수
+		var dealt := calc_damage(amount, armor_pen)
+		var absorbed := mini(ice_shield, dealt)
+		ice_shield -= absorbed
+		_buff_label.text = "얼음 보호막 %d" % ice_shield if ice_shield > 0 else "보호막 파괴!"
+		FloatingText.spawn(self, global_position + Vector2(0, -30), "-%d 보호막" % absorbed, Color(0.6, 0.9, 1.0))
+		if ice_shield <= 0:
+			_shield_ring.hide()
+			Fx.flying_sprites(self, get_hit_center(), Fx.ICE_SHARD_TEXTURE, 12, 40.0, Color(0.7, 0.95, 1.0))
+		var left := dealt - absorbed
+		if left <= 0:
+			return
+		amount = left
+		armor_pen = 9999  # 이미 방어력을 적용한 피해
 	super.take_damage(amount, knockback, is_crit, armor_pen)
 	if not _phase_two and not is_dead() and float(hp) <= max_hp * 0.5:
 		_phase_two = true
