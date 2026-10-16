@@ -10,9 +10,9 @@
 script = ExtResource("1_res")
 stage_name = "버려진 왕궁"
 floor_texture = ExtResource("2_res")
-wall_tint = Color(0.9, 0.82, 0.6, 1)
-ambient_color = Color(0.95, 0.9, 0.82, 1)
-boss_intro_text = "옥좌를 잃은 왕이 왕관을 쓰고 일어선다…"
+wall_tint = Color(0.5, 0.45, 0.56, 1)
+ambient_color = Color(0.6, 0.54, 0.68, 1)
+boss_intro_text = "무너진 왕궁 깊은 곳 — 어둠의 성 빈 옥좌의 주인이었던 왕이 저주받은 왕관을 쓰고 일어선다…"
 enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res")])
 enemy_weights = Array[float]([1.1, 1.0])
 boss_scene = ExtResource("3_res")

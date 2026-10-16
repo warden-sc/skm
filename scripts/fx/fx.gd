@@ -108,6 +108,30 @@ static func explosion(context: Node, at_global: Vector2, color: Color, radius: f
 		shockwave(context, at_global, Color.WHITE, radius * 0.6, 0.2)
 
 
+## 몸에서 피어오르는 검은 안개 (가산 합성이 아닌 일반 합성 → 어둡게 보임). 사신 · 옥좌 잃은 왕
+static func make_dark_mist(amount: int, radius: float, lifetime: float = 1.6) -> CPUParticles2D:
+	var p := CPUParticles2D.new()
+	p.texture = GLOW_TEXTURE
+	p.amount = maxi(amount, 1)
+	p.lifetime = lifetime
+	p.local_coords = false
+	p.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+	p.emission_sphere_radius = radius
+	p.direction = Vector2.UP
+	p.spread = 180.0
+	p.initial_velocity_min = 4.0
+	p.initial_velocity_max = 14.0
+	p.gravity = Vector2(0, -6)
+	p.scale_amount_min = 0.6
+	p.scale_amount_max = 1.4
+	var g := Gradient.new()
+	g.set_color(0, Color(0.05, 0.03, 0.08, 0.0))
+	g.add_point(0.25, Color(0.06, 0.04, 0.1, 0.55))
+	g.set_color(g.get_point_count() - 1, Color(0.05, 0.03, 0.08, 0.0))
+	p.color_ramp = g
+	return p
+
+
 ## 몸에 계속 붙어 있는 오라 파티클 (몬스터 화염 오라, 무기 잔불 등)
 static func make_aura(color: Color, amount: int, radius: float, gravity: Vector2, lifetime: float = 0.6) -> CPUParticles2D:
 	var p := CPUParticles2D.new()

@@ -1,6 +1,7 @@
 class_name BossDullahan
 extends Enemy
 ## 5스테이지 보스: 기사단장 듀라한 — 주인 없는 빈 옥좌를 지키는 머리 없는 흑기사.
+## 옥좌의 주인은 왕국을 잃고 떠난 왕(10스테이지 보스 「옥좌 잃은 왕」)이며, 듀라한은 왕이 돌아올 날을 기다리며 옥좌를 지킨다.
 ##
 ## 패턴 (순환):
 ##   SLASH  : 대검을 치켜든 뒤 앞쪽 부채꼴을 크게 베어냄 (예고 장판 3개)
@@ -138,9 +139,12 @@ func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool =
 	if is_exposed():
 		amount = roundi(amount * EXPOSED_DAMAGE_MULTIPLIER)
 	super.take_damage(amount, knockback, is_crit, armor_pen)
+	if is_dead():
+		GameManager.show_notice("듀라한: 폐하… 옥좌를… 지키지 못했습니다…", Color(0.8, 0.6, 1.0))
+		return
 	if not _phase_two and not is_dead() and float(hp) <= max_hp * 0.5:
 		_phase_two = true
-		GameManager.show_notice("기사단장 듀라한: 옥좌의 맹세를 잊지 않았다…!", Color(0.8, 0.5, 1.0))
+		GameManager.show_notice("기사단장 듀라한: 폐하께서 돌아오실 때까지… 이 옥좌는 내가 지킨다!", Color(0.8, 0.5, 1.0))
 		Fx.explosion(self, get_hit_center(), Elements.color_of(Elements.Type.DARK), 70.0, 3, Vector2(0, -30))
 
 

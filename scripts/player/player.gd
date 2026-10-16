@@ -102,6 +102,19 @@ var _floor_status: String = ""
 var _charm_left: float = 0.0
 var _charmer: Node2D
 var _charm_particles: CPUParticles2D
+## 죽음의 낙인 (사신): 쌓이면 사형 선고 → 잠시 후 큰 피해 (대시로 피할 수 있음)
+const DEATH_MARK_MAX := 5
+const DEATH_MARK_KEEP_TIME := 8.0
+const EXECUTION_DELAY := 1.5
+const EXECUTION_RATIO := 0.35
+var death_marks: int = 0
+var _mark_timer: float = 0.0
+var _execution_left: float = -1.0
+## 마지막 대시 후 지난 시간 (사형 선고는 대시 직후 잠깐 동안도 회피로 인정)
+var _since_dash: float = 99.0
+const EXECUTION_DODGE_GRACE := 0.3
+## 마지막 사형 선고를 대시로 피했는지 (UI·테스트용)
+var last_execution_dodged: bool = false
 var _floor_status_left: float = 0.0
 var _status_text: String = ""
 var _windup_weapon: WeaponData
@@ -238,6 +251,48 @@ func is_charmed() -> bool:
 	return _charm_left > 0.0
 
 
+## 「죽음의 낙인」 추가. DEATH_MARK_MAX 개가 되면 사형 선고 (EXECUTION_DELAY 뒤 최대 체력의 35% 피해, 그 순간 대시 중이면 회피)
+## 낙인은 마지막으로 쌓인 뒤 DEATH_MARK_KEEP_TIME 이 지나면 하나씩 사라짐
+func add_death_mark(count: int = 1) -> void:
+	if _is_dead or count <= 0 or _execution_left >= 0.0:
+		return
+	death_marks = mini(death_marks + count, DEATH_MARK_MAX)
+	_mark_timer = DEATH_MARK_KEEP_TIME
+	if death_marks >= DEATH_MARK_MAX:
+		_execution_left = EXECUTION_DELAY
+		FloatingText.spawn(self, global_position + Vector2(0, -22), "사형 선고!", Color(0.75, 0.4, 1.0), true)
+		GameManager.show_notice("죽음의 낙인 %d개 — 사형 선고! 대시로 피하라!" % DEATH_MARK_MAX, Color(0.75, 0.45, 1.0))
+	else:
+		FloatingText.spawn(self, global_position + Vector2(0, -22), "낙인 %d/%d" % [death_marks, DEATH_MARK_MAX], Color(0.7, 0.5, 0.95))
+
+
+func is_sentenced() -> bool:
+	return _execution_left >= 0.0
+
+
+func _update_death_marks(delta: float) -> void:
+	if _execution_left >= 0.0:
+		_execution_left -= delta
+		if _execution_left < 0.0:
+			death_marks = 0
+			_execution_left = -1.0
+			Fx.explosion(self, global_position + Vector2(0, -6), Color(0.5, 0.25, 0.8), 30.0, 2)
+			last_execution_dodged = is_dashing() or _since_dash <= EXECUTION_DODGE_GRACE
+			if last_execution_dodged:
+				FloatingText.spawn(self, global_position + Vector2(0, -22), "회피!", Color(0.7, 1.0, 1.0), true)
+			else:
+				var dmg := roundi(GameManager.max_hp * EXECUTION_RATIO)
+				GameManager.damage_player(dmg)
+				FloatingText.spawn(self, global_position + Vector2(0, -22), str(dmg), Color(0.75, 0.4, 1.0), true)
+				shake_camera(5.0)
+		return
+	if death_marks > 0:
+		_mark_timer -= delta
+		if _mark_timer <= 0.0:
+			death_marks -= 1
+			_mark_timer = 2.0
+
+
 func is_dashing() -> bool:
 	return _dash_time_left > 0.0
 
@@ -351,6 +406,8 @@ func teleport_to(at_global: Vector2, camera_bounds: Rect2) -> void:
 		end_windup(false)
 	global_position = at_global
 	velocity = Vector2.ZERO
+	death_marks = 0
+	_execution_left = -1.0
 	set_camera_bounds(camera_bounds)
 
 
@@ -413,11 +470,17 @@ func _update_status(delta: float) -> void:
 			FloatingText.spawn(self, global_position + Vector2(randf_range(-6, 6), -18), str(dmg), Color(1.0, 0.55, 0.2))
 	_floor_status_left = maxf(_floor_status_left - delta, 0.0)
 	_charm_left = maxf(_charm_left - delta, 0.0)
+	_since_dash += delta
+	_update_death_marks(delta)
 	if _charm_particles != null:
 		_charm_particles.emitting = _charm_left > 0.0
 	if _burn_particles != null:
 		_burn_particles.emitting = _burn_left > 0.0
 	var parts := PackedStringArray()
+	if _execution_left >= 0.0:
+		parts.append("사형 선고 %.1f초! (대시로 회피)" % _execution_left)
+	elif death_marks > 0:
+		parts.append("죽음의 낙인 %d/%d" % [death_marks, DEATH_MARK_MAX])
 	if _charm_left > 0.0:
 		parts.append("매혹 %.1f초 (조작 불가)" % _charm_left)
 	if _burn_left > 0.0:
@@ -520,6 +583,7 @@ func _update_timers(delta: float) -> void:
 
 
 func _start_dash(input_dir: Vector2) -> void:
+	_since_dash = 0.0
 	_dash_direction = input_dir.normalized() if input_dir != Vector2.ZERO else _aim_direction
 	_dash_time_left = dash_duration
 	_dash_cooldown_left = dash_cooldown
@@ -558,6 +622,8 @@ func _update_visuals(delta: float) -> void:
 	# 피격 무적 깜빡임
 	if _invincible_left > 0.0:
 		_body_sprite.modulate = Color(1, 0.5, 0.5, 0.45 if int(_anim_time * 20.0) % 2 == 0 else 1.0)
+	elif _execution_left >= 0.0:
+		_body_sprite.modulate = Color(0.75, 0.5, 1.0) if int(_anim_time * 12.0) % 2 == 0 else Color(0.4, 0.3, 0.6)  # 사형 선고
 	elif _charm_left > 0.0:
 		_body_sprite.modulate = Color(1.0, 0.6, 0.9)  # 매혹
 	elif _burn_left > 0.0:

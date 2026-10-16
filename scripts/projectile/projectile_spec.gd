@@ -36,6 +36,8 @@ var burn_damage: int = 0
 var burn_duration: float = 0.0
 ## 적 탄: 맞은 플레이어를 매혹 (조작 불가 시간)
 var charm_duration: float = 0.0
+## 적 탄: 맞으면 쌓이는 「죽음의 낙인」 수
+var death_mark: int = 0
 ## 매혹을 건 적 (매혹된 플레이어가 끌려가는 쪽)
 var charmer: Node2D
 

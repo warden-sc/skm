@@ -137,6 +137,8 @@ func _on_body_entered(body: Node2D) -> void:
 					player.apply_burn(_spec.burn_damage, _spec.burn_duration)
 				if _spec.charm_duration > 0.0:
 					player.apply_charm(_spec.charm_duration, _spec.charmer)
+				if _spec.death_mark > 0:
+					player.add_death_mark(_spec.death_mark)
 				_impact(global_position, null)
 				release()
 			Player.HitResult.BLOCKED:

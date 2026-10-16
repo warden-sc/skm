@@ -10,9 +10,9 @@
 script = ExtResource("1_res")
 stage_name = "망자의 묘지"
 floor_texture = ExtResource("2_res")
-wall_tint = Color(0.6, 0.7, 0.7, 1)
-ambient_color = Color(0.72, 0.82, 0.84, 1)
-boss_intro_text = "묘지의 안개 속에서 죽음의 사신이 낫을 들고 다가온다…"
+wall_tint = Color(0.42, 0.48, 0.52, 1)
+ambient_color = Color(0.5, 0.55, 0.64, 1)
+boss_intro_text = "검은 안개를 두른 죽음의 사신이 낫을 들고 다가온다…"
 enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res")])
 enemy_weights = Array[float]([1.2, 1.0])
 boss_scene = ExtResource("3_res")

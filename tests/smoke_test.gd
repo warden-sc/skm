@@ -965,6 +965,67 @@ func _run() -> void:
 						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
 							seen6["shot"] = true)
 				_check(seen6["aoe"] and seen6["shot"] and _enemy_names().size() >= before_names, "%s 패턴: 장판 · 탄막 · 부하 소환" % boss.display_name)
+				if n == 6:
+					var orc_king := boss as BossOrcKing
+					orc_king.set_physics_process(false)
+					var before_rally := orc_king.get_minions().size()
+					orc_king.cast(BossOrcKing.Pattern.WAR_CRY)
+					await _frames(4)
+					var rallied_ok := orc_king.get_minions().size() > before_rally
+					for m in orc_king.get_minions():
+						if not m.has_meta(&"war_cry") or m.power < 1.3 or m.defense < 8:
+							rallied_ok = false
+					_check(rallied_ok, "[기믹] 족장의 함성: 오크킹이 부른 부하 %d명 강화 (공격력 x1.4 · 방어력 +8)" % orc_king.get_minions().size())
+					var calm_power := orc_king.power
+					orc_king.take_damage(roundi(orc_king.hp * 0.7), Vector2.ZERO, false, 999)
+					orc_king.set_physics_process(true)
+					await _survive(100)
+					_check(orc_king.power > calm_power * 1.3 and orc_king.get_status_text().contains("광폭화"), "[기믹] 광폭화: 체력이 줄수록 공격력 증가 (x%.2f · %s)" % [orc_king.power / calm_power, orc_king.get_status_text()])
+					orc_king.set_physics_process(true)
+				if n == 7:
+					var reaper := boss as BossReaper
+					_check(reaper.get_node("DarkMist") != null and (reaper.get_node("DarkMist") as CPUParticles2D).emitting, "사신 몸에서 검은 안개가 피어오름")
+					# 죽음의 낙인 (사신 공격이 섞이지 않도록 잠시 정지)
+					reaper.set_physics_process(false)
+					await _frames(60)
+					player.death_marks = 0
+					for i in 4:
+						player.add_death_mark(1)
+					await _frames(2)
+					_check(player.death_marks == 4 and not player.is_sentenced() and _gm.player_status.contains("죽음의 낙인 4/5"), "[기믹] 죽음의 낙인 4/5 (상태 표시: %s)" % _gm.player_status)
+					_gm.hp = _gm.max_hp
+					var hp_exec: int = _gm.hp
+					player.add_death_mark(1)
+					_check(player.is_sentenced(), "낙인 5개 → 사형 선고")
+					await _frames(int(Player.EXECUTION_DELAY * 60) + 6)
+					_check(_gm.hp <= hp_exec - roundi(_gm.max_hp * Player.EXECUTION_RATIO) + 1 and player.death_marks == 0, "사형 선고: 최대 체력의 35%% 피해 (-%d)" % (hp_exec - _gm.hp))
+					_gm.hp = _gm.max_hp
+					for i in 5:
+						player.add_death_mark(1)
+					while player.is_sentenced() and player._execution_left > 0.12:
+						await get_tree().physics_frame
+					player._start_dash(Vector2.RIGHT)  # 대시 입력 자체는 앞의 [이동/대시] 에서 검사
+					for i in 20:
+						await get_tree().physics_frame
+					_check(player.last_execution_dodged and player.death_marks == 0 and not player.is_sentenced(), "사형 선고 순간 대시하면 회피 (dodged=%s marks=%d left=%.2f since=%.2f dead=%s hp=%d)" % [player.last_execution_dodged, player.death_marks, player._execution_left, player._since_dash, player._is_dead, _gm.hp])
+					reaper.set_physics_process(true)
+					player.global_position = reaper.global_position + Vector2(10, 0)  # 몸통·낫이 반드시 닿는 거리
+					var mark_hit := {"marked": false}
+					await _survive(360, func() -> void:
+						if player.death_marks > 0 or player.is_sentenced():
+							mark_hit["marked"] = true)
+					_check(mark_hit["marked"], "사신의 공격에 맞으면 낙인이 쌓임 (left=%.2f dead=%s hp=%d)" % [player._execution_left, player._is_dead, _gm.hp])
+					# 망령화
+					reaper.enter_wraith()
+					var misses := 0
+					for i in 40:
+						var hp_r := reaper.hp
+						reaper.take_damage(10, Vector2.ZERO, false, 999)
+						if reaper.hp == hp_r:
+							misses += 1
+					await _survive(30)
+					_check(reaper.is_wraith() and misses >= 15 and reaper.sprite.modulate.a < 0.7, "[기믹] 망령화: 거의 투명해지고 공격이 잘 맞지 않음 (40번 중 %d번 빗나감)" % misses)
+					reaper._exit_wraith()
 				if n == 7:
 					var reaper := boss as BossReaper
 					reaper.set_physics_process(false)
@@ -985,6 +1046,7 @@ func _run() -> void:
 				pool.spawn(staff_spec)
 				await _survive(20)
 				_check(wyvern.hp == hp_w, "비행 중 지팡이 마법·폭발은 닿지 않음")
+				wyvern.set_physics_process(false)  # 빠르게 선회하므로 화살 한 발 검사 동안만 고정
 				var bow_spec := ProjectileSpec.from_weapon(ItemDB.get_weapon(&"hunter_bow"), player.get_muzzle_position(), player.get_muzzle_position().direction_to(wyvern.get_hit_center()), {"amount": 500, "crit": false, "armor_pen": 99})
 				bow_spec.max_distance = 400.0
 				pool.spawn(bow_spec)
@@ -993,6 +1055,7 @@ func _run() -> void:
 					if is_instance_valid(wyvern) and wyvern.hp < hp_w:
 						bow_hit["hit"] = true)
 				_check(bow_hit["hit"], "비행 중에도 화살은 맞음")
+				wyvern.set_physics_process(true)
 				await _survive(int(wyvern.flight_time * 1.3 * 60) + 120)
 				_check(not wyvern.is_flying(), "비행이 끝나면 급강하해 착지 → 다시 모든 공격이 닿음")
 			9:
@@ -1021,6 +1084,7 @@ func _run() -> void:
 			10:
 				var king := boss as BossLostKing
 				await _survive(10)
+				_check(king.get_node("DarkMist") != null and king.get_status_text().contains("옥좌"), "옥좌 잃은 왕: 검은 안개 + 듀라한이 지키던 옥좌를 찾음 (%s)" % king.get_status_text())
 				_check(king.has_crown() and (king.crown as CrownEnemy).king == king and king.crown.max_hp < king.max_hp, "[기믹] 왕관: 왕과 따로 체력 (%d)" % (king.crown.max_hp if king.crown != null else 0))
 				king.raise_barrier()
 				var hp_k := king.hp
