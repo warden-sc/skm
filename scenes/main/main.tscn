@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=3]
+[gd_scene load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://scripts/main/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/world/room.gd" id="2_room"]
@@ -25,6 +25,11 @@
 [ext_resource type="Resource" path="res://data/stages/stage_3.tres" id="23_stage3"]
 [ext_resource type="Resource" path="res://data/stages/stage_4.tres" id="24_stage4"]
 [ext_resource type="Resource" path="res://data/stages/stage_5.tres" id="25_stage5"]
+[ext_resource type="Resource" path="res://data/stages/stage_6.tres" id="26_stage6"]
+[ext_resource type="Resource" path="res://data/stages/stage_7.tres" id="27_stage7"]
+[ext_resource type="Resource" path="res://data/stages/stage_8.tres" id="28_stage8"]
+[ext_resource type="Resource" path="res://data/stages/stage_9.tres" id="29_stage9"]
+[ext_resource type="Resource" path="res://data/stages/stage_10.tres" id="30_stage10"]
 [ext_resource type="PackedScene" path="res://scenes/world/pickup.tscn" id="24_pickup"]
 [ext_resource type="PackedScene" path="res://scenes/world/chest.tscn" id="25_chest"]
 
@@ -127,7 +132,7 @@ script = ExtResource("18_fade")
 script = ExtResource("19_stage")
 entities_root = NodePath("../Entities")
 player = NodePath("../Entities/Player")
-stages = Array[ExtResource("20_stagedata")]([ExtResource("21_stage1"), ExtResource("22_stage2"), ExtResource("23_stage3"), ExtResource("24_stage4"), ExtResource("25_stage5")])
+stages = Array[ExtResource("20_stagedata")]([ExtResource("21_stage1"), ExtResource("22_stage2"), ExtResource("23_stage3"), ExtResource("24_stage4"), ExtResource("25_stage5"), ExtResource("26_stage6"), ExtResource("27_stage7"), ExtResource("28_stage8"), ExtResource("29_stage9"), ExtResource("30_stage10")])
 camp_room = NodePath("../Rooms/CampRoom")
 field_room = NodePath("../Rooms/FieldRoom")
 boss_room = NodePath("../Rooms/BossRoom")

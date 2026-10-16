@@ -98,6 +98,10 @@ var _burn_tick_timer: float = 0.0
 var _burn_particles: CPUParticles2D
 ## 지금 서 있는 적 장판 (점액 바닥 등) 표시용
 var _floor_status: String = ""
+## 매혹: 남은 시간 동안 조작 불가 (매혹한 적 쪽으로 홀린 듯 걸어감)
+var _charm_left: float = 0.0
+var _charmer: Node2D
+var _charm_particles: CPUParticles2D
 var _floor_status_left: float = 0.0
 var _status_text: String = ""
 var _windup_weapon: WeaponData
@@ -149,6 +153,11 @@ func _physics_process(delta: float) -> void:
 	else:
 		# get_vector 는 이미 길이 1 이하로 정규화되어 대각선도 속도가 같습니다.
 		var input_dir := Input.get_vector(&"move_left", &"move_right", &"move_up", &"move_down")
+		if is_charmed():
+			# 매혹: 조작 불가, 매혹한 적에게 천천히 끌려감
+			input_dir = Vector2.ZERO
+			if _charmer != null and is_instance_valid(_charmer):
+				input_dir = global_position.direction_to(_charmer.global_position) * 0.35
 		var speed := max_speed * (1.0 + GameManager.get_move_speed_bonus()) * _guard.get_move_multiplier() * _attack.get_move_multiplier()
 		if _slow_left > 0.0:
 			speed *= _slow_multiplier
@@ -157,7 +166,7 @@ func _physics_process(delta: float) -> void:
 		else:
 			velocity = velocity.move_toward(Vector2.ZERO, friction * delta)
 
-		if Input.is_action_just_pressed(&"dash") and _dash_cooldown_left <= 0.0:
+		if Input.is_action_just_pressed(&"dash") and _dash_cooldown_left <= 0.0 and not is_charmed():
 			_start_dash(input_dir)
 
 	move_and_slide()
@@ -165,7 +174,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _is_dead:
+	if _is_dead or is_charmed():
 		return
 	if event.is_action_pressed(&"use_potion"):
 		if _potion_cooldown_left <= 0.0 and GameManager.use_potion():
@@ -207,11 +216,26 @@ func get_aim_point(max_range: float) -> Vector2:
 
 
 func can_attack() -> bool:
-	return not _is_dead and _dash_time_left <= 0.0 and not _guard.is_guarding()
+	return not _is_dead and _dash_time_left <= 0.0 and not _guard.is_guarding() and not is_charmed()
 
 
 func can_guard() -> bool:
-	return not _is_dead and _dash_time_left <= 0.0
+	return not _is_dead and _dash_time_left <= 0.0 and not is_charmed()
+
+
+## 매혹 (서큐버스): duration 동안 이동·공격·가드·대시·포션 불가. charmer 쪽으로 천천히 끌려감
+func apply_charm(duration: float, charmer: Node2D = null) -> void:
+	if _is_dead:
+		return
+	_charm_left = maxf(_charm_left, duration)
+	_charmer = charmer
+	if _windup_weapon != null:
+		end_windup(false)
+	FloatingText.spawn(self, global_position + Vector2(0, -20), "매혹!", Color(1.0, 0.45, 0.8), true)
+
+
+func is_charmed() -> bool:
+	return _charm_left > 0.0
 
 
 func is_dashing() -> bool:
@@ -388,9 +412,14 @@ func _update_status(delta: float) -> void:
 			GameManager.damage_player(dmg)
 			FloatingText.spawn(self, global_position + Vector2(randf_range(-6, 6), -18), str(dmg), Color(1.0, 0.55, 0.2))
 	_floor_status_left = maxf(_floor_status_left - delta, 0.0)
+	_charm_left = maxf(_charm_left - delta, 0.0)
+	if _charm_particles != null:
+		_charm_particles.emitting = _charm_left > 0.0
 	if _burn_particles != null:
 		_burn_particles.emitting = _burn_left > 0.0
 	var parts := PackedStringArray()
+	if _charm_left > 0.0:
+		parts.append("매혹 %.1f초 (조작 불가)" % _charm_left)
 	if _burn_left > 0.0:
 		parts.append("화상 %.1f초 (0.5초마다 -%d)" % [_burn_left, get_burn_tick_damage()])
 	if _floor_status_left > 0.0:
@@ -529,6 +558,8 @@ func _update_visuals(delta: float) -> void:
 	# 피격 무적 깜빡임
 	if _invincible_left > 0.0:
 		_body_sprite.modulate = Color(1, 0.5, 0.5, 0.45 if int(_anim_time * 20.0) % 2 == 0 else 1.0)
+	elif _charm_left > 0.0:
+		_body_sprite.modulate = Color(1.0, 0.6, 0.9)  # 매혹
 	elif _burn_left > 0.0:
 		_body_sprite.modulate = Color(1.0, 0.7, 0.5)  # 화상
 	elif _floor_status_left > 0.0:
@@ -571,6 +602,11 @@ func _setup_windup_visuals() -> void:
 	_burn_particles.z_index = 3
 	_burn_particles.emitting = false
 	add_child(_burn_particles)
+	_charm_particles = Fx.make_aura(Color(1.0, 0.45, 0.8), 8, 6.0, Vector2(0, -30), 0.7)
+	_charm_particles.position = Vector2(0, -14)
+	_charm_particles.z_index = 3
+	_charm_particles.emitting = false
+	add_child(_charm_particles)
 	_target_ring = TargetRing.new()
 	_target_ring.name = "TargetRing"
 	add_child(_target_ring)

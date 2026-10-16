@@ -1,0 +1,45 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/boss_orc_king.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/orc_king.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/shadow.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/axe.png" id="4_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/rock.png" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/hobgoblin.tscn" id="6_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/orc_warrior.tscn" id="7_res"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 15.0
+
+[node name="BossOrcKing" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_res")
+display_name = "오크킹"
+max_hp = 9500
+defense = 18
+move_speed = 36.0
+contact_damage = 46
+knockback_resistance = 0.97
+is_boss = true
+gold_min = 600
+gold_max = 700
+item_drop_chance = 1.0
+item_drop_ids = Array[StringName]([&"holy_sword"])
+axe_texture = ExtResource("4_res")
+rock_texture = ExtResource("5_res")
+minion_scenes = Array[PackedScene]([ExtResource("6_res"), ExtResource("7_res")])
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(3.4, 3.4)
+texture = ExtResource("3_res")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -28)
+scale = Vector2(1.3, 1.3)
+texture = ExtResource("2_res")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -16)
+shape = SubResource("CircleShape2D_hit")

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/stage_data.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/tiles/floor_royal.png" id="2_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/boss_lost_king.tscn" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/royal_guard.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/court_mage.tscn" id="5_res"]
+
+[resource]
+script = ExtResource("1_res")
+stage_name = "버려진 왕궁"
+floor_texture = ExtResource("2_res")
+wall_tint = Color(0.9, 0.82, 0.6, 1)
+ambient_color = Color(0.95, 0.9, 0.82, 1)
+boss_intro_text = "옥좌를 잃은 왕이 왕관을 쓰고 일어선다…"
+enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res")])
+enemy_weights = Array[float]([1.1, 1.0])
+boss_scene = ExtResource("3_res")
+kill_target = 24
+spawn_interval = 1.6
+max_alive = 8

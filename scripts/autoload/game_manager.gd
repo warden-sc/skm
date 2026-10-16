@@ -84,7 +84,7 @@ const STARTING_POTIONS := {&"small_potion": 2}
 ## 포션 종류별 최대 보유 개수
 const POTION_MAX_STACK := 5
 const BASE_MAX_HP := 100
-const STARTING_GOLD := 60
+const STARTING_GOLD := 100
 
 var difficulty: Difficulty = Difficulty.NORMAL
 

@@ -139,6 +139,9 @@ func _melee_attack(weapon: WeaponData) -> bool:
 		var enemy := result.get("collider") as Enemy
 		if enemy == null or enemy.is_dead() or hit_ids.has(enemy.get_instance_id()):
 			continue
+		if not enemy.can_be_hit_by(Enemy.HitKind.MELEE):
+			enemy.show_immune()
+			continue
 		var to_enemy := enemy.get_hit_center() - origin
 		if to_enemy.length() > MELEE_POINT_BLANK and absf(aim.angle_to(to_enemy)) > half_arc:
 			continue

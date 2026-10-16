@@ -21,6 +21,8 @@ signal summon_requested(scene: PackedScene, at_global: Vector2, summoner: Enemy)
 ##   MOVE_TO: 지정한 지점으로 빠르게 이동해 대기 (포위 진형 등)
 ##   GUARD  : 지휘관 곁(지정한 오프셋)으로 돌아와 지킴
 enum Command { NONE, CHARGE, MOVE_TO, GUARD }
+## 플레이어 공격 종류. 공중에 뜬 적(airborne)은 활(BOW)로만 맞힐 수 있음 (와이번 기믹)
+enum HitKind { MELEE, BOW, MAGIC }
 
 const COMMAND_CHARGE_WINDUP := 0.35
 const COMMAND_CHARGE_SPEED := 3.4
@@ -75,6 +77,9 @@ var _slow_left: float = 0.0
 var _slow_multiplier: float = 1.0
 var _aura: CPUParticles2D
 var _anim_time: float = 0.0
+## 공중에 떠 있으면 true → 활 공격만 맞음
+var airborne: bool = false
+var _immune_text_cooldown: float = 0.0
 ## 나를 소환해 지휘하는 적 (없으면 null)
 var commander: Enemy
 var _command: Command = Command.NONE
@@ -124,6 +129,7 @@ func _physics_process(delta: float) -> void:
 	if _player == null or not is_instance_valid(_player):
 		_player = get_tree().get_first_node_in_group(&"player") as Player
 
+	_immune_text_cooldown = maxf(_immune_text_cooldown - delta, 0.0)
 	_stun_left = maxf(_stun_left - delta, 0.0)
 	_slow_left = maxf(_slow_left - delta, 0.0)
 	var move := Vector2.ZERO
@@ -136,7 +142,7 @@ func _physics_process(delta: float) -> void:
 	if arena_rect.has_area():
 		global_position = global_position.clamp(arena_rect.position, arena_rect.end)
 
-	if _touching_player and _stun_left <= 0.0 and _player != null and is_instance_valid(_player):
+	if _touching_player and _stun_left <= 0.0 and not airborne and _player != null and is_instance_valid(_player):
 		if _player.take_hit(contact_damage, get_hit_center(), self) == Player.HitResult.DAMAGED and burn_damage > 0:
 			_player.apply_burn(burn_damage, burn_duration)
 
@@ -249,6 +255,19 @@ func stun(duration: float) -> void:
 	var actual := duration * (1.0 - knockback_resistance * 0.6)
 	_stun_left = maxf(_stun_left, actual)
 	FloatingText.spawn(self, global_position + Vector2(0, -20), "기절!", Color(0.6, 0.8, 1.0))
+
+
+## 이 종류의 공격으로 맞힐 수 있는지 (공중에 뜨면 활만 가능)
+func can_be_hit_by(kind: HitKind) -> bool:
+	return not airborne or kind == HitKind.BOW
+
+
+## 맞힐 수 없는 공격이 닿았을 때 안내 문구 (너무 자주 뜨지 않게)
+func show_immune() -> void:
+	if _immune_text_cooldown > 0.0 or _dead:
+		return
+	_immune_text_cooldown = 0.5
+	FloatingText.spawn(self, global_position + Vector2(0, -34), "공중! 활만 닿음", Color(0.75, 0.85, 1.0))
 
 
 ## 졸개 소환 요청 (보스 등 자식 클래스에서 사용)

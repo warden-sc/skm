@@ -134,6 +134,7 @@ func _run() -> void:
 	_check(stage.camp_room.get_bounds().has_point(player.global_position), "플레이어가 야영지 안에 있음")
 	_check(hud.get_node("%Hotbar").get_child_count() == 14, "HUD 단축바 (무기 3 + 방어구 4 + 장신구 3 + 포션)")
 	_check(_gm.get_potion_count(&"small_potion") == 2, "시작 포션: 작은 회복 포션 2개")
+	_check(_gm.gold == 100, "시작 골드 100G")
 
 	print("[이동/대시]")
 	var start_x := player.global_position.x
@@ -910,21 +911,146 @@ func _run() -> void:
 				dl_seen["wave"] = true)
 	_check(dl_seen["slash"] and dl_seen["wave"], "듀라한 패턴: 대검 베기 · 암흑 검기 · 돌진 · 기사 소환 · 머리 던지기")
 
-	print("[엔딩 - 5스테이지 보스 토벌]")
-	var kills_before: int = _gm.total_kills
-	stage.ending_delay = 600.0  # 아래 테스트가 끝난 뒤 엔딩 화면을 따로 검사
 	dullahan.take_damage(999999, Vector2.ZERO, false, 9999)
 	if not dullahan.is_dead() and dullahan.get_thrown_head() != null:
 		dullahan.get_thrown_head().take_damage(999999)
 		await _frames(2)
 		dullahan.take_damage(999999)
 	await _frames(4)
-	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막 보스 토벌 → 모든 스테이지 클리어")
+	_check(not _gm.is_game_cleared and stage.get_chest() != null and next_portal.enabled, "5스테이지 보스 토벌 → 상자 + 6스테이지 텔레포트 (아직 엔딩 아님)")
+	var stage_mobs := {
+		6: ["홉고블린", "오크 전사", "오크 주술사"],
+		7: ["해골 병사", "유령"],
+		8: ["새끼 와이번", "리자드맨 투창병"],
+		9: ["하급 서큐버스"],
+		10: ["왕실 근위병", "궁정 마술사"],
+	}
+	var stage_names := {6: "오크 요새", 7: "망자의 묘지", 8: "비룡의 둥지", 9: "마계의 문", 10: "버려진 왕궁"}
+	var boss_names := {6: "오크킹", 7: "죽음의 사신", 8: "와이번", 9: "상급마족 서큐버스", 10: "옥좌 잃은 왕"}
+	var final_boss: Enemy = null
+	for n in range(6, 11):
+		next_portal.interacted.emit()
+		await _frames(3)
+		print("[%d스테이지 - %s]" % [n, stage_names[n]])
+		_check(_gm.stage == n and _gm.stage_name == stage_names[n], "스테이지 %d 「%s」" % [n, _gm.stage_name])
+		field_portal.interacted.emit()
+		await _frames(2)
+		for scene in stage.get_stage_data().enemy_scenes:
+			stage._add_enemy(scene.instantiate() as Enemy, stage._pick_spawn_position(stage.field_room.get_arena_rect()), stage.field_room.get_arena_rect())
+		await _frames(3)
+		var names_now := _enemy_names()
+		var all_mobs := true
+		for mob_name in stage_mobs[n]:
+			if not names_now.has(mob_name):
+				all_mobs = false
+		_check(all_mobs, "잡몹: %s" % ", ".join(stage_mobs[n]))
+		await _survive(240)
+		_check(not _gm.is_player_dead, "%d스테이지 잡몹 패턴 실행" % n)
+		gate.open()
+		gate.interacted.emit()
+		await _frames(int(stage.boss_entry_delay * 60) + 10)
+		var boss := _find_boss()
+		_check(boss != null and boss.display_name == boss_names[n], "%d스테이지 보스: %s" % [n, boss_names[n]])
+		if boss == null:
+			continue
+		player.global_position = boss_center + Vector2(0, 60)
+		var seen6 := {"aoe": false, "shot": false}
+		match n:
+			6, 7:
+				var before_names := _enemy_names().size()
+				await _survive(900, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen6["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen6["shot"] = true)
+				_check(seen6["aoe"] and seen6["shot"] and _enemy_names().size() >= before_names, "%s 패턴: 장판 · 탄막 · 부하 소환" % boss.display_name)
+				if n == 7:
+					var reaper := boss as BossReaper
+					reaper.set_physics_process(false)
+					reaper.global_position = boss_center + Vector2(0, -80)
+					reaper.cast(BossReaper.Pattern.BLINK)
+					await _survive(30)
+					_check(reaper.global_position.distance_to(player.global_position) < 80.0, "사신: 안개처럼 사라졌다 플레이어 곁에서 나타남")
+					reaper.set_physics_process(true)
+			8:
+				var wyvern := boss as BossWyvern
+				wyvern.take_off()
+				await _survive(30)
+				_check(wyvern.is_flying() and not wyvern.can_be_hit_by(Enemy.HitKind.MELEE) and not wyvern.can_be_hit_by(Enemy.HitKind.MAGIC) and wyvern.can_be_hit_by(Enemy.HitKind.BOW), "[기믹] 와이번 비행: 공중에서는 활로만 맞음")
+				var hp_w := wyvern.hp
+				Spells.damage_area(player, wyvern.get_hit_center(), 40.0, 500, 500, 0, 0.0)
+				var staff_spec := ProjectileSpec.from_weapon(ItemDB.get_weapon(&"ignis_staff"), player.get_muzzle_position(), player.get_muzzle_position().direction_to(wyvern.get_hit_center()), {"amount": 500, "crit": false, "armor_pen": 0})
+				staff_spec.max_distance = 400.0
+				pool.spawn(staff_spec)
+				await _survive(20)
+				_check(wyvern.hp == hp_w, "비행 중 지팡이 마법·폭발은 닿지 않음")
+				var bow_spec := ProjectileSpec.from_weapon(ItemDB.get_weapon(&"hunter_bow"), player.get_muzzle_position(), player.get_muzzle_position().direction_to(wyvern.get_hit_center()), {"amount": 500, "crit": false, "armor_pen": 99})
+				bow_spec.max_distance = 400.0
+				pool.spawn(bow_spec)
+				var bow_hit := {"hit": false}
+				await _survive(40, func() -> void:
+					if is_instance_valid(wyvern) and wyvern.hp < hp_w:
+						bow_hit["hit"] = true)
+				_check(bow_hit["hit"], "비행 중에도 화살은 맞음")
+				await _survive(int(wyvern.flight_time * 1.3 * 60) + 120)
+				_check(not wyvern.is_flying(), "비행이 끝나면 급강하해 착지 → 다시 모든 공격이 닿음")
+			9:
+				var succubus := boss as BossSuccubus
+				succubus.set_physics_process(false)
+				succubus.global_position = player.global_position + Vector2(0, -90)
+				succubus.set_physics_process(true)
+				succubus.cast(BossSuccubus.Pattern.CHARM)
+				var charm_seen := {"charmed": false, "behind": false}
+				await _survive(110, func() -> void:
+					if player.is_charmed() and not charm_seen["charmed"]:
+						charm_seen["charmed"] = true
+					if player.is_charmed() and is_instance_valid(succubus) and succubus.global_position.distance_to(player.global_position) < 50.0:
+						charm_seen["behind"] = true)
+				_check(charm_seen["charmed"], "[기믹] 서큐버스 매혹의 하트에 맞으면 매혹")
+				_check(charm_seen["behind"], "매혹되면 서큐버스가 등 뒤로 순간이동")
+				player.apply_charm(1.0, succubus)
+				_check(not player.can_attack() and not player.can_guard() and _gm.player_status.contains("매혹"), "매혹 중: 공격·가드 불가 + 상태 표시")
+				var charm_x := player.global_position.x
+				Input.action_press(&"move_right")
+				await _survive(20)
+				Input.action_release(&"move_right")
+				_check(player.global_position.x - charm_x < 12.0, "매혹 중: 이동 입력이 먹히지 않음")
+				await _survive(60)
+				_check(not player.is_charmed() and player.can_attack(), "매혹이 풀리면 다시 조작 가능")
+			10:
+				var king := boss as BossLostKing
+				await _survive(10)
+				_check(king.has_crown() and (king.crown as CrownEnemy).king == king and king.crown.max_hp < king.max_hp, "[기믹] 왕관: 왕과 따로 체력 (%d)" % (king.crown.max_hp if king.crown != null else 0))
+				king.raise_barrier()
+				var hp_k := king.hp
+				king.take_damage(500, Vector2.ZERO, false, 99)
+				_check(king.is_barrier_up() and king.hp == hp_k, "왕관이 있으면 「왕관의 가호」로 공격을 막음")
+				king.crown.take_damage(999999)
+				await _frames(3)
+				_check(king.is_crown_broken() and not king.is_barrier_up(), "왕관을 부수면 가호가 사라짐")
+				hp_k = king.hp
+				king.take_damage(500, Vector2.ZERO, false, 99)
+				king.raise_barrier()
+				_check(king.hp < hp_k and not king.is_barrier_up(), "왕관이 없으면 피해가 들어가고 가호를 다시 못 씀")
+				final_boss = king
+		if n < 10:
+			boss.take_damage(999999, Vector2.ZERO, false, 9999)
+			await _frames(4)
+			_check(not _gm.is_game_cleared and next_portal.enabled, "%d스테이지 보스 토벌 → 다음 스테이지 텔레포트" % n)
+
+	print("[엔딩 - 10스테이지 보스 토벌]")
+	var kills_before: int = _gm.total_kills
+	stage.ending_delay = 600.0  # 아래 테스트가 끝난 뒤 엔딩 화면을 따로 검사
+	if final_boss != null:
+		final_boss.take_damage(999999, Vector2.ZERO, false, 9999)
+	await _frames(4)
+	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(10스테이지) 보스 토벌 → 모든 스테이지 클리어")
 	_check(_gm.total_kills > kills_before and _gm.play_time > 0.0, "엔딩 기록: 처치 %d마리 · 플레이 %s" % [_gm.total_kills, _gm.get_play_time_text()])
 	_check(stage.get_chest() == null and not next_portal.enabled and get_tree().get_nodes_in_group(&"enemies").is_empty(), "마지막 스테이지: 상자 / 텔레포트 없음, 남은 졸개 정리")
 	stage.go_to_next_stage()
 	await _frames(3)
-	_check(_gm.stage == 5, "5스테이지 이후 반복 스테이지 없음")
+	_check(_gm.stage == 10, "10스테이지 이후 반복 스테이지 없음")
 
 	print("[난이도 배율]")
 	_gm.difficulty = _gm.Difficulty.VERY_HARD

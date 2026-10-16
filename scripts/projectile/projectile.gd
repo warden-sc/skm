@@ -106,6 +106,9 @@ func _on_area_entered(area: Area2D) -> void:
 	var id := enemy.get_instance_id()
 	if _hit_ids.has(id):
 		return
+	if not enemy.can_be_hit_by(_spec.hit_kind):
+		enemy.show_immune()  # 공중의 적: 활이 아니면 그냥 지나감
+		return
 	_hit_ids[id] = true
 
 	enemy.take_damage(_spec.damage, _velocity.normalized() * _spec.knockback, _spec.is_crit, _spec.armor_pen)
@@ -132,6 +135,8 @@ func _on_body_entered(body: Node2D) -> void:
 					player.apply_slow(0.5, _spec.slow_duration)
 				if _spec.burn_damage > 0:
 					player.apply_burn(_spec.burn_damage, _spec.burn_duration)
+				if _spec.charm_duration > 0.0:
+					player.apply_charm(_spec.charm_duration, _spec.charmer)
 				_impact(global_position, null)
 				release()
 			Player.HitResult.BLOCKED:
@@ -181,7 +186,7 @@ func _impact(at_global: Vector2, direct_target: Enemy) -> void:
 		if enemy == null or enemy == direct_target or enemy.is_dead():
 			continue
 		var offset := enemy.get_hit_center() - at_global
-		if offset.length() <= _spec.explosion_radius:
+		if offset.length() <= _spec.explosion_radius and enemy.can_be_hit_by(_spec.hit_kind):
 			enemy.take_damage(_spec.explosion_damage, offset.normalized() * _spec.knockback * 0.5, false, _spec.armor_pen)
 
 

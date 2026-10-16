@@ -1,0 +1,44 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/boss_wyvern.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/wyvern.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/shadow.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/fireball.png" id="4_res"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 16.0
+
+[node name="BossWyvern" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_res")
+display_name = "와이번"
+max_hp = 11500
+defense = 20
+move_speed = 46.0
+contact_damage = 48
+knockback_resistance = 0.97
+is_boss = true
+aura_element = 1
+aura_amount = 10
+burn_damage = 4
+burn_duration = 3.0
+gold_min = 700
+gold_max = 800
+item_drop_chance = 1.0
+item_drop_ids = Array[StringName]([&"holy_sword"])
+fireball_texture = ExtResource("4_res")
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(3.6, 3.6)
+texture = ExtResource("3_res")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -24)
+scale = Vector2(1.2, 1.2)
+texture = ExtResource("2_res")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -16)
+shape = SubResource("CircleShape2D_hit")

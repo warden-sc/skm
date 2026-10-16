@@ -1068,6 +1068,450 @@ def dark_slash():
                 img.putpixel((x, y), (200, 120, 255, 255) if d1 > 4.8 else (120, 50, 190, 255))
     return img
 
+
+# ---------------------------------------------------------------- 6~10스테이지
+X_PAL = dict(PAL)
+X_PAL.update({
+    "a": (58, 60, 74, 255), "A": (96, 100, 120, 255), "e": (36, 36, 48, 255),
+    "h": (120, 150, 70, 255),   # 홉고블린 피부
+    "H": (80, 105, 45, 255),
+    "f": (230, 210, 190, 255),  # 뼈
+    "F": (170, 155, 140, 255),
+    "u": (190, 235, 255, 255),  # 유령
+    "U": (120, 180, 220, 255),
+    "z": (200, 80, 60, 255),    # 와이번 비늘
+    "Z": (130, 45, 40, 255),
+    "j": (90, 170, 140, 255),   # 리자드맨
+    "J": (50, 110, 90, 255),
+    "i": (245, 180, 200, 255),  # 서큐버스 피부
+    "I": (110, 30, 70, 255),    # 서큐버스 날개/옷
+    "Q": (220, 180, 70, 255),   # 금
+    "q": (160, 30, 50, 255),    # 핏빛
+    "x": (200, 60, 255, 255),
+})
+
+HOBGOBLIN = [
+    "................",
+    "...k........k...",
+    "...kHk.kkkk.kHk.",
+    "....kHkhhhhkHk..",
+    ".....khrhhrhk...",
+    ".....khhhhhhk...",
+    ".....khWkkWhk..k",
+    "....kkhhhhhhkkkt",
+    "...khkttttttkhkt",
+    "...khktTTTTtkhkt",
+    "...kk.ttttttkkkk",
+    "......kTTTTk....",
+    ".....khk..khk...",
+    ".....kHk..kHk...",
+    ".....kkk..kkk...",
+    "................",
+]
+
+ORC_WARRIOR = [
+    "....kkkkkk......",
+    "...kGGGGGGk.....",
+    "..kGGrGGrGGk....",
+    "..kGGGGGGGGk....",
+    "..kGWGGGGWGk..k.",
+    "...kGGGGGGk..klk",
+    "kkkkmmTTTTmk.klk",
+    "ktykTTTTTTTmkklk",
+    "ktykTTyTTTTkGklk",
+    "ktykTTTTTTTkGkyk",
+    "kkkk.kTTTTk.kkyk",
+    "....kTkkTk...kk.",
+    "....kmk.kmk.....",
+    "....kdk.kdk.....",
+    "....kkk.kkk.....",
+    "................",
+]
+
+ORC_SHAMAN = [
+    "..........kfk...",
+    "....kkkkkkkfk...",
+    "...kPPPPPPkTk...",
+    "..kPGGGGGGPkTk..",
+    "..kPGxGGxGPkTk..",
+    "..kPGGGGGGPkTk..",
+    "...kGWGGWGk.kTk.",
+    "..kPPPPPPPPk.Tk.",
+    ".kPPPPyPPPPPkTk.",
+    ".kPkPPPPPPkPkTk.",
+    ".kk.kPPPPk.kkTk.",
+    "....kPPPPk...k..",
+    "...kPPPPPPk.....",
+    "...kGGkkGGk.....",
+    "...kkk..kkk.....",
+    "................",
+]
+
+SKELETON = [
+    "................",
+    ".....kkkkk......",
+    "....kfffffk.....",
+    "....kfekefk.....",
+    "....kfffffk.....",
+    ".....kfkfk......",
+    "...kk.kfk.kk..k.",
+    "..kfkkfffkkfk.kl",
+    "..kfk.kfk.kfkkl.",
+    "...k.kfffk.kkl..",
+    ".....kf.fk..kk..",
+    ".....kfkfk......",
+    "....kf...fk.....",
+    "....kF...Fk.....",
+    "....kk...kk.....",
+    "................",
+]
+
+GHOST = [
+    "................",
+    ".....kkkkkk.....",
+    "....kuuuuuuk....",
+    "...kuuuuuuuuk...",
+    "...kuukuukuuk...",
+    "...kuukuukuuk...",
+    "..kuuuuuuuuuuk..",
+    "..kuuuukkuuuuk..",
+    "..kuuuuuuuuuuk..",
+    "..kUuuuuuuuuUk..",
+    "..kUUuuuuuuUUk..",
+    "..kUUUuuuuUUUk..",
+    "..kUkUUkkUUkUk..",
+    "..kk.kk..kk.kk..",
+    "................",
+    "................",
+]
+
+BABY_WYVERN = [
+    "................",
+    ".kk..........kk.",
+    "kzzk........kzzk",
+    "kzZzk..kk..kzZzk",
+    ".kzZzkkzzkkzZzk.",
+    "..kzZkzyzzkZzk..",
+    "...kkzzzzzzkk...",
+    "....kzzWzWzk....",
+    "....kzzzzzzk....",
+    ".....kzZZzk.....",
+    "......kzzk......",
+    "......kzZk......",
+    ".......kzk......",
+    "........kk......",
+    "................",
+    "................",
+]
+
+LIZARDMAN = [
+    "..........k.....",
+    "....kkkk.klk....",
+    "...kjjjjkklk....",
+    "..kjjrjjjklk....",
+    "..kjjjjjjJlk....",
+    "...kkjjjjkTk....",
+    "..kjjJJJJjTk....",
+    ".kjkjJyyJjTk....",
+    ".kjkjJJJJkjk....",
+    ".kk.kjJJjkkk....",
+    "....kjjjjk......",
+    "...kjjkkjjk.....",
+    "...kjk..kjk.....",
+    "...kJk..kJk..kk.",
+    "...kkk..kkkkkJk.",
+    "............kk..",
+]
+
+LESSER_SUCCUBUS = [
+    ".k............k.",
+    "kIk..kkkkkk..kIk",
+    "kIIkkpppppkkkIIk",
+    "kIIkpiiiiipkkIIk",
+    ".kIkpixiixipkIk.",
+    "..kkpiiiiiipkk..",
+    "...kpkiqqikpk...",
+    "..kIkkiiiikkIk..",
+    ".kIIkIIIIIIkIIk.",
+    ".kIk.kiIIik.kIk.",
+    "..k..kIIIIk..k..",
+    ".....kIIIIk.....",
+    "....kiik.kiik...",
+    "....kik...kik.k.",
+    "....kkk...kkkIk.",
+    "..............k.",
+]
+
+ROYAL_GUARD = [
+    "......kk........",
+    ".....kQQk....k..",
+    "....kAAAAk..kQk.",
+    "...kAAAAAAk.klk.",
+    "...kAkkkkAk.klk.",
+    "...kAAAAAAk.klk.",
+    "kkkkqQQQQqkkklk.",
+    "kqqkqqqqqqqkklk.",
+    "kqQkqqQQqqqkAlk.",
+    "kqqkqqqqqqqkAkk.",
+    "kkkk.kqqqqk.kk..",
+    "....kAAkAAk.....",
+    "...kAAk.kAAk....",
+    "...kek...kek....",
+    "...kkk...kkk....",
+    "................",
+]
+
+COURT_MAGE = [
+    "......kk........",
+    ".....kBBk.......",
+    "....kBQBBk......",
+    "...kBBBBBBk.kk..",
+    "..kkkkkkkkkkCk..",
+    "....kssssk.kCCk.",
+    "....kskskk..kk..",
+    "....kssssk..kTk.",
+    "...kBBQQBBk.kTk.",
+    "..kBBBBBBBBkkTk.",
+    "..kBkBBQBBkBkTk.",
+    "..kk.kBBBBk.kTk.",
+    "....kBBBBBBk.k..",
+    "...kBBBBBBBBk...",
+    "...kkkkkkkkkk...",
+    "................",
+]
+
+
+def orc_king():
+    """오크킹 (40x40): 거대한 오크, 머리에 금관, 털 망토, 거대 도끼"""
+    img = canvas(40)
+    skin, skin_d = (70, 150, 70, 255), (45, 105, 50, 255)
+    fur, fur_d, gold = (150, 120, 90, 255), (100, 80, 60, 255), X_PAL["Q"]
+    leather = (110, 70, 45, 255)
+    ellipse(img, 19.5, 26, 15, 9, fur)            # 털 망토
+    rect(img, 10, 16, 29, 32, leather)            # 몸통
+    rect(img, 10, 16, 29, 18, fur_d)
+    rect(img, 19, 18, 20, 32, (80, 50, 35, 255))
+    rect(img, 4, 17, 9, 29, skin)                 # 팔
+    rect(img, 30, 17, 35, 29, skin)
+    rect(img, 4, 27, 9, 30, skin_d)
+    rect(img, 12, 33, 17, 39, skin_d)             # 다리
+    rect(img, 22, 33, 27, 39, skin_d)
+    rect(img, 12, 4, 27, 16, skin)                # 머리
+    rect(img, 12, 13, 27, 16, skin_d)
+    put(img, [(15, 9), (16, 9), (23, 9), (24, 9)], (230, 60, 40, 255))
+    put(img, [(14, 14), (25, 14), (14, 13), (25, 13)], (245, 240, 220, 255))  # 엄니
+    rect(img, 11, 1, 28, 4, gold)                 # 왕관
+    for x in (11, 16, 20, 24, 28):
+        put(img, [(x, 0)], gold)
+    put(img, [(15, 2), (20, 2), (24, 2)], (220, 40, 60, 255))
+    rect(img, 36, 4, 37, 34, (110, 75, 50, 255))  # 도끼 자루
+    ellipse(img, 36.5, 8, 3.5, 6, (190, 195, 210, 255))  # 도끼날
+    rect(img, 36, 3, 37, 13, (120, 125, 140, 255))
+    return outline(img)
+
+
+def reaper():
+    """죽음의 사신 (32x40): 검은 두건 로브, 해골 얼굴, 빛나는 눈, 거대한 낫"""
+    img = canvas(32, 40)
+    robe, robe_d, robe_hi = (40, 36, 56, 255), (22, 20, 32, 255), (70, 62, 96, 255)
+    bone, eye = X_PAL["f"], (120, 255, 220, 255)
+    for y in range(8, 38):                         # 로브 (아래로 퍼지고 너덜너덜)
+        half = 5 + (y - 8) * 0.32
+        for x in range(int(14.5 - half), int(14.5 + half) + 1):
+            if y > 34 and (x + y) % 3 == 0:
+                continue
+            img.putpixel((x, y), robe if (x - 14) % 5 else robe_hi)
+    ellipse(img, 14.5, 7, 6.5, 6.5, robe_d)       # 두건
+    ellipse(img, 14.5, 8, 4, 4, bone)             # 해골
+    put(img, [(12, 7), (13, 7), (16, 7), (17, 7)], eye)
+    put(img, [(13, 10), (15, 10), (14, 11)], robe_d)
+    rect(img, 6, 16, 8, 22, robe)                 # 소매
+    put(img, [(7, 23), (8, 23)], bone)
+    rect(img, 27, 2, 28, 38, (110, 90, 70, 255))  # 낫 자루
+    for i in range(14):                           # 낫날 (위에서 왼쪽으로 휘어짐)
+        x = 27 - i
+        y = 2 + int(round(4.0 * math.sin(i / 13.0 * math.pi)))
+        put(img, [(x, y), (x, y + 1)], (210, 220, 235, 255))
+        if i > 2:
+            put(img, [(x, y + 2)], (150, 160, 180, 255))
+    return outline(img)
+
+
+def wyvern():
+    """와이번 (48x40): 붉은 비룡, 활짝 편 날개, 긴 꼬리"""
+    img = canvas(48, 40)
+    scale, dark, belly = X_PAL["z"], X_PAL["Z"], (240, 190, 120, 255)
+    wing, wing_d = (170, 70, 60, 255), (110, 40, 40, 255)
+    for side in (-1, 1):                           # 날개
+        for i in range(17):
+            x = 24 + side * (5 + i)
+            top = 6 + int(abs(i - 7) * 0.5)
+            bot = 22 - int(i * 0.45)
+            for y in range(top, bot):
+                img.putpixel((x, y), wing if (y + i) % 6 else wing_d)
+            img.putpixel((x, top), dark)
+    ellipse(img, 24, 20, 6, 9, scale)              # 몸
+    ellipse(img, 24, 22, 3, 6, belly)
+    rect(img, 22, 6, 26, 12, scale)                # 목/머리
+    ellipse(img, 24, 5, 4, 3.5, scale)
+    put(img, [(22, 4), (26, 4)], (255, 220, 80, 255))
+    put(img, [(21, 1), (27, 1), (21, 2), (27, 2)], dark)  # 뿔
+    for i in range(10):                            # 꼬리
+        put(img, [(24 + int(3 * math.sin(i * 0.6)), 29 + i)], dark)
+        put(img, [(25 + int(3 * math.sin(i * 0.6)), 29 + i)], scale)
+    put(img, [(19, 28), (20, 29), (28, 28), (27, 29)], dark)  # 발
+    return outline(img)
+
+
+def succubus():
+    """상급마족 서큐버스 (28x36): 뿔, 긴 흑발, 박쥐 날개, 꼬리"""
+    img = canvas(28, 36)
+    skin, wing, wing_d = X_PAL["i"], X_PAL["I"], (70, 15, 45, 255)
+    hair, cloth, eye = (40, 20, 40, 255), (140, 20, 70, 255), (255, 60, 160, 255)
+    for side in (-1, 1):                            # 날개
+        for i in range(9):
+            x = 14 + side * (4 + i)
+            for y in range(6 + i // 2, 20 - i // 3):
+                img.putpixel((x, y), wing if (y + i) % 4 else wing_d)
+    ellipse(img, 13.5, 8, 5.5, 6, hair)             # 머리카락
+    rect(img, 8, 9, 10, 22, hair)
+    rect(img, 17, 9, 19, 22, hair)
+    rect(img, 11, 5, 16, 11, skin)                  # 얼굴
+    put(img, [(12, 8), (15, 8)], eye)
+    put(img, [(13, 10), (14, 10)], (200, 40, 80, 255))
+    put(img, [(10, 2), (10, 3), (11, 4), (17, 2), (17, 3), (16, 4)], (60, 30, 40, 255))  # 뿔
+    rect(img, 11, 12, 16, 22, skin)                 # 몸
+    rect(img, 11, 14, 16, 16, cloth)
+    rect(img, 11, 20, 16, 24, cloth)
+    rect(img, 11, 25, 12, 33, skin)                 # 다리
+    rect(img, 15, 25, 16, 33, skin)
+    put(img, [(11, 34), (12, 34), (15, 34), (16, 34)], hair)
+    for i in range(8):                              # 꼬리
+        put(img, [(18 + i, 26 + int(2 * math.sin(i * 0.8)))], wing_d)
+    put(img, [(26, 25), (26, 27), (27, 26)], wing_d)
+    return outline(img)
+
+
+def lost_king():
+    """옥좌 잃은 왕 (32x40): 해진 보라 망토 + 담비털, 흰 수염, 홀 (왕관은 따로)"""
+    img = canvas(32, 40)
+    robe, robe_d, ermine = (100, 50, 140, 255), (60, 30, 90, 255), (240, 240, 240, 255)
+    skin, beard, gold = PAL["s"], (220, 220, 225, 255), X_PAL["Q"]
+    for y in range(12, 39):
+        half = 6 + (y - 12) * 0.3
+        for x in range(int(15.5 - half), int(15.5 + half) + 1):
+            if y > 35 and (x * 7 + y) % 4 == 0:
+                continue   # 해진 자락
+            img.putpixel((x, y), robe if (x + y) % 7 else robe_d)
+    rect(img, 8, 11, 23, 13, ermine)               # 담비털 깃
+    put(img, [(10, 12), (14, 12), (18, 12), (22, 12)], (30, 30, 30, 255))
+    rect(img, 11, 3, 20, 10, skin)                 # 얼굴
+    put(img, [(13, 6), (18, 6)], (40, 40, 60, 255))
+    for y in range(9, 18):                         # 수염
+        w = max(1, 5 - (y - 9) // 2)
+        rect(img, 15 - w, y, 16 + w, y, beard)
+    rect(img, 10, 2, 21, 3, (180, 180, 190, 255))  # 흰 머리
+    rect(img, 26, 8, 27, 34, gold)                 # 홀
+    ellipse(img, 26.5, 7, 2.5, 2.5, (200, 40, 60, 255))
+    return outline(img)
+
+
+def crown():
+    """옥좌 잃은 왕의 왕관 (16x12): 따로 체력이 있는 기믹 대상"""
+    img = canvas(16, 12)
+    gold, gold_d = X_PAL["Q"], (170, 120, 40, 255)
+    rect(img, 1, 6, 14, 10, gold)
+    rect(img, 1, 9, 14, 10, gold_d)
+    for x in (1, 5, 10, 14):
+        rect(img, x, 2, x, 6, gold)
+    rect(img, 7, 0, 8, 6, gold)
+    put(img, [(4, 8), (11, 8)], (60, 120, 255, 255))
+    put(img, [(7, 7), (8, 7), (7, 8), (8, 8)], (230, 40, 70, 255))
+    return outline(img)
+
+
+def heart():
+    """매혹의 하트 탄 (9x8)"""
+    rows = [
+        ".pp...pp.",
+        "pWvp.pvvp",
+        "pvvvpvvvp",
+        "pvvvvvvvp",
+        ".pvvvvvp.",
+        "..pvvvp..",
+        "...pvp...",
+        "....p....",
+    ]
+    pal = {"p": (200, 40, 120, 255), "v": (255, 120, 190, 255), "W": (255, 230, 240, 255)}
+    img = canvas(9, 8)
+    for y, row in enumerate(rows):
+        for x, ch in enumerate(row):
+            if ch in pal:
+                img.putpixel((x, y), pal[ch])
+    return img
+
+
+def axe():
+    """오크킹의 손도끼 (12x12)"""
+    img = canvas(12)
+    rect(img, 5, 1, 6, 11, (110, 75, 50, 255))
+    ellipse(img, 7.5, 3.5, 3.5, 3, (200, 205, 220, 255))
+    rect(img, 5, 1, 6, 6, (120, 125, 140, 255))
+    return outline(img)
+
+
+def _floor(seed, base, var, specks):
+    rnd = random.Random(seed)
+    img = canvas(32)
+    for y in range(32):
+        for x in range(32):
+            v = rnd.randint(-var, var)
+            img.putpixel((x, y), (base[0] + v, base[1] + v, base[2] + v, 255))
+    for count, col, size in specks:
+        for _ in range(count):
+            x, y = rnd.randint(0, 31 - size), rnd.randint(0, 31)
+            for i in range(size):
+                img.putpixel((x + i, y), col)
+    return img
+
+
+def floor_fortress():
+    """오크 요새: 다져진 흙 + 나무 판자"""
+    img = _floor(31, (110, 82, 56), 6, [(10, (90, 66, 44, 255), 2), (6, (140, 110, 80, 255), 1)])
+    for y in (0, 16):
+        for x in range(32):
+            img.putpixel((x, y), (75, 55, 38, 255))
+    return img
+
+
+def floor_graveyard():
+    """망자의 묘지: 잿빛 흙 + 뼛조각"""
+    return _floor(41, (64, 70, 66), 5, [(6, (200, 195, 180, 255), 2), (10, (45, 52, 48, 255), 2)])
+
+
+def floor_crag():
+    """비룡의 둥지: 붉은 바위 + 금"""
+    img = _floor(51, (112, 86, 72), 7, [(8, (80, 58, 48, 255), 3), (6, (150, 110, 90, 255), 1)])
+    return img
+
+
+def floor_demon():
+    """마계: 자줏빛 석판 + 붉은 균열"""
+    img = _floor(61, (70, 40, 72), 5, [(5, (200, 40, 80, 255), 3), (8, (50, 25, 55, 255), 2)])
+    for i in range(32):
+        img.putpixel((i, 0), (40, 20, 45, 255))
+        img.putpixel((0, i), (40, 20, 45, 255))
+    return img
+
+
+def floor_royal():
+    """버려진 왕궁: 바랜 대리석 + 금 줄눈"""
+    img = _floor(71, (196, 190, 182), 5, [(6, (170, 160, 150, 255), 3)])
+    for i in range(32):
+        img.putpixel((i, 15), (200, 170, 90, 255))
+        img.putpixel((15, i), (200, 170, 90, 255))
+    return img
+
 # ---------------------------------------------------------------- 갑옷 (착용 오버레이 = 플레이어 몸통 위치에 정확히 맞춤)
 ARMOR_COLORS = {
     # 이름: (주색, 밝은 포인트, 어두운 색, 장식)
@@ -1473,6 +1917,23 @@ def main():
     save(throne(), "world", "throne.png")
     save(floor_castle(), "tiles", "floor_castle.png")
     save(dark_slash(), "projectiles", "dark_slash.png")
+    for name, rows in (("hobgoblin", HOBGOBLIN), ("orc_warrior", ORC_WARRIOR), ("orc_shaman", ORC_SHAMAN),
+                       ("skeleton", SKELETON), ("ghost", GHOST), ("baby_wyvern", BABY_WYVERN), ("lizardman", LIZARDMAN),
+                       ("lesser_succubus", LESSER_SUCCUBUS), ("royal_guard", ROYAL_GUARD), ("court_mage", COURT_MAGE)):
+        save(outline(from_map(rows, pal=X_PAL)), "characters", f"{name}.png")
+    save(orc_king(), "characters", "orc_king.png")
+    save(reaper(), "characters", "reaper.png")
+    save(wyvern(), "characters", "wyvern.png")
+    save(succubus(), "characters", "succubus.png")
+    save(lost_king(), "characters", "lost_king.png")
+    save(crown(), "characters", "crown.png")
+    save(heart(), "projectiles", "heart.png")
+    save(axe(), "projectiles", "axe.png")
+    save(floor_fortress(), "tiles", "floor_fortress.png")
+    save(floor_graveyard(), "tiles", "floor_graveyard.png")
+    save(floor_crag(), "tiles", "floor_crag.png")
+    save(floor_demon(), "tiles", "floor_demon.png")
+    save(floor_royal(), "tiles", "floor_royal.png")
     save(wall_tile(), "tiles", "wall.png")
     save(rug(), "tiles", "rug.png")
 

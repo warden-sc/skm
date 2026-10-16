@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/stage_data.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/tiles/floor_demon.png" id="2_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/boss_succubus.tscn" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/lesser_succubus.tscn" id="4_res"]
+
+[resource]
+script = ExtResource("1_res")
+stage_name = "마계의 문"
+floor_texture = ExtResource("2_res")
+wall_tint = Color(0.75, 0.5, 0.75, 1)
+ambient_color = Color(0.92, 0.76, 0.92, 1)
+boss_intro_text = "달콤한 향기와 함께 상급마족 서큐버스가 나타났다…"
+enemy_scenes = Array[PackedScene]([ExtResource("4_res")])
+enemy_weights = Array[float]([1.0])
+boss_scene = ExtResource("3_res")
+kill_target = 22
+spawn_interval = 1.6
+max_alive = 8

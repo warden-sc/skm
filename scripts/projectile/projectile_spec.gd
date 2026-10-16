@@ -29,9 +29,15 @@ var explosion_damage: int = 0
 var slow_duration: float = 0.0
 ## 플레이어 지팡이 투사체면 그 지팡이 (터질 때 마법별 이펙트·장판은 Spells.projectile_impact 가 처리)
 var source_weapon: WeaponData
+## 공격 종류 (공중의 적은 BOW 만 맞음)
+var hit_kind: Enemy.HitKind = Enemy.HitKind.MAGIC
 ## 적 탄: 맞은 플레이어에게 화상 (0.5초마다 피해 / 지속 시간)
 var burn_damage: int = 0
 var burn_duration: float = 0.0
+## 적 탄: 맞은 플레이어를 매혹 (조작 불가 시간)
+var charm_duration: float = 0.0
+## 매혹을 건 적 (매혹된 플레이어가 끌려가는 쪽)
+var charmer: Node2D
 
 
 ## 플레이어 무기 데이터로부터 1발 분량의 명세를 만듭니다.
@@ -58,6 +64,7 @@ static func from_weapon(weapon: WeaponData, from: Vector2, dir: Vector2, roll: D
 	spec.slow_duration = weapon.slow_duration
 	if weapon.is_staff():
 		spec.source_weapon = weapon
+	spec.hit_kind = Enemy.HitKind.BOW if weapon.is_bow() else Enemy.HitKind.MAGIC
 	return spec
 
 

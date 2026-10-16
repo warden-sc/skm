@@ -118,7 +118,7 @@ func _tick() -> void:
 		var enemy := node as Enemy
 		if enemy == null or enemy.is_dead():
 			continue
-		if enemy.get_hit_center().distance_to(global_position) > radius:
+		if enemy.get_hit_center().distance_to(global_position) > radius or enemy.airborne:
 			continue
 		if tick_damage > 0:
 			enemy.take_damage(tick_damage, Vector2.ZERO, false, armor_pen)

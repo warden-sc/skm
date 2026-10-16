@@ -86,6 +86,9 @@ static func damage_area(context: Node, center: Vector2, radius: float, core_dama
 		var offset := enemy.get_hit_center() - center
 		if offset.length() > radius:
 			continue
+		if not enemy.can_be_hit_by(Enemy.HitKind.MAGIC):
+			enemy.show_immune()
+			continue
 		var core := offset.length() <= radius * CORE_RATIO
 		var push := offset.normalized() if offset != Vector2.ZERO else Vector2.ZERO
 		enemy.take_damage(core_damage if core else splash_damage, push * knockback, is_crit and core, armor_pen)
