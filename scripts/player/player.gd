@@ -590,7 +590,7 @@ func take_hit(amount: int, from_position: Vector2, attacker: Enemy = null) -> Hi
 
 
 ## 방패로 막을 수 없는 큰 공격 (티탄이 던진 바위 등): 가드·방어력 무시, 대시 중에만 피함.
-## dodgeable 이 false 면 대시로도 못 피함 (대마법사의 메테오 — 안전지대로만 피함)
+## dodgeable 이 false 면 대시로도 못 피함 (대마법사 아르카나의 메테오 — 안전지대로만 피함)
 func take_unblockable_hit(amount: int, from_position: Vector2, dodgeable: bool = true) -> HitResult:
 	if _is_dead or (dodgeable and is_dashing()):
 		return HitResult.IGNORED

@@ -110,7 +110,7 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 		20: ["견습 마법사", "마력 갑옷", "날아다니는 마도서"],
 	}
 	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁", 16: "바람의 봉우리", 17: "거인의 감옥", 18: "인형 극장", 19: "폭풍의 바다", 20: "대마법사의 탑"}
-	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "그리핀", 17: "티탄", 18: "꼭두각시 마리오네트", 19: "폭풍의 지배자 레비아탄", 20: "대마법사"}
+	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "그리핀", 17: "티탄", 18: "꼭두각시 마리오네트", 19: "폭풍의 지배자 레비아탄", 20: "대마법사 아르카나"}
 	var final_boss: Enemy = null
 	for n in range(first, 21):
 		next_portal.interacted.emit()
@@ -412,6 +412,7 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 			18:
 				var mario := boss as BossMarionette
 				await _survive(5)
+				_check(mario.get_node("DarkMist") != null, "마리오네트: 검은 안개를 두름")
 				var switches := mario.get_switches()
 				var sides_ok := switches.size() == 4
 				var arena18 := stage.boss_room.get_arena_rect()
@@ -504,6 +505,7 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 			20:
 				var mage := boss as BossArchmage
 				await _survive(5)
+				_check(mage.get_node("DarkMist") != null, "대마법사 아르카나: 검은 안개를 두름")
 				mage.begin_chant()
 				_check(mage.is_chanting() and mage.get_safe_spot() != Vector2.INF, "[기믹] 대마법 영창: 메테오 스웜 + 안전지대 표시")
 				mage.take_damage(roundi(mage.get_interrupt_threshold() / 0.8) + 40, Vector2.ZERO, false, 9999)
@@ -542,7 +544,7 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 					for c in pool.get_children():
 						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
 							seen20["shot"] = true)
-				_check(seen20["aoe"] and seen20["shot"], "대마법사 패턴: 화염 · 서리 · 낙뢰 · 비전 · 순간이동")
+				_check(seen20["aoe"] and seen20["shot"], "아르카나 패턴: 화염 · 서리 · 낙뢰 · 비전 · 순간이동")
 				final_boss = mage
 		if n < 20:
 			boss.take_damage(999999, Vector2.ZERO, false, 9999)

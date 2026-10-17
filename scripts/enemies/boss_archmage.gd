@@ -1,6 +1,7 @@
 class_name BossArchmage
 extends PatternBoss
-## 20스테이지(마지막) 보스: 대마법사 — 마법의 탑 꼭대기에서 모든 원소를 다루는 대마법사. 끝에 마력 구슬이 달린 지팡이를 든다.
+## 20스테이지(마지막) 보스: 대마법사 아르카나 — 어둠에 잠긴 탑 꼭대기에서 모든 원소를 다루는 대마법사 (전설 지팡이 「아르카나」의 주인).
+## 몸에서 검은 안개가 피어오름. 끝에 마력 구슬이 달린 지팡이를 든다.
 ##   FIRE      : 화염구 부채꼴 (화상)
 ##   FROST     : 서리 고리 — 플레이어 주변을 둥글게 얼음 장판 (감속)
 ##   LIGHTNING : 낙뢰 — 플레이어를 따라 연달아 떨어지는 번개
@@ -51,6 +52,12 @@ func _ready() -> void:
 	_overlay.z_index = -3
 	_overlay.draw.connect(_draw_overlay)
 	add_child(_overlay)
+	var mist := Fx.make_dark_mist(24, 18.0)
+	mist.name = "DarkMist"
+	mist.position = get_hit_center() - global_position
+	mist.z_index = -1  # 몸 뒤로 퍼져 실루엣이 보이도록
+	add_child(mist)
+	mist.emitting = true
 
 
 func is_chanting() -> bool:
@@ -116,7 +123,7 @@ func begin_chant() -> void:
 		if _safe_spot.distance_to(_player.global_position) > 90.0 and _safe_spot.distance_to(global_position) > 60.0:
 			break
 	set_status("대마법 영창: 메테오 스웜", Color(1.0, 0.6, 0.3))
-	GameManager.show_notice("대마법사가 메테오를 영창한다! 영창을 끊거나 초록 안전지대로!", Color(1.0, 0.65, 0.35))
+	GameManager.show_notice("아르카나가 메테오를 영창한다! 영창을 끊거나 초록 안전지대로!", Color(1.0, 0.65, 0.35))
 
 
 func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool = false, armor_pen: int = 0) -> void:
@@ -136,7 +143,7 @@ func _interrupt() -> void:
 	_safe_spot = Vector2.INF
 	_backlash_left = backlash_time
 	set_status("영창 실패! 마력 역류 (받는 피해 1.5배)", Color(0.6, 0.9, 1.0))
-	GameManager.show_notice("영창을 끊었다! 대마법사가 마력 역류로 비틀거린다", Color(0.6, 0.9, 1.0))
+	GameManager.show_notice("영창을 끊었다! 아르카나가 마력 역류로 비틀거린다", Color(0.6, 0.9, 1.0))
 	Fx.explosion(self, get_hit_center(), Color(0.6, 0.5, 1.0), 40.0, 3)
 	stun(backlash_time)
 	_after(backlash_time, func() -> void:
@@ -230,4 +237,4 @@ func _cast_element(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("대마법사: 이제부터가 진짜 마법이다…! 원소 마법이 겹쳐 온다", Color(0.75, 0.6, 1.0))
+	GameManager.show_notice("아르카나: 이제부터가 진짜 마법이다…! 원소 마법이 겹쳐 온다", Color(0.75, 0.6, 1.0))

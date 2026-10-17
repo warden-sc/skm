@@ -1,6 +1,7 @@
 class_name BossMarionette
 extends PatternBoss
-## 18스테이지 보스: 꼭두각시 마리오네트 — 주인 잃은 인형 극장에서 스스로 실을 조종하게 된 인형.
+## 18스테이지 보스: 꼭두각시 마리오네트 — 불 꺼진 인형 극장에서 주인을 잃고 스스로 실을 조종하게 된 저주받은 인형.
+## 몸에서 검은 안개가 피어오름.
 ##   STRINGS : 실 베기 — 자기 몸에서 사방으로 뻗는 실 5줄 (예고 장판 줄)
 ##   DANCE   : 인형의 춤 — 빙글 돌며 탄을 나선으로 뿌림
 ##   NEEDLE  : 바늘 — 플레이어 쪽 부채꼴
@@ -47,6 +48,12 @@ func _ready() -> void:
 	_thread_lines.z_index = 40
 	_thread_lines.draw.connect(_draw_threads)
 	add_child(_thread_lines)
+	var mist := Fx.make_dark_mist(20, 16.0)
+	mist.name = "DarkMist"
+	mist.position = get_hit_center() - global_position
+	mist.z_index = -1
+	add_child(mist)
+	mist.emitting = true
 
 
 func get_switches() -> Array[PuppetSwitch]:
@@ -166,7 +173,7 @@ func _draw_threads() -> void:
 	for i in _threads:
 		var from := global_position + hands[i]
 		var wobble := Vector2(sin(_anim_time * 6.0 + i) * 3.0, 0.0)
-		_thread_lines.draw_line(from, target + wobble, Color(0.95, 0.9, 1.0, 0.8), 1.0)
+		_thread_lines.draw_line(from, target + wobble, Color(0.75, 0.7, 0.8, 0.8), 1.0)
 
 
 func _die() -> void:

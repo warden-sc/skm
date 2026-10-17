@@ -11,9 +11,10 @@
 script = ExtResource("1_res")
 stage_name = "대마법사의 탑"
 floor_texture = ExtResource("2_res")
-wall_tint = Color(0.56, 0.52, 0.74, 1)
-ambient_color = Color(0.78, 0.74, 0.92, 1)
-boss_intro_text = "탑의 꼭대기, 별이 박힌 로브의 대마법사가 지팡이를 들어 올린다…"
+wall_tint = Color(0.32, 0.28, 0.44, 1)
+ambient_color = Color(0.52, 0.46, 0.66, 1)
+boss_spawn_offset = Vector2(0, 40)
+boss_intro_text = "어둠에 잠긴 탑 꼭대기 — 대마법사 아르카나가 보랏빛으로 타오르는 눈을 뜨고 지팡이를 들어 올린다…"
 enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
 enemy_weights = Array[float]([1.1, 0.8, 1.0])
 boss_scene = ExtResource("3_res")

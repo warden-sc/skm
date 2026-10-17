@@ -11,9 +11,9 @@
 script = ExtResource("1_res")
 stage_name = "인형 극장"
 floor_texture = ExtResource("2_res")
-wall_tint = Color(0.62, 0.5, 0.5, 1)
-ambient_color = Color(0.82, 0.72, 0.72, 1)
-boss_intro_text = "막이 오르고, 주인 잃은 꼭두각시 마리오네트가 스스로 실을 당기며 무대에 선다…"
+wall_tint = Color(0.36, 0.28, 0.3, 1)
+ambient_color = Color(0.56, 0.46, 0.52, 1)
+boss_intro_text = "불 꺼진 무대 위로 막이 오르고, 주인 잃은 꼭두각시 마리오네트가 삐걱이며 스스로 실을 당긴다…"
 enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
 enemy_weights = Array[float]([1.2, 1.0, 1.0])
 boss_scene = ExtResource("3_res")
