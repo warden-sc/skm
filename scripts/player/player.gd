@@ -97,6 +97,9 @@ var _burn_tick_damage: int = 0
 var _burn_tick_timer: float = 0.0
 ## true 면 화상 대신 「독」 (키메라 꼬리 등) — 피해 방식은 화상과 같음
 var _burn_is_poison: bool = false
+## 방어력 감소 (그리핀의 포효): 남은 시간 / 깎인 방어력
+var _armor_break_left: float = 0.0
+var _armor_break_amount: int = 0
 var _burn_particles: CPUParticles2D
 ## 지금 서 있는 적 장판 (점액 바닥 등) 표시용
 var _floor_status: String = ""
@@ -427,6 +430,23 @@ func apply_slow(multiplier: float, duration: float) -> void:
 	_slow_left = maxf(_slow_left, duration)
 
 
+## 방어력 감소: duration 동안 방패·투구·갑옷 등의 방어력이 amount 만큼 줄어듦 (그리핀의 포효)
+func apply_armor_break(amount: int, duration: float) -> void:
+	if _is_dead or amount <= 0:
+		return
+	_armor_break_amount = maxi(_armor_break_amount if _armor_break_left > 0.0 else 0, amount)
+	_armor_break_left = maxf(_armor_break_left, duration)
+
+
+func is_armor_broken() -> bool:
+	return _armor_break_left > 0.0
+
+
+## 지금 실제로 적용되는 방어력 (방어력 감소 반영)
+func get_effective_defense() -> int:
+	return maxi(GameManager.get_total_defense() - (_armor_break_amount if _armor_break_left > 0.0 else 0), 0)
+
+
 func is_slowed() -> bool:
 	return _slow_left > 0.0
 
@@ -488,6 +508,8 @@ func _update_status(delta: float) -> void:
 		parts.append("매혹 %.1f초 (조작 불가)" % _charm_left)
 	if _burn_left > 0.0:
 		parts.append("%s %.1f초 (0.5초마다 -%d)" % ["독" if _burn_is_poison else "화상", _burn_left, get_burn_tick_damage()])
+	if _armor_break_left > 0.0:
+		parts.append("방어력 감소 -%d (%.1f초)" % [_armor_break_amount, _armor_break_left])
 	if _floor_status_left > 0.0:
 		parts.append(_floor_status)
 	elif _slow_left > 0.0:
@@ -530,12 +552,24 @@ func take_hit(amount: int, from_position: Vector2, attacker: Enemy = null) -> Hi
 	return HitResult.DAMAGED
 
 
+## 방패로 막을 수 없는 큰 공격 (티탄이 던진 바위 등): 가드·방어력 무시, 대시 중에만 피함
+func take_unblockable_hit(amount: int, from_position: Vector2) -> HitResult:
+	if _is_dead or is_dashing():
+		return HitResult.IGNORED
+	var hit_dir := global_position.direction_to(from_position)
+	_invincible_left = invincible_time
+	velocity = -hit_dir * hit_knockback * 1.8
+	shake_camera(6.0)
+	GameManager.damage_player(maxi(amount, 1))
+	return HitResult.DAMAGED
+
+
 # ============================================================ 내부
 func _apply_damage(amount: int) -> void:
 	if amount <= 0:
 		return
 	# 방패 + 투구 방어력 (최소 1은 들어감)
-	GameManager.damage_player(maxi(1, amount - GameManager.get_total_defense()))
+	GameManager.damage_player(maxi(1, amount - get_effective_defense()))
 
 
 func _on_blocked(leftover_damage: int, hit_dir: Vector2, attacker: Enemy) -> void:
@@ -579,6 +613,7 @@ func _update_timers(delta: float) -> void:
 	_invincible_left = maxf(_invincible_left - delta, 0.0)
 	_potion_cooldown_left = maxf(_potion_cooldown_left - delta, 0.0)
 	_slow_left = maxf(_slow_left - delta, 0.0)
+	_armor_break_left = maxf(_armor_break_left - delta, 0.0)
 	_dash_time_left = maxf(_dash_time_left - delta, 0.0)
 	if _dash_cooldown_left > 0.0:
 		_dash_cooldown_left = maxf(_dash_cooldown_left - delta, 0.0)

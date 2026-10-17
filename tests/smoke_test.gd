@@ -88,8 +88,8 @@ func _item_pickups(entities: Node) -> Array:
 	return entities.get_children().filter(func(n: Node) -> bool: return n is Pickup and (n as Pickup).kind == Pickup.Kind.ITEM)
 
 
-## 11~15스테이지: 잡몹 · 보스 패턴 · 보스 기믹. 15스테이지 보스(마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
-func _test_late_stages(main: Node2D) -> Enemy:
+## 11~17스테이지: 잡몹 · 보스 패턴 · 보스 기믹. 17스테이지 보스(마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
+func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 	var player := main.get_node("Entities/Player") as Player
 	var pool := main.get_node("ProjectilePool") as ProjectilePool
 	var stage := main.get_node("StageManager") as StageManager
@@ -103,11 +103,13 @@ func _test_late_stages(main: Node2D) -> Enemy:
 		13: ["어인 전사", "심해 해파리", "아귀"],
 		14: ["태엽 병정", "모래 전갈", "시간의 망령"],
 		15: ["거울 망령", "그림자 검사", "파편 정령"],
+		16: ["하피", "바람 정령", "거대 독수리"],
+		17: ["언덕 거인", "외눈 거인", "사슬 묶인 거인"],
 	}
-	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁"}
-	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어"}
+	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁", 16: "바람의 봉우리", 17: "거인의 감옥"}
+	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "그리핀", 17: "티탄"}
 	var final_boss: Enemy = null
-	for n in range(11, 16):
+	for n in range(first, 18):
 		next_portal.interacted.emit()
 		await _frames(3)
 		print("[%d스테이지 - %s]" % [n, stage_names[n]])
@@ -316,8 +318,96 @@ func _test_late_stages(main: Node2D) -> Enemy:
 						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
 							seen15["shot"] = true)
 				_check(seen15["aoe"] and seen15["shot"], "도플갱어 패턴: 거울 파편 · 순간이동 베기 · 파편 낙하")
-				final_boss = doppel
-		if n < 15:
+			16:
+				var griffin := boss as BossGriffin
+				await _survive(5)
+				var wings := griffin.get_wings()
+				_check(wings.size() == 2 and wings[0].max_hp == roundi(griffin.max_hp * griffin.wing_hp_ratio) and wings[1].hp == wings[1].max_hp, "[기믹] 그리핀: 양쪽 날개에 몸통과 따로 체력 (%d)" % (wings[0].max_hp if not wings.is_empty() else 0))
+				griffin.take_off()
+				await _survive(30)
+				var wings_air := true
+				for w in griffin.get_wings():
+					if not w.airborne or w.can_be_hit_by(Enemy.HitKind.MELEE):
+						wings_air = false
+				_check(griffin.is_flying() and not griffin.can_be_hit_by(Enemy.HitKind.MELEE) and not griffin.can_be_hit_by(Enemy.HitKind.MAGIC) and griffin.can_be_hit_by(Enemy.HitKind.BOW) and wings_air, "[기믹] 그리핀 비행: 공중에서는 몸통·날개 모두 활로만 맞음")
+				griffin._flight_left = 0.01
+				await _survive(80)
+				_check(not griffin.is_flying(), "비행이 끝나면 급강하해 착지")
+				var def_before := player.get_effective_defense()
+				griffin.roar()
+				await _frames(2)
+				_check(player.is_armor_broken() and player.get_effective_defense() == maxi(def_before - griffin.roar_armor_break, 0) and _gm.player_status.contains("방어력 감소"), "[기믹] 포효: 플레이어 방어력 감소 (%d → %d · %s)" % [def_before, player.get_effective_defense(), _gm.player_status])
+				var claw_before := _count_nodes_of("AoeStrike")
+				await _survive(40)
+				_check(_count_nodes_of("AoeStrike") > claw_before, "포효 뒤 강한 앞발톱 할퀴기")
+				var seen16 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen16["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen16["shot"] = true)
+				_check(seen16["aoe"] and seen16["shot"], "그리핀 패턴: 돌진 · 포효+발톱 · 깃털 · 비행")
+				if not griffin.is_flying():
+					griffin.take_off()
+				await _survive(20)
+				for w in griffin.get_wings():
+					w.take_damage(999999)
+				await _frames(3)
+				_check(griffin.is_groggy() and not griffin.is_flying() and griffin.get_groggy_count() == 1 and griffin.get_status_text().contains("그로기"), "[기믹] 양쪽 날개를 부수면 땅에 처박히며 그로기 (%s)" % griffin.get_status_text())
+				var gx := griffin.global_position
+				griffin.take_off()
+				await _survive(30)
+				_check(not griffin.is_flying() and griffin.global_position.distance_to(gx) < 2.0, "그로기 중에는 움직이지도 날지도 못함")
+				griffin._groggy_left = 0.01
+				griffin._regrow_left = 0.01
+				await _survive(10)
+				_check(griffin.get_wings().size() == 2 and not griffin.is_groggy(), "시간이 지나면 날개가 다시 돋아남")
+			17:
+				var titan := boss as BossTitan
+				titan.set_physics_process(false)
+				titan.slam()
+				await _survive(80)
+				var rocks := titan.get_cover_rocks()
+				_check(rocks.size() == titan.rocks_per_slam, "[기믹] 티탄 내려찍기 → 튄 돌 %d개가 경기장 곳곳에 박힘" % rocks.size())
+				for e in get_tree().get_nodes_in_group(&"enemies"):
+					if not (e as Enemy).is_boss:
+						(e as Enemy).despawn()
+				stage._release_projectiles()
+				await _survive(60)
+				if not rocks.is_empty():
+					var rock := rocks[0]
+					var hand := titan.get_hit_center() + Vector2(0, -26)
+					var behind := rock.get_center() + hand.direction_to(rock.get_center()) * 30.0
+					player.global_position = behind + Vector2(0, 5)
+					player.velocity = Vector2.ZERO
+					await _frames(2)
+					_gm.hp = _gm.max_hp
+					var hp_cover: int = _gm.hp
+					titan.throw_boulder()
+					await _frames(150)
+					_check(rock.hits == 1 and _gm.hp >= hp_cover - 2, "[기믹] 박힌 바위 뒤에 숨으면 던진 바위를 막아 줌 (피해 %d)" % (hp_cover - _gm.hp))
+				for r in titan.get_cover_rocks():
+					r.crumble()
+				await _frames(2)
+				player.global_position = titan.global_position + Vector2(40, 90)
+				player.velocity = Vector2.ZERO
+				await _frames(2)
+				_gm.hp = _gm.max_hp
+				var hp_open: int = _gm.hp
+				titan.throw_boulder()
+				await _frames(150)
+				_check(hp_open - _gm.hp >= titan.get_boulder_damage() - 3, "엄폐 없이 던진 바위에 맞으면 큰 피해 (-%d / 최대 체력의 %d%%)" % [hp_open - _gm.hp, roundi(titan.boulder_ratio * 100.0)])
+				_gm.hp = _gm.max_hp
+				titan.set_physics_process(true)
+				var throws_before := titan._throws
+				var seen17 := {"aoe": false}
+				await _survive(700, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen17["aoe"] = true)
+				_check(seen17["aoe"] and titan._throws > throws_before, "티탄 패턴: 내려찍기 · 바위 던지기 · 쇠사슬 휘두르기 · 구속구 내리치기")
+				final_boss = titan
+		if n < 17:
 			boss.take_damage(999999, Vector2.ZERO, false, 9999)
 			await _frames(4)
 			_check(not _gm.is_game_cleared and next_portal.enabled, "%d스테이지 보스 토벌 → 다음 스테이지 텔레포트" % n)
@@ -1347,18 +1437,18 @@ func _run() -> void:
 
 	final_boss = await _test_late_stages(main)
 
-	print("[엔딩 - 15스테이지 보스 토벌]")
+	print("[엔딩 - 17스테이지 보스 토벌]")
 	var kills_before: int = _gm.total_kills
 	stage.ending_delay = 600.0  # 아래 테스트가 끝난 뒤 엔딩 화면을 따로 검사
 	if final_boss != null:
 		final_boss.take_damage(999999, Vector2.ZERO, false, 9999)
 	await _frames(4)
-	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(15스테이지) 보스 토벌 → 모든 스테이지 클리어")
+	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(17스테이지) 보스 토벌 → 모든 스테이지 클리어")
 	_check(_gm.total_kills > kills_before and _gm.play_time > 0.0, "엔딩 기록: 처치 %d마리 · 플레이 %s" % [_gm.total_kills, _gm.get_play_time_text()])
 	_check(stage.get_chest() == null and not next_portal.enabled and get_tree().get_nodes_in_group(&"enemies").is_empty(), "마지막 스테이지: 상자 / 텔레포트 없음, 남은 졸개 정리")
 	stage.go_to_next_stage()
 	await _frames(3)
-	_check(_gm.stage == 15, "15스테이지 이후 반복 스테이지 없음")
+	_check(_gm.stage == 17, "17스테이지 이후 반복 스테이지 없음")
 
 	print("[난이도 배율]")
 	_gm.difficulty = _gm.Difficulty.VERY_HARD

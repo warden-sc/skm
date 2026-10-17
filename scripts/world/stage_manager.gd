@@ -413,8 +413,8 @@ func _clear_enemies() -> void:
 		var leftover := node as Enemy
 		if leftover != null and not leftover.is_dead():
 			leftover.despawn()
-	# 바닥 장판(점액·불바다·마법 장판)과 떨어지던 마법도 함께 정리
-	for group in [&"ground_zones", &"sky_strikes"]:
+	# 바닥 장판(점액·불바다·마법 장판)과 떨어지던 마법, 티탄이 박아 둔 바위도 함께 정리
+	for group in [&"ground_zones", &"sky_strikes", &"cover_rocks"]:
 		for node in get_tree().get_nodes_in_group(group):
 			node.queue_free()
 

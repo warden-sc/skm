@@ -2382,6 +2382,257 @@ def save_late_sprites():
         save(painter(), "tiles", f"{name}.png")
 
 
+# ---------------------------------------------------------------- 16~17스테이지
+def harpy():
+    """하피 (16x16): 새 날개 팔, 깃털 머리, 발톱"""
+    img = canvas(16)
+    wing, wing_d, skin = _c(150, 110, 80), _c(100, 70, 50), _c(230, 190, 160)
+    for i in range(6):
+        rect(img, 0 + i // 2, 4 + i, 4, 4 + i, wing if i % 2 else wing_d)
+        rect(img, 11, 4 + i, 15 - i // 2, 4 + i, wing if i % 2 else wing_d)
+    rect(img, 5, 1, 10, 5, skin)
+    rect(img, 4, 0, 11, 1, _c(120, 60, 40))
+    put(img, [(4, 2), (11, 2), (4, 3), (11, 3)], _c(120, 60, 40))
+    put(img, [(6, 3), (9, 3)], _c(220, 40, 40))
+    rect(img, 5, 6, 10, 10, wing_d)
+    rect(img, 6, 7, 9, 9, skin)
+    put(img, [(5, 11), (6, 12), (10, 11), (9, 12), (5, 13), (6, 13), (9, 13), (10, 13)], _c(230, 200, 90))
+    return outline(img)
+
+
+def wind_spirit():
+    """바람 정령 (16x16): 소용돌이치는 연두빛 바람 덩어리"""
+    img = canvas(16)
+    for a in range(0, 720, 12):
+        r = math.radians(a)
+        d = 1.0 + a / 720.0 * 5.5
+        x, y = 7.5 + math.cos(r) * d, 7 + math.sin(r) * d * 0.8
+        put(img, [(int(round(x)), int(round(y)))], (190, 255, 220, 230) if a % 48 else (120, 220, 180, 230))
+    put(img, [(6, 6), (9, 6)], _c(40, 90, 80))
+    rect(img, 6, 13, 9, 14, (150, 230, 200, 160))
+    return outline(img, (40, 90, 80, 255))
+
+
+def giant_eagle():
+    """거대 독수리 (18x16): 펼친 갈색 날개, 흰 머리, 노란 부리"""
+    img = canvas(18, 16)
+    wing, wing_d = _c(120, 84, 56), _c(80, 54, 36)
+    for i in range(8):
+        rect(img, i, 5 + i // 2, i, 9 - i // 4, wing if i % 2 else wing_d)
+        rect(img, 17 - i, 5 + i // 2, 17 - i, 9 - i // 4, wing if i % 2 else wing_d)
+    ellipse(img, 8.5, 9, 4, 4, wing)
+    ellipse(img, 8.5, 4, 3, 3, _c(240, 238, 230))
+    put(img, [(7, 3), (10, 3)], _c(30, 20, 10))
+    put(img, [(8, 6), (9, 6), (9, 7)], _c(250, 200, 60))
+    put(img, [(7, 13), (10, 13), (6, 14), (11, 14)], _c(250, 200, 60))
+    return outline(img)
+
+
+def griffin():
+    """그리핀 (48x40, 날개 제외): 흰 독수리 머리와 노란 부리, 앞발은 독수리 발톱, 뒷몸은 사자 (날개는 따로)"""
+    img = canvas(48, 40)
+    fur, fur_d, feather, feather_d = _c(200, 160, 96), _c(150, 112, 62), _c(240, 236, 226), _c(190, 182, 170)
+    beak, talon = _c(250, 196, 60), _c(70, 60, 50)
+    ellipse(img, 27, 25, 14, 8, fur)                 # 사자 몸통
+    ellipse(img, 29, 28, 11, 4, fur_d)
+    for x in (30, 36):                               # 뒷다리
+        rect(img, x, 30, x + 3, 38, fur_d)
+    rect(img, 30, 37, 34, 38, _c(90, 66, 40))
+    rect(img, 36, 37, 40, 38, _c(90, 66, 40))
+    for i in range(8):                               # 꼬리 (끝에 술)
+        put(img, [(41 + i // 2, 22 - i), (42 + i // 2, 22 - i)], fur_d)
+    ellipse(img, 46, 13, 2, 2.5, _c(110, 80, 50))
+    ellipse(img, 15, 20, 9, 9, feather)              # 깃털 가슴
+    ellipse(img, 15, 23, 7, 5, feather_d)
+    for x in (11, 18):                               # 앞발 (독수리 발톱)
+        rect(img, x, 28, x + 3, 36, _c(240, 200, 70))
+        put(img, [(x - 1, 37), (x + 1, 38), (x + 3, 38), (x + 4, 37)], talon)
+    ellipse(img, 11, 10, 7, 7, feather)              # 독수리 머리
+    put(img, [(9, 8), (8, 8)], _c(20, 20, 20))
+    put(img, [(9, 7)], _c(250, 220, 80))
+    rect(img, 2, 10, 5, 12, beak)                    # 부리
+    put(img, [(1, 11), (2, 13), (3, 13)], _c(200, 140, 30))
+    put(img, [(14, 3), (15, 2), (16, 2), (17, 3)], feather_d)  # 깃털 볏
+    return outline(img)
+
+
+def griffin_wing():
+    """그리핀의 날개 (오른쪽, 26x30) — 몸통과 체력이 따로. 왼쪽 날개는 좌우 반전"""
+    img = canvas(26, 30)
+    feather, feather_d, tip = _c(236, 230, 214), _c(184, 172, 154), _c(130, 100, 70)
+    for x in range(0, 25):                           # 날개 윗변 (어깨 → 바깥 끝으로 치켜 올라감)
+        top = 9 - int(x * 0.32)
+        rect(img, x, top, x, top + 4, feather)
+        put(img, [(x, top)], feather_d)
+    for k in range(7):                               # 아래로 늘어진 칼깃 (바깥쪽일수록 길게)
+        x0 = 3 + k * 3
+        top = 12 - int(x0 * 0.32)
+        length = 11 + k * 2
+        for t in range(length):
+            y = top + t
+            x = x0 + t // 4
+            if y < 30 and x < 26:
+                put(img, [(x, y), (x + 1, y)], feather if t < length - 3 else tip)
+                put(img, [(x + 2, y)], feather_d)
+    return outline(img)
+
+
+def feather_bolt():
+    """그리핀 깃털 탄 (8x8)"""
+    img = canvas(8)
+    put(img, [(1, 6), (2, 5), (3, 4), (4, 3), (5, 2), (6, 1)], _c(240, 236, 226))
+    put(img, [(2, 6), (3, 5), (4, 4), (5, 3), (6, 2), (3, 6), (5, 4)], _c(190, 182, 170))
+    return outline(img, (80, 70, 60, 255))
+
+
+def hill_giant():
+    """언덕 거인 (24x24): 털옷을 걸친 덩치 큰 거인, 통나무 곤봉"""
+    img = canvas(24)
+    skin, skin_d, fur = _c(210, 160, 120), _c(160, 116, 84), _c(120, 90, 60)
+    rect(img, 7, 2, 15, 9, skin)
+    put(img, [(9, 5), (13, 5)], _c(40, 30, 20))
+    rect(img, 9, 7, 13, 7, skin_d)
+    rect(img, 5, 10, 17, 18, fur)
+    rect(img, 7, 11, 15, 13, skin)
+    rect(img, 2, 10, 4, 17, skin)
+    rect(img, 18, 10, 20, 15, skin)
+    rect(img, 7, 19, 9, 23, skin_d)
+    rect(img, 13, 19, 15, 23, skin_d)
+    rect(img, 20, 3, 22, 16, _c(110, 80, 50))       # 통나무 곤봉
+    rect(img, 19, 2, 23, 6, _c(130, 96, 60))
+    return outline(img)
+
+
+def cyclops():
+    """외눈 거인 (24x24): 이마의 커다란 외눈, 뿔, 바위를 든 손"""
+    img = canvas(24)
+    skin, skin_d = _c(150, 170, 130), _c(100, 120, 90)
+    rect(img, 7, 3, 16, 10, skin)
+    ellipse(img, 11.5, 6, 2.5, 2, _c(245, 245, 235))
+    put(img, [(11, 6), (12, 6)], _c(180, 30, 30))
+    put(img, [(11, 1), (11, 2), (12, 2)], _c(220, 210, 190))
+    rect(img, 9, 9, 14, 9, skin_d)
+    rect(img, 6, 11, 17, 18, _c(110, 80, 60))
+    rect(img, 8, 11, 15, 13, skin)
+    rect(img, 3, 11, 5, 16, skin)
+    rect(img, 18, 10, 20, 14, skin)
+    ellipse(img, 20, 7, 3, 3, _c(130, 124, 116))     # 들고 있는 바위
+    rect(img, 7, 19, 9, 23, skin_d)
+    rect(img, 14, 19, 16, 23, skin_d)
+    return outline(img)
+
+
+def chained_giant():
+    """사슬 묶인 거인 (24x24): 목과 손목에 쇠고랑, 큰 쇠문짝 방패"""
+    img = canvas(24)
+    skin, skin_d, iron = _c(170, 150, 140), _c(120, 104, 96), _c(90, 94, 104)
+    rect(img, 8, 2, 15, 9, skin)
+    put(img, [(10, 5), (13, 5)], _c(230, 200, 80))
+    rect(img, 7, 9, 16, 10, iron)                    # 목 쇠고랑
+    rect(img, 6, 11, 17, 18, skin_d)
+    rect(img, 6, 15, 17, 15, iron)
+    rect(img, 3, 11, 5, 17, skin)
+    rect(img, 3, 16, 5, 17, iron)
+    rect(img, 7, 19, 9, 23, skin_d)
+    rect(img, 14, 19, 16, 23, skin_d)
+    rect(img, 17, 6, 22, 20, _c(110, 114, 124))      # 쇠문짝 방패
+    rect(img, 18, 8, 21, 8, iron)
+    rect(img, 18, 13, 21, 13, iron)
+    rect(img, 18, 18, 21, 18, iron)
+    return outline(img)
+
+
+def titan():
+    """티탄 (56x60): 잿빛 거인, 양 손목의 쇠고랑에서 늘어진 쇠사슬 끝에 커다란 원형 쇠 구속구"""
+    img = canvas(56, 60)
+    skin, skin_d, skin_hi = _c(140, 146, 160), _c(96, 100, 116), _c(180, 186, 200)
+    iron, iron_d, cloth = _c(84, 86, 96), _c(50, 52, 60), _c(110, 80, 60)
+    rect(img, 20, 4, 35, 17, skin)                   # 머리
+    rect(img, 20, 4, 35, 6, skin_d)
+    put(img, [(24, 10), (25, 10), (30, 10), (31, 10)], _c(255, 140, 60))
+    rect(img, 24, 14, 31, 14, skin_d)
+    rect(img, 16, 18, 39, 36, skin)                  # 몸통
+    rect(img, 18, 20, 37, 22, skin_hi)
+    rect(img, 27, 22, 28, 34, skin_d)
+    rect(img, 18, 33, 37, 40, cloth)                 # 허리천
+    rect(img, 9, 18, 15, 34, skin)                   # 팔
+    rect(img, 40, 18, 46, 34, skin)
+    rect(img, 8, 32, 16, 35, iron)                   # 손목 쇠고랑
+    rect(img, 39, 32, 47, 35, iron)
+    rect(img, 19, 41, 25, 58, skin_d)                # 다리
+    rect(img, 30, 41, 36, 58, skin_d)
+    rect(img, 18, 54, 26, 56, iron)                  # 발목 쇠고랑
+    rect(img, 29, 54, 37, 56, iron)
+    for side, cx in ((-1, 7), (1, 48)):              # 쇠사슬 + 끝의 원형 구속구
+        for i in range(12):
+            x = cx + side * (i // 6)
+            y = 36 + i
+            put(img, [(x, y)], iron if i % 2 else iron_d)
+            if i % 2 == 0:
+                put(img, [(x - 1, y), (x + 1, y)], iron_d)
+        rx, ry = cx + side, 52
+        for y in range(60):                            # 두꺼운 원형 쇠고리 (구속구)
+            for x in range(56):
+                d = math.hypot(x - rx, y - ry)
+                if 4.2 <= d <= 7.2:
+                    img.putpixel((x, y), iron if d < 6.0 else iron_d)
+        put(img, [(rx - 3, ry - 5), (rx - 4, ry - 4), (rx - 5, ry - 3)], _c(150, 154, 168))
+    return outline(img)
+
+
+def cover_rock():
+    """티탄이 내려찍어 튀어나와 땅에 박힌 바위 (24x20) — 엄폐물"""
+    img = canvas(24, 20)
+    rock, rock_d, rock_hi = _c(128, 120, 112), _c(84, 78, 72), _c(170, 162, 150)
+    ellipse(img, 11.5, 11, 10.5, 8, rock)
+    ellipse(img, 13, 14, 8, 4.5, rock_d)
+    ellipse(img, 8, 7, 4, 2.5, rock_hi)
+    put(img, [(14, 6), (15, 7), (16, 8), (16, 9)], rock_d)
+    rect(img, 2, 18, 21, 19, _c(70, 60, 50))          # 박힌 흙
+    return outline(img)
+
+
+def boulder():
+    """티탄이 던지는 바위 (16x16)"""
+    img = canvas(16)
+    ellipse(img, 7.5, 7.5, 7, 6.5, _c(120, 112, 104))
+    ellipse(img, 9, 9.5, 5, 3.5, _c(84, 78, 72))
+    ellipse(img, 5, 5, 2.5, 2, _c(168, 160, 150))
+    return outline(img)
+
+
+def floor_peak():
+    """바람의 봉우리: 바람에 깎인 회백색 바위 + 마른 풀"""
+    img = _floor(131, (122, 128, 120), 5, [(6, (150, 156, 146, 255), 3), (6, (96, 102, 94, 255), 2), (5, (130, 150, 90, 255), 1)])
+    for i in range(0, 32, 2):
+        img.putpixel((i, (i * 3) % 32), (104, 110, 102, 255))
+    return img
+
+
+def floor_titan():
+    """티탄의 감옥: 거친 암반 + 깊은 균열 + 쇠사슬 자국"""
+    img = _floor(141, (84, 80, 78), 5, [(6, (60, 56, 54, 255), 3), (5, (110, 104, 98, 255), 2)])
+    for i in range(14):
+        img.putpixel((4 + i, 10 + int(3 * math.sin(i * 0.7))), (44, 40, 38, 255))
+    for x in range(20, 30, 2):
+        img.putpixel((x, 25), (70, 72, 82, 255))
+        img.putpixel((x + 1, 26), (70, 72, 82, 255))
+    return img
+
+
+def save_late2_sprites():
+    for name, painter in (("harpy", harpy), ("wind_spirit", wind_spirit), ("giant_eagle", giant_eagle),
+                          ("griffin", griffin), ("griffin_wing", griffin_wing),
+                          ("hill_giant", hill_giant), ("cyclops", cyclops), ("chained_giant", chained_giant),
+                          ("titan", titan), ("cover_rock", cover_rock)):
+        save(painter(), "characters", f"{name}.png")
+    save(feather_bolt(), "projectiles", "feather.png")
+    save(boulder(), "projectiles", "boulder.png")
+    save(orb((235, 255, 245), (120, 220, 180)), "projectiles", "wind_orb.png")
+    save(floor_peak(), "tiles", "floor_peak.png")
+    save(floor_titan(), "tiles", "floor_titan.png")
+
+
 def main():
     save(from_map(PLAYER), "characters", "player.png")
     save(from_map(SLIME), "characters", "slime.png")
@@ -2501,6 +2752,7 @@ def main():
     save(wall_tile(), "tiles", "wall.png")
     save(rug(), "tiles", "rug.png")
     save_late_sprites()
+    save_late2_sprites()
 
     save(bar_under(), "ui", "bar_under.png")
     save(bar((200, 50, 70)), "ui", "bar_hp.png")

@@ -1,4 +1,4 @@
-[gd_scene load_steps=38 format=3]
+[gd_scene load_steps=40 format=3]
 
 [ext_resource type="Script" path="res://scripts/main/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/world/room.gd" id="2_room"]
@@ -35,6 +35,8 @@
 [ext_resource type="Resource" path="res://data/stages/stage_13.tres" id="33_stage13"]
 [ext_resource type="Resource" path="res://data/stages/stage_14.tres" id="34_stage14"]
 [ext_resource type="Resource" path="res://data/stages/stage_15.tres" id="35_stage15"]
+[ext_resource type="Resource" path="res://data/stages/stage_16.tres" id="36_stage16"]
+[ext_resource type="Resource" path="res://data/stages/stage_17.tres" id="37_stage17"]
 [ext_resource type="PackedScene" path="res://scenes/world/pickup.tscn" id="24_pickup"]
 [ext_resource type="PackedScene" path="res://scenes/world/chest.tscn" id="25_chest"]
 
@@ -137,7 +139,7 @@ script = ExtResource("18_fade")
 script = ExtResource("19_stage")
 entities_root = NodePath("../Entities")
 player = NodePath("../Entities/Player")
-stages = Array[ExtResource("20_stagedata")]([ExtResource("21_stage1"), ExtResource("22_stage2"), ExtResource("23_stage3"), ExtResource("24_stage4"), ExtResource("25_stage5"), ExtResource("26_stage6"), ExtResource("27_stage7"), ExtResource("28_stage8"), ExtResource("29_stage9"), ExtResource("30_stage10"), ExtResource("31_stage11"), ExtResource("32_stage12"), ExtResource("33_stage13"), ExtResource("34_stage14"), ExtResource("35_stage15")])
+stages = Array[ExtResource("20_stagedata")]([ExtResource("21_stage1"), ExtResource("22_stage2"), ExtResource("23_stage3"), ExtResource("24_stage4"), ExtResource("25_stage5"), ExtResource("26_stage6"), ExtResource("27_stage7"), ExtResource("28_stage8"), ExtResource("29_stage9"), ExtResource("30_stage10"), ExtResource("31_stage11"), ExtResource("32_stage12"), ExtResource("33_stage13"), ExtResource("34_stage14"), ExtResource("35_stage15"), ExtResource("36_stage16"), ExtResource("37_stage17")])
 camp_room = NodePath("../Rooms/CampRoom")
 field_room = NodePath("../Rooms/FieldRoom")
 boss_room = NodePath("../Rooms/BossRoom")
