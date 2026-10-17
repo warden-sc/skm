@@ -134,7 +134,7 @@ func _on_body_entered(body: Node2D) -> void:
 				if _spec.slow_duration > 0.0:
 					player.apply_slow(0.5, _spec.slow_duration)
 				if _spec.burn_damage > 0:
-					player.apply_burn(_spec.burn_damage, _spec.burn_duration)
+					player.apply_burn(_spec.burn_damage, _spec.burn_duration, _spec.burn_poison)
 				if _spec.charm_duration > 0.0:
 					player.apply_charm(_spec.charm_duration, _spec.charmer)
 				if _spec.death_mark > 0:

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/stage_data.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/tiles/floor_mirror.png" id="2_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/boss_doppelganger.tscn" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/mirror_shade.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/shadow_swordsman.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/shard_sprite.tscn" id="6_res"]
+
+[resource]
+script = ExtResource("1_res")
+stage_name = "거울의 미궁"
+floor_texture = ExtResource("2_res")
+wall_tint = Color(0.58, 0.5, 0.74, 1)
+ambient_color = Color(0.72, 0.66, 0.86, 1)
+boss_spawn_offset = Vector2(0, 40)
+boss_intro_text = "미궁 끝의 커다란 거울 속에서, 당신과 똑같이 생긴 무언가가 걸어 나온다…"
+enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
+enemy_weights = Array[float]([1.1, 1.0, 0.9])
+boss_scene = ExtResource("3_res")
+kill_target = 26
+spawn_interval = 1.6
+max_alive = 8

@@ -1,0 +1,42 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/caster.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/shard_sprite.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/shadow.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/glass_shard.png" id="4_res"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 6.5
+
+[node name="ShardSprite" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_res")
+display_name = "파편 정령"
+max_hp = 380
+defense = 16
+move_speed = 48.0
+contact_damage = 32
+gold_min = 34
+gold_max = 48
+item_drop_chance = 0.1
+element = 7
+bolt_texture = ExtResource("4_res")
+bolt_count = 5
+bolt_damage = 34
+bolt_speed = 135.0
+strike_count = 0
+item_drop_ids = Array[StringName]([&"holy_sword", &"solaris_bow", &"arcana_staff", &"colossus_bulwark", &"paladin_plate", &"gatekeeper_horns", &"windwalker_boots", &"dragonscale_bracelet", &"star_ring", &"life_pendant"])
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(1.0, 1.0)
+texture = ExtResource("3_res")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -10)
+texture = ExtResource("2_res")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -8)
+shape = SubResource("CircleShape2D_hit")

@@ -1,0 +1,51 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/boss_doppelganger.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/doppelganger.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/shadow.png" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/magic_mirror.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/doppel_clone.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/mirror_shade.tscn" id="6_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/shadow_swordsman.tscn" id="7_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/glass_shard.png" id="8_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/arrow.png" id="9_res"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 12.0
+
+[node name="BossDoppelganger" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_res")
+display_name = "거울에 갇힌 미혹의 도플갱어"
+max_hp = 17000
+defense = 24
+move_speed = 46.0
+contact_damage = 54
+knockback_resistance = 0.97
+is_boss = true
+aura_element = 8
+aura_amount = 5
+gold_min = 1300
+gold_max = 1400
+item_drop_chance = 1.0
+mirror_scene = ExtResource("4_res")
+clone_scene = ExtResource("5_res")
+minion_scenes = Array[PackedScene]([ExtResource("6_res"), ExtResource("7_res")])
+shard_texture = ExtResource("8_res")
+arrow_texture = ExtResource("9_res")
+item_drop_ids = Array[StringName]([&"holy_sword"])
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(1.8, 1.8)
+texture = ExtResource("3_res")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -22)
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("2_res")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -16)
+shape = SubResource("CircleShape2D_hit")

@@ -79,6 +79,7 @@ func perform_attack(weapon: WeaponData = null) -> bool:
 	var did_attack := _melee_attack(weapon) if weapon.is_melee() else _ranged_attack(weapon)
 	if did_attack:
 		_cooldown_left = weapon.attack_cooldown
+		GameManager.report_player_attacked(weapon, player.get_aim_direction())
 	return did_attack
 
 

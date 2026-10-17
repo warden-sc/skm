@@ -39,6 +39,8 @@ signal potions_changed
 signal potion_used(potion: PotionData, healed: int)
 ## 플레이어 상태 이상 문구 (화상 / 점액 바닥 / 감속). 없으면 빈 문자열
 signal player_status_changed(text: String)
+## 플레이어가 공격을 내보낼 때 (도플갱어가 따라 함)
+signal player_attacked(weapon: WeaponData, aim: Vector2)
 
 # --- 스테이지 / 보스 ---
 signal stage_changed(stage: int)
@@ -734,6 +736,11 @@ func set_kill_progress(current_kills: int, target: int) -> void:
 	kills = current_kills
 	kill_target = target
 	kill_progress_changed.emit(kills, kill_target)
+
+
+## 플레이어가 공격을 내보냄 (AttackController 가 호출 · 도플갱어가 따라 함)
+func report_player_attacked(weapon: WeaponData, aim: Vector2) -> void:
+	player_attacked.emit(weapon, aim)
 
 
 func report_boss_spawned(boss_name: String, boss_max_hp: int) -> void:

@@ -95,6 +95,8 @@ var _slow_multiplier: float = 1.0
 var _burn_left: float = 0.0
 var _burn_tick_damage: int = 0
 var _burn_tick_timer: float = 0.0
+## true 면 화상 대신 「독」 (키메라 꼬리 등) — 피해 방식은 화상과 같음
+var _burn_is_poison: bool = false
 var _burn_particles: CPUParticles2D
 ## 지금 서 있는 적 장판 (점액 바닥 등) 표시용
 var _floor_status: String = ""
@@ -435,9 +437,10 @@ const BURN_TICK_TIME := 0.5
 ## 화상: duration 동안 0.5초마다 tick_damage 의 지속 피해.
 ## 실제 피해 = tick_damage × GameManager.get_dot_multiplier() (방어력이 높을수록 덜 들어옴, 최소 1).
 ## 가드·대시 무적으로 막을 수 없고, 펜던트의 체력 재생으로 버팁니다.
-func apply_burn(tick_damage: int, duration: float) -> void:
+func apply_burn(tick_damage: int, duration: float, poison: bool = false) -> void:
 	if _is_dead or tick_damage <= 0:
 		return
+	_burn_is_poison = poison
 	if _burn_left <= 0.0:
 		_burn_tick_timer = BURN_TICK_TIME
 	_burn_tick_damage = maxi(_burn_tick_damage if _burn_left > 0.0 else 0, tick_damage)
@@ -467,7 +470,7 @@ func _update_status(delta: float) -> void:
 			_burn_tick_timer += BURN_TICK_TIME
 			var dmg := get_burn_tick_damage()
 			GameManager.damage_player(dmg)
-			FloatingText.spawn(self, global_position + Vector2(randf_range(-6, 6), -18), str(dmg), Color(1.0, 0.55, 0.2))
+			FloatingText.spawn(self, global_position + Vector2(randf_range(-6, 6), -18), str(dmg), Color(0.6, 1.0, 0.35) if _burn_is_poison else Color(1.0, 0.55, 0.2))
 	_floor_status_left = maxf(_floor_status_left - delta, 0.0)
 	_charm_left = maxf(_charm_left - delta, 0.0)
 	_since_dash += delta
@@ -484,7 +487,7 @@ func _update_status(delta: float) -> void:
 	if _charm_left > 0.0:
 		parts.append("매혹 %.1f초 (조작 불가)" % _charm_left)
 	if _burn_left > 0.0:
-		parts.append("화상 %.1f초 (0.5초마다 -%d)" % [_burn_left, get_burn_tick_damage()])
+		parts.append("%s %.1f초 (0.5초마다 -%d)" % ["독" if _burn_is_poison else "화상", _burn_left, get_burn_tick_damage()])
 	if _floor_status_left > 0.0:
 		parts.append(_floor_status)
 	elif _slow_left > 0.0:
@@ -627,7 +630,7 @@ func _update_visuals(delta: float) -> void:
 	elif _charm_left > 0.0:
 		_body_sprite.modulate = Color(1.0, 0.6, 0.9)  # 매혹
 	elif _burn_left > 0.0:
-		_body_sprite.modulate = Color(1.0, 0.7, 0.5)  # 화상
+		_body_sprite.modulate = Color(0.7, 1.0, 0.55) if _burn_is_poison else Color(1.0, 0.7, 0.5)  # 독 / 화상
 	elif _floor_status_left > 0.0:
 		_body_sprite.modulate = Color(0.7, 1.0, 0.6)  # 점액 바닥
 	elif _slow_left > 0.0:

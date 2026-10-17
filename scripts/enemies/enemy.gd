@@ -51,6 +51,8 @@ const COMMAND_GUARD_SPEED := 180.0
 ## 0 보다 크면 이 적의 공격(접촉·탄·장판)에 맞은 플레이어가 화상을 입음 (0.5초마다 이 피해, 방어력으로 감소)
 @export var burn_damage: int = 0
 @export var burn_duration: float = 3.0
+## true 면 화상 대신 독 (상태 표시·색만 다름)
+@export var burn_is_poison: bool = false
 ## 0 보다 크면 이 적의 공격에 맞을 때마다 플레이어에게 「죽음의 낙인」이 쌓임 (사신)
 @export var death_mark_on_hit: int = 0
 
@@ -149,7 +151,7 @@ func _physics_process(delta: float) -> void:
 	if _touching_player and _stun_left <= 0.0 and not airborne and _player != null and is_instance_valid(_player):
 		if _player.take_hit(contact_damage, get_hit_center(), self) == Player.HitResult.DAMAGED:
 			if burn_damage > 0:
-				_player.apply_burn(burn_damage, burn_duration)
+				_player.apply_burn(burn_damage, burn_duration, burn_is_poison)
 			if death_mark_on_hit > 0:
 				_player.add_death_mark(death_mark_on_hit)
 
@@ -231,6 +233,7 @@ func shoot(dir: Vector2, speed: float, damage: int, texture: Texture2D, slow: fl
 	var spec := ProjectileSpec.enemy_bullet(origin, dir, speed, roundi(damage * power), texture, slow, element)
 	spec.burn_damage = burn_damage
 	spec.burn_duration = burn_duration
+	spec.burn_poison = burn_is_poison
 	spec.death_mark = death_mark_on_hit
 	pool.spawn(spec)
 
@@ -242,6 +245,7 @@ func telegraph_strike(at_global: Vector2, radius: float, delay: float, damage: i
 	if strike != null:
 		strike.burn_damage = burn_damage
 		strike.burn_duration = burn_duration
+		strike.burn_poison = burn_is_poison
 		strike.death_mark = death_mark_on_hit
 	return strike
 

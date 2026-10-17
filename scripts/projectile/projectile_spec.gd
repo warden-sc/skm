@@ -34,6 +34,7 @@ var hit_kind: Enemy.HitKind = Enemy.HitKind.MAGIC
 ## 적 탄: 맞은 플레이어에게 화상 (0.5초마다 피해 / 지속 시간)
 var burn_damage: int = 0
 var burn_duration: float = 0.0
+var burn_poison: bool = false
 ## 적 탄: 맞은 플레이어를 매혹 (조작 불가 시간)
 var charm_duration: float = 0.0
 ## 적 탄: 맞으면 쌓이는 「죽음의 낙인」 수

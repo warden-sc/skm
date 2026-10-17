@@ -1,6 +1,6 @@
 class_name GroundZone
 extends Node2D
-## 바닥 장판 (점액 웅덩이 / 불타는 땅).
+## 바닥 장판 (점액 웅덩이 / 불타는 땅 / 크라켄의 먹물 / 아르케오스의 시간 모래).
 ## - 플레이어 지팡이 마법이 남기면 적에게 피해·감속
 ## - hostile = true 이면 적(보스)이 깐 장판: 밟은 플레이어가 느려지거나(점액) 화상을 입음(불)
 ##
@@ -8,9 +8,11 @@ extends Node2D
 ## - 바닥 위 · 캐릭터 아래(z_index -5)에 그려지고, 끝나기 직전에 서서히 사라집니다.
 ## - 적 판정은 거리 계산이라 물리 콜백 타이밍 문제가 없습니다.
 
-enum Kind { SLIME, FIRE }
+enum Kind { SLIME, FIRE, INK, SAND }
 
 const TICK_TIME := 0.5
+## 밟았을 때 상태 표시 이름
+const FLOOR_NAMES := {Kind.SLIME: "점액 바닥", Kind.FIRE: "불바다", Kind.INK: "먹물 바닥", Kind.SAND: "시간의 모래"}
 const FADE_TIME := 0.4
 
 var kind: Kind = Kind.SLIME
@@ -77,7 +79,14 @@ func _ready() -> void:
 
 
 func get_color() -> Color:
-	return Color(1.0, 0.45, 0.12) if kind == Kind.FIRE else Color(0.35, 0.85, 0.3)
+	match kind:
+		Kind.FIRE:
+			return Color(1.0, 0.45, 0.12)
+		Kind.INK:
+			return Color(0.32, 0.22, 0.42)
+		Kind.SAND:
+			return Color(0.95, 0.8, 0.45)
+	return Color(0.35, 0.85, 0.3)
 
 
 func _physics_process(delta: float) -> void:
@@ -108,7 +117,7 @@ func _affect_player() -> void:
 		return
 	if player_slow < 1.0:
 		player.apply_slow(player_slow, 0.25)
-		player.mark_floor_status("점액 바닥 (이동 속도 -%d%%)" % roundi((1.0 - player_slow) * 100.0))
+		player.mark_floor_status("%s (이동 속도 -%d%%)" % [FLOOR_NAMES[kind], roundi((1.0 - player_slow) * 100.0)])
 	if player_burn > 0:
 		player.apply_burn(player_burn, player_burn_duration)
 
@@ -137,6 +146,15 @@ func _draw() -> void:
 		draw_circle(Vector2.ZERO, r * 0.7 * wobble, Color(1.0, 0.35, 0.05, 0.35 * alpha))
 		draw_circle(Vector2.ZERO, r * 0.35, Color(1.0, 0.8, 0.3, 0.3 * alpha))
 		draw_arc(Vector2.ZERO, r, 0.0, TAU, 40, Color(1.0, 0.6, 0.2, 0.8 * alpha), 1.0)
+	elif kind == Kind.INK:
+		draw_circle(Vector2.ZERO, r * wobble, Color(0.04, 0.02, 0.08, 0.7 * alpha))
+		draw_circle(Vector2(r * 0.2, -r * 0.1), r * 0.55, Color(color, 0.4 * alpha))
+		draw_arc(Vector2.ZERO, r * wobble, 0.0, TAU, 40, Color(0.5, 0.35, 0.65, 0.6 * alpha), 1.0)
+	elif kind == Kind.SAND:
+		draw_circle(Vector2.ZERO, r, Color(0.5, 0.4, 0.2, 0.35 * alpha))
+		for i in 3:
+			draw_arc(Vector2.ZERO, r * (0.35 + 0.3 * i), _elapsed * (1.5 - i * 0.6), _elapsed * (1.5 - i * 0.6) + PI * 1.3, 24, Color(color, 0.6 * alpha), 1.0)
+		draw_arc(Vector2.ZERO, r, 0.0, TAU, 40, Color(color, 0.8 * alpha), 1.0)
 	else:
 		draw_circle(Vector2.ZERO, r * wobble, Color(0.15, 0.45, 0.12, 0.55 * alpha))
 		draw_circle(Vector2(-r * 0.15, -r * 0.1), r * 0.65, Color(color, 0.45 * alpha))

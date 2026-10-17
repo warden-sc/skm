@@ -1,0 +1,44 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/mushroom.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/jellyfish.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/shadow.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/mana_bolt.png" id="4_res"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 7.0
+
+[node name="Jellyfish" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_res")
+display_name = "심해 해파리"
+max_hp = 380
+defense = 12
+move_speed = 30.0
+contact_damage = 36
+knockback_resistance = 0.2
+aura_element = 3
+aura_amount = 3
+gold_min = 34
+gold_max = 48
+item_drop_chance = 0.1
+spore_texture = ExtResource("4_res")
+spore_damage = 30
+spore_count = 8
+spore_speed = 85.0
+spore_slow = 0.8
+item_drop_ids = Array[StringName]([&"holy_sword", &"solaris_bow", &"arcana_staff", &"colossus_bulwark", &"paladin_plate", &"gatekeeper_horns", &"windwalker_boots", &"dragonscale_bracelet", &"star_ring", &"life_pendant"])
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(1.1, 1.1)
+texture = ExtResource("3_res")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -10)
+texture = ExtResource("2_res")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -8)
+shape = SubResource("CircleShape2D_hit")

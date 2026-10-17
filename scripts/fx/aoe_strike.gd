@@ -15,6 +15,7 @@ var fx_gravity: Vector2 = Vector2.ZERO
 ## 맞으면 화상 (0.5초마다 피해 / 지속 시간)
 var burn_damage: int = 0
 var burn_duration: float = 0.0
+var burn_poison: bool = false
 ## 맞으면 쌓이는 「죽음의 낙인」 수
 var death_mark: int = 0
 
@@ -66,7 +67,7 @@ func _detonate() -> void:
 		if result == Player.HitResult.DAMAGED and slow_duration > 0.0:
 			player.apply_slow(0.5, slow_duration)
 		if result == Player.HitResult.DAMAGED and burn_damage > 0:
-			player.apply_burn(burn_damage, burn_duration)
+			player.apply_burn(burn_damage, burn_duration, burn_poison)
 		if result == Player.HitResult.DAMAGED and death_mark > 0:
 			player.add_death_mark(death_mark)
 	var tween := create_tween()

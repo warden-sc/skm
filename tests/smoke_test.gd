@@ -88,6 +88,242 @@ func _item_pickups(entities: Node) -> Array:
 	return entities.get_children().filter(func(n: Node) -> bool: return n is Pickup and (n as Pickup).kind == Pickup.Kind.ITEM)
 
 
+## 11~15스테이지: 잡몹 · 보스 패턴 · 보스 기믹. 15스테이지 보스(마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
+func _test_late_stages(main: Node2D) -> Enemy:
+	var player := main.get_node("Entities/Player") as Player
+	var pool := main.get_node("ProjectilePool") as ProjectilePool
+	var stage := main.get_node("StageManager") as StageManager
+	var field_portal := main.get_node("Entities/FieldPortal") as Portal
+	var gate := main.get_node("Entities/BossGate") as BossGate
+	var next_portal := main.get_node("Entities/NextStagePortal") as Portal
+	var boss_center := stage.boss_room.get_arena_rect().get_center()
+	var stage_mobs := {
+		11: ["실패한 실험체", "호문쿨루스", "광기의 연금술사"],
+		12: ["마도 인형", "마도 드론", "마도 수호병"],
+		13: ["어인 전사", "심해 해파리", "아귀"],
+		14: ["태엽 병정", "모래 전갈", "시간의 망령"],
+		15: ["거울 망령", "그림자 검사", "파편 정령"],
+	}
+	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁"}
+	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어"}
+	var final_boss: Enemy = null
+	for n in range(11, 16):
+		next_portal.interacted.emit()
+		await _frames(3)
+		print("[%d스테이지 - %s]" % [n, stage_names[n]])
+		_check(_gm.stage == n and _gm.stage_name == stage_names[n], "스테이지 %d 「%s」" % [n, _gm.stage_name])
+		field_portal.interacted.emit()
+		await _frames(2)
+		for scene in stage.get_stage_data().enemy_scenes:
+			stage._add_enemy(scene.instantiate() as Enemy, stage._pick_spawn_position(stage.field_room.get_arena_rect()), stage.field_room.get_arena_rect())
+		await _frames(3)
+		var names_now := _enemy_names()
+		var all_mobs := true
+		for mob_name in stage_mobs[n]:
+			if not names_now.has(mob_name):
+				all_mobs = false
+		_check(all_mobs, "잡몹: %s" % ", ".join(stage_mobs[n]))
+		await _survive(240)
+		_check(not _gm.is_player_dead, "%d스테이지 잡몹 패턴 실행" % n)
+		gate.open()
+		gate.interacted.emit()
+		await _frames(int(stage.boss_entry_delay * 60) + 10)
+		var boss := _find_boss()
+		_check(boss != null and boss.display_name == boss_names[n], "%d스테이지 보스: %s" % [n, boss_names[n]])
+		if boss == null:
+			continue
+		player.global_position = boss_center + Vector2(0, 60)
+		match n:
+			11:
+				var chimera := boss as BossChimera
+				await _survive(5)
+				_check(chimera.has_tail() and chimera.tail.max_hp == roundi(chimera.max_hp * chimera.tail_hp_ratio) and chimera.tail.hp == chimera.tail.max_hp, "[기믹] 키메라: 몸통과 꼬리 체력이 따로 (꼬리 %d)" % (chimera.tail.max_hp if chimera.tail != null else 0))
+				var poison_seen := {"poison": false}
+				chimera.cast(BossChimera.Pattern.STING)
+				await _survive(120, func() -> void:
+					if _gm.player_status.contains("독"):
+						poison_seen["poison"] = true)
+				_check(poison_seen["poison"], "꼬리 독액에 맞으면 독 (지속 피해)")
+				var seen11 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen11["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen11["shot"] = true)
+				_check(seen11["aoe"] and seen11["shot"], "키메라 패턴: 덮치기 · 화염 숨결 · 독액 · 포효")
+				var power_before := chimera.power
+				var contact_before := chimera.contact_damage
+				chimera.tail.take_damage(999999)
+				await _frames(3)
+				_check(chimera.is_tail_cut() and is_equal_approx(chimera.power, power_before * 0.5) and chimera.contact_damage == roundi(contact_before * 0.5), "[기믹] 꼬리를 자르면 본체 공격력 50%% (%.2f → %.2f)" % [power_before, chimera.power])
+				_check(chimera.get_status_text().contains("50%"), "꼬리 절단 상태 표시 (%s)" % chimera.get_status_text())
+			12:
+				var legion := boss as BossLegion
+				await _survive(5)
+				var core := legion.get_core()
+				_check(core != null and core.relay_ratio == 1.5, "[기믹] 레기온 가슴의 마도코어 (약점)")
+				if core != null:
+					legion.set_physics_process(false)
+					await _frames(2)
+					var hp0 := legion.hp
+					core.take_damage(1000)
+					var core_drop := hp0 - legion.hp
+					await _frames(1)
+					var hp1 := legion.hp
+					legion.take_damage(1000)
+					var body_drop := hp1 - legion.hp
+					_check(core_drop == legion.calc_damage(1500) and body_drop == legion.calc_damage(1000), "마도코어를 맞히면 피해 1.5배 (몸 %d / 코어 %d)" % [body_drop, core_drop])
+					await _frames(1)
+					var hp2 := legion.hp
+					legion.take_damage(1000)
+					core.take_damage(1000)
+					_check(hp2 - legion.hp == legion.calc_damage(1500), "몸과 코어에 함께 맞아도 1.5배만 (중복 없음: %d)" % (hp2 - legion.hp))
+					legion.set_physics_process(true)
+				player.global_position = legion.get_hit_center() + Vector2(0, 90)
+				legion.fire_laser()
+				var laser := legion.get_laser()
+				var laser_frames := int((laser.warn_time + laser.duration) * 60) + 10 if laser != null else 10
+				var sweep := {"laser": laser, "total": 0.0, "last": INF, "hits": 0}
+				laser = null  # 레이저는 끝나면 사라지므로 람다에는 딕셔너리로만 넘김
+				await _survive(laser_frames, func() -> void:
+					if not is_instance_valid(sweep["laser"]):
+						return
+					var beam := sweep["laser"] as LaserSweep
+					if beam.is_firing():
+						var a := beam.get_angle()
+						if float(sweep["last"]) != INF:
+							sweep["total"] = float(sweep["total"]) + absf(angle_difference(float(sweep["last"]), a))
+						sweep["last"] = a
+						sweep["hits"] = beam.get_hit_count())
+				_check(float(sweep["total"]) > deg_to_rad(320.0), "[기믹] 레이저 한 줄기가 360도 회전 (%.0f도)" % rad_to_deg(float(sweep["total"])))
+				_check(int(sweep["hits"]) >= 1, "회전 레이저에 닿으면 피해")
+				var seen12 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen12["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen12["shot"] = true)
+				_check(seen12["aoe"] and seen12["shot"], "레기온 패턴: 마력 포탄 · 주먹 충격파 · 마력탄 · 출격")
+			13:
+				var kraken := boss as BossKraken
+				await _survive(10)
+				_check(kraken.get_tentacles().size() == 4 and kraken.is_guarded(), "[기믹] 크라켄 주변에 촉수 4개 (체력 따로)")
+				var hp_g := kraken.hp
+				kraken.take_damage(1000, Vector2.ZERO, false, 9999)
+				_check(hp_g - kraken.hp <= 301, "촉수가 남아 있으면 본체 피해 -70%% (%d)" % (hp_g - kraken.hp))
+				for t in kraken.get_tentacles():
+					t.take_damage(999999)
+				await _frames(3)
+				_check(not kraken.is_guarded() and kraken.get_status_text().contains("드러남"), "촉수를 모두 베면 본체가 드러남 (%s)" % kraken.get_status_text())
+				hp_g = kraken.hp
+				kraken.take_damage(1000, Vector2.ZERO, false, 9999)
+				_check(hp_g - kraken.hp == 1000, "드러난 본체에는 피해가 그대로")
+				kraken._regrow_left = 0.05
+				kraken._stun_left = 0.0  # 촉수를 다 베이면 잠깐 기절하는데, 기절 중에는 다시 자라지 않음
+				await _survive(10)
+				_check(kraken.get_tentacles().size() == 4, "시간이 지나면 촉수가 다시 솟아오름")
+				kraken.cast(BossKraken.Pattern.INK)
+				await _survive(70)
+				var ink: GroundZone = null
+				for z in get_tree().get_nodes_in_group(&"hostile_zones"):
+					if (z as GroundZone).kind == GroundZone.Kind.INK:
+						ink = z as GroundZone
+				_check(ink != null, "먹물 분사 → 먹물 웅덩이")
+				if ink != null:
+					player.global_position = ink.global_position
+					await _survive(3)
+					_check(player.is_slowed() and _gm.player_status.contains("먹물"), "먹물을 밟으면 크게 느려짐 (%s)" % _gm.player_status)
+				var seen13 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen13["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen13["shot"] = true)
+				_check(seen13["aoe"] and seen13["shot"], "크라켄 패턴: 먹물 · 소용돌이 · 촉수 내려치기")
+			14:
+				var arkeos := boss as BossArkeos
+				arkeos.rewind_seconds = 1.0
+				arkeos._rewind_cooldown = 999.0
+				var spot_a := boss_center + Vector2(-70, 50)
+				player.global_position = spot_a
+				await _survive(80)
+				player.global_position = boss_center + Vector2(80, 70)
+				var hp_before := arkeos.hp
+				arkeos.take_damage(2000, Vector2.ZERO, false, 9999)
+				var snap := arkeos.get_past_snapshot()
+				var target: Vector2 = snap["pos"]
+				arkeos.begin_rewind()
+				var strike_waiting := false
+				for node in get_tree().current_scene.get_children():
+					if node is AoeStrike and (node as Node2D).global_position.distance_to(target) < 2.0:
+						strike_waiting = true
+				_check(arkeos.is_rewind_pending() and strike_waiting, "[기믹] 시간 역행 예고: 보스가 끌려갈 자리를 알고 미리 장판")
+				await _survive(int(arkeos.rewind_delay * 60) + 4)
+				_check(arkeos.get_rewind_count() == 1 and arkeos.hp >= hp_before - 1, "시간 역행: 그동안 받은 피해가 되돌아감 (+%d)" % arkeos.get_last_rewind_heal())
+				_check(player.global_position.distance_to(target) < 6.0 and target.distance_to(spot_a) < 40.0, "플레이어가 1초 전 자리로 강제 전이")
+				var seen14 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen14["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen14["shot"] = true)
+				_check(seen14["aoe"] and seen14["shot"], "아르케오스 패턴: 모래 가시 · 시곗바늘 · 시간의 모래")
+			15:
+				var doppel := boss as BossDoppelganger
+				await _frames(3)
+				var hp_e := doppel.hp
+				doppel.take_damage(500, Vector2.ZERO, false, 9999)
+				_check(doppel.is_emerging() and doppel.hp == hp_e and doppel.has_mirror(), "[기믹] 뒤의 거울 안에서 걸어 나옴 (나오는 동안 무적)")
+				await _survive(int(BossDoppelganger.EMERGE_TIME * 60) + 5)
+				_check(not doppel.is_emerging() and doppel.global_position.y > doppel.mirror.global_position.y + 20.0, "거울에서 걸어 나와 앞으로")
+				_gm.report_player_attacked(ItemDB.get_weapon(&"rusty_sword"), Vector2.DOWN)
+				await _survive(30)
+				_check(doppel.get_last_mimic() == BossDoppelganger.Mimic.SLASH and doppel.get_mimic_count() == 1, "[기믹] 1페이즈 따라하기: 검으로 치면 검 베기로 되갚음")
+				doppel.mimic(BossDoppelganger.Mimic.ARROW)
+				var arrow_seen := false
+				for c in pool.get_children():
+					if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+						arrow_seen = true
+				_check(arrow_seen, "활로 쏘면 화살로 따라함")
+				var strikes_before := _count_nodes_of("AoeStrike")
+				doppel.mimic(BossDoppelganger.Mimic.SPELL)
+				_check(_count_nodes_of("AoeStrike") > strikes_before, "지팡이 마법은 플레이어 발밑 마법으로 따라함")
+				doppel.take_damage(roundi(doppel.hp * 0.6), Vector2.ZERO, false, 9999)
+				await _survive(30)
+				_check(doppel.phase_two and doppel.get_clones().size() == BossDoppelganger.MAX_CLONES, "[기믹] 2페이즈: 분신 %d개 소환" % doppel.get_clones().size())
+				var at_before := doppel.global_position
+				var swapped := doppel.swap_with_clone()
+				_check(swapped and doppel.global_position.distance_to(at_before) > 1.0, "본체가 분신과 자리를 바꿈")
+				var mimics_before := doppel.get_mimic_count()
+				_gm.report_player_attacked(ItemDB.get_weapon(&"rusty_sword"), Vector2.DOWN)
+				await _survive(30)
+				_check(doppel.get_mimic_count() == mimics_before, "2페이즈에서는 따라하기 대신 분신")
+				doppel.mirror.take_damage(999999)
+				await _frames(3)
+				_check(doppel.is_mirror_broken() and doppel.get_clones().is_empty(), "거울을 부수면 분신이 모두 사라짐")
+				doppel.summon_clones()
+				await _frames(3)
+				_check(doppel.get_clones().is_empty(), "거울이 없으면 분신을 다시 부를 수 없음")
+				var seen15 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen15["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen15["shot"] = true)
+				_check(seen15["aoe"] and seen15["shot"], "도플갱어 패턴: 거울 파편 · 순간이동 베기 · 파편 낙하")
+				final_boss = doppel
+		if n < 15:
+			boss.take_damage(999999, Vector2.ZERO, false, 9999)
+			await _frames(4)
+			_check(not _gm.is_game_cleared and next_portal.enabled, "%d스테이지 보스 토벌 → 다음 스테이지 텔레포트" % n)
+	return final_boss
+
+
 func _run() -> void:
 	_gm = get_node("/root/GameManager")
 
@@ -985,9 +1221,17 @@ func _run() -> void:
 				if n == 7:
 					var reaper := boss as BossReaper
 					_check(reaper.get_node("DarkMist") != null and (reaper.get_node("DarkMist") as CPUParticles2D).emitting, "사신 몸에서 검은 안개가 피어오름")
-					# 죽음의 낙인 (사신 공격이 섞이지 않도록 잠시 정지)
+					# 죽음의 낙인 (사신 공격이 섞이지 않도록 잠시 정지 + 부하·날아오는 탄 정리 — 아래 피해 검사는 체력을 채우지 않음)
 					reaper.set_physics_process(false)
+					for e in get_tree().get_nodes_in_group(&"enemies"):
+						if not (e as Enemy).is_boss:
+							(e as Enemy).despawn()
+					stage._release_projectiles()
 					await _frames(60)
+					stage._release_projectiles()
+					for node in get_tree().current_scene.get_children():
+						if node is AoeStrike:
+							node.queue_free()
 					player.death_marks = 0
 					for i in 4:
 						player.add_death_mark(1)
@@ -1097,24 +1341,24 @@ func _run() -> void:
 				king.take_damage(500, Vector2.ZERO, false, 99)
 				king.raise_barrier()
 				_check(king.hp < hp_k and not king.is_barrier_up(), "왕관이 없으면 피해가 들어가고 가호를 다시 못 씀")
-				final_boss = king
-		if n < 10:
-			boss.take_damage(999999, Vector2.ZERO, false, 9999)
-			await _frames(4)
-			_check(not _gm.is_game_cleared and next_portal.enabled, "%d스테이지 보스 토벌 → 다음 스테이지 텔레포트" % n)
+		boss.take_damage(999999, Vector2.ZERO, false, 9999)
+		await _frames(4)
+		_check(not _gm.is_game_cleared and next_portal.enabled, "%d스테이지 보스 토벌 → 다음 스테이지 텔레포트" % n)
 
-	print("[엔딩 - 10스테이지 보스 토벌]")
+	final_boss = await _test_late_stages(main)
+
+	print("[엔딩 - 15스테이지 보스 토벌]")
 	var kills_before: int = _gm.total_kills
 	stage.ending_delay = 600.0  # 아래 테스트가 끝난 뒤 엔딩 화면을 따로 검사
 	if final_boss != null:
 		final_boss.take_damage(999999, Vector2.ZERO, false, 9999)
 	await _frames(4)
-	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(10스테이지) 보스 토벌 → 모든 스테이지 클리어")
+	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(15스테이지) 보스 토벌 → 모든 스테이지 클리어")
 	_check(_gm.total_kills > kills_before and _gm.play_time > 0.0, "엔딩 기록: 처치 %d마리 · 플레이 %s" % [_gm.total_kills, _gm.get_play_time_text()])
 	_check(stage.get_chest() == null and not next_portal.enabled and get_tree().get_nodes_in_group(&"enemies").is_empty(), "마지막 스테이지: 상자 / 텔레포트 없음, 남은 졸개 정리")
 	stage.go_to_next_stage()
 	await _frames(3)
-	_check(_gm.stage == 10, "10스테이지 이후 반복 스테이지 없음")
+	_check(_gm.stage == 15, "15스테이지 이후 반복 스테이지 없음")
 
 	print("[난이도 배율]")
 	_gm.difficulty = _gm.Difficulty.VERY_HARD
