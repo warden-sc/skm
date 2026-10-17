@@ -88,7 +88,7 @@ func _item_pickups(entities: Node) -> Array:
 	return entities.get_children().filter(func(n: Node) -> bool: return n is Pickup and (n as Pickup).kind == Pickup.Kind.ITEM)
 
 
-## 11~20스테이지: 잡몹 · 보스 패턴 · 보스 기믹. 20스테이지 보스(마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
+## 11~21스테이지: 잡몹 · 보스 패턴 · 보스 기믹. 21스테이지 보스(마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
 func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 	var player := main.get_node("Entities/Player") as Player
 	var pool := main.get_node("ProjectilePool") as ProjectilePool
@@ -108,11 +108,12 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 		18: ["인형 병사", "광대 인형", "실 거미"],
 		19: ["바다뱀", "폭풍 정령", "서리 정령"],
 		20: ["견습 마법사", "마력 갑옷", "날아다니는 마도서"],
+		21: ["태엽 거미", "증기 골렘", "기계 사수"],
 	}
-	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁", 16: "바람의 봉우리", 17: "거인의 감옥", 18: "인형 극장", 19: "폭풍의 바다", 20: "대마법사의 탑"}
-	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "그리핀", 17: "티탄", 18: "꼭두각시 마리오네트", 19: "폭풍의 지배자 레비아탄", 20: "대마법사 아르카나"}
+	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁", 16: "바람의 봉우리", 17: "거인의 감옥", 18: "인형 극장", 19: "폭풍의 바다", 20: "대마법사의 탑", 21: "기계 신전"}
+	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "천공의 수호자 그리핀", 17: "추방된 자 티탄", 18: "꼭두각시 마리오네트", 19: "폭풍의 지배자 레비아탄", 20: "대마법사 아르카나", 21: "기계의 정점 테모스"}
 	var final_boss: Enemy = null
-	for n in range(first, 21):
+	for n in range(first, 22):
 		next_portal.interacted.emit()
 		await _frames(3)
 		print("[%d스테이지 - %s]" % [n, stage_names[n]])
@@ -545,8 +546,46 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
 							seen20["shot"] = true)
 				_check(seen20["aoe"] and seen20["shot"], "아르카나 패턴: 화염 · 서리 · 낙뢰 · 비전 · 순간이동")
-				final_boss = mage
-		if n < 20:
+			21:
+				var temos := boss as BossTemos
+				await _survive(5)
+				var machines := temos.get_machines()
+				_check(machines.size() == 4 and machines[0].max_hp == roundi(temos.max_hp * temos.machine_hp_ratio) and machines[0].hp != temos.hp, "[기믹] 테모스와 연결된 냉각수 기계 4대 (체력 따로 %d)" % (machines[0].max_hp if not machines.is_empty() else 0))
+				_check(temos.get_node_or_null("Sprite2D") != null and temos.sprite.get_child_count() >= 3, "몸통의 거대한 태엽과 작은 태엽들")
+				var rot0 := temos._gear_big.rotation
+				await _survive(10)
+				_check(not is_equal_approx(temos._gear_big.rotation, rot0), "태엽이 돌아감")
+				for i in 5:
+					temos.cast(BossTemos.Pattern.GEARS)
+					await _survive(30)
+				_check(not temos.is_overheated() and temos.heat < 40.0, "냉각수 기계가 살아 있으면 스킬을 써도 열이 쌓이지 않음 (열 %.0f)" % temos.heat)
+				for m in temos.get_machines():
+					m.take_damage(999999)
+				await _frames(3)
+				_check(temos.get_machines().is_empty() and is_equal_approx(temos.get_cooling_rate(), temos.base_cooling), "냉각수 기계를 부수면 열이 거의 식지 않음")
+				var casts := 0
+				while not temos.is_overheated() and casts < 10:
+					temos.cast(BossTemos.Pattern.GEARS)
+					casts += 1
+					await _survive(6)
+				_check(temos.is_overheated() and temos.defense == roundi(temos._base_defense * 0.5) and temos.contact_damage == 0 and temos.get_status_text().contains("과열"), "[기믹] 스킬 %d번 만에 과열: 방어력 -50%% (%d), 몸통 피해 없음" % [casts, temos.defense])
+				var skills0 := temos.get_skill_count()
+				temos.cast(BossTemos.Pattern.PISTON)
+				await _survive(60)
+				_check(temos.get_skill_count() == skills0, "과열 중에는 스킬을 쓰지 못함 (공격 불가)")
+				temos.heat = 0.5
+				await _survive(5)
+				_check(not temos.is_overheated() and temos.defense == temos._base_defense and temos.contact_damage > 0, "열이 정상으로 돌아오면 과열 해제 (방어력 복구)")
+				var seen21 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen21["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen21["shot"] = true)
+				_check(seen21["aoe"] and seen21["shot"] and temos.get_overheat_count() >= 1, "테모스 패턴: 톱니 탄 · 증기 · 피스톤 · 포격 · 소환")
+				final_boss = temos
+		if n < 21:
 			boss.take_damage(999999, Vector2.ZERO, false, 9999)
 			await _frames(4)
 			_check(not _gm.is_game_cleared and next_portal.enabled, "%d스테이지 보스 토벌 → 다음 스테이지 텔레포트" % n)
@@ -1576,18 +1615,18 @@ func _run() -> void:
 
 	final_boss = await _test_late_stages(main)
 
-	print("[엔딩 - 20스테이지 보스 토벌]")
+	print("[엔딩 - 21스테이지 보스 토벌]")
 	var kills_before: int = _gm.total_kills
 	stage.ending_delay = 600.0  # 아래 테스트가 끝난 뒤 엔딩 화면을 따로 검사
 	if final_boss != null:
 		final_boss.take_damage(999999, Vector2.ZERO, false, 9999)
 	await _frames(4)
-	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(20스테이지) 보스 토벌 → 모든 스테이지 클리어")
+	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(21스테이지) 보스 토벌 → 모든 스테이지 클리어")
 	_check(_gm.total_kills > kills_before and _gm.play_time > 0.0, "엔딩 기록: 처치 %d마리 · 플레이 %s" % [_gm.total_kills, _gm.get_play_time_text()])
 	_check(stage.get_chest() == null and not next_portal.enabled and get_tree().get_nodes_in_group(&"enemies").is_empty(), "마지막 스테이지: 상자 / 텔레포트 없음, 남은 졸개 정리")
 	stage.go_to_next_stage()
 	await _frames(3)
-	_check(_gm.stage == 20, "20스테이지 이후 반복 스테이지 없음")
+	_check(_gm.stage == 21, "21스테이지 이후 반복 스테이지 없음")
 
 	print("[난이도 배율]")
 	_gm.difficulty = _gm.Difficulty.VERY_HARD

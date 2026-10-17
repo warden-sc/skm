@@ -2932,6 +2932,144 @@ def save_late3_sprites():
     save(floor_arcane(), "tiles", "floor_arcane.png")
 
 
+# ---------------------------------------------------------------- 21스테이지
+def gear(size, teeth, col, col_d, hub):
+    """톱니바퀴 (회전용, size x size)"""
+    img = canvas(size)
+    c = (size - 1) / 2.0
+    r_out, r_in = size / 2.0 - 0.5, size / 2.0 - 2.5
+    for y in range(size):
+        for x in range(size):
+            d = math.hypot(x - c, y - c)
+            a = math.atan2(y - c, x - c)
+            tooth = math.cos(a * teeth) > 0.2
+            if d <= r_in or (d <= r_out and tooth):
+                img.putpixel((x, y), col if d < r_in - 1.5 else col_d)
+            if d <= size * 0.16:
+                img.putpixel((x, y), hub)
+            if size * 0.16 < d < r_in - 2 and int(round(math.degrees(a))) % 90 in range(-6, 7):
+                img.putpixel((x, y), col_d)   # 바퀴살
+    return outline(img)
+
+
+def temos():
+    """기계의 정점 테모스 (56x60): 놋쇠·강철 기계 거인, 가슴 한가운데 거대한 태엽 자리(톱니는 따로 돌아감), 붉은 눈"""
+    img = canvas(56, 60)
+    brass, brass_d, steel, steel_d = _c(176, 136, 70), _c(120, 88, 44), _c(110, 116, 128), _c(66, 70, 82)
+    rect(img, 12, 16, 43, 44, steel)                 # 몸통
+    rect(img, 12, 16, 43, 18, brass)
+    rect(img, 12, 42, 43, 44, brass_d)
+    ellipse(img, 27.5, 30, 12, 12, steel_d)          # 가슴의 태엽 자리 (어두운 구멍)
+    ellipse(img, 27.5, 30, 10, 10, _c(36, 30, 30))
+    rect(img, 2, 16, 11, 22, brass)                  # 어깨
+    rect(img, 44, 16, 53, 22, brass)
+    rect(img, 4, 22, 10, 40, steel_d)                # 팔 (피스톤)
+    rect(img, 45, 22, 51, 40, steel_d)
+    rect(img, 6, 24, 8, 38, steel)
+    rect(img, 47, 24, 49, 38, steel)
+    rect(img, 2, 40, 12, 46, brass_d)                # 집게손
+    rect(img, 43, 40, 53, 46, brass_d)
+    rect(img, 16, 45, 23, 58, steel_d)               # 다리
+    rect(img, 32, 45, 39, 58, steel_d)
+    rect(img, 14, 56, 25, 59, brass_d)
+    rect(img, 30, 56, 41, 59, brass_d)
+    rect(img, 20, 3, 35, 15, brass)                  # 머리
+    rect(img, 22, 7, 33, 10, _c(30, 24, 24))
+    put(img, [(24, 8), (25, 8), (30, 8), (31, 8)], _c(255, 60, 40))
+    rect(img, 26, 0, 29, 3, steel_d)                 # 굴뚝
+    for x in (14, 41):                               # 증기 배관
+        rect(img, x, 6, x + 1, 16, _c(90, 96, 108))
+    for x in range(14, 43, 4):                       # 리벳
+        put(img, [(x, 17)], _c(230, 200, 120))
+    return outline(img)
+
+
+def coolant_machine():
+    """냉각수 기계 (20x28): 푸른 냉각수가 든 유리 탱크, 강철 받침, 배관"""
+    img = canvas(20, 28)
+    steel, steel_d, coolant = _c(110, 116, 128), _c(66, 70, 82), _c(80, 200, 240)
+    rect(img, 2, 22, 17, 27, steel_d)
+    rect(img, 4, 20, 15, 22, steel)
+    rect(img, 4, 2, 15, 20, (180, 220, 240, 180))   # 유리
+    rect(img, 5, 7, 14, 19, coolant)
+    rect(img, 5, 7, 14, 8, _c(160, 240, 255))
+    put(img, [(7, 11), (10, 14), (12, 10), (8, 16)], _c(200, 250, 255))   # 기포
+    rect(img, 3, 0, 16, 2, steel)
+    rect(img, 16, 12, 19, 14, steel_d)               # 배관
+    return outline(img)
+
+
+def clock_spider():
+    """태엽 거미 (16x14): 놋쇠 몸통 등에 작은 태엽 열쇠"""
+    img = canvas(16, 14)
+    brass, brass_d = _c(190, 150, 80), _c(120, 90, 44)
+    ellipse(img, 8, 8, 4.5, 3.5, brass)
+    put(img, [(6, 7), (10, 7)], _c(255, 70, 50))
+    for side in (-1, 1):
+        for k in range(3):
+            put(img, [(8 + side * 5, 6 + k * 2), (8 + side * 6, 7 + k * 2), (8 + side * 7, 8 + k * 2)], brass_d)
+    rect(img, 7, 1, 8, 4, _c(150, 156, 170))
+    put(img, [(5, 1), (6, 1), (9, 1), (10, 1)], _c(150, 156, 170))
+    return outline(img)
+
+
+def steam_golem():
+    """증기 골렘 (22x22): 보일러 몸통, 굴뚝에서 증기, 붉게 달아오른 화구"""
+    img = canvas(22)
+    steel, steel_d = _c(96, 100, 112), _c(60, 62, 72)
+    ellipse(img, 11, 12, 8, 7, steel)
+    ellipse(img, 11, 13, 3.5, 2.5, _c(255, 120, 40))
+    rect(img, 8, 2, 13, 6, steel_d)
+    put(img, [(9, 4), (12, 4)], _c(255, 200, 80))
+    rect(img, 15, 0, 16, 5, steel_d)
+    rect(img, 1, 9, 3, 16, steel_d)
+    rect(img, 18, 9, 20, 16, steel_d)
+    rect(img, 6, 18, 9, 21, steel_d)
+    rect(img, 13, 18, 16, 21, steel_d)
+    return outline(img)
+
+
+def machine_gunner():
+    """기계 사수 (16x16): 한쪽 팔이 연발 포신인 자동 인형"""
+    img = canvas(16)
+    brass, steel = _c(170, 130, 70), _c(110, 116, 128)
+    rect(img, 5, 1, 10, 5, steel)
+    rect(img, 6, 3, 9, 3, _c(255, 60, 40))
+    rect(img, 4, 6, 10, 11, brass)
+    rect(img, 11, 7, 15, 9, _c(70, 72, 82))         # 포신
+    put(img, [(15, 7), (15, 9)], _c(40, 40, 48))
+    rect(img, 2, 6, 3, 10, steel)
+    rect(img, 5, 12, 6, 15, steel)
+    rect(img, 8, 12, 9, 15, steel)
+    return outline(img)
+
+
+def floor_machine():
+    """기계 신전: 놋쇠 판 + 리벳 + 철망 바닥"""
+    img = _floor(181, (70, 62, 52), 4, [(6, (54, 48, 40, 255), 3), (4, (96, 80, 50, 255), 2)])
+    for i in range(32):
+        img.putpixel((i, 0), (40, 36, 30, 255))
+        img.putpixel((0, i), (40, 36, 30, 255))
+    for y in range(18, 30, 2):
+        for x in range(18, 30):
+            img.putpixel((x, y), (44, 40, 36, 255))
+    for p in ((3, 3), (28, 3), (3, 28), (12, 28)):
+        img.putpixel(p, (170, 140, 80, 255))
+    return img
+
+
+def save_late4_sprites():
+    save(temos(), "characters", "temos.png")
+    save(gear(30, 10, _c(200, 160, 80), _c(140, 104, 50), _c(90, 70, 40)), "characters", "gear_big.png")
+    save(gear(14, 7, _c(170, 176, 190), _c(110, 116, 128), _c(70, 72, 82)), "characters", "gear_small.png")
+    save(coolant_machine(), "characters", "coolant_machine.png")
+    save(clock_spider(), "characters", "clock_spider.png")
+    save(steam_golem(), "characters", "steam_golem.png")
+    save(machine_gunner(), "characters", "machine_gunner.png")
+    save(gear(8, 6, _c(220, 190, 110), _c(150, 120, 60), _c(90, 70, 40)), "projectiles", "gear_bolt.png")
+    save(floor_machine(), "tiles", "floor_machine.png")
+
+
 def main():
     save(from_map(PLAYER), "characters", "player.png")
     save(from_map(SLIME), "characters", "slime.png")
@@ -3053,6 +3191,7 @@ def main():
     save_late_sprites()
     save_late2_sprites()
     save_late3_sprites()
+    save_late4_sprites()
 
     save(bar_under(), "ui", "bar_under.png")
     save(bar((200, 50, 70)), "ui", "bar_hp.png")
