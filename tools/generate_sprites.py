@@ -3070,6 +3070,118 @@ def save_late4_sprites():
     save(floor_machine(), "tiles", "floor_machine.png")
 
 
+# ---------------------------------------------------------------- 22스테이지
+def scorpion_boss():
+    """사막의 암살자 스콜피언 (56x44): 검붉은 모래색 갑각, 거대한 집게 두 개, 머리 위로 치켜든 꼬리 끝에 보랏빛 독침"""
+    img = canvas(56, 44)
+    shell, shell_d, shell_hi = _c(150, 96, 60), _c(96, 56, 36), _c(196, 140, 90)
+    venom = _c(190, 70, 230)
+    ellipse(img, 28, 32, 13, 8, shell)               # 몸통
+    for x in range(18, 40, 4):                       # 마디
+        rect(img, x, 26, x, 38, shell_d)
+    ellipse(img, 28, 29, 9, 3, shell_hi)
+    for side in (-1, 1):                             # 다리
+        for k in range(4):
+            x0 = 28 + side * (10 + k * 2)
+            put(img, [(x0, 36 + k % 2), (x0 + side, 38 + k % 2), (x0 + side * 2, 40 + k % 2), (x0 + side * 3, 41 + k % 2)], shell_d)
+    for side in (-1, 1):                             # 집게 (팔 + 큰 집게)
+        ax = 28 + side * 11
+        rect(img, min(ax, ax + side * 6), 26, max(ax, ax + side * 6), 28, shell)
+        cx = 28 + side * 20
+        ellipse(img, cx, 24, 6, 5, shell)
+        ellipse(img, cx + side * 2, 21, 3, 2, shell_hi)
+        rect(img, cx - 2 + side * 3, 17, cx + 2 + side * 3, 19, shell_d)   # 집게 날 사이
+        put(img, [(cx + side * 5, 16), (cx + side * 6, 15), (cx + side * 1, 16), (cx, 15)], shell_d)
+    put(img, [(25, 31), (31, 31)], _c(255, 60, 40))  # 눈
+    put(img, [(24, 31), (32, 31)], _c(255, 140, 60))
+    for i in range(22):                              # 치켜든 꼬리 (마디)
+        t = i / 21.0
+        x = int(round(30 + 6 * math.sin(t * math.pi * 0.9)))
+        y = int(round(26 - t * 24))
+        w = 3 - i // 9
+        rect(img, x - w, y, x + w, y, shell if i % 4 else shell_d)
+    ellipse(img, 33, 2, 2.5, 2, venom)               # 독침
+    put(img, [(35, 3), (36, 4), (37, 5)], venom)
+    put(img, [(32, 1)], _c(240, 190, 255))
+    return outline(img)
+
+
+def sand_mound():
+    """모래 속으로 숨은 스콜피언이 움직이는 모래 둔덕 (28x14)"""
+    img = canvas(28, 14)
+    ellipse(img, 13.5, 9, 13, 5, _c(200, 164, 104))
+    ellipse(img, 13.5, 8, 9, 3, _c(222, 190, 130))
+    put(img, [(6, 9), (10, 11), (17, 10), (21, 8)], _c(160, 124, 74))
+    return img
+
+
+def desert_bandit():
+    """사막 도적 (16x16): 터번과 복면, 휘어진 단검"""
+    img = canvas(16)
+    cloth, cloth_d, skin = _c(200, 170, 120), _c(140, 110, 70), _c(190, 140, 100)
+    rect(img, 5, 1, 10, 4, cloth)
+    rect(img, 5, 5, 10, 6, _c(70, 50, 40))
+    put(img, [(6, 4), (9, 4)], _c(30, 20, 20))
+    rect(img, 4, 7, 11, 12, cloth_d)
+    rect(img, 6, 7, 9, 8, skin)
+    rect(img, 5, 13, 6, 15, cloth_d)
+    rect(img, 9, 13, 10, 15, cloth_d)
+    put(img, [(12, 6), (13, 7), (13, 8), (12, 9)], _c(220, 225, 235))
+    rect(img, 12, 9, 12, 11, _c(110, 80, 50))
+    return outline(img)
+
+
+def desert_viper():
+    """사막 독사 (18x12): 모래색 뱀, 보랏빛 독니"""
+    img = canvas(18, 12)
+    sc, sc_d = _c(200, 170, 100), _c(140, 110, 60)
+    for i in range(14):
+        x = 2 + i
+        y = 7 + int(round(2 * math.sin(i * 0.8)))
+        rect(img, x, y - 1, x, y, sc if i % 3 else sc_d)
+    ellipse(img, 15, 4, 2.5, 2, sc)
+    put(img, [(16, 3)], _c(40, 20, 20))
+    put(img, [(17, 6), (14, 6)], _c(200, 90, 240))
+    return outline(img)
+
+
+def mummy():
+    """미라 (16x16): 낡은 붕대, 빛나는 눈"""
+    img = canvas(16)
+    band, band_d = _c(214, 204, 176), _c(150, 140, 116)
+    rect(img, 5, 1, 10, 6, band)
+    put(img, [(6, 3), (9, 3)], _c(120, 255, 160))
+    rect(img, 4, 7, 11, 12, band)
+    for y in range(1, 13, 2):
+        rect(img, 4 if y > 6 else 5, y, 11 if y > 6 else 10, y, band_d)
+    rect(img, 2, 7, 3, 9, band)
+    rect(img, 12, 7, 13, 9, band)
+    rect(img, 5, 13, 6, 15, band_d)
+    rect(img, 9, 13, 10, 15, band_d)
+    put(img, [(13, 10), (14, 11)], band_d)
+    return outline(img)
+
+
+def floor_desert():
+    """사막: 바람 무늬가 진 고운 모래"""
+    img = _floor(191, (196, 160, 104), 5, [(8, (214, 180, 124, 255), 3), (6, (170, 134, 84, 255), 2)])
+    for k in range(3):
+        for x in range(32):
+            y = (6 + k * 11 + int(round(2 * math.sin(x * 0.4 + k)))) % 32
+            img.putpixel((x, y), (178, 142, 90, 255))
+    return img
+
+
+def save_late5_sprites():
+    save(scorpion_boss(), "characters", "scorpion_boss.png")
+    save(sand_mound(), "characters", "sand_mound.png")
+    save(desert_bandit(), "characters", "desert_bandit.png")
+    save(desert_viper(), "characters", "desert_viper.png")
+    save(mummy(), "characters", "mummy.png")
+    save(orb((250, 220, 255), (170, 60, 220)), "projectiles", "venom.png")
+    save(floor_desert(), "tiles", "floor_desert.png")
+
+
 def main():
     save(from_map(PLAYER), "characters", "player.png")
     save(from_map(SLIME), "characters", "slime.png")
@@ -3192,6 +3304,7 @@ def main():
     save_late2_sprites()
     save_late3_sprites()
     save_late4_sprites()
+    save_late5_sprites()
 
     save(bar_under(), "ui", "bar_under.png")
     save(bar((200, 50, 70)), "ui", "bar_hp.png")

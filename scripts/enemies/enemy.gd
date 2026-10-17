@@ -83,6 +83,8 @@ var _aura: CPUParticles2D
 var _anim_time: float = 0.0
 ## 공중에 떠 있으면 true → 활 공격만 맞음
 var airborne: bool = false
+## 맞힐 수 없는 공격이 닿았을 때 뜨는 문구 (모래 속에 숨은 스콜피언 등은 바꿔 씀)
+var immune_text: String = "공중! 활만 닿음"
 ## 평소 색조 (오크킹의 함성으로 강화된 졸개는 붉게)
 var base_tint: Color = Color.WHITE
 var _immune_text_cooldown: float = 0.0
@@ -280,7 +282,7 @@ func show_immune() -> void:
 	if _immune_text_cooldown > 0.0 or _dead:
 		return
 	_immune_text_cooldown = 0.5
-	FloatingText.spawn(self, global_position + Vector2(0, -34), "공중! 활만 닿음", Color(0.75, 0.85, 1.0))
+	FloatingText.spawn(self, global_position + Vector2(0, -34), immune_text, Color(0.75, 0.85, 1.0))
 
 
 ## 졸개 소환 요청 (보스 등 자식 클래스에서 사용)

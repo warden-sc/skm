@@ -88,7 +88,7 @@ func _item_pickups(entities: Node) -> Array:
 	return entities.get_children().filter(func(n: Node) -> bool: return n is Pickup and (n as Pickup).kind == Pickup.Kind.ITEM)
 
 
-## 11~21스테이지: 잡몹 · 보스 패턴 · 보스 기믹. 21스테이지 보스(마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
+## 11~22스테이지: 잡몹 · 보스 패턴 · 보스 기믹. 22스테이지 보스(마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
 func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 	var player := main.get_node("Entities/Player") as Player
 	var pool := main.get_node("ProjectilePool") as ProjectilePool
@@ -109,11 +109,12 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 		19: ["바다뱀", "폭풍 정령", "서리 정령"],
 		20: ["견습 마법사", "마력 갑옷", "날아다니는 마도서"],
 		21: ["태엽 거미", "증기 골렘", "기계 사수"],
+		22: ["사막 도적", "사막 독사", "미라"],
 	}
-	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁", 16: "바람의 봉우리", 17: "거인의 감옥", 18: "인형 극장", 19: "폭풍의 바다", 20: "대마법사의 탑", 21: "기계 신전"}
-	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "천공의 수호자 그리핀", 17: "추방된 자 티탄", 18: "꼭두각시 마리오네트", 19: "폭풍의 지배자 레비아탄", 20: "대마법사 아르카나", 21: "기계의 정점 테모스"}
+	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁", 16: "바람의 봉우리", 17: "거인의 감옥", 18: "인형 극장", 19: "폭풍의 바다", 20: "대마법사의 탑", 21: "기계 신전", 22: "모래 폭풍의 사막"}
+	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "천공의 수호자 그리핀", 17: "추방된 자 티탄", 18: "꼭두각시 마리오네트", 19: "폭풍의 지배자 레비아탄", 20: "대마법사 아르카나", 21: "기계의 정점 테모스", 22: "사막의 암살자 스콜피언"}
 	var final_boss: Enemy = null
-	for n in range(first, 22):
+	for n in range(first, 23):
 		next_portal.interacted.emit()
 		await _frames(3)
 		print("[%d스테이지 - %s]" % [n, stage_names[n]])
@@ -584,8 +585,65 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
 							seen21["shot"] = true)
 				_check(seen21["aoe"] and seen21["shot"] and temos.get_overheat_count() >= 1, "테모스 패턴: 톱니 탄 · 증기 · 피스톤 · 포격 · 소환")
-				final_boss = temos
-		if n < 21:
+			22:
+				var scorp := boss as BossScorpion
+				await _survive(5)
+				scorp.take_damage(6000, Vector2.ZERO, false, 9999)
+				var hp_low := scorp.hp
+				player.global_position = boss_center + Vector2(0, 110)
+				scorp.burrow()
+				await _frames(2)
+				var hp_burrow := scorp.hp
+				scorp.take_damage(5000, Vector2.ZERO, false, 9999)
+				_check(scorp.is_burrowed() and not scorp.sprite.visible and not scorp.can_be_hit_by(Enemy.HitKind.MELEE) and not scorp.can_be_hit_by(Enemy.HitKind.BOW) and not scorp.can_be_hit_by(Enemy.HitKind.MAGIC) and scorp.hp >= hp_burrow, "[기믹] 모래 속으로 숨으면 어떤 공격도 닿지 않음")
+				var d_track := scorp.global_position.distance_to(player.global_position)
+				var ambush := {"strike": false}
+				var hold := player.global_position
+				await _survive(int(scorp.burrow_time * 60) - 30, func() -> void:
+					player.global_position = hold
+					for node in get_tree().current_scene.get_children():
+						if node is AoeStrike and (node as Node2D).global_position.distance_to(hold) < 3.0:
+							ambush["strike"] = true)
+				_check(scorp.hp > hp_low and scorp.get_healed_total() > 0, "숨어 있는 동안 체력 회복 (+%d)" % scorp.get_healed_total())
+				_check(scorp.global_position.distance_to(player.global_position) < d_track - 20.0, "모래 둔덕이 플레이어를 쫓아옴")
+				await _survive(60, func() -> void:
+					player.global_position = hold
+					for node in get_tree().current_scene.get_children():
+						if node is AoeStrike and (node as Node2D).global_position.distance_to(hold) < 3.0:
+							ambush["strike"] = true)
+				_check(not scorp.is_burrowed() and scorp.sprite.visible and ambush["strike"] and scorp.global_position.distance_to(hold) < 12.0, "끝나기 직전 발밑에 예고 → 그 자리에서 솟구치며 기습")
+				scorp.set_physics_process(false)
+				scorp._burrow_cooldown = 999.0
+				var below := scorp.get_hit_center() + Vector2(0, 44)
+				player.global_position = below
+				await _frames(1)
+				scorp.cast(BossScorpion.Pattern.PINCER)
+				await _survive(50, func() -> void:
+					player.global_position = below)
+				_check(player.is_armor_broken() and _gm.player_status.contains("방어력 감소"), "[기믹] 집게에 맞으면 갑각 분쇄 (방어력 감소)")
+				scorp.cast(BossScorpion.Pattern.STING)
+				var poisoned := {"poison": false}
+				await _survive(110, func() -> void:
+					player.global_position = below
+					if _gm.player_status.contains("독"):
+						poisoned["poison"] = true)
+				_check(poisoned["poison"], "[기믹] 꼬리 독침에 맞으면 강한 독")
+				scorp.set_physics_process(true)
+				scorp._burrow_cooldown = 3.0
+				var burrows0 := scorp.get_burrow_count()
+				var seen22 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen22["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen22["shot"] = true)
+				_check(seen22["aoe"] and seen22["shot"] and scorp.get_burrow_count() > burrows0, "스콜피언 패턴: 독침 · 집게 · 신경독 · 꼬리 휩쓸기 · 잠행 반복")
+				if scorp.is_burrowed():
+					scorp._burrow_left = 0.01
+					await _survive(3)
+				final_boss = scorp
+		if n < 22:
 			boss.take_damage(999999, Vector2.ZERO, false, 9999)
 			await _frames(4)
 			_check(not _gm.is_game_cleared and next_portal.enabled, "%d스테이지 보스 토벌 → 다음 스테이지 텔레포트" % n)
@@ -1615,18 +1673,18 @@ func _run() -> void:
 
 	final_boss = await _test_late_stages(main)
 
-	print("[엔딩 - 21스테이지 보스 토벌]")
+	print("[엔딩 - 22스테이지 보스 토벌]")
 	var kills_before: int = _gm.total_kills
 	stage.ending_delay = 600.0  # 아래 테스트가 끝난 뒤 엔딩 화면을 따로 검사
 	if final_boss != null:
 		final_boss.take_damage(999999, Vector2.ZERO, false, 9999)
 	await _frames(4)
-	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(21스테이지) 보스 토벌 → 모든 스테이지 클리어")
+	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(22스테이지) 보스 토벌 → 모든 스테이지 클리어")
 	_check(_gm.total_kills > kills_before and _gm.play_time > 0.0, "엔딩 기록: 처치 %d마리 · 플레이 %s" % [_gm.total_kills, _gm.get_play_time_text()])
 	_check(stage.get_chest() == null and not next_portal.enabled and get_tree().get_nodes_in_group(&"enemies").is_empty(), "마지막 스테이지: 상자 / 텔레포트 없음, 남은 졸개 정리")
 	stage.go_to_next_stage()
 	await _frames(3)
-	_check(_gm.stage == 21, "21스테이지 이후 반복 스테이지 없음")
+	_check(_gm.stage == 22, "22스테이지 이후 반복 스테이지 없음")
 
 	print("[난이도 배율]")
 	_gm.difficulty = _gm.Difficulty.VERY_HARD
