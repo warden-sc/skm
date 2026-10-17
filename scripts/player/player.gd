@@ -107,6 +107,10 @@ var _floor_status: String = ""
 var _charm_left: float = 0.0
 var _charmer: Node2D
 var _charm_particles: CPUParticles2D
+## 꼭두각시 조종 (18스테이지 마리오네트): 조종하는 적 / 조종 세기(0~1, 1이면 완전히 조종당함) / 남은 실 수
+var _puppet_master: Node2D
+var _puppet_strength: float = 0.0
+var _puppet_threads: int = 0
 ## 죽음의 낙인 (사신): 쌓이면 사형 선고 → 잠시 후 큰 피해 (대시로 피할 수 있음)
 const DEATH_MARK_MAX := 5
 const DEATH_MARK_KEEP_TIME := 8.0
@@ -176,6 +180,10 @@ func _physics_process(delta: float) -> void:
 			input_dir = Vector2.ZERO
 			if _charmer != null and is_instance_valid(_charmer):
 				input_dir = global_position.direction_to(_charmer.global_position) * 0.35
+		elif is_puppeted():
+			# 꼭두각시: 내 입력과 마리오네트가 끄는 방향이 구속력(strength) 비율로 섞임
+			var pull: Vector2 = _puppet_master.call(&"get_puppet_pull", self)
+			input_dir = (input_dir * (1.0 - _puppet_strength) + pull * _puppet_strength).limit_length(1.0)
 		var speed := max_speed * (1.0 + GameManager.get_move_speed_bonus()) * _guard.get_move_multiplier() * _attack.get_move_multiplier()
 		if _slow_left > 0.0:
 			speed *= _slow_multiplier
@@ -184,7 +192,7 @@ func _physics_process(delta: float) -> void:
 		else:
 			velocity = velocity.move_toward(Vector2.ZERO, friction * delta)
 
-		if Input.is_action_just_pressed(&"dash") and _dash_cooldown_left <= 0.0 and not is_charmed():
+		if Input.is_action_just_pressed(&"dash") and _dash_cooldown_left <= 0.0 and not is_charmed() and not is_puppeted():
 			_start_dash(input_dir)
 
 	move_and_slide()
@@ -234,11 +242,11 @@ func get_aim_point(max_range: float) -> Vector2:
 
 
 func can_attack() -> bool:
-	return not _is_dead and _dash_time_left <= 0.0 and not _guard.is_guarding() and not is_charmed()
+	return not _is_dead and _dash_time_left <= 0.0 and not _guard.is_guarding() and not is_charmed() and not is_puppeted()
 
 
 func can_guard() -> bool:
-	return not _is_dead and _dash_time_left <= 0.0 and not is_charmed()
+	return not _is_dead and _dash_time_left <= 0.0 and not is_charmed() and not is_puppeted()
 
 
 ## 매혹 (서큐버스): duration 동안 이동·공격·가드·대시·포션 불가. charmer 쪽으로 천천히 끌려감
@@ -254,6 +262,32 @@ func apply_charm(duration: float, charmer: Node2D = null) -> void:
 
 func is_charmed() -> bool:
 	return _charm_left > 0.0
+
+
+## 꼭두각시 조종 시작/갱신 (마리오네트). master 는 get_puppet_pull(player) -> Vector2 를 가져야 함.
+## strength: 1 이면 완전히 조종당함, 낮을수록 내 입력이 더 먹힘. threads: 남은 실 수 (상태 표시)
+func set_puppet(master: Node2D, strength: float, threads: int) -> void:
+	if _is_dead:
+		return
+	_puppet_master = master
+	_puppet_strength = clampf(strength, 0.0, 1.0)
+	_puppet_threads = threads
+	if _windup_weapon != null:
+		end_windup(false)
+
+
+func release_puppet() -> void:
+	_puppet_master = null
+	_puppet_strength = 0.0
+	_puppet_threads = 0
+
+
+func is_puppeted() -> bool:
+	return _puppet_master != null and is_instance_valid(_puppet_master) and _puppet_strength > 0.0
+
+
+func get_puppet_strength() -> float:
+	return _puppet_strength if is_puppeted() else 0.0
 
 
 ## 「죽음의 낙인」 추가. DEATH_MARK_MAX 개가 되면 사형 선고 (EXECUTION_DELAY 뒤 최대 체력의 35% 피해, 그 순간 대시 중이면 회피)
@@ -413,6 +447,7 @@ func teleport_to(at_global: Vector2, camera_bounds: Rect2) -> void:
 	velocity = Vector2.ZERO
 	death_marks = 0
 	_execution_left = -1.0
+	release_puppet()
 	set_camera_bounds(camera_bounds)
 
 
@@ -506,6 +541,8 @@ func _update_status(delta: float) -> void:
 		parts.append("죽음의 낙인 %d/%d" % [death_marks, DEATH_MARK_MAX])
 	if _charm_left > 0.0:
 		parts.append("매혹 %.1f초 (조작 불가)" % _charm_left)
+	if is_puppeted():
+		parts.append("꼭두각시: 남은 실 %d개 (구속력 %d%%) — 맵 가장자리 스위치를 밟아라" % [_puppet_threads, roundi(_puppet_strength * 100.0)])
 	if _burn_left > 0.0:
 		parts.append("%s %.1f초 (0.5초마다 -%d)" % ["독" if _burn_is_poison else "화상", _burn_left, get_burn_tick_damage()])
 	if _armor_break_left > 0.0:
@@ -552,9 +589,10 @@ func take_hit(amount: int, from_position: Vector2, attacker: Enemy = null) -> Hi
 	return HitResult.DAMAGED
 
 
-## 방패로 막을 수 없는 큰 공격 (티탄이 던진 바위 등): 가드·방어력 무시, 대시 중에만 피함
-func take_unblockable_hit(amount: int, from_position: Vector2) -> HitResult:
-	if _is_dead or is_dashing():
+## 방패로 막을 수 없는 큰 공격 (티탄이 던진 바위 등): 가드·방어력 무시, 대시 중에만 피함.
+## dodgeable 이 false 면 대시로도 못 피함 (대마법사의 메테오 — 안전지대로만 피함)
+func take_unblockable_hit(amount: int, from_position: Vector2, dodgeable: bool = true) -> HitResult:
+	if _is_dead or (dodgeable and is_dashing()):
 		return HitResult.IGNORED
 	var hit_dir := global_position.direction_to(from_position)
 	_invincible_left = invincible_time

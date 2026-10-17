@@ -2543,7 +2543,7 @@ def chained_giant():
 
 
 def titan():
-    """티탄 (56x60): 잿빛 거인, 양 손목의 쇠고랑에서 늘어진 쇠사슬 끝에 커다란 원형 쇠 구속구"""
+    """티탄 (56x60): 잿빛 거인, 양 손목의 쇠고랑에서 늘어진 쇠사슬 끝에 구멍 없이 꽉 찬 커다란 원형 쇠 구속구"""
     img = canvas(56, 60)
     skin, skin_d, skin_hi = _c(140, 146, 160), _c(96, 100, 116), _c(180, 186, 200)
     iron, iron_d, cloth = _c(84, 86, 96), _c(50, 52, 60), _c(110, 80, 60)
@@ -2570,13 +2570,14 @@ def titan():
             put(img, [(x, y)], iron if i % 2 else iron_d)
             if i % 2 == 0:
                 put(img, [(x - 1, y), (x + 1, y)], iron_d)
-        rx, ry = cx + side, 52
-        for y in range(60):                            # 두꺼운 원형 쇠고리 (구속구)
+        rx, ry = cx - side, 52
+        for y in range(60):                            # 구멍 없이 꽉 찬 원형 쇠 구속구
             for x in range(56):
                 d = math.hypot(x - rx, y - ry)
-                if 4.2 <= d <= 7.2:
-                    img.putpixel((x, y), iron if d < 6.0 else iron_d)
-        put(img, [(rx - 3, ry - 5), (rx - 4, ry - 4), (rx - 5, ry - 3)], _c(150, 154, 168))
+                if d <= 7.2:
+                    img.putpixel((x, y), iron_d if d > 6.0 or (x - rx) + (y - ry) > 4.0 else iron)
+        put(img, [(rx - 3, ry - 4), (rx - 4, ry - 3), (rx - 2, ry - 4), (rx - 4, ry - 2)], _c(150, 154, 168))  # 반사광
+        put(img, [(rx - 1, ry), (rx, ry), (rx + 1, ry), (rx, ry - 1), (rx, ry + 1)], iron_d)  # 리벳
     return outline(img)
 
 
@@ -2631,6 +2632,302 @@ def save_late2_sprites():
     save(orb((235, 255, 245), (120, 220, 180)), "projectiles", "wind_orb.png")
     save(floor_peak(), "tiles", "floor_peak.png")
     save(floor_titan(), "tiles", "floor_titan.png")
+
+
+# ---------------------------------------------------------------- 18~20스테이지
+def puppet_soldier():
+    """인형 병사 (16x16): 관절이 보이는 나무 병정 인형, 머리 위로 실"""
+    img = canvas(16)
+    wood, wood_d, red = _c(200, 160, 110), _c(140, 104, 66), _c(170, 40, 50)
+    rect(img, 5, 2, 10, 6, wood)
+    put(img, [(6, 4), (9, 4)], _c(30, 20, 20))
+    put(img, [(6, 5), (9, 5)], _c(230, 120, 120))
+    rect(img, 4, 7, 11, 11, red)
+    rect(img, 4, 9, 11, 9, _c(230, 200, 90))
+    put(img, [(3, 7), (2, 8), (2, 9), (12, 7), (13, 8), (13, 9)], wood_d)
+    rect(img, 5, 12, 6, 15, wood_d)
+    rect(img, 9, 12, 10, 15, wood_d)
+    put(img, [(5, 13), (10, 13)], wood)
+    put(img, [(3, 0), (3, 1), (3, 2), (3, 3), (3, 4), (3, 5), (12, 0), (12, 1), (12, 2), (12, 3), (12, 4), (12, 5)], (220, 220, 230, 150))
+    return outline(img)
+
+
+def jester_doll():
+    """광대 인형 (16x16): 두 갈래 모자, 하얀 얼굴, 마름모 무늬 옷"""
+    img = canvas(16)
+    purple, yellow, face = _c(130, 60, 160), _c(240, 200, 60), _c(240, 236, 230)
+    put(img, [(3, 1), (4, 2), (5, 3), (12, 1), (11, 2), (10, 3)], purple)
+    put(img, [(2, 0), (13, 0)], yellow)
+    rect(img, 5, 3, 10, 7, face)
+    put(img, [(6, 5), (9, 5)], _c(40, 20, 50))
+    put(img, [(7, 7), (8, 7)], _c(200, 40, 60))
+    for y in range(8, 13):
+        for x in range(4, 12):
+            img.putpixel((x, y), purple if (x + y) % 2 else yellow)
+    rect(img, 5, 13, 6, 15, purple)
+    rect(img, 9, 13, 10, 15, yellow)
+    put(img, [(2, 8), (13, 8)], _c(250, 120, 60))
+    return outline(img)
+
+
+def thread_spider():
+    """실 거미 (16x14): 은빛 실을 뿜는 커다란 거미, 붉은 눈"""
+    img = canvas(16, 14)
+    body, body_d = _c(70, 60, 80), _c(40, 34, 48)
+    ellipse(img, 8, 8, 4, 3.5, body)
+    ellipse(img, 8, 4, 2.5, 2, body_d)
+    put(img, [(7, 4), (9, 4)], _c(255, 60, 60))
+    for side in (-1, 1):
+        for k in range(4):
+            x0 = 8 + side * 3
+            put(img, [(x0 + side * 2, 6 + k), (x0 + side * 4, 5 + k * 2), (x0 + side * 5, 7 + k * 2)], body_d)
+    put(img, [(8, 12), (8, 13)], (230, 230, 240, 200))
+    return outline(img)
+
+
+def marionette():
+    """꼭두각시 마리오네트 (32x48): 금이 간 도자기 얼굴의 큰 인형, 손발 관절, 머리 위 십자 조종대에서 내려온 실"""
+    img = canvas(32, 48)
+    face, cheek, dress, dress_d = _c(236, 230, 226), _c(230, 140, 150), _c(120, 30, 60), _c(80, 20, 44)
+    joint, wood = _c(180, 150, 120), _c(150, 116, 84)
+    rect(img, 6, 1, 25, 2, wood)                     # 십자 조종대
+    rect(img, 15, 0, 16, 5, wood)
+    for x in (7, 15, 24):                            # 조종대에서 내려오는 실
+        for y in range(3, 16 if x == 15 else 24):
+            put(img, [(x, y)], (230, 230, 240, 200))
+    ellipse(img, 15.5, 13, 6, 6, face)               # 머리
+    rect(img, 9, 7, 22, 9, _c(60, 30, 40))           # 머리카락
+    put(img, [(9, 10), (9, 11), (22, 10), (22, 11)], _c(60, 30, 40))
+    put(img, [(13, 12), (18, 12)], _c(30, 20, 40))
+    put(img, [(13, 13), (18, 13)], _c(120, 200, 255))
+    put(img, [(12, 15), (19, 15)], cheek)
+    put(img, [(15, 16), (16, 16)], _c(150, 30, 50))
+    put(img, [(19, 9), (20, 10), (19, 11), (20, 12)], _c(120, 110, 110))  # 얼굴의 금
+    for y in range(20, 40):                          # 드레스
+        half = 4 + (y - 20) * 0.4
+        for x in range(int(15.5 - half), int(15.5 + half) + 1):
+            img.putpixel((x, y), dress if (x + y) % 5 else dress_d)
+    rect(img, 13, 20, 18, 22, _c(240, 220, 230))     # 레이스 깃
+    for side in (-1, 1):                             # 관절 팔
+        x0 = 15 + side * 6
+        put(img, [(x0, 21), (x0 + side, 22), (x0 + side * 2, 23)], joint)
+        ellipse(img, x0 + side * 3, 24, 1.2, 1.2, wood)
+        put(img, [(x0 + side * 3, 25), (x0 + side * 3, 26), (x0 + side * 4, 27)], joint)
+    for x in (12, 19):                               # 관절 다리
+        rect(img, x, 40, x + 1, 46, joint)
+        put(img, [(x, 43), (x + 1, 43)], wood)
+    return outline(img)
+
+
+def switch_plate(on):
+    """마리오네트 실 끊기 스위치 (16x12): 바닥 발판"""
+    img = canvas(16, 12)
+    base = _c(110, 100, 90)
+    ellipse(img, 7.5, 7, 7.5, 4.5, base)
+    ellipse(img, 7.5, 6 if not on else 7, 5, 3, _c(255, 210, 80) if not on else _c(110, 200, 120))
+    put(img, [(6, 5), (7, 5)], _c(255, 245, 200) if not on else _c(200, 255, 210))
+    return outline(img)
+
+
+def sea_serpent():
+    """바다뱀 (18x14): 청록 비늘, 지느러미"""
+    img = canvas(18, 14)
+    sc, sc_d = _c(60, 150, 160), _c(30, 96, 110)
+    for i in range(14):
+        x = 2 + i
+        y = 8 + int(round(2 * math.sin(i * 0.7)))
+        rect(img, x, y - 1, x, y + 1, sc if i % 3 else sc_d)
+    ellipse(img, 15, 6, 2.5, 2, sc)
+    put(img, [(16, 5)], _c(255, 230, 80))
+    put(img, [(5, 6), (8, 5), (11, 6)], _c(220, 120, 120))
+    return outline(img)
+
+
+def storm_spirit():
+    """폭풍 정령 (16x16): 번개가 치는 먹구름 덩어리"""
+    img = canvas(16)
+    ellipse(img, 7.5, 6, 6, 4, _c(90, 96, 120))
+    ellipse(img, 5, 5, 3, 2.5, _c(120, 126, 150))
+    ellipse(img, 10, 4.5, 3, 2.5, _c(110, 116, 140))
+    put(img, [(5, 6), (9, 6)], _c(255, 255, 160))
+    put(img, [(7, 10), (6, 11), (7, 12), (6, 13), (7, 14)], _c(255, 240, 120))
+    put(img, [(10, 10), (11, 11), (10, 12)], _c(255, 240, 120))
+    return outline(img)
+
+
+def frost_spirit():
+    """서리 정령 (16x16): 얼음 결정 몸, 하늘빛 눈"""
+    img = canvas(16)
+    ice, ice_d = _c(200, 236, 255), _c(130, 190, 230)
+    for i in range(6):
+        a = math.radians(i * 60)
+        for r in range(7):
+            put(img, [(int(round(7.5 + math.cos(a) * r)), int(round(7.5 + math.sin(a) * r)))], ice if r % 2 else ice_d)
+    ellipse(img, 7.5, 7.5, 2.5, 2.5, ice)
+    put(img, [(6, 7), (9, 7)], _c(40, 90, 160))
+    return outline(img, (40, 70, 120, 255))
+
+
+def leviathan():
+    """폭풍의 지배자 레비아탄 (64x48): 짙은 청색 바다룡, 뿔 달린 머리, 몸을 감은 똬리, 등지느러미"""
+    img = canvas(64, 48)
+    sc, sc_d, belly = _c(40, 80, 130), _c(24, 50, 90), _c(150, 200, 210)
+    fin = _c(80, 170, 190)
+    for k in range(3):                               # 똬리 (아래쪽 몸)
+        cx, cy, rx, ry = 34 + k * 6, 34 + k * 2, 18 - k * 3, 7 - k
+        for a in range(0, 360, 3):
+            r = math.radians(a)
+            for t in range(4):
+                put(img, [(int(cx + math.cos(r) * (rx - t)), int(cy + math.sin(r) * (ry - t * 0.6)))], sc if (a // 15 + t) % 3 else sc_d)
+    for i in range(26):                              # 솟아오른 목
+        x = 16 + int(i * 0.35)
+        y = 36 - i
+        rect(img, x - 3, y, x + 3, y, sc)
+        put(img, [(x - 3, y)], belly)
+        if i % 3 == 0:
+            put(img, [(x + 4, y), (x + 5, y - 1)], fin)  # 등지느러미
+    ellipse(img, 22, 8, 9, 6, sc)                    # 머리
+    rect(img, 9, 9, 16, 12, sc)                      # 주둥이
+    put(img, [(9, 12), (10, 12), (12, 12), (14, 12)], _c(240, 240, 230))  # 이빨
+    ellipse(img, 20, 6, 1.5, 1.2, _c(255, 230, 80))
+    put(img, [(25, 1), (26, 0), (27, 0), (29, 2), (30, 1), (31, 1)], _c(200, 210, 220))  # 뿔
+    for x in (24, 28, 32):
+        put(img, [(x, 3), (x + 1, 2)], fin)
+    return outline(img)
+
+
+def icicle():
+    """고드름 (8x14)"""
+    img = canvas(8, 14)
+    for y in range(13):
+        w = max(0, 3 - y // 4)
+        rect(img, 4 - w, y, 3 + w, y, _c(220, 245, 255) if y < 9 else _c(170, 220, 250))
+    return outline(img, (60, 110, 160, 255))
+
+
+def apprentice_mage():
+    """견습 마법사 (16x16): 파란 고깔모자와 로브, 작은 지팡이"""
+    img = canvas(16)
+    robe, robe_d = _c(60, 90, 180), _c(40, 60, 130)
+    put(img, [(7, 0), (7, 1), (8, 1), (6, 2), (7, 2), (8, 2), (9, 2)], robe_d)
+    rect(img, 4, 3, 11, 3, robe_d)
+    rect(img, 5, 4, 10, 7, PAL["s"])
+    put(img, [(6, 5), (9, 5)], _c(30, 30, 50))
+    for y in range(8, 16):
+        half = 3 + (y - 8) * 0.35
+        for x in range(int(7.5 - half), int(7.5 + half) + 1):
+            img.putpixel((x, y), robe if (x + y) % 4 else robe_d)
+    rect(img, 13, 4, 13, 14, _c(140, 100, 60))
+    put(img, [(13, 3), (12, 3), (14, 3), (13, 2)], _c(150, 220, 255))
+    return outline(img)
+
+
+def magic_armor():
+    """마력 갑옷 (18x18): 속이 빈 채 푸른 마력으로 움직이는 갑옷, 큰 방패"""
+    img = canvas(18)
+    steel, steel_d, glow = _c(160, 168, 186), _c(100, 108, 128), _c(120, 180, 255)
+    rect(img, 5, 1, 12, 6, steel)
+    rect(img, 6, 3, 11, 3, _c(20, 20, 30))
+    put(img, [(7, 3), (10, 3)], glow)
+    rect(img, 4, 7, 13, 13, steel)
+    rect(img, 4, 7, 13, 8, steel_d)
+    put(img, [(8, 10), (9, 10), (8, 11), (9, 11)], glow)
+    rect(img, 5, 14, 7, 17, steel_d)
+    rect(img, 10, 14, 12, 17, steel_d)
+    rect(img, 13, 6, 17, 15, _c(90, 70, 140))
+    rect(img, 15, 8, 15, 13, glow)
+    rect(img, 1, 7, 3, 12, steel_d)
+    return outline(img)
+
+
+def grimoire():
+    """날아다니는 마도서 (16x14): 펼쳐진 책, 빛나는 룬"""
+    img = canvas(16, 14)
+    cover, page = _c(110, 40, 60), _c(240, 230, 200)
+    rect(img, 1, 3, 7, 11, cover)
+    rect(img, 8, 3, 14, 11, cover)
+    rect(img, 2, 4, 7, 10, page)
+    rect(img, 8, 4, 13, 10, page)
+    for y in (5, 7, 9):
+        put(img, [(3, y), (4, y), (5, y), (10, y), (11, y), (12, y)], _c(150, 90, 220))
+    put(img, [(7, 2), (8, 2), (7, 12), (8, 12)], _c(230, 200, 80))
+    return outline(img)
+
+
+def archmage():
+    """대마법사 (32x46): 별무늬 남보라 로브, 긴 흰 수염, 끝에 마력 구슬이 달린 거대한 지팡이"""
+    img = canvas(32, 46)
+    robe, robe_d, star = _c(56, 46, 120), _c(34, 28, 80), _c(255, 220, 110)
+    beard, skin = _c(236, 236, 240), _c(230, 196, 160)
+    put(img, [(13, 0), (13, 1), (14, 1), (12, 2), (13, 2), (14, 2)], robe_d)  # 고깔모자
+    for y in range(3, 10):
+        half = 1 + (y - 3) * 0.9
+        rect(img, int(13.5 - half), y, int(13.5 + half), y, robe if y < 9 else robe_d)
+    rect(img, 9, 10, 18, 14, skin)
+    put(img, [(11, 12), (16, 12)], _c(80, 160, 255))
+    for y in range(14, 46):                          # 로브
+        half = 6 + (y - 14) * 0.22
+        for x in range(int(13.5 - half), int(13.5 + half) + 1):
+            img.putpixel((x, y), robe if (x * 3 + y) % 7 else robe_d)
+    for y in range(14, 30):                          # 긴 수염
+        w = max(1, 5 - (y - 14) // 3)
+        rect(img, 13 - w, y, 14 + w, y, beard)
+    for x, y in ((8, 34), (18, 38), (10, 42), (17, 28), (7, 25)):  # 별무늬
+        put(img, [(x, y), (x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)], star)
+    rect(img, 26, 6, 27, 45, _c(120, 84, 50))        # 지팡이
+    put(img, [(25, 6), (28, 6), (24, 4), (29, 4)], _c(200, 170, 90))
+    ellipse(img, 26.5, 3, 3, 3, _c(140, 220, 255))   # 마력 구슬
+    put(img, [(25, 2)], _c(255, 255, 255))
+    rect(img, 20, 22, 25, 24, robe)                  # 지팡이를 쥔 팔
+    rect(img, 24, 22, 26, 25, skin)
+    return outline(img)
+
+
+def floor_theater():
+    """인형 극장: 낡은 무대 마루 + 붉은 카펫 자국"""
+    img = _floor(151, (120, 84, 60), 5, [(6, (96, 66, 46, 255), 3), (4, (150, 60, 60, 255), 2)])
+    for y in (0, 8, 16, 24):
+        for x in range(32):
+            img.putpixel((x, y), (80, 54, 38, 255))
+    for y in range(32):
+        img.putpixel(((y // 8) * 11 % 32, y), (86, 58, 40, 255))
+    return img
+
+
+def floor_storm():
+    """폭풍의 바다: 젖은 검푸른 바위 + 물웅덩이"""
+    img = _floor(161, (52, 62, 78), 5, [(6, (70, 90, 110, 255), 3), (6, (36, 44, 56, 255), 2), (3, (120, 150, 180, 255), 1)])
+    return img
+
+
+def floor_arcane():
+    """대마법사의 탑: 짙은 남색 석판 + 금빛 룬"""
+    img = _floor(171, (46, 44, 76), 4, [(5, (60, 56, 96, 255), 3), (4, (34, 32, 58, 255), 2)])
+    for i in range(32):
+        img.putpixel((i, 0), (30, 28, 50, 255))
+        img.putpixel((0, i), (30, 28, 50, 255))
+    for a in range(0, 360, 20):
+        r = math.radians(a)
+        img.putpixel((int(16 + 8 * math.cos(r)), int(16 + 8 * math.sin(r))), (200, 170, 90, 255))
+    for p in ((16, 9), (16, 23), (9, 16), (23, 16)):
+        img.putpixel(p, (230, 200, 110, 255))
+    return img
+
+
+def save_late3_sprites():
+    for name, painter in (("puppet_soldier", puppet_soldier), ("jester_doll", jester_doll), ("thread_spider", thread_spider),
+                          ("marionette", marionette), ("sea_serpent", sea_serpent), ("storm_spirit", storm_spirit),
+                          ("frost_spirit", frost_spirit), ("leviathan", leviathan), ("apprentice_mage", apprentice_mage),
+                          ("magic_armor", magic_armor), ("grimoire", grimoire), ("archmage", archmage)):
+        save(painter(), "characters", f"{name}.png")
+    save(switch_plate(False), "world", "switch_off.png")
+    save(switch_plate(True), "world", "switch_on.png")
+    save(icicle(), "projectiles", "icicle.png")
+    save(orb((255, 255, 220), (255, 200, 60)), "projectiles", "spark_orb.png")
+    save(orb((240, 230, 255), (170, 90, 255)), "projectiles", "arcane_orb.png")
+    save(floor_theater(), "tiles", "floor_theater.png")
+    save(floor_storm(), "tiles", "floor_storm.png")
+    save(floor_arcane(), "tiles", "floor_arcane.png")
 
 
 def main():
@@ -2753,6 +3050,7 @@ def main():
     save(rug(), "tiles", "rug.png")
     save_late_sprites()
     save_late2_sprites()
+    save_late3_sprites()
 
     save(bar_under(), "ui", "bar_under.png")
     save(bar((200, 50, 70)), "ui", "bar_hp.png")

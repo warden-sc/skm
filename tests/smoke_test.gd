@@ -88,7 +88,7 @@ func _item_pickups(entities: Node) -> Array:
 	return entities.get_children().filter(func(n: Node) -> bool: return n is Pickup and (n as Pickup).kind == Pickup.Kind.ITEM)
 
 
-## 11~17스테이지: 잡몹 · 보스 패턴 · 보스 기믹. 17스테이지 보스(마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
+## 11~20스테이지: 잡몹 · 보스 패턴 · 보스 기믹. 20스테이지 보스(마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
 func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 	var player := main.get_node("Entities/Player") as Player
 	var pool := main.get_node("ProjectilePool") as ProjectilePool
@@ -105,11 +105,14 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 		15: ["거울 망령", "그림자 검사", "파편 정령"],
 		16: ["하피", "바람 정령", "거대 독수리"],
 		17: ["언덕 거인", "외눈 거인", "사슬 묶인 거인"],
+		18: ["인형 병사", "광대 인형", "실 거미"],
+		19: ["바다뱀", "폭풍 정령", "서리 정령"],
+		20: ["견습 마법사", "마력 갑옷", "날아다니는 마도서"],
 	}
-	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁", 16: "바람의 봉우리", 17: "거인의 감옥"}
-	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "그리핀", 17: "티탄"}
+	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁", 16: "바람의 봉우리", 17: "거인의 감옥", 18: "인형 극장", 19: "폭풍의 바다", 20: "대마법사의 탑"}
+	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "그리핀", 17: "티탄", 18: "꼭두각시 마리오네트", 19: "폭풍의 지배자 레비아탄", 20: "대마법사"}
 	var final_boss: Enemy = null
-	for n in range(first, 18):
+	for n in range(first, 21):
 		next_portal.interacted.emit()
 		await _frames(3)
 		print("[%d스테이지 - %s]" % [n, stage_names[n]])
@@ -406,8 +409,142 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 					if _count_nodes_of("AoeStrike") > 0:
 						seen17["aoe"] = true)
 				_check(seen17["aoe"] and titan._throws > throws_before, "티탄 패턴: 내려찍기 · 바위 던지기 · 쇠사슬 휘두르기 · 구속구 내리치기")
-				final_boss = titan
-		if n < 17:
+			18:
+				var mario := boss as BossMarionette
+				await _survive(5)
+				var switches := mario.get_switches()
+				var sides_ok := switches.size() == 4
+				var arena18 := stage.boss_room.get_arena_rect()
+				for sw in switches:
+					var near_edge := minf(minf(sw.global_position.x - arena18.position.x, arena18.end.x - sw.global_position.x), minf(sw.global_position.y - arena18.position.y, arena18.end.y - sw.global_position.y))
+					if near_edge > 40.0:
+						sides_ok = false
+				_check(sides_ok, "[기믹] 마리오네트 보스방 가장자리 네 곳에 스위치")
+				mario.set_physics_process(false)
+				player.global_position = boss_center + Vector2(0, 100)
+				mario.begin_control()
+				await _frames(2)
+				_check(player.is_puppeted() and mario.get_threads() == 4 and is_equal_approx(player.get_puppet_strength(), 0.9) and not player.can_attack() and not player.can_guard() and _gm.player_status.contains("꼭두각시"), "[기믹] 꼭두각시 조종: 실 4가닥, 공격·가드 불가 (%s)" % _gm.player_status)
+				var d0 := player.global_position.distance_to(mario.global_position)
+				await _frames(40)
+				_check(player.global_position.distance_to(mario.global_position) < d0 - 10.0, "조종당하면 마리오네트 쪽으로 끌려감")
+				var strengths: Array[float] = []
+				for i in 3:
+					player.global_position = switches[i].global_position
+					await _frames(3)
+					strengths.append(player.get_puppet_strength())
+				_check(mario.get_threads() == 1 and strengths[0] > strengths[1] and strengths[1] > strengths[2] and player.is_puppeted(), "스위치를 밟을 때마다 실이 끊어지며 구속력 약화 (%s)" % str(strengths))
+				player.global_position = switches[3].global_position
+				await _frames(3)
+				_check(not player.is_puppeted() and not mario.is_controlling() and mario.get_release_count() == 1 and mario.is_stunned() and player.can_attack(), "스위치 4개를 모두 밟으면 구속에서 해방 + 마리오네트 휘청")
+				mario._stun_left = 0.0
+				mario.set_physics_process(true)
+				mario.begin_control()
+				mario._control_left = 0.02
+				await _survive(5)
+				_check(not player.is_puppeted(), "조종 시간이 다 되면 저절로 풀림")
+				var seen18 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen18["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen18["shot"] = true)
+				_check(seen18["aoe"] and seen18["shot"], "마리오네트 패턴: 실 베기 · 인형의 춤 · 바늘 · 소환")
+			19:
+				var levi := boss as BossLeviathan
+				await _survive(5)
+				var field := levi.get_field()
+				_check(field != null, "[기믹] 레비아탄 보스방이 상단(구름) / 하단(폭풍우)으로 나뉨")
+				if field != null:
+					levi.set_physics_process(false)
+					for e in get_tree().get_nodes_in_group(&"enemies"):
+						if not (e as Enemy).is_boss:
+							(e as Enemy).despawn()
+					stage._release_projectiles()
+					var upper_spot := Vector2(field.area.get_center().x - 60.0, field.get_divider_y() - 50.0)
+					player.global_position = upper_spot
+					levi._zone_pending = false
+					levi._next_zone = StormField.Zone.UPPER
+					var hits0 := levi.get_zone_hit_count()
+					levi.begin_zone_attack()
+					_check(field.get_warn_zone() == StormField.Zone.UPPER and levi.get_status_text().contains("상단"), "상단 공격 예고 (%s)" % levi.get_status_text())
+					await _survive(int(levi.zone_warn * 60) + 6, func() -> void:
+						player.global_position = upper_spot)
+					_check(levi.get_zone_hit_count() == hits0 + 1, "상단 공격 때 상단에 있으면 고드름에 맞음")
+					_check(levi.get_next_zone() == StormField.Zone.LOWER, "상단 다음은 하단 공격 (번갈아)")
+					player.velocity = Vector2.ZERO
+					levi.begin_zone_attack()
+					await _survive(int(levi.zone_warn * 60) + 6, func() -> void:
+						player.global_position = upper_spot)
+					_check(levi.get_zone_hit_count() == hits0 + 1 and levi.get_zone_attack_count() >= 2, "하단 공격 때는 상단으로 피하면 안전")
+					var lower_spot := Vector2(field.area.get_center().x + 60.0, field.get_divider_y() + 50.0)
+					levi.begin_zone_attack()
+					await _survive(int(levi.zone_warn * 60) + 6, func() -> void:
+						player.global_position = lower_spot)
+					_check(levi.get_zone_hit_count() == hits0 + 1, "상단 공격 때는 하단으로 피하면 안전")
+					levi.set_physics_process(true)
+				var b0 := levi.get_breath_count()
+				levi.breath()
+				var breath_shot := {"shot": false}
+				await _survive(60, func() -> void:
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							breath_shot["shot"] = true)
+				_check(levi.get_breath_count() == b0 + 1 and breath_shot["shot"], "[기믹] 상단·하단 상관없이 브레스")
+				var zones_before := levi.get_zone_attack_count()
+				var seen19 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen19["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen19["shot"] = true)
+				_check(seen19["aoe"] and seen19["shot"] and levi.get_zone_attack_count() >= zones_before + 1, "레비아탄 패턴: 지대 공격 반복 · 꼬리 · 물보라 · 브레스")
+			20:
+				var mage := boss as BossArchmage
+				await _survive(5)
+				mage.begin_chant()
+				_check(mage.is_chanting() and mage.get_safe_spot() != Vector2.INF, "[기믹] 대마법 영창: 메테오 스웜 + 안전지대 표시")
+				mage.take_damage(roundi(mage.get_interrupt_threshold() / 0.8) + 40, Vector2.ZERO, false, 9999)
+				_check(not mage.is_chanting() and mage.get_interrupt_count() == 1 and mage.is_backlashed() and mage.is_stunned(), "영창 중 일정 피해를 주면 영창이 끊기고 마력 역류 (기절)")
+				var hp_b := mage.hp
+				mage.take_damage(1000, Vector2.ZERO, false, 9999)
+				_check(hp_b - mage.hp == 1500, "마력 역류 중에는 받는 피해 1.5배 (%d)" % (hp_b - mage.hp))
+				mage._backlash_left = 0.0
+				mage._stun_left = 0.0
+				mage.set_physics_process(false)
+				mage.begin_chant()
+				var safe := mage.get_safe_spot()
+				player.global_position = safe
+				_gm.hp = _gm.max_hp
+				var hp_safe: int = _gm.hp
+				mage._chant_left = 0.0001
+				mage.set_physics_process(true)
+				await _frames(3)
+				mage.set_physics_process(false)
+				_check(mage.get_meteor_count() == 1 and not mage.did_meteor_hit() and _gm.hp >= hp_safe - 1, "영창을 못 끊어도 안전지대 안에 있으면 메테오를 피함")
+				mage.begin_chant()
+				safe = mage.get_safe_spot()
+				var arena20 := stage.boss_room.get_arena_rect()
+				player.global_position = (safe + Vector2(mage.safe_radius + 50.0, 0.0) if safe.x < arena20.get_center().x else safe - Vector2(mage.safe_radius + 50.0, 0.0))
+				_gm.hp = _gm.max_hp
+				var hp_out: int = _gm.hp
+				mage._chant_left = 0.0001
+				mage.set_physics_process(true)
+				await _frames(3)
+				_check(mage.get_meteor_count() == 2 and mage.did_meteor_hit() and hp_out - _gm.hp >= roundi(_gm.max_hp * mage.meteor_ratio) - 2, "안전지대 밖에서 메테오를 맞으면 큰 피해 (-%d)" % (hp_out - _gm.hp))
+				_gm.hp = _gm.max_hp
+				var seen20 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen20["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen20["shot"] = true)
+				_check(seen20["aoe"] and seen20["shot"], "대마법사 패턴: 화염 · 서리 · 낙뢰 · 비전 · 순간이동")
+				final_boss = mage
+		if n < 20:
 			boss.take_damage(999999, Vector2.ZERO, false, 9999)
 			await _frames(4)
 			_check(not _gm.is_game_cleared and next_portal.enabled, "%d스테이지 보스 토벌 → 다음 스테이지 텔레포트" % n)
@@ -1437,18 +1574,18 @@ func _run() -> void:
 
 	final_boss = await _test_late_stages(main)
 
-	print("[엔딩 - 17스테이지 보스 토벌]")
+	print("[엔딩 - 20스테이지 보스 토벌]")
 	var kills_before: int = _gm.total_kills
 	stage.ending_delay = 600.0  # 아래 테스트가 끝난 뒤 엔딩 화면을 따로 검사
 	if final_boss != null:
 		final_boss.take_damage(999999, Vector2.ZERO, false, 9999)
 	await _frames(4)
-	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(17스테이지) 보스 토벌 → 모든 스테이지 클리어")
+	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(20스테이지) 보스 토벌 → 모든 스테이지 클리어")
 	_check(_gm.total_kills > kills_before and _gm.play_time > 0.0, "엔딩 기록: 처치 %d마리 · 플레이 %s" % [_gm.total_kills, _gm.get_play_time_text()])
 	_check(stage.get_chest() == null and not next_portal.enabled and get_tree().get_nodes_in_group(&"enemies").is_empty(), "마지막 스테이지: 상자 / 텔레포트 없음, 남은 졸개 정리")
 	stage.go_to_next_stage()
 	await _frames(3)
-	_check(_gm.stage == 17, "17스테이지 이후 반복 스테이지 없음")
+	_check(_gm.stage == 20, "20스테이지 이후 반복 스테이지 없음")
 
 	print("[난이도 배율]")
 	_gm.difficulty = _gm.Difficulty.VERY_HARD
