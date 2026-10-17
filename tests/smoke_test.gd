@@ -88,7 +88,7 @@ func _item_pickups(entities: Node) -> Array:
 	return entities.get_children().filter(func(n: Node) -> bool: return n is Pickup and (n as Pickup).kind == Pickup.Kind.ITEM)
 
 
-## 11~22스테이지: 잡몹 · 보스 패턴 · 보스 기믹. 22스테이지 보스(마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
+## 11~24스테이지: 잡몹 · 보스 패턴 · 보스 기믹. 24스테이지 보스(마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
 func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 	var player := main.get_node("Entities/Player") as Player
 	var pool := main.get_node("ProjectilePool") as ProjectilePool
@@ -110,11 +110,13 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 		20: ["견습 마법사", "마력 갑옷", "날아다니는 마도서"],
 		21: ["태엽 거미", "증기 골렘", "기계 사수"],
 		22: ["사막 도적", "사막 독사", "미라"],
+		23: ["하위 뱀파이어", "흡혈 박쥐", "구울"],
+		24: ["독 도마뱀", "독두꺼비", "맹독 거미"],
 	}
-	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁", 16: "바람의 봉우리", 17: "거인의 감옥", 18: "인형 극장", 19: "폭풍의 바다", 20: "대마법사의 탑", 21: "기계 신전", 22: "모래 폭풍의 사막"}
-	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "천공의 수호자 그리핀", 17: "추방된 자 티탄", 18: "꼭두각시 마리오네트", 19: "폭풍의 지배자 레비아탄", 20: "대마법사 아르카나", 21: "기계의 정점 테모스", 22: "사막의 암살자 스콜피언"}
+	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁", 16: "바람의 봉우리", 17: "거인의 감옥", 18: "인형 극장", 19: "폭풍의 바다", 20: "대마법사의 탑", 21: "기계 신전", 22: "모래 폭풍의 사막", 23: "피의 성", 24: "맹독의 늪"}
+	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "천공의 수호자 그리핀", 17: "추방된 자 티탄", 18: "꼭두각시 마리오네트", 19: "폭풍의 지배자 레비아탄", 20: "대마법사 아르카나", 21: "기계의 정점 테모스", 22: "사막의 암살자 스콜피언", 23: "피의 군주 벨", 24: "맹독의 패주 바실리스크"}
 	var final_boss: Enemy = null
-	for n in range(first, 23):
+	for n in range(first, 25):
 		next_portal.interacted.emit()
 		await _frames(3)
 		print("[%d스테이지 - %s]" % [n, stage_names[n]])
@@ -642,8 +644,100 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 				if scorp.is_burrowed():
 					scorp._burrow_left = 0.01
 					await _survive(3)
-				final_boss = scorp
-		if n < 22:
+				scorp._burrow_cooldown = 999.0
+			23:
+				var bel := boss as BossVampire
+				await _survive(5)
+				_check(bel.get_node("DarkMist") != null, "피의 군주 벨: 검은 안개를 두름")
+				for e in get_tree().get_nodes_in_group(&"enemies"):
+					if not (e as Enemy).is_boss:
+						(e as Enemy).despawn()
+				bel.take_damage(6000, Vector2.ZERO, false, 9999)
+				var hp_bel := bel.hp
+				var near := bel.global_position + Vector2(0, 70)
+				player.global_position = near
+				bel.begin_drain()
+				_check(bel.is_draining(), "[기믹] 흡혈: 벨과 플레이어가 핏줄기로 이어짐")
+				await _survive(100, func() -> void:
+					player.global_position = near)
+				_check(bel.get_drained_total() > 0 and bel.get_healed_total() > 0 and bel.hp > hp_bel, "흡혈: 플레이어 체력을 빨아 벨이 회복 (-%d / +%d)" % [bel.get_drained_total(), bel.get_healed_total()])
+				await _survive(120)
+				var far := bel.global_position + Vector2(0, bel.drain_range + 60.0)
+				var arena23 := stage.boss_room.get_arena_rect()
+				if not arena23.has_point(far):
+					far = bel.global_position + Vector2(bel.drain_range + 60.0 if bel.global_position.x < arena23.get_center().x else -bel.drain_range - 60.0, 0.0)
+				player.global_position = bel.global_position + Vector2(0, 60)
+				bel._drain_left = 0.0
+				bel.begin_drain()
+				var breaks0 := bel.get_break_count()
+				player.global_position = far
+				await _survive(5, func() -> void:
+					player.global_position = far)
+				_check(bel.get_break_count() == breaks0 + 1 and not bel.is_draining(), "멀리 떨어지면 핏줄기가 끊어짐 (거리 %.0f)" % bel.global_position.distance_to(player.global_position))
+				bel._drain_cooldown = 3.0
+				var drains0 := bel.get_drain_count()
+				var seen23 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen23["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen23["shot"] = true)
+				_check(seen23["aoe"] and seen23["shot"] and bel.get_drain_count() > drains0, "벨 패턴: 박쥐 떼 · 핏빛 낫 · 안개화 · 피의 비 · 흡혈 반복")
+			24:
+				var basil := boss as BossBasilisk
+				await _survive(5)
+				var fog := basil.get_fog()
+				_check(basil.has_gland() and basil.gland.max_hp == roundi(basil.max_hp * basil.gland_hp_ratio) and fog != null, "[기믹] 바실리스크 머리의 독샘 (체력 따로) + 독안개 시작")
+				if fog != null:
+					var cov0 := fog.get_coverage()
+					fog.advance(basil.fog_time * 0.6)
+					await _frames(2)
+					_check(fog.get_coverage() > cov0 + 0.4, "독안개가 점점 보스방을 덮어감 (%.0f%% → %.0f%%)" % [cov0 * 100.0, fog.get_coverage() * 100.0])
+					var arena24 := stage.boss_room.get_arena_rect()
+					var corner := arena24.position + Vector2(10, 10)
+					await _survive(70, func() -> void:
+						player.global_position = corner)
+					_check(fog.is_in_fog(corner) and player.is_burning() and _gm.player_status.contains("독") and is_equal_approx(_gm.potion_heal_multiplier, 0.5), "독안개 속에서는 독 + 포션 회복 -50%% (%s)" % _gm.player_status)
+					_gm.potions[&"small_potion"] = 3
+					_gm.hp = roundi(_gm.max_hp * 0.3)
+					var hp_p: int = _gm.hp
+					_gm.use_potion(ItemDB.get_potion(&"small_potion"))
+					_check(_gm.hp - hp_p == roundi(ItemDB.get_potion(&"small_potion").get_heal(_gm.max_hp) * 0.5), "독에 걸리면 포션 회복량 절반 (+%d)" % (_gm.hp - hp_p))
+					fog.advance(basil.fog_time)
+					await _frames(2)
+					_check(fog.get_coverage() >= 0.99, "끝내 보스방 전체가 독안개로 덮임")
+				var b0 := basil.get_breath_count()
+				basil.breath()
+				var poison_shot := {"shot": false}
+				await _survive(30, func() -> void:
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							poison_shot["shot"] = true)
+				_check(basil.get_breath_count() == b0 + 1 and poison_shot["shot"], "[기믹] 독샘이 있으면 독 브레스")
+				basil.set_physics_process(false)
+				var spot24 := boss_center + Vector2(0, 90)
+				player.global_position = spot24
+				await _frames(2)
+				basil.gaze()
+				await _survive(60, func() -> void:
+					player.global_position = spot24)
+				_check(basil.get_petrify_count() == 1 and player.is_charmed() and _gm.player_status.contains("석화"), "석화의 눈에 맞으면 석화 (조작 불가)")
+				basil.set_physics_process(true)
+				basil.gland.take_damage(999999)
+				await _frames(3)
+				_check(basil.is_gland_broken() and fog != null and is_instance_valid(fog) and fog.is_receding(), "[기믹] 독샘을 부수면 독안개가 걷힘")
+				var b1 := basil.get_breath_count()
+				basil.breath()
+				await _survive(100)
+				_check(basil.get_breath_count() == b1 and basil.get_fog() == null, "독샘이 없으면 독 브레스도 못 씀, 안개는 사라짐")
+				var seen24 := {"aoe": false}
+				await _survive(600, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen24["aoe"] = true)
+				_check(seen24["aoe"], "바실리스크 패턴: 석화의 눈 · 꼬리 휩쓸기 · 독니 돌진 · 소환")
+				final_boss = basil
+		if n < 24:
 			boss.take_damage(999999, Vector2.ZERO, false, 9999)
 			await _frames(4)
 			_check(not _gm.is_game_cleared and next_portal.enabled, "%d스테이지 보스 토벌 → 다음 스테이지 텔레포트" % n)
@@ -1673,18 +1767,18 @@ func _run() -> void:
 
 	final_boss = await _test_late_stages(main)
 
-	print("[엔딩 - 22스테이지 보스 토벌]")
+	print("[엔딩 - 24스테이지 보스 토벌]")
 	var kills_before: int = _gm.total_kills
 	stage.ending_delay = 600.0  # 아래 테스트가 끝난 뒤 엔딩 화면을 따로 검사
 	if final_boss != null:
 		final_boss.take_damage(999999, Vector2.ZERO, false, 9999)
 	await _frames(4)
-	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(22스테이지) 보스 토벌 → 모든 스테이지 클리어")
+	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(24스테이지) 보스 토벌 → 모든 스테이지 클리어")
 	_check(_gm.total_kills > kills_before and _gm.play_time > 0.0, "엔딩 기록: 처치 %d마리 · 플레이 %s" % [_gm.total_kills, _gm.get_play_time_text()])
 	_check(stage.get_chest() == null and not next_portal.enabled and get_tree().get_nodes_in_group(&"enemies").is_empty(), "마지막 스테이지: 상자 / 텔레포트 없음, 남은 졸개 정리")
 	stage.go_to_next_stage()
 	await _frames(3)
-	_check(_gm.stage == 22, "22스테이지 이후 반복 스테이지 없음")
+	_check(_gm.stage == 24, "24스테이지 이후 반복 스테이지 없음")
 
 	print("[난이도 배율]")
 	_gm.difficulty = _gm.Difficulty.VERY_HARD

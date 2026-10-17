@@ -3182,6 +3182,197 @@ def save_late5_sprites():
     save(floor_desert(), "tiles", "floor_desert.png")
 
 
+# ---------------------------------------------------------------- 23~24스테이지
+def vampire_lord():
+    """피의 군주 벨 (30x42): 창백한 얼굴, 뒤로 넘긴 흑발, 붉은 눈, 높이 선 깃의 검붉은 망토"""
+    img = canvas(30, 42)
+    cape, cape_in, suit = _c(40, 12, 20), _c(140, 20, 40), _c(30, 26, 36)
+    skin, hair = _c(214, 206, 214), _c(20, 16, 24)
+    for y in range(8, 41):                           # 망토 (바깥 검정, 안감 진홍)
+        half = 5 + (y - 8) * 0.32
+        for x in range(int(14.5 - half), int(14.5 + half) + 1):
+            edge = abs(x - 14.5) > half - 2
+            img.putpixel((x, y), cape if edge else (cape_in if y > 16 and (x + y) % 9 else cape))
+    for side in (-1, 1):                             # 높이 선 깃
+        for i in range(6):
+            put(img, [(14 + side * (5 + i // 2), 3 + i), (14 + side * (6 + i // 2), 4 + i)], cape)
+    rect(img, 11, 15, 18, 36, suit)                  # 몸
+    rect(img, 13, 15, 16, 18, _c(230, 225, 230))     # 셔츠 깃
+    put(img, [(14, 17), (15, 17)], _c(200, 20, 40))  # 루비 브로치
+    rect(img, 11, 4, 18, 13, skin)                   # 얼굴
+    rect(img, 10, 2, 19, 5, hair)                    # 뒤로 넘긴 머리
+    put(img, [(10, 6), (19, 6), (14, 6), (15, 6), (14, 7)], hair)
+    put(img, [(12, 9), (17, 9)], _c(255, 30, 50))    # 붉은 눈
+    put(img, [(13, 12), (16, 12)], _c(250, 250, 250))  # 송곳니
+    rect(img, 13, 11, 16, 11, _c(120, 20, 40))
+    rect(img, 12, 37, 13, 41, suit)
+    rect(img, 16, 37, 17, 41, suit)
+    return outline(img, (8, 4, 8, 255))
+
+
+def blood_bat():
+    """흡혈 박쥐 탄 (10x8)"""
+    img = canvas(10, 8)
+    wing = _c(60, 20, 30)
+    put(img, [(0, 2), (1, 1), (2, 2), (3, 3), (8, 1), (9, 2), (7, 2), (6, 3)], wing)
+    rect(img, 1, 3, 8, 4, wing)
+    ellipse(img, 4.5, 4, 1.6, 1.6, _c(90, 30, 40))
+    put(img, [(4, 3), (5, 3)], _c(255, 40, 50))
+    return outline(img, (20, 6, 10, 255))
+
+
+def lesser_vampire():
+    """하위 뱀파이어 (16x16): 창백한 얼굴, 붉은 눈, 짧은 망토"""
+    img = canvas(16)
+    cape, skin = _c(60, 16, 28), _c(200, 196, 206)
+    rect(img, 5, 1, 10, 6, skin)
+    rect(img, 5, 0, 10, 1, _c(30, 24, 30))
+    put(img, [(6, 3), (9, 3)], _c(255, 40, 50))
+    put(img, [(7, 5), (8, 5)], _c(240, 240, 240))
+    for y in range(7, 14):
+        half = 3 + (y - 7) * 0.5
+        rect(img, int(7.5 - half), y, int(7.5 + half), y, cape)
+    rect(img, 6, 7, 9, 12, _c(36, 30, 40))
+    rect(img, 5, 14, 6, 15, _c(30, 24, 30))
+    rect(img, 9, 14, 10, 15, _c(30, 24, 30))
+    return outline(img, (8, 4, 8, 255))
+
+
+def vampire_bat():
+    """흡혈 박쥐 (16x12)"""
+    img = canvas(16, 12)
+    wing, body = _c(56, 30, 40), _c(80, 44, 56)
+    for i in range(6):
+        rect(img, i, 3 + i // 2, i, 7 - i // 3, wing)
+        rect(img, 15 - i, 3 + i // 2, 15 - i, 7 - i // 3, wing)
+    ellipse(img, 7.5, 6, 2.5, 3, body)
+    put(img, [(6, 1), (9, 1)], body)
+    put(img, [(6, 5), (9, 5)], _c(255, 50, 60))
+    return outline(img, (16, 8, 12, 255))
+
+
+def ghoul():
+    """구울 (16x16): 회녹색 피부, 구부정한 몸, 긴 손톱"""
+    img = canvas(16)
+    skin, skin_d = _c(120, 140, 110), _c(80, 96, 74)
+    rect(img, 4, 2, 9, 7, skin)
+    put(img, [(5, 4), (8, 4)], _c(255, 230, 120))
+    rect(img, 5, 6, 8, 6, _c(60, 20, 20))
+    rect(img, 4, 8, 11, 12, skin_d)
+    rect(img, 11, 7, 13, 10, skin)
+    put(img, [(14, 10), (14, 11), (13, 11)], _c(230, 230, 220))
+    rect(img, 1, 8, 3, 11, skin)
+    rect(img, 5, 13, 6, 15, skin_d)
+    rect(img, 9, 13, 10, 15, skin_d)
+    return outline(img)
+
+
+def basilisk():
+    """맹독의 패주 바실리스크 (60x44, 오른쪽을 봄): 왕관 같은 볏의 거대 독룡, 노란 눈, 머리에 독샘 자리 (독샘은 따로)"""
+    img = canvas(60, 44)
+    sc, sc_d, belly = _c(70, 110, 60), _c(40, 70, 36), _c(170, 180, 110)
+    for i in range(40):                              # 똬리 튼 몸
+        t = i / 39.0
+        x = 18 + i
+        y = 34 - int(round(6 * math.sin(t * math.pi * 1.5)))
+        rect(img, x - 1, y - 4 + (i // 12), x + 1, y + 3, sc if i % 5 else sc_d)
+        put(img, [(x, y + 3)], belly)
+    for i in range(5):                               # 가늘어지는 꼬리 끝
+        put(img, [(58, 34 - i), (59, 33 - i)], sc_d)
+    for i in range(16):                              # 치켜든 목
+        x = 16 + int(i * 0.3)
+        y = 33 - i
+        rect(img, x - 4, y, x + 3, y, sc)
+        put(img, [(x - 4, y)], belly)
+    ellipse(img, 14, 12, 10, 7, sc)                  # 머리
+    rect(img, 2, 13, 10, 17, sc)                     # 주둥이
+    put(img, [(2, 17), (4, 17), (6, 17), (8, 17)], _c(240, 240, 220))
+    ellipse(img, 12, 10, 2.5, 2, _c(255, 230, 40))   # 노란 눈
+    rect(img, 12, 9, 12, 11, _c(20, 20, 10))
+    for k, x in enumerate((10, 14, 18, 22)):         # 왕관 같은 볏
+        h = 6 - abs(k - 1.5) * 1.5
+        rect(img, x, int(5 - h), x + 1, 5, _c(200, 60, 60))
+    return outline(img).transpose(Image.FLIP_LEFT_RIGHT)
+
+
+def poison_gland():
+    """바실리스크의 독샘 (14x12): 머리 위에서 부글거리는 초록 독주머니 — 체력이 따로"""
+    img = canvas(14, 12)
+    ellipse(img, 6.5, 6, 6, 5, _c(90, 200, 70))
+    ellipse(img, 6.5, 7, 4, 3, _c(60, 160, 50))
+    put(img, [(4, 3), (5, 3), (9, 5)], _c(200, 255, 160))
+    put(img, [(3, 8), (8, 9), (10, 7)], _c(40, 110, 40))
+    return outline(img, (20, 50, 20, 255))
+
+
+def venom_lizard():
+    """독 도마뱀 (18x12): 초록 비늘에 보라 반점"""
+    img = canvas(18, 12)
+    sc, sc_d = _c(90, 150, 70), _c(56, 100, 44)
+    ellipse(img, 8, 7, 6, 3, sc)
+    ellipse(img, 14.5, 6, 3, 2, sc)
+    put(img, [(15, 5)], _c(255, 230, 60))
+    for x in range(0, 3):
+        put(img, [(x, 7 + (x % 2))], sc_d)
+    for x in (5, 11):
+        put(img, [(x, 10), (x - 1, 11), (x + 1, 11)], sc_d)
+    put(img, [(6, 6), (9, 7), (11, 5)], _c(160, 70, 190))
+    return outline(img)
+
+
+def poison_toad():
+    """독두꺼비 (16x14): 울퉁불퉁한 보랏빛 등, 노란 배"""
+    img = canvas(16, 14)
+    back, belly = _c(110, 70, 130), _c(220, 200, 90)
+    ellipse(img, 7.5, 8, 6.5, 5, back)
+    ellipse(img, 7.5, 10, 4.5, 2.5, belly)
+    put(img, [(4, 4), (11, 4)], _c(255, 220, 60))
+    put(img, [(5, 7), (9, 6), (11, 9), (3, 9)], _c(150, 220, 80))
+    put(img, [(1, 12), (2, 13), (13, 12), (14, 13)], back)
+    return outline(img)
+
+
+def venom_spider():
+    """맹독 거미 (16x14): 검은 몸에 초록 독 무늬"""
+    img = canvas(16, 14)
+    body = _c(30, 30, 34)
+    ellipse(img, 8, 8, 4, 3.5, body)
+    ellipse(img, 8, 4, 2.5, 2, body)
+    put(img, [(7, 7), (8, 8), (9, 7), (8, 9)], _c(120, 230, 80))
+    put(img, [(7, 4), (9, 4)], _c(255, 60, 60))
+    for side in (-1, 1):
+        for k in range(4):
+            put(img, [(8 + side * 4, 6 + k), (8 + side * 6, 5 + k * 2), (8 + side * 7, 7 + k * 2)], body)
+    return outline(img, (70, 100, 60, 255))
+
+
+def floor_blood():
+    """피의 성: 검붉은 석판 + 마른 핏자국"""
+    img = _floor(201, (52, 30, 36), 4, [(6, (70, 20, 30, 255), 3), (5, (36, 20, 26, 255), 2), (3, (110, 20, 30, 255), 1)])
+    for i in range(32):
+        img.putpixel((i, 0), (28, 14, 18, 255))
+        img.putpixel((0, i), (28, 14, 18, 255))
+    return img
+
+
+def floor_swamp():
+    """맹독의 늪: 질척한 녹갈색 진흙 + 독물 웅덩이"""
+    img = _floor(211, (60, 70, 44), 5, [(6, (70, 110, 50, 255), 3), (6, (44, 50, 32, 255), 2), (4, (120, 180, 80, 255), 1)])
+    return img
+
+
+def save_late6_sprites():
+    for name, painter in (("vampire_lord", vampire_lord), ("lesser_vampire", lesser_vampire), ("vampire_bat", vampire_bat), ("ghoul", ghoul),
+                          ("basilisk", basilisk), ("poison_gland", poison_gland), ("venom_lizard", venom_lizard),
+                          ("poison_toad", poison_toad), ("venom_spider", venom_spider)):
+        save(painter(), "characters", f"{name}.png")
+    save(blood_bat(), "projectiles", "blood_bat.png")
+    save(orb((255, 210, 210), (190, 20, 40)), "projectiles", "blood_orb.png")
+    save(orb((220, 255, 200), (70, 170, 50)), "projectiles", "poison_orb.png")
+    save(floor_blood(), "tiles", "floor_blood.png")
+    save(floor_swamp(), "tiles", "floor_swamp.png")
+
+
 def main():
     save(from_map(PLAYER), "characters", "player.png")
     save(from_map(SLIME), "characters", "slime.png")
@@ -3305,6 +3496,7 @@ def main():
     save_late3_sprites()
     save_late4_sprites()
     save_late5_sprites()
+    save_late6_sprites()
 
     save(bar_under(), "ui", "bar_under.png")
     save(bar((200, 50, 70)), "ui", "bar_hp.png")

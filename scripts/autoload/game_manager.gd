@@ -319,6 +319,8 @@ func tick_regen(delta: float) -> void:
 
 ## 지속 피해(화상 등) 배율: 방어력 15 에서 절반, 높을수록 덜 들어옴
 const DOT_DEFENSE_HALF := 15.0
+## 포션 회복량 배율 (독에 걸리면 Player 가 0.5 로 낮춤 — 바실리스크 기믹)
+var potion_heal_multiplier: float = 1.0
 
 
 func get_dot_multiplier() -> float:
@@ -596,7 +598,7 @@ func use_potion(potion: PotionData = null) -> bool:
 		show_notice("체력이 가득 차 있습니다", Color(0.8, 0.9, 1.0))
 		return false
 	var before := hp
-	heal_player(potion.get_heal(max_hp))
+	heal_player(maxi(1, roundi(potion.get_heal(max_hp) * potion_heal_multiplier)))
 	potions[potion.id] = get_potion_count(potion.id) - 1
 	potions_changed.emit()
 	potion_used.emit(potion, hp - before)

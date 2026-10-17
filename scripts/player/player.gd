@@ -107,6 +107,8 @@ var _floor_status: String = ""
 var _charm_left: float = 0.0
 var _charmer: Node2D
 var _charm_particles: CPUParticles2D
+## 조작 불가 상태 이름 (매혹 / 석화)
+var _charm_label: String = "매혹"
 ## 꼭두각시 조종 (18스테이지 마리오네트): 조종하는 적 / 조종 세기(0~1, 1이면 완전히 조종당함) / 남은 실 수
 var _puppet_master: Node2D
 var _puppet_strength: float = 0.0
@@ -250,14 +252,15 @@ func can_guard() -> bool:
 
 
 ## 매혹 (서큐버스): duration 동안 이동·공격·가드·대시·포션 불가. charmer 쪽으로 천천히 끌려감
-func apply_charm(duration: float, charmer: Node2D = null) -> void:
+func apply_charm(duration: float, charmer: Node2D = null, label: String = "매혹") -> void:
 	if _is_dead:
 		return
+	_charm_label = label
 	_charm_left = maxf(_charm_left, duration)
 	_charmer = charmer
 	if _windup_weapon != null:
 		end_windup(false)
-	FloatingText.spawn(self, global_position + Vector2(0, -20), "매혹!", Color(1.0, 0.45, 0.8), true)
+	FloatingText.spawn(self, global_position + Vector2(0, -20), label + "!", Color(0.75, 0.75, 0.7) if label == "석화" else Color(1.0, 0.45, 0.8), true)
 
 
 func is_charmed() -> bool:
@@ -534,17 +537,18 @@ func _update_status(delta: float) -> void:
 		_charm_particles.emitting = _charm_left > 0.0
 	if _burn_particles != null:
 		_burn_particles.emitting = _burn_left > 0.0
+	GameManager.potion_heal_multiplier = 0.5 if _burn_left > 0.0 and _burn_is_poison else 1.0
 	var parts := PackedStringArray()
 	if _execution_left >= 0.0:
 		parts.append("사형 선고 %.1f초! (대시로 회피)" % _execution_left)
 	elif death_marks > 0:
 		parts.append("죽음의 낙인 %d/%d" % [death_marks, DEATH_MARK_MAX])
 	if _charm_left > 0.0:
-		parts.append("매혹 %.1f초 (조작 불가)" % _charm_left)
+		parts.append("%s %.1f초 (조작 불가)" % [_charm_label, _charm_left])
 	if is_puppeted():
 		parts.append("꼭두각시: 남은 실 %d개 (구속력 %d%%) — 맵 가장자리 스위치를 밟아라" % [_puppet_threads, roundi(_puppet_strength * 100.0)])
 	if _burn_left > 0.0:
-		parts.append("%s %.1f초 (0.5초마다 -%d)" % ["독" if _burn_is_poison else "화상", _burn_left, get_burn_tick_damage()])
+		parts.append("%s %.1f초 (0.5초마다 -%d%s)" % ["독" if _burn_is_poison else "화상", _burn_left, get_burn_tick_damage(), " · 포션 회복 -50%" if _burn_is_poison else ""])
 	if _armor_break_left > 0.0:
 		parts.append("방어력 감소 -%d (%.1f초)" % [_armor_break_amount, _armor_break_left])
 	if _floor_status_left > 0.0:
@@ -701,7 +705,7 @@ func _update_visuals(delta: float) -> void:
 	elif _execution_left >= 0.0:
 		_body_sprite.modulate = Color(0.75, 0.5, 1.0) if int(_anim_time * 12.0) % 2 == 0 else Color(0.4, 0.3, 0.6)  # 사형 선고
 	elif _charm_left > 0.0:
-		_body_sprite.modulate = Color(1.0, 0.6, 0.9)  # 매혹
+		_body_sprite.modulate = Color(0.6, 0.6, 0.58) if _charm_label == "석화" else Color(1.0, 0.6, 0.9)  # 석화 / 매혹
 	elif _burn_left > 0.0:
 		_body_sprite.modulate = Color(0.7, 1.0, 0.55) if _burn_is_poison else Color(1.0, 0.7, 0.5)  # 독 / 화상
 	elif _floor_status_left > 0.0:
