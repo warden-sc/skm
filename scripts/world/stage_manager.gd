@@ -109,7 +109,9 @@ func _ready() -> void:
 	add_child(_ambient)
 	_setup_stage(GameManager.stage)
 	_arrive_at_camp()
-	_notice_later("STAGE %d 「%s」 — 상인에게서 장비를 갖추고 텔레포트[E]로 사냥터에 가세요" % [GameManager.stage, GameManager.stage_name], Color(0.6, 1.0, 0.7), 0.3)
+	# 문구는 띄우는 순간의 스테이지로 만듦 (그 사이 스테이지가 바뀌어도 맞는 번호가 나오게)
+	get_tree().create_timer(0.3, false).timeout.connect(func() -> void:
+		GameManager.show_notice("STAGE %d 「%s」 — 상인에게서 장비를 갖추고 텔레포트[E]로 사냥터에 가세요" % [GameManager.stage, GameManager.stage_name], Color(0.6, 1.0, 0.7)))
 
 
 func _process(delta: float) -> void:
