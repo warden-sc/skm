@@ -278,6 +278,7 @@ func can_guard() -> bool:
 
 
 ## 매혹 (서큐버스): duration 동안 이동·공격·가드·대시·포션 불가. charmer 쪽으로 천천히 끌려감
+## (바실리스크의 「석화」, 마르스의 「공포」도 같은 행동불능 — charmer 가 없으면 제자리)
 func apply_charm(duration: float, charmer: Node2D = null, label: String = "매혹") -> void:
 	if _is_dead:
 		return
@@ -286,7 +287,17 @@ func apply_charm(duration: float, charmer: Node2D = null, label: String = "매�
 	_charmer = charmer
 	if _windup_weapon != null:
 		end_windup(false)
-	FloatingText.spawn(self, global_position + Vector2(0, -20), label + "!", Color(0.75, 0.75, 0.7) if label == "석화" else Color(1.0, 0.45, 0.8), true)
+	var color := Color(1.0, 0.45, 0.8)
+	if label == "석화":
+		color = Color(0.75, 0.75, 0.7)
+	elif label == "공포":
+		color = Color(0.75, 0.3, 0.35)
+	FloatingText.spawn(self, global_position + Vector2(0, -20), label + "!", color, true)
+
+
+## 매혹·석화·공포를 바로 풀어 줌 (보스가 쓰러졌을 때 등)
+func release_charm() -> void:
+	_charm_left = 0.0
 
 
 func is_charmed() -> bool:
@@ -680,7 +691,7 @@ func _update_status(delta: float) -> void:
 	elif death_marks > 0:
 		parts.append("죽음의 낙인 %d/%d" % [death_marks, DEATH_MARK_MAX])
 	if _charm_left > 0.0:
-		parts.append("%s %.1f초 (조작 불가)" % [_charm_label, _charm_left])
+		parts.append("%s %.1f초 (%s)" % [_charm_label, _charm_left, "행동불능" if _charm_label == "공포" else "조작 불가"])
 	if is_puppeted():
 		parts.append("꼭두각시: 남은 실 %d개 (구속력 %d%%) — 맵 가장자리 스위치를 밟아라" % [_puppet_threads, roundi(_puppet_strength * 100.0)])
 	if _burn_left > 0.0:
@@ -856,7 +867,13 @@ func _update_visuals(delta: float) -> void:
 	elif _execution_left >= 0.0:
 		_body_sprite.modulate = Color(0.75, 0.5, 1.0) if int(_anim_time * 12.0) % 2 == 0 else Color(0.4, 0.3, 0.6)  # 사형 선고
 	elif _charm_left > 0.0:
-		_body_sprite.modulate = Color(0.6, 0.6, 0.58) if _charm_label == "석화" else Color(1.0, 0.6, 0.9)  # 석화 / 매혹
+		match _charm_label:
+			"석화":
+				_body_sprite.modulate = Color(0.6, 0.6, 0.58)
+			"공포":
+				_body_sprite.modulate = Color(0.55, 0.45, 0.6)
+			_:
+				_body_sprite.modulate = Color(1.0, 0.6, 0.9)
 	elif _burn_left > 0.0:
 		_body_sprite.modulate = Color(0.7, 1.0, 0.55) if _burn_is_poison else Color(1.0, 0.7, 0.5)  # 독 / 화상
 	elif _floor_status_left > 0.0:

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/stage_data.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/tiles/floor_phlegra.png" id="2_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/boss_enceladus.tscn" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/lava_giant.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/fire_serpent.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/gigantes_shaman.tscn" id="6_res"]
+
+[resource]
+script = ExtResource("1_res")
+stage_name = "플레그라 들판"
+floor_texture = ExtResource("2_res")
+wall_tint = Color(0.5, 0.36, 0.32, 1)
+ambient_color = Color(0.94, 0.78, 0.7, 1)
+boss_intro_text = "신들과 거인이 싸웠던 불타는 들판 — 땅을 가르고 불의 거인 엔켈라도스가 솟아오른다…"
+enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
+enemy_weights = Array[float]([1.0, 1.1, 0.9])
+boss_scene = ExtResource("3_res")
+kill_target = 36
+spawn_interval = 1.6
+max_alive = 8

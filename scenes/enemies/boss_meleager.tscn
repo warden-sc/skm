@@ -1,0 +1,51 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/boss_meleager.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/meleager.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/shadow.png" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/calydon_boar.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/curetes_warrior.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/calydon_hunter.tscn" id="6_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/life_brand.png" id="7_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/hearth.png" id="8_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/spear.png" id="9_res"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 16.0
+
+[node name="BossMeleager" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_res")
+display_name = "칼리돈의 영웅 멜레아그로스"
+max_hp = 98000
+defense = 41
+move_speed = 40.0
+contact_damage = 96
+knockback_resistance = 1.0
+is_boss = true
+aura_element = 0
+aura_amount = 0
+gold_min = 10500
+gold_max = 11000
+item_drop_chance = 1.0
+boar_scene = ExtResource("4_res")
+minion_scenes = Array[PackedScene]([ExtResource("5_res"), ExtResource("6_res")])
+brand_texture = ExtResource("7_res")
+hearth_texture = ExtResource("8_res")
+javelin_texture = ExtResource("9_res")
+item_drop_ids = Array[StringName]([&"holy_sword"])
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(3.2, 3.2)
+texture = ExtResource("3_res")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -30)
+scale = Vector2(1.3, 1.3)
+texture = ExtResource("2_res")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -22)
+shape = SubResource("CircleShape2D_hit")
