@@ -198,7 +198,8 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 			if not names_now.has(mob_name):
 				all_mobs = false
 		_check(all_mobs, "잡몹: %s" % ", ".join(stage_mobs[n]))
-		await _survive(240)
+		await _survive(240, func() -> void:
+			player._invincible_left = 1.0)  # 후반 잡몹 두 마리가 한 프레임에 겹쳐 때리면 장비 없는 테스트 캐릭터가 쓰러짐 — 패턴 실행만 확인
 		_check(not _gm.is_player_dead, "%d스테이지 잡몹 패턴 실행" % n)
 		if _gm.DRAGON_SCALE_STAGES.has(n):
 			var scale_node: DragonScale = null
