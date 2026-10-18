@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/stage_data.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/tiles/floor_greek_camp.png" id="2_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/boss_ajax.tscn" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/salamis_shield.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/salamis_slinger.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/trojan_raider.tscn" id="6_res"]
+
+[resource]
+script = ExtResource("1_res")
+stage_name = "그리스 진영"
+floor_texture = ExtResource("2_res")
+wall_tint = Color(0.66, 0.58, 0.46, 1)
+ambient_color = Color(0.94, 0.88, 0.8, 1)
+boss_intro_text = "그리스 진영 앞을 성벽처럼 가로막은 거구 — 일곱 겹 방패의 큰 아이아스가 버티고 선다…"
+enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
+enemy_weights = Array[float]([1.0, 1.0, 1.0])
+boss_scene = ExtResource("3_res")
+kill_target = 40
+spawn_interval = 1.6
+max_alive = 8

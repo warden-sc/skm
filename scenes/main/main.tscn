@@ -1,4 +1,4 @@
-[gd_scene load_steps=94 format=3]
+[gd_scene load_steps=104 format=3]
 
 [ext_resource type="Script" path="res://scripts/main/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/world/room.gd" id="2_room"]
@@ -90,6 +90,16 @@
 [ext_resource type="Resource" path="res://data/stages/stage_68.tres" id="88_stage68"]
 [ext_resource type="Resource" path="res://data/stages/stage_69.tres" id="89_stage69"]
 [ext_resource type="Resource" path="res://data/stages/stage_70.tres" id="90_stage70"]
+[ext_resource type="Resource" path="res://data/stages/stage_71.tres" id="91_stage71"]
+[ext_resource type="Resource" path="res://data/stages/stage_72.tres" id="92_stage72"]
+[ext_resource type="Resource" path="res://data/stages/stage_73.tres" id="93_stage73"]
+[ext_resource type="Resource" path="res://data/stages/stage_74.tres" id="94_stage74"]
+[ext_resource type="Resource" path="res://data/stages/stage_75.tres" id="95_stage75"]
+[ext_resource type="Resource" path="res://data/stages/stage_76.tres" id="96_stage76"]
+[ext_resource type="Resource" path="res://data/stages/stage_77.tres" id="97_stage77"]
+[ext_resource type="Resource" path="res://data/stages/stage_78.tres" id="98_stage78"]
+[ext_resource type="Resource" path="res://data/stages/stage_79.tres" id="99_stage79"]
+[ext_resource type="Resource" path="res://data/stages/stage_80.tres" id="100_stage80"]
 [ext_resource type="Resource" path="res://data/stages/stage_hidden.tres" id="56_stagehidden"]
 [ext_resource type="PackedScene" path="res://scenes/world/pickup.tscn" id="24_pickup"]
 [ext_resource type="PackedScene" path="res://scenes/world/chest.tscn" id="25_chest"]
@@ -193,7 +203,7 @@ script = ExtResource("18_fade")
 script = ExtResource("19_stage")
 entities_root = NodePath("../Entities")
 player = NodePath("../Entities/Player")
-stages = Array[ExtResource("20_stagedata")]([ExtResource("21_stage1"), ExtResource("22_stage2"), ExtResource("23_stage3"), ExtResource("24_stage4"), ExtResource("25_stage5"), ExtResource("26_stage6"), ExtResource("27_stage7"), ExtResource("28_stage8"), ExtResource("29_stage9"), ExtResource("30_stage10"), ExtResource("31_stage11"), ExtResource("32_stage12"), ExtResource("33_stage13"), ExtResource("34_stage14"), ExtResource("35_stage15"), ExtResource("36_stage16"), ExtResource("37_stage17"), ExtResource("38_stage18"), ExtResource("39_stage19"), ExtResource("40_stage20"), ExtResource("41_stage21"), ExtResource("42_stage22"), ExtResource("43_stage23"), ExtResource("44_stage24"), ExtResource("45_stage25"), ExtResource("46_stage26"), ExtResource("47_stage27"), ExtResource("48_stage28"), ExtResource("49_stage29"), ExtResource("50_stage30"), ExtResource("51_stage31"), ExtResource("52_stage32"), ExtResource("53_stage33"), ExtResource("54_stage34"), ExtResource("55_stage35"), ExtResource("56_stage36"), ExtResource("57_stage37"), ExtResource("58_stage38"), ExtResource("59_stage39"), ExtResource("60_stage40"), ExtResource("61_stage41"), ExtResource("62_stage42"), ExtResource("63_stage43"), ExtResource("64_stage44"), ExtResource("65_stage45"), ExtResource("66_stage46"), ExtResource("67_stage47"), ExtResource("68_stage48"), ExtResource("69_stage49"), ExtResource("70_stage50"), ExtResource("71_stage51"), ExtResource("72_stage52"), ExtResource("73_stage53"), ExtResource("74_stage54"), ExtResource("75_stage55"), ExtResource("76_stage56"), ExtResource("77_stage57"), ExtResource("78_stage58"), ExtResource("79_stage59"), ExtResource("80_stage60"), ExtResource("81_stage61"), ExtResource("82_stage62"), ExtResource("83_stage63"), ExtResource("84_stage64"), ExtResource("85_stage65"), ExtResource("86_stage66"), ExtResource("87_stage67"), ExtResource("88_stage68"), ExtResource("89_stage69"), ExtResource("90_stage70")])
+stages = Array[ExtResource("20_stagedata")]([ExtResource("21_stage1"), ExtResource("22_stage2"), ExtResource("23_stage3"), ExtResource("24_stage4"), ExtResource("25_stage5"), ExtResource("26_stage6"), ExtResource("27_stage7"), ExtResource("28_stage8"), ExtResource("29_stage9"), ExtResource("30_stage10"), ExtResource("31_stage11"), ExtResource("32_stage12"), ExtResource("33_stage13"), ExtResource("34_stage14"), ExtResource("35_stage15"), ExtResource("36_stage16"), ExtResource("37_stage17"), ExtResource("38_stage18"), ExtResource("39_stage19"), ExtResource("40_stage20"), ExtResource("41_stage21"), ExtResource("42_stage22"), ExtResource("43_stage23"), ExtResource("44_stage24"), ExtResource("45_stage25"), ExtResource("46_stage26"), ExtResource("47_stage27"), ExtResource("48_stage28"), ExtResource("49_stage29"), ExtResource("50_stage30"), ExtResource("51_stage31"), ExtResource("52_stage32"), ExtResource("53_stage33"), ExtResource("54_stage34"), ExtResource("55_stage35"), ExtResource("56_stage36"), ExtResource("57_stage37"), ExtResource("58_stage38"), ExtResource("59_stage39"), ExtResource("60_stage40"), ExtResource("61_stage41"), ExtResource("62_stage42"), ExtResource("63_stage43"), ExtResource("64_stage44"), ExtResource("65_stage45"), ExtResource("66_stage46"), ExtResource("67_stage47"), ExtResource("68_stage48"), ExtResource("69_stage49"), ExtResource("70_stage50"), ExtResource("71_stage51"), ExtResource("72_stage52"), ExtResource("73_stage53"), ExtResource("74_stage54"), ExtResource("75_stage55"), ExtResource("76_stage56"), ExtResource("77_stage57"), ExtResource("78_stage58"), ExtResource("79_stage59"), ExtResource("80_stage60"), ExtResource("81_stage61"), ExtResource("82_stage62"), ExtResource("83_stage63"), ExtResource("84_stage64"), ExtResource("85_stage65"), ExtResource("86_stage66"), ExtResource("87_stage67"), ExtResource("88_stage68"), ExtResource("89_stage69"), ExtResource("90_stage70"), ExtResource("91_stage71"), ExtResource("92_stage72"), ExtResource("93_stage73"), ExtResource("94_stage74"), ExtResource("95_stage75"), ExtResource("96_stage76"), ExtResource("97_stage77"), ExtResource("98_stage78"), ExtResource("99_stage79"), ExtResource("100_stage80")])
 camp_room = NodePath("../Rooms/CampRoom")
 field_room = NodePath("../Rooms/FieldRoom")
 boss_room = NodePath("../Rooms/BossRoom")

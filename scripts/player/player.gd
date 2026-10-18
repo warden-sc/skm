@@ -17,6 +17,9 @@ extends CharacterBody2D
 ##   ├ SwingFx(Sprite2D)  ├ ShieldSprite(Sprite2D)  ├ Muzzle(Marker2D) └ ChargeOrb(Sprite2D)
 ##   AttackController(Node), GuardController(Node), Camera2D
 
+## 공격할 때마다 (근접 휘두르기 · 활/지팡이 발사) — 71스테이지 바다뱀의 휘감기를 연타로 빠져나갈 때 사용
+signal attacked
+
 ## take_hit() 의 결과. 투사체는 이 값을 보고 소멸/통과/반사를 결정합니다.
 enum HitResult { IGNORED, DAMAGED, BLOCKED, PARRIED }
 
@@ -515,10 +518,12 @@ func is_invincible() -> bool:
 ## 원거리 공격 시 무기를 살짝 튕기는 연출
 func play_attack_feedback() -> void:
 	_weapon_kick = 1.0
+	attacked.emit()
 
 
 ## 근접 휘두르기 연출: 무기가 부채꼴을 그리며 지나가고 베기 이펙트가 남습니다.
 func play_melee_swing(weapon: WeaponData) -> void:
+	attacked.emit()
 	var half_arc := deg_to_rad(weapon.melee_arc_degrees) * 0.5
 	var duration := clampf(weapon.attack_cooldown * 0.45, 0.07, 0.16)
 	_swing_sign = -_swing_sign  # 휘두를 때마다 방향을 번갈아
