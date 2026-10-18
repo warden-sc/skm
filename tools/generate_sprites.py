@@ -5447,10 +5447,24 @@ def floor_caucasus():
     return _floor(471, (100, 96, 92), 6, [(6, (80, 76, 74, 255), 4), (5, (130, 126, 120, 255), 2), (4, (255, 140, 50, 255), 1)])
 
 
+def nest_viper():
+    """둥지 독사 (18x12): 짙은 녹색 뱀, 노란 띠무늬, 초록 독니"""
+    img = canvas(18, 12)
+    sc, sc_d, band = _c(70, 110, 60), _c(40, 70, 36), _c(210, 190, 80)
+    for i in range(14):
+        x = 2 + i
+        y = 7 + int(round(2 * math.sin(i * 0.9)))
+        rect(img, x, y - 1, x, y, band if i % 4 == 1 else (sc if i % 3 else sc_d))
+    ellipse(img, 15, 4, 2.5, 2, sc)
+    put(img, [(16, 3)], _c(240, 200, 40))
+    put(img, [(17, 6), (14, 6)], _c(140, 255, 90))
+    return outline(img)
+
+
 def save_late14_sprites():
     for name, painter in (("arachne", arachne), ("loom", loom), ("spider_maiden", spider_maiden), ("cave_spider", cave_spider),
                           ("weaver_spider", weaver_spider), ("echidna", echidna), ("monster_egg", monster_egg), ("baby_chimera", baby_chimera),
-                          ("baby_cerberus", baby_cerberus), ("nanny_harpy", nanny_harpy), ("nest_guard", nest_guard), ("heracles", heracles),
+                          ("baby_cerberus", baby_cerberus), ("nanny_harpy", nanny_harpy), ("nest_viper", nest_viper), ("nest_guard", nest_guard), ("heracles", heracles),
                           ("hero_trainee", hero_trainee), ("centaur_archer", centaur_archer), ("lion_cub", lion_cub), ("prometheus", prometheus),
                           ("titan_chain", titan_chain), ("caucasus_eagle", caucasus_eagle), ("chain_warden", chain_warden), ("ember_spirit", ember_spirit)):
         save(painter(), "characters", f"{name}.png")
@@ -5458,6 +5472,119 @@ def save_late14_sprites():
     for name, painter in (("floor_web_temple", floor_web_temple), ("floor_monster_nest", floor_monster_nest),
                           ("floor_hero_trial", floor_hero_trial), ("floor_caucasus", floor_caucasus)):
         save(painter(), "tiles", f"{name}.png")
+
+
+
+# ---------------------------------------------------------------- 50스테이지 (헤파이스토스의 대장간)
+def hephaestus():
+    """대장장이 신 헤파이스토스 (42x52): 검은 수염, 가죽 앞치마, 굵은 팔, 불꽃이 이는 망치"""
+    img = canvas(42, 52)
+    skin, skin_d, apron = _c(190, 130, 90), _c(140, 90, 60), _c(110, 70, 40)
+    rect(img, 13, 38, 18, 50, skin_d)
+    rect(img, 23, 38, 28, 50, _c(150, 150, 160))      # 쇠다리 보조구
+    rect(img, 12, 48, 19, 51, _c(60, 40, 30))
+    rect(img, 22, 48, 29, 51, _c(60, 40, 30))
+    ellipse(img, 20, 27, 12, 11, skin)
+    rect(img, 12, 26, 28, 40, apron)                   # 가죽 앞치마
+    for y in (30, 34):
+        put(img, [(14, y), (26, y)], _c(80, 50, 30))
+    rect(img, 3, 16, 9, 32, skin_d)
+    rect(img, 31, 16, 37, 32, skin_d)
+    ellipse(img, 20, 10, 6, 6, skin)
+    rect(img, 13, 3, 27, 6, _c(30, 24, 20))
+    ellipse(img, 20, 16, 6, 4, _c(30, 24, 20))         # 검은 수염
+    put(img, [(18, 9), (22, 9)], _c(255, 160, 60))
+    rect(img, 36, 8, 38, 34, _c(110, 80, 50))          # 망치 자루
+    rect(img, 32, 4, 41, 10, _c(90, 90, 100))          # 망치 머리
+    for x, y in ((33, 2), (37, 1), (40, 3)):
+        put(img, [(x, y)], _c(255, 170, 60))
+    return outline(img, (40, 20, 10, 255))
+
+
+def anvil():
+    """헤파이스토스의 모루 (22x16)"""
+    img = canvas(22, 16)
+    rect(img, 3, 3, 20, 6, _c(90, 90, 100))
+    _poly(img, [(0, 3), (3, 3), (3, 6)], _c(90, 90, 100))
+    rect(img, 7, 7, 15, 11, _c(70, 70, 80))
+    rect(img, 4, 12, 18, 15, _c(60, 60, 70))
+    put(img, [(6, 3), (7, 3), (8, 3)], _c(255, 160, 60))
+    return outline(img)
+
+
+def golden_net():
+    """황금 그물 (18x18)"""
+    img = canvas(18)
+    for i in range(0, 18, 4):
+        _line(img, (i, 0), (i, 17), _c(240, 200, 80))
+        _line(img, (0, i), (17, i), _c(240, 200, 80))
+    for i in range(2, 18, 4):
+        for j in range(2, 18, 4):
+            put(img, [(i, j)], _c(255, 240, 160))
+    return img
+
+
+def bronze_automaton():
+    """청동 자동인형 (14x18)"""
+    img = canvas(14, 18)
+    rect(img, 4, 1, 10, 6, _c(190, 140, 70))
+    put(img, [(5, 3), (9, 3)], _c(120, 230, 255))
+    rect(img, 3, 7, 11, 13, _c(170, 120, 60))
+    put(img, [(7, 9)], _c(255, 200, 80))
+    rect(img, 4, 14, 5, 17, _c(130, 90, 40))
+    rect(img, 9, 14, 10, 17, _c(130, 90, 40))
+    rect(img, 1, 7, 2, 12, _c(150, 100, 50))
+    rect(img, 12, 7, 13, 12, _c(150, 100, 50))
+    return outline(img)
+
+
+def cyclops_smith():
+    """키클롭스 대장장이 (20x20)"""
+    img = canvas(20)
+    ellipse(img, 10, 12, 6, 6, _c(180, 130, 100))
+    rect(img, 6, 11, 14, 17, _c(110, 70, 40))
+    ellipse(img, 10, 5, 4, 4, _c(190, 140, 110))
+    ellipse(img, 10, 5, 1.6, 1.6, _c(250, 250, 240))
+    put(img, [(10, 5)], _c(200, 60, 20))
+    rect(img, 7, 18, 8, 19, _c(140, 100, 70))
+    rect(img, 12, 18, 13, 19, _c(140, 100, 70))
+    rect(img, 16, 4, 17, 13, _c(110, 80, 50))
+    rect(img, 15, 2, 19, 5, _c(90, 90, 100))
+    return outline(img)
+
+
+def bronze_hound():
+    """청동 사냥개 (18x12)"""
+    img = canvas(18, 12)
+    ellipse(img, 8, 6, 6, 3, _c(190, 140, 70))
+    ellipse(img, 14, 4, 2.5, 2, _c(200, 150, 80))
+    put(img, [(15, 3)], _c(255, 90, 40))
+    for x in (4, 7, 10, 12):
+        rect(img, x, 9, x, 11, _c(140, 100, 50))
+    for x in (5, 8, 11):
+        put(img, [(x, 4)], _c(230, 190, 120))
+    return outline(img)
+
+
+def spear_bolt():
+    """던지는 청동 창 (14x6)"""
+    img = canvas(14, 6)
+    rect(img, 0, 2, 10, 3, _c(140, 100, 60))
+    _poly(img, [(10, 0), (13, 2), (13, 3), (10, 5)], _c(220, 170, 90))
+    return outline(img, (60, 30, 10, 255))
+
+
+def floor_forge():
+    return _floor(481, (70, 52, 46), 5, [(6, (50, 36, 32, 255), 4), (5, (110, 80, 60, 255), 2), (4, (255, 140, 50, 255), 1)])
+
+
+def save_late15_sprites():
+    for name, painter in (("hephaestus", hephaestus), ("anvil", anvil), ("golden_net", golden_net), ("bronze_automaton", bronze_automaton),
+                          ("cyclops_smith", cyclops_smith), ("bronze_hound", bronze_hound)):
+        save(painter(), "characters", f"{name}.png")
+    save(spear_bolt(), "projectiles", "spear.png")
+    save(orb((255, 240, 160), (255, 110, 30)), "projectiles", "molten_drop.png")
+    save(floor_forge(), "tiles", "floor_forge.png")
 
 
 def main():
@@ -5592,6 +5719,7 @@ def main():
     save_late12_sprites()
     save_late13_sprites()
     save_late14_sprites()
+    save_late15_sprites()
 
     save(bar_under(), "ui", "bar_under.png")
     save(bar((200, 50, 70)), "ui", "bar_hp.png")

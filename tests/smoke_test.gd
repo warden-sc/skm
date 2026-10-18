@@ -88,7 +88,7 @@ func _item_pickups(entities: Node) -> Array:
 	return entities.get_children().filter(func(n: Node) -> bool: return n is Pickup and (n as Pickup).kind == Pickup.Kind.ITEM)
 
 
-## 11~49스테이지: 잡몹 · 보스 패턴 · 보스 기믹 (+ 30~35 고대 용의 비늘 → 35스테이지 뒤 히든 던전). 49스테이지 보스(현재 마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
+## 11~50스테이지: 잡몹 · 보스 패턴 · 보스 기믹 (+ 30~35 고대 용의 비늘 → 35스테이지 뒤 히든 던전). 50스테이지 보스(현재 마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
 func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 	var player := main.get_node("Entities/Player") as Player
 	var pool := main.get_node("ProjectilePool") as ProjectilePool
@@ -137,11 +137,12 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 		47: ["둥지 독사", "괴물 유모 하피", "둥지 파수꾼"],
 		48: ["영웅 견습생", "켄타우로스 궁수", "네메아 새끼사자"],
 		49: ["바위산 독수리", "사슬 감시자", "불씨 정령"],
+		50: ["청동 자동인형", "키클롭스 대장장이", "청동 사냥개"],
 	}
-	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁", 16: "바람의 봉우리", 17: "거인의 감옥", 18: "인형 극장", 19: "폭풍의 바다", 20: "대마법사의 탑", 21: "기계 신전", 22: "모래 폭풍의 사막", 23: "피의 성", 24: "맹독의 늪", 25: "해와 달의 신전", 26: "빙결의 궁전", 27: "심연", 28: "공허의 둥지", 29: "꿈의 경계", 30: "정령의 성역", 31: "폭풍의 협곡", 32: "대지의 균열", 33: "얼어붙은 호수", 34: "용암 화산", 35: "용의 묘지", 36: "천상의 법정", 37: "타락한 신전", 38: "청동의 해안", 39: "크노소스의 미궁", 40: "구름 위의 길", 41: "레르나의 늪", 42: "키클롭스의 동굴", 43: "명계의 문", 44: "메시나 해협", 45: "리비아의 투기장", 46: "거미줄 신전", 47: "괴물들의 둥지", 48: "영웅의 시련장", 49: "코카서스의 바위산"}
-	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "천공의 수호자 그리핀", 17: "추방된 자 티탄", 18: "꼭두각시 마리오네트", 19: "폭풍의 지배자 레비아탄", 20: "대마법사 아르카나", 21: "기계의 정점 테모스", 22: "사막의 암살자 스콜피언", 23: "피의 군주 벨", 24: "맹독의 패주 바실리스크", 25: "해의 쌍둥이 솔", 26: "빙결의 여왕 글라시아", 27: "심연의 군주 녹스", 28: "공허의 포식자 보이드 웜", 29: "몽마 나이트메어", 30: "대정령 벨페르 가이아", 31: "바람의 드래곤 제피로스", 32: "대지의 드래곤 테라곤", 33: "얼음의 드래곤 코퀴로스", 34: "화염의 드래곤 베르단", 35: "언데드 드래곤 헬리시온", 36: "심판의 천사 세라핀", 37: "타락한 신 아스타로트", 38: "청동 거인 탈로스", 39: "미궁의 미노타우로스", 40: "전령의 신 헤르메스", 41: "머리 아홉의 히드라", 42: "외눈 거인 폴리페모스", 43: "명계의 문지기 케르베로스", 44: "스킬라와 카립디스", 45: "대지의 거인 안타이오스", 46: "거미 여인 아라크네", 47: "괴물의 어머니 에키드나", 48: "영웅 헤라클레스", 49: "사슬에 묶인 티탄 프로메테우스"}
+	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁", 16: "바람의 봉우리", 17: "거인의 감옥", 18: "인형 극장", 19: "폭풍의 바다", 20: "대마법사의 탑", 21: "기계 신전", 22: "모래 폭풍의 사막", 23: "피의 성", 24: "맹독의 늪", 25: "해와 달의 신전", 26: "빙결의 궁전", 27: "심연", 28: "공허의 둥지", 29: "꿈의 경계", 30: "정령의 성역", 31: "폭풍의 협곡", 32: "대지의 균열", 33: "얼어붙은 호수", 34: "용암 화산", 35: "용의 묘지", 36: "천상의 법정", 37: "타락한 신전", 38: "청동의 해안", 39: "크노소스의 미궁", 40: "구름 위의 길", 41: "레르나의 늪", 42: "키클롭스의 동굴", 43: "명계의 문", 44: "메시나 해협", 45: "리비아의 투기장", 46: "거미줄 신전", 47: "괴물들의 둥지", 48: "영웅의 시련장", 49: "코카서스의 바위산", 50: "헤파이스토스의 대장간"}
+	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "천공의 수호자 그리핀", 17: "추방된 자 티탄", 18: "꼭두각시 마리오네트", 19: "폭풍의 지배자 레비아탄", 20: "대마법사 아르카나", 21: "기계의 정점 테모스", 22: "사막의 암살자 스콜피언", 23: "피의 군주 벨", 24: "맹독의 패주 바실리스크", 25: "해의 쌍둥이 솔", 26: "빙결의 여왕 글라시아", 27: "심연의 군주 녹스", 28: "공허의 포식자 보이드 웜", 29: "몽마 나이트메어", 30: "대정령 벨페르 가이아", 31: "바람의 드래곤 제피로스", 32: "대지의 드래곤 테라곤", 33: "얼음의 드래곤 코퀴로스", 34: "화염의 드래곤 베르단", 35: "언데드 드래곤 헬리시온", 36: "심판의 천사 세라핀", 37: "타락한 신 아스타로트", 38: "청동 거인 탈로스", 39: "미궁의 미노타우로스", 40: "전령의 신 헤르메스", 41: "머리 아홉의 히드라", 42: "외눈 거인 폴리페모스", 43: "명계의 문지기 케르베로스", 44: "스킬라와 카립디스", 45: "대지의 거인 안타이오스", 46: "거미 여인 아라크네", 47: "괴물의 어머니 에키드나", 48: "영웅 헤라클레스", 49: "사슬에 묶인 티탄 프로메테우스", 50: "대장장이 신 헤파이스토스"}
 	var final_boss: Enemy = null
-	for n in range(first, 50):
+	for n in range(first, 51):
 		next_portal.interacted.emit()
 		await _frames(3)
 		print("[%d스테이지 - %s]" % [n, stage_names[n]])
@@ -427,9 +428,16 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 					await _frames(2)
 					_gm.hp = _gm.max_hp
 					var hp_cover: int = _gm.hp
+					var cover_before := 0
+					for r in titan.get_cover_rocks():
+						cover_before += r.hits
 					titan.throw_boulder()
 					await _frames(150)
-					_check(rock.hits == 1 and _gm.hp >= hp_cover - 2, "[기믹] 박힌 바위 뒤에 숨으면 던진 바위를 막아 줌 (피해 %d)" % (hp_cover - _gm.hp))
+					var cover_after := 0
+					for r in titan.get_cover_rocks():
+						cover_after += r.hits
+					# 던진 바위는 앞을 가로막은 바위(꼭 rock 이 아니어도)가 대신 맞음
+					_check(cover_after < cover_before and _gm.hp >= hp_cover - 2, "[기믹] 박힌 바위 뒤에 숨으면 던진 바위를 막아 줌 (피해 %d)" % (hp_cover - _gm.hp))
 				for r in titan.get_cover_rocks():
 					r.crumble()
 				await _frames(2)
@@ -1811,10 +1819,63 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
 							seen49["shot"] = true)
 				_check(seen49["aoe"] and seen49["shot"], "프로메테우스 패턴: 훔친 불 · 불기둥 · 불의 고리 · 소환")
-				final_boss = pro
+			50:
+				var heph := boss as BossHephaestus
+				await _survive(5)
+				_check(heph.channels != null and heph.get_anvil() != null and heph.weapon == BossHephaestus.Weapon.HAMMER, "[기믹] 바닥의 쇳물 홈 · 모루 · 무기 「망치」")
+				heph._pour_cooldown = 999.0
+				heph.begin_pour(0)
+				_check(heph.channels.is_warning() and heph.channels.lanes.size() == 2, "[기믹] 용광로: 쇳물이 흐를 홈이 달아오름 (예고)")
+				var lane_at := heph.channels.lane_rect(heph.channels.lanes[0], false).get_center()
+				await _survive(int(heph.pour_warn * 60) + 20, func() -> void:
+					player.global_position = lane_at)
+				_check(heph.channels.is_pouring() and heph.channels.hits >= 1, "쇳물이 흐르는 홈 위에 있으면 큰 피해 + 화상 (가드·대시 불가)")
+				var safe := false
+				for y in range(int(heph.channels.area.position.y) + 10, int(heph.channels.area.end.y), 12):  # 가로 홈 → 세로로 훑기
+					var p50 := Vector2(heph.channels.area.get_center().x, y)
+					if not heph.channels.is_in_flow(p50):
+						safe = true
+				_check(safe, "홈 사이에는 쇳물이 흐르지 않는 빈 땅이 있음")
+				await _survive(int(heph.pour_time * 60) + 5)
+				heph.take_damage(roundi(heph.max_hp * 0.35), Vector2.ZERO, false, 999999)
+				await _frames(3)
+				_check(heph.is_forging(), "[기믹] 담금질: 체력 2/3 에서 모루로 가 새 무기를 벼림")
+				var power50 := heph.power
+				heph._forging_left = 0.01
+				await _frames(3)
+				_check(heph.weapon == BossHephaestus.Weapon.AXE and heph.get_forge_count() == 1 and heph.power > power50, "담금질을 막지 못하면 새 무기 「도끼」 (공격력 상승)")
+				heph.get_anvil().take_damage(9999999)
+				await _frames(2)
+				heph.take_damage(roundi(heph.max_hp * 0.35), Vector2.ZERO, false, 999999)
+				await _frames(3)
+				_check(not heph.is_forging() and heph.weapon == BossHephaestus.Weapon.AXE and heph.is_stunned(), "모루를 부숴 두면 다음 무기(창)를 벼리지 못함")
+				heph._stun_left = 0.0
+				player.global_position = boss_center + Vector2(-80, 90)
+				await _frames(1)
+				_check(heph.trap_in_net(), "(그물 던지기)")
+				await _frames(3)
+				_check(player.is_rooted() and heph.get_net() != null and _gm.player_status.contains("그물"), "[기믹] 황금 그물에 갇히면 움직일 수 없음")
+				heph.get_net().take_damage(9999999)
+				await _frames(3)
+				_check(not player.is_rooted() and heph.get_net_escapes() == 1, "그물을 공격해 찢으면 빠져나옴")
+				heph.trap_in_net()
+				await _frames(3)
+				heph._net_left = 0.01
+				await _frames(3)
+				_check(not player.is_rooted() and heph.get_net() == null and heph.get_net_escapes() == 1, "찢지 못해도 시간이 지나면 풀림")
+				player.global_position = boss_center + Vector2(0, 90)
+				var seen50 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen50["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen50["shot"] = true)
+				_check(seen50["aoe"] and seen50["shot"], "헤파이스토스 패턴: 무기 공격 · 황금 그물 · 불똥 · 소환")
+				final_boss = heph
 		if n == 35:
 			await _test_hidden_dungeon(main, boss as BossHelicion)
-		elif n < 49:
+		elif n < 50:
 			boss.take_damage(999999, Vector2.ZERO, false, 9999)
 			await _frames(4)
 			_check(not _gm.is_game_cleared and next_portal.enabled, "%d스테이지 보스 토벌 → 다음 스테이지 텔레포트" % n)
@@ -1906,26 +1967,28 @@ func _test_hidden_dungeon(main: Node2D, heli_end: BossHelicion) -> void:
 	_check(_item_pickups(main.get_node("Entities")).size() == items_before + 2, "고대 용의 보물상자: 장비 2개")
 
 
-## 마지막 스테이지(49) 보스 토벌 → 모든 스테이지 클리어 / 비늘 없이 35스테이지 보스를 쓰러뜨리면 히든 없음
+## 마지막 스테이지(50) 보스 토벌 → 모든 스테이지 클리어 / 비늘 없이 35스테이지 보스를 쓰러뜨리면 히든 없음
 func _test_final_and_no_hidden(main: Node2D, final_boss: Enemy) -> void:
+	var player := main.get_node("Entities/Player") as Player
 	var stage := main.get_node("StageManager") as StageManager
 	var field_portal := main.get_node("Entities/FieldPortal") as Portal
 	var gate := main.get_node("Entities/BossGate") as BossGate
 	var next_portal_end := main.get_node("Entities/NextStagePortal") as Portal
-	print("[엔딩 - 49스테이지 보스 토벌]")
+	print("[엔딩 - 50스테이지 보스 토벌]")
 	stage.ending_delay = 600.0  # 아래 테스트가 끝난 뒤 엔딩 화면을 따로 검사
 	var kills_before: int = _gm.total_kills
 	if final_boss != null:
 		final_boss.take_damage(9999999, Vector2.ZERO, false, 999999)
 	await _frames(4)
-	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(49스테이지) 보스 토벌 → 모든 스테이지 클리어")
+	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(50스테이지) 보스 토벌 → 모든 스테이지 클리어")
 	_check(_gm.total_kills > kills_before and _gm.play_time > 0.0, "엔딩 기록: 처치 %d마리 · 플레이 %s" % [_gm.total_kills, _gm.get_play_time_text()])
 	_check(stage.get_chest() == null and not next_portal_end.enabled and get_tree().get_nodes_in_group(&"enemies").is_empty(), "마지막 스테이지: 상자 / 텔레포트 없음, 남은 졸개 정리")
 	_check(_gm.faith_damage_bonus == 0.0 and get_tree().get_nodes_in_group(&"hostile_zones").is_empty() and _gm.stolen_weapon == null, "보스가 쓰러지면 신앙·장판·빼앗긴 무기 정리")
 	stage.go_to_next_stage()
 	await _frames(3)
 	_check(_gm.key_items.has(&"prometheus_ember"), "프로메테우스를 쓰러뜨리면 보물 「프로메테우스의 불씨」")
-	_check(_gm.stage == 49 and get_tree().current_scene == main and get_tree().get_nodes_in_group(&"storm_fields").is_empty(), "49스테이지 이후 반복 스테이지 없음 (장치 정리)")
+	_check(_gm.stage == 50 and get_tree().current_scene == main, "50스테이지 이후 반복 스테이지 없음")
+	_check(get_tree().get_nodes_in_group(&"storm_fields").is_empty() and not player.is_rooted(), "마지막 보스가 쓰러지면 용광로·그물 정리 (fields %d · 묶임 %s %s)" % [get_tree().get_nodes_in_group(&"storm_fields").size(), player.is_rooted(), player._root_label])
 
 	print("[히든 조건 없이 35스테이지 보스 토벌]")
 	_gm.dragon_scales.clear()
