@@ -4493,6 +4493,234 @@ def save_late10_sprites():
         save(painter(), "tiles", f"{name}.png")
 
 
+
+# ---------------------------------------------------------------- 38~40스테이지 (올림포스로 가는 길)
+def talos():
+    """청동 거인 탈로스 (44x56): 청동 몸, 가슴의 리벳, 투구 같은 머리, 발목의 못 자리"""
+    img = canvas(44, 56)
+    br, br_d, br_l = _c(190, 130, 60), _c(120, 76, 34), _c(235, 180, 100)
+    rect(img, 14, 40, 19, 54, br_d)                    # 다리
+    rect(img, 25, 40, 30, 54, br_d)
+    rect(img, 12, 52, 20, 55, br)
+    rect(img, 24, 52, 32, 55, br)
+    ellipse(img, 22, 30, 12, 12, br)                   # 몸통
+    ellipse(img, 19, 26, 5, 5, br_l)
+    for x, y in ((14, 24), (30, 24), (16, 36), (28, 36), (22, 20)):   # 리벳
+        put(img, [(x, y)], _c(250, 220, 150))
+    rect(img, 4, 20, 9, 38, br_d)                      # 팔
+    rect(img, 35, 20, 40, 38, br_d)
+    ellipse(img, 6, 40, 3.5, 3, br)
+    ellipse(img, 38, 40, 3.5, 3, br)
+    ellipse(img, 22, 11, 7, 7, br)                     # 머리 (투구)
+    rect(img, 15, 10, 29, 12, br_d)
+    put(img, [(19, 11), (25, 11)], _c(255, 160, 60))
+    rect(img, 21, 2, 23, 5, _c(200, 60, 40))           # 볏
+    put(img, [(17, 52), (18, 53)], _c(120, 120, 130))  # 발목 (못 자리)
+    return outline(img, (50, 30, 10, 255))
+
+
+def bronze_nail():
+    """탈로스 발목의 청동 못 (10x12)"""
+    img = canvas(10, 12)
+    ellipse(img, 4.5, 2.5, 4, 2, _c(240, 200, 110))
+    rect(img, 3, 3, 6, 11, _c(190, 140, 70))
+    put(img, [(4, 4), (4, 5)], _c(255, 240, 180))
+    return outline(img, (60, 36, 10, 255))
+
+
+def minotaur():
+    """미궁의 미노타우로스 (44x50): 황소 머리, 커다란 뿔, 근육질 몸, 양날 도끼"""
+    img = canvas(44, 50)
+    fur, fur_d, skin = _c(110, 70, 50), _c(70, 44, 30), _c(160, 110, 80)
+    rect(img, 15, 36, 20, 48, fur_d)                   # 다리 (털)
+    rect(img, 24, 36, 29, 48, fur_d)
+    put(img, [(15, 48), (16, 49), (20, 48), (24, 48), (28, 49), (29, 48)], _c(40, 30, 26))   # 발굽
+    ellipse(img, 22, 27, 11, 11, skin)                 # 몸
+    rect(img, 15, 34, 29, 37, _c(150, 40, 40))         # 허리천
+    rect(img, 7, 18, 11, 32, skin)                     # 팔
+    rect(img, 33, 18, 37, 32, skin)
+    ellipse(img, 22, 12, 7, 7, fur)                    # 황소 머리
+    ellipse(img, 22, 16, 4, 3, _c(170, 130, 110))      # 주둥이
+    put(img, [(21, 16), (23, 16)], _c(40, 20, 20))
+    put(img, [(19, 10), (25, 10)], _c(255, 60, 40))
+    for side in (-1, 1):                               # 뿔
+        put(img, [(22 + side * 7, 8), (22 + side * 9, 7), (22 + side * 11, 5), (22 + side * 12, 3), (22 + side * 12, 2)], _c(235, 225, 200))
+        put(img, [(22 + side * 8, 8), (22 + side * 10, 6)], _c(235, 225, 200))
+    rect(img, 39, 8, 40, 40, _c(110, 80, 50))          # 도끼 자루
+    _poly(img, [(40, 10), (43, 6), (43, 18), (40, 14)], _c(200, 200, 210))
+    _poly(img, [(39, 10), (36, 6), (36, 18), (39, 14)], _c(170, 170, 185))
+    return outline(img, (30, 16, 10, 255))
+
+
+def hermes():
+    """전령의 신 헤르메스 (32x46): 날개 달린 모자(페타소스), 날개 신발, 뱀 지팡이(카두케우스), 흰 망토"""
+    img = canvas(32, 46)
+    skin, cloak = _c(240, 205, 170), _c(240, 240, 235)
+    ellipse(img, 16, 10, 5, 5, skin)                   # 얼굴
+    ellipse(img, 16, 5, 7, 2.5, _c(200, 170, 90))      # 페타소스
+    for side in (-1, 1):
+        put(img, [(16 + side * 7, 4), (16 + side * 9, 3), (16 + side * 10, 2), (16 + side * 8, 3)], _c(255, 255, 255))
+    put(img, [(14, 10), (18, 10)], _c(60, 120, 200))
+    for y in range(16, 38):                            # 망토 + 튜닉
+        half = 4 + (y - 16) * 0.25
+        for x in range(int(16 - half), int(16 + half) + 1):
+            img.putpixel((x, y), cloak if (x + y) % 7 else _c(210, 210, 200))
+    rect(img, 13, 18, 19, 30, _c(90, 140, 200))
+    rect(img, 13, 38, 14, 43, skin)                    # 다리
+    rect(img, 18, 38, 19, 43, skin)
+    for x in (12, 18):                                 # 날개 신발
+        rect(img, x, 43, x + 3, 45, _c(200, 170, 90))
+        put(img, [(x - 1, 41), (x - 2, 42), (x - 1, 43)], _c(255, 255, 255))
+    rect(img, 26, 8, 26, 40, _c(230, 200, 100))        # 카두케우스
+    put(img, [(25, 7), (27, 7), (24, 6), (28, 6)], _c(255, 255, 255))
+    for i in range(6):
+        put(img, [(25 + (i % 2) * 2, 12 + i * 4), (26, 14 + i * 4)], _c(90, 170, 90))
+    return outline(img, (40, 40, 60, 255))
+
+
+def letter():
+    """전령의 편지 (12x10): 날개 달린 봉인 편지"""
+    img = canvas(12, 10)
+    rect(img, 2, 3, 9, 8, _c(245, 235, 210))
+    _line(img, (2, 3), (5, 6), _c(200, 180, 150))
+    _line(img, (9, 3), (6, 6), _c(200, 180, 150))
+    put(img, [(5, 6), (6, 6)], _c(200, 40, 40))
+    put(img, [(0, 2), (1, 3), (11, 2), (10, 3)], _c(255, 255, 255))
+    return outline(img)
+
+
+def bronze_soldier():
+    """청동 병사 (14x18)"""
+    img = canvas(14, 18)
+    ellipse(img, 7, 4, 3, 3, _c(190, 130, 60))
+    rect(img, 6, 1, 8, 1, _c(200, 60, 40))
+    put(img, [(6, 4), (8, 4)], _c(255, 160, 60))
+    rect(img, 4, 8, 10, 13, _c(170, 115, 50))
+    rect(img, 5, 14, 6, 17, _c(120, 76, 34))
+    rect(img, 8, 14, 9, 17, _c(120, 76, 34))
+    rect(img, 12, 3, 12, 14, _c(200, 200, 210))
+    ellipse(img, 2, 10, 2, 3, _c(220, 170, 90))
+    return outline(img)
+
+
+def rock_crab():
+    """바위 게 (18x12)"""
+    img = canvas(18, 12)
+    ellipse(img, 9, 6, 6, 4, _c(130, 110, 100))
+    put(img, [(7, 3), (11, 3)], _c(30, 30, 30))
+    for side in (-1, 1):
+        ellipse(img, 9 + side * 7.5, 3, 2, 2, _c(200, 100, 70))
+        for i in range(3):
+            put(img, [(9 + side * (4 + i), 9 + i // 2), (9 + side * (4 + i), 10)], _c(100, 84, 76))
+    return outline(img)
+
+
+def bronze_archer():
+    """청동 사수 (14x18): 투석 팔을 단 청동 자동인형"""
+    img = canvas(14, 18)
+    ellipse(img, 7, 4, 3, 3, _c(170, 120, 60))
+    put(img, [(7, 4)], _c(255, 90, 40))
+    rect(img, 4, 8, 10, 14, _c(150, 100, 45))
+    rect(img, 10, 6, 13, 7, _c(120, 80, 35))
+    ellipse(img, 12, 5, 1.5, 1.5, _c(130, 120, 110))
+    rect(img, 5, 15, 9, 17, _c(110, 70, 30))
+    return outline(img)
+
+
+def bull_warrior():
+    """황소 전사 (14x18): 황소 투구의 전사"""
+    img = canvas(14, 18)
+    ellipse(img, 7, 4, 3, 3, _c(160, 110, 80))
+    put(img, [(3, 2), (2, 1), (11, 2), (12, 1)], _c(235, 225, 200))
+    put(img, [(6, 4), (8, 4)], _c(255, 60, 40))
+    rect(img, 4, 8, 10, 13, _c(130, 50, 40))
+    rect(img, 5, 14, 6, 17, _c(90, 60, 40))
+    rect(img, 8, 14, 9, 17, _c(90, 60, 40))
+    rect(img, 12, 4, 12, 14, _c(110, 80, 50))
+    return outline(img)
+
+
+def maze_guardian():
+    """미궁 파수꾼 (20x20): 미궁 돌로 된 거대한 석상 병사"""
+    img = golem((130, 120, 105), (90, 82, 70), (240, 200, 90), (255, 240, 180))
+    return img
+
+
+def maze_wraith():
+    """미궁 망령 (14x16): 미궁에서 길 잃은 희생자의 망령"""
+    img = canvas(14, 16)
+    for y in range(3, 15):
+        half = 3.5 - abs(y - 7) * 0.12
+        rect(img, int(7 - half), y, int(7 + half), y, (200, 190, 160, 190))
+    ellipse(img, 7, 4, 3, 3, (220, 210, 180, 220))
+    put(img, [(5, 4), (8, 4)], _c(60, 40, 20))
+    put(img, [(2, 12), (12, 12), (1, 14)], _c(230, 200, 100))
+    return outline(img, (60, 50, 30, 255))
+
+
+def satyr():
+    """사티로스 (14x18): 염소 다리와 뿔, 피리"""
+    img = canvas(14, 18)
+    ellipse(img, 7, 4, 3, 3, _c(220, 180, 140))
+    put(img, [(4, 1), (4, 2), (10, 1), (10, 2)], _c(200, 190, 170))
+    put(img, [(6, 4), (8, 4)], _c(60, 40, 20))
+    rect(img, 5, 8, 9, 11, _c(220, 180, 140))
+    rect(img, 4, 12, 10, 14, _c(120, 80, 50))
+    rect(img, 4, 15, 5, 17, _c(100, 66, 40))
+    rect(img, 9, 15, 10, 17, _c(100, 66, 40))
+    rect(img, 10, 6, 13, 7, _c(170, 140, 80))
+    return outline(img)
+
+
+def nymph():
+    """님프 (12x16): 나뭇잎 옷의 숲의 정령"""
+    img = canvas(12, 16)
+    ellipse(img, 6, 4, 2.5, 2.5, _c(230, 220, 200))
+    rect(img, 3, 2, 9, 3, _c(120, 200, 110))
+    put(img, [(5, 4), (7, 4)], _c(40, 120, 60))
+    for y in range(7, 16):
+        half = 1.5 + (y - 7) * 0.4
+        rect(img, int(6 - half), y, int(6 + half), y, _c(120, 200, 120) if y % 2 else _c(90, 170, 100))
+    return outline(img)
+
+
+def pegasus():
+    """페가수스 (20x16): 흰 날개 말"""
+    img = canvas(20, 16)
+    ellipse(img, 9, 9, 6, 3.5, _c(245, 245, 250))
+    ellipse(img, 16, 5, 2.5, 2.5, _c(245, 245, 250))
+    put(img, [(17, 4)], _c(60, 80, 160))
+    put(img, [(14, 3), (13, 4), (12, 5)], _c(200, 220, 255))
+    _poly(img, [(8, 7), (3, 0), (12, 5)], _c(230, 240, 255))
+    for x in (5, 8, 11, 13):
+        rect(img, x, 12, x, 15, _c(210, 210, 220))
+    put(img, [(2, 9), (1, 10), (2, 11)], _c(200, 220, 255))
+    return outline(img)
+
+
+def floor_bronze_coast():
+    return _floor(361, (200, 180, 130), 6, [(6, (220, 200, 150, 255), 4), (5, (160, 140, 100, 255), 2), (4, (210, 150, 80, 255), 1)])
+
+
+def floor_labyrinth():
+    return _floor(371, (120, 108, 92), 5, [(6, (140, 128, 110, 255), 5), (5, (90, 80, 68, 255), 2), (3, (200, 170, 90, 255), 1)])
+
+
+def floor_cloud_road():
+    return _floor(381, (215, 225, 240), 5, [(6, (240, 245, 255, 255), 5), (5, (190, 200, 225, 255), 2), (4, (255, 230, 150, 255), 1)])
+
+
+def save_late11_sprites():
+    for name, painter in (("talos", talos), ("bronze_nail", bronze_nail), ("minotaur", minotaur), ("hermes", hermes), ("letter", letter),
+                          ("bronze_soldier", bronze_soldier), ("rock_crab", rock_crab), ("bronze_archer", bronze_archer),
+                          ("bull_warrior", bull_warrior), ("maze_guardian", maze_guardian), ("maze_wraith", maze_wraith),
+                          ("satyr", satyr), ("nymph", nymph), ("pegasus", pegasus)):
+        save(painter(), "characters", f"{name}.png")
+    save(orb((210, 255, 200), (60, 150, 80)), "projectiles", "snake_orb.png")
+    for name, painter in (("floor_bronze_coast", floor_bronze_coast), ("floor_labyrinth", floor_labyrinth), ("floor_cloud_road", floor_cloud_road)):
+        save(painter(), "tiles", f"{name}.png")
+
+
 def main():
     save(from_map(PLAYER), "characters", "player.png")
     save(from_map(SLIME), "characters", "slime.png")
@@ -4621,6 +4849,7 @@ def main():
     save_late8_sprites()
     save_late9_sprites()
     save_late10_sprites()
+    save_late11_sprites()
 
     save(bar_under(), "ui", "bar_under.png")
     save(bar((200, 50, 70)), "ui", "bar_hp.png")

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/stage_data.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/tiles/floor_labyrinth.png" id="2_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/boss_minotaur.tscn" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/bull_warrior.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/maze_guardian.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/maze_wraith.tscn" id="6_res"]
+
+[resource]
+script = ExtResource("1_res")
+stage_name = "크노소스의 미궁"
+floor_texture = ExtResource("2_res")
+wall_tint = Color(0.55, 0.5, 0.42, 1)
+ambient_color = Color(0.84, 0.8, 0.74, 1)
+boss_spawn_offset = Vector2(0, 30)
+boss_intro_text = "미궁의 벽이 스스로 움직이고 — 그 한가운데에서 미노타우로스가 콧김을 뿜는다…"
+enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
+enemy_weights = Array[float]([1.1, 0.9, 1.0])
+boss_scene = ExtResource("3_res")
+kill_target = 31
+spawn_interval = 1.6
+max_alive = 8

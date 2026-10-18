@@ -139,6 +139,8 @@ const DRAGON_SCALE_STAGES: Array[int] = [30, 31, 32, 33, 34, 35]
 var dragon_scales: Array[int] = []
 ## 히든 보스(고대 드래곤 아르케)를 쓰러뜨렸는지
 var hidden_cleared: bool = false
+## 헤르메스(40스테이지)가 훔쳐 간 무기 — 돌려받기 전까지 무기 칸·가방에서 빠짐
+var stolen_weapon: WeaponData
 ## 이번 모험에서 처치한 몬스터 수 (보스·소환된 졸개 포함)
 var total_kills: int = 0
 ## 이번 모험의 플레이 시간(초). 일시정지(상점·인벤토리) 중에는 늘지 않음
@@ -175,6 +177,7 @@ func reset_game() -> void:
 	is_game_cleared = false
 	dragon_scales.clear()
 	hidden_cleared = false
+	stolen_weapon = null
 	total_kills = 0
 	play_time = 0.0
 	items.clear()
@@ -724,6 +727,38 @@ func cycle_weapon(step: int) -> void:
 		if weapon_slots[slot] != null:
 			select_weapon_slot(slot)
 			return
+
+
+## 헤르메스의 「도둑의 손」: 손에 든 무기를 빼앗김 (무기가 하나뿐이면 훔치지 않음). 훔친 무기를 돌려줌
+func steal_active_weapon() -> WeaponData:
+	if stolen_weapon != null or equipped_weapon == null or _equipped_weapon_count() <= 1:
+		return null
+	var weapon := equipped_weapon
+	weapon_slots[weapon_slots.find(weapon)] = null
+	items.erase(weapon)
+	stolen_weapon = weapon
+	cycle_weapon(1)
+	_recalculate_stats()
+	inventory_changed.emit()
+	equipment_changed.emit()
+	return weapon
+
+
+## 훔쳐 간 무기를 돌려받음 (빈 무기 칸이면 다시 장착). 돌려받았으면 true
+func return_stolen_weapon() -> bool:
+	if stolen_weapon == null:
+		return false
+	var weapon := stolen_weapon
+	stolen_weapon = null
+	if not items.has(weapon):
+		items.append(weapon)
+	var slot := weapon_slot_of(weapon)
+	if weapon_slots[slot] == null:
+		weapon_slots[slot] = weapon
+	_recalculate_stats()
+	inventory_changed.emit()
+	equipment_changed.emit()
+	return true
 
 
 func _equipped_weapon_count() -> int:

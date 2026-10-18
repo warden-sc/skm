@@ -282,6 +282,7 @@ func _arrive_at_camp() -> void:
 # ============================================================ 스테이지 준비
 func _setup_stage(stage: int) -> void:
 	var data := get_stage_data(stage)
+	GameManager.return_stolen_weapon()  # 헤르메스에게 빼앗긴 무기가 남아 있으면 돌려받음 (안전장치)
 	GameManager.set_stage(stage, data.stage_name)
 	for room in [camp_room, field_room, boss_room]:
 		(room as Room).apply_theme(data.floor_texture, data.wall_tint)

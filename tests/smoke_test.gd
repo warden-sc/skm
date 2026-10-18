@@ -88,7 +88,7 @@ func _item_pickups(entities: Node) -> Array:
 	return entities.get_children().filter(func(n: Node) -> bool: return n is Pickup and (n as Pickup).kind == Pickup.Kind.ITEM)
 
 
-## 11~37스테이지: 잡몹 · 보스 패턴 · 보스 기믹 (+ 30~35 고대 용의 비늘 → 35스테이지 뒤 히든 던전). 37스테이지 보스(현재 마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
+## 11~40스테이지: 잡몹 · 보스 패턴 · 보스 기믹 (+ 30~35 고대 용의 비늘 → 35스테이지 뒤 히든 던전). 40스테이지 보스(현재 마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
 func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 	var player := main.get_node("Entities/Player") as Player
 	var pool := main.get_node("ProjectilePool") as ProjectilePool
@@ -125,11 +125,14 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 		35: ["해골 용병", "묘지 구울", "원혼"],
 		36: ["천사 병사", "오파님", "성가대 인형"],
 		37: ["광신도", "타락 사제", "날개 꺾인 천사"],
+		38: ["청동 병사", "바위 게", "청동 사수"],
+		39: ["황소 전사", "미궁 파수꾼", "미궁 망령"],
+		40: ["사티로스", "님프", "페가수스"],
 	}
-	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁", 16: "바람의 봉우리", 17: "거인의 감옥", 18: "인형 극장", 19: "폭풍의 바다", 20: "대마법사의 탑", 21: "기계 신전", 22: "모래 폭풍의 사막", 23: "피의 성", 24: "맹독의 늪", 25: "해와 달의 신전", 26: "빙결의 궁전", 27: "심연", 28: "공허의 둥지", 29: "꿈의 경계", 30: "정령의 성역", 31: "폭풍의 협곡", 32: "대지의 균열", 33: "얼어붙은 호수", 34: "용암 화산", 35: "용의 묘지", 36: "천상의 법정", 37: "타락한 신전"}
-	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "천공의 수호자 그리핀", 17: "추방된 자 티탄", 18: "꼭두각시 마리오네트", 19: "폭풍의 지배자 레비아탄", 20: "대마법사 아르카나", 21: "기계의 정점 테모스", 22: "사막의 암살자 스콜피언", 23: "피의 군주 벨", 24: "맹독의 패주 바실리스크", 25: "해의 쌍둥이 솔", 26: "빙결의 여왕 글라시아", 27: "심연의 군주 녹스", 28: "공허의 포식자 보이드 웜", 29: "몽마 나이트메어", 30: "대정령 벨페르 가이아", 31: "바람의 드래곤 제피로스", 32: "대지의 드래곤 테라곤", 33: "얼음의 드래곤 코퀴로스", 34: "화염의 드래곤 베르단", 35: "언데드 드래곤 헬리시온", 36: "심판의 천사 세라핀", 37: "타락한 신 아스타로트"}
+	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁", 16: "바람의 봉우리", 17: "거인의 감옥", 18: "인형 극장", 19: "폭풍의 바다", 20: "대마법사의 탑", 21: "기계 신전", 22: "모래 폭풍의 사막", 23: "피의 성", 24: "맹독의 늪", 25: "해와 달의 신전", 26: "빙결의 궁전", 27: "심연", 28: "공허의 둥지", 29: "꿈의 경계", 30: "정령의 성역", 31: "폭풍의 협곡", 32: "대지의 균열", 33: "얼어붙은 호수", 34: "용암 화산", 35: "용의 묘지", 36: "천상의 법정", 37: "타락한 신전", 38: "청동의 해안", 39: "크노소스의 미궁", 40: "구름 위의 길"}
+	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "천공의 수호자 그리핀", 17: "추방된 자 티탄", 18: "꼭두각시 마리오네트", 19: "폭풍의 지배자 레비아탄", 20: "대마법사 아르카나", 21: "기계의 정점 테모스", 22: "사막의 암살자 스콜피언", 23: "피의 군주 벨", 24: "맹독의 패주 바실리스크", 25: "해의 쌍둥이 솔", 26: "빙결의 여왕 글라시아", 27: "심연의 군주 녹스", 28: "공허의 포식자 보이드 웜", 29: "몽마 나이트메어", 30: "대정령 벨페르 가이아", 31: "바람의 드래곤 제피로스", 32: "대지의 드래곤 테라곤", 33: "얼음의 드래곤 코퀴로스", 34: "화염의 드래곤 베르단", 35: "언데드 드래곤 헬리시온", 36: "심판의 천사 세라핀", 37: "타락한 신 아스타로트", 38: "청동 거인 탈로스", 39: "미궁의 미노타우로스", 40: "전령의 신 헤르메스"}
 	var final_boss: Enemy = null
-	for n in range(first, 38):
+	for n in range(first, 41):
 		next_portal.interacted.emit()
 		await _frames(3)
 		print("[%d스테이지 - %s]" % [n, stage_names[n]])
@@ -1339,10 +1342,154 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
 							seen37["shot"] = true)
 				_check(seen37["aoe"] and seen37["shot"], "아스타로트 패턴: 타락의 고리 · 천벌 · 속박의 사슬 · 소환")
-				final_boss = asta
+			38:
+				var talos := boss as BossTalos
+				await _survive(5)
+				_check(talos.get_nail() != null and talos.defense == talos._base_defense + talos.nail_armor and talos.pools.size() == 2,
+						"[기믹] 발목의 청동 못 (방어력 +%d) · 물웅덩이 2곳" % talos.nail_armor)
+				var nail_hp0 := talos.get_nail().max_hp if talos.get_nail() != null else 0
+				if talos.get_nail() != null:
+					talos.get_nail().take_damage(9999999)
+				await _frames(3)
+				_check(talos.get_nails_broken() == 1 and talos.is_bleeding() and talos.is_stunned() and talos.defense == talos._base_defense, "청동 못을 부수면 이코르가 흘러 무너짐 (기절 · 방어력 보너스 사라짐)")
+				var hp38 := talos.hp
+				await _survive(40)
+				_check(talos.hp < hp38, "이코르 출혈로 체력이 계속 줄어듦 (-%d)" % (hp38 - talos.hp))
+				talos._bleed_left = 0.01
+				await _survive(140)
+				_check(talos.get_nail() != null and talos.get_nail().max_hp > nail_hp0 and talos.defense == talos._base_defense + talos.nail_armor, "출혈이 끝나면 더 단단한 새 못을 박음")
+				talos._stun_left = 0.0
+				talos.heat = 60.0
+				await _frames(2)
+				_check(talos.burn_damage > 0 and talos.get_status_text().begins_with("열"), "[기믹] 열 50%% 이상이면 공격에 화상")
+				talos.global_position = talos.pools[0].global_position
+				await _frames(3)
+				_check(talos.get_cool_count() == 1 and talos.heat < 5.0 and talos.burn_damage == 0, "물웅덩이에 들어가면 식음")
+				talos._stun_left = 0.0
+				talos.heat = 100.0
+				talos._blaze_timer = 0.01
+				talos.global_position = boss_center + Vector2(0, -60)
+				await _frames(3)
+				_check(_count_nodes_of("AoeStrike") > 0, "열 100%% 「작열」: 몸 주위 폭발")
+				var seen38 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen38["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen38["shot"] = true)
+				_check(seen38["aoe"] and seen38["shot"], "탈로스 패턴: 발 구르기 · 바위 던지기 · 주먹 · 소환")
+			39:
+				var mino := boss as BossMinotaur
+				await _survive(5)
+				_check(mino.get_maze() != null and mino.get_maze().walls.size() >= 4, "[기믹] 움직이는 미궁: 벽 %d개" % (mino.get_maze().walls.size() if mino.get_maze() != null else 0))
+				mino._maze_left = 999.0
+				mino._trap_cooldown = 999.0
+				var built := mino.get_maze().get_rebuild_count()
+				mino.shift_maze()
+				_check(mino.get_maze().is_warning(), "미궁이 바뀔 자리를 점선으로 예고")
+				await _survive(110)
+				_check(mino.get_maze().get_rebuild_count() == built + 1 and not mino.get_maze().is_warning(), "예고 뒤 벽이 새 자리로 옮겨 감")
+				mino._maze_left = 999.0
+				var wall39: Array[Rect2] = [Rect2(boss_center + Vector2(60, -60), Vector2(10, 120))]
+				mino.get_maze()._apply(wall39)
+				mino.global_position = boss_center + Vector2(-60, 0)
+				player.global_position = boss_center + Vector2(-60, 120)
+				mino._bstate = PatternBoss.BossState.CASTING
+				mino._btimer = 5.0
+				mino.begin_charge(Vector2.RIGHT)
+				await _survive(int(mino.charge_windup * 60) + 40, func() -> void:
+					player.global_position = boss_center + Vector2(-60, 120))
+				_check(mino.get_stuck_count() == 1 and mino.is_stuck() and mino.is_stunned(), "[기믹] 돌진하다 벽에 들이받으면 뿔이 박힘 (무방비)")
+				var hp39 := mino.hp
+				mino.take_damage(1000, Vector2.ZERO, false, 999999)
+				_check(hp39 - mino.hp == roundi(1000 * mino.stuck_multiplier), "뿔이 박힌 동안 받는 피해 x%.1f" % mino.stuck_multiplier)
+				mino._stun_left = 0.0
+				mino._stuck_left = 0.0
+				var no_walls: Array[Rect2] = []
+				mino.get_maze()._apply(no_walls)
+				mino.begin_trap()
+				var thread39 := mino.get_thread()
+				_check(thread39 != null and thread39.points.size() >= 3, "[기믹] 미궁의 함정: 바닥에 아리아드네의 실")
+				if thread39 != null:
+					var on := thread39.points[2]
+					await _survive(int(mino.trap_warn * 60) + 6, func() -> void:
+						player.global_position = on)
+				_check(mino.get_trap_dodges() == 1 and mino.get_trap_hits() == 0, "실 위에 서 있으면 함정을 피함")
+				mino.begin_trap()
+				var thread39b := mino.get_thread()
+				var off := boss_center
+				if thread39b != null:
+					var area39 := stage.boss_room.get_arena_rect()
+					for cand in [area39.position + Vector2(30, 30), area39.end - Vector2(30, 30), Vector2(area39.position.x + 30, area39.end.y - 30), Vector2(area39.end.x - 30, area39.position.y + 30)]:
+						if not thread39b.is_on_thread(cand):
+							off = cand
+							break
+				_gm.hp = _gm.max_hp
+				var hp_t: int = _gm.hp
+				player.global_position = off
+				await _frames(int(mino.trap_warn * 60) + 6)
+				_check(mino.get_trap_hits() == 1 and _gm.hp <= hp_t - roundi(_gm.max_hp * mino.trap_ratio) + 5, "실 밖에 있으면 함정에 큰 피해 (가드·대시 불가)")
+				_gm.hp = _gm.max_hp
+				player.global_position = boss_center + Vector2(0, 90)
+				var seen39 := {"aoe": false, "shot": false, "charge": false}
+				await _survive(700, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen39["aoe"] = true
+					if mino.is_charging():
+						seen39["charge"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen39["shot"] = true)
+				_check(seen39["aoe"] and seen39["shot"] and seen39["charge"], "미노타우로스 패턴: 돌진 · 양날 도끼 · 발 구르기 · 소환")
+			40:
+				var herm := boss as BossHermes
+				await _survive(5)
+				var bow40 := ItemDB.get_item(&"hunter_bow") as WeaponData
+				_gm.add_item(bow40)
+				_gm.equip_item(bow40)
+				herm._bstate = PatternBoss.BossState.CHASE
+				var hp40 := herm.hp
+				herm.take_damage(1000, Vector2.ZERO, false, 999999)
+				var moving_loss := hp40 - herm.hp
+				herm._bstate = PatternBoss.BossState.CASTING
+				herm._btimer = 5.0
+				hp40 = herm.hp
+				herm.take_damage(1000, Vector2.ZERO, false, 999999)
+				_check(moving_loss == roundi(1000 * herm.moving_ratio) and hp40 - herm.hp == 1000, "[기믹] 신속: 달리는 동안엔 피해 %d%%만, 멈춰서 패턴을 쓸 때는 그대로" % roundi(herm.moving_ratio * 100.0))
+				_check(_gm.equipped_weapon == bow40, "(준비) 활을 손에 듦")
+				_check(herm.try_steal() and _gm.stolen_weapon == bow40 and not _gm.items.has(bow40) and not _gm.weapon_slots.has(bow40) and _gm.equipped_weapon != null and _gm.equipped_weapon != bow40,
+						"[기믹] 도둑의 손: 손에 든 무기(활)를 빼앗김 → 남은 무기로 바뀜")
+				herm.take_damage(roundi(herm.max_hp * herm.recover_ratio) + 200, Vector2.ZERO, false, 999999)
+				_check(_gm.stolen_weapon == null and _gm.items.has(bow40) and _gm.weapon_slots.has(bow40) and not herm.has_stolen(), "헤르메스를 충분히 때리면 무기를 되찾음")
+				_gm.unequip_item(bow40)
+				_gm.gold = 500
+				_check(herm.try_steal() and herm.stolen_gold == 300 and _gm.gold == 200, "무기가 하나뿐이면 골드를 훔쳐 감")
+				herm.give_back()
+				_check(_gm.gold == 500, "되찾으면 골드도 돌아옴")
+				herm.send_letters()
+				await _frames(3)
+				var letters := herm.get_letters()
+				_check(letters.size() == 3, "[기믹] 전령의 편지 3통")
+				if not letters.is_empty():
+					letters[0].take_damage(9999999)
+				herm.letter_speed = 3000.0
+				var speed40 := herm.move_speed
+				await _frames(12)
+				_check(herm.blessings == 2 and herm.move_speed > speed40, "떨어뜨리지 못한 편지가 도착하면 「전령의 축복」 (빨라짐 · 강해짐)")
+				herm.letter_speed = 55.0
+				var seen40 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen40["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen40["shot"] = true)
+				_check(seen40["aoe"] and seen40["shot"], "헤르메스 패턴: 뱀 지팡이 · 질풍 차기 · 도둑의 손 · 편지 · 소환")
+				final_boss = herm
 		if n == 35:
 			await _test_hidden_dungeon(main, boss as BossHelicion)
-		elif n < 37:
+		elif n < 40:
 			boss.take_damage(999999, Vector2.ZERO, false, 9999)
 			await _frames(4)
 			_check(not _gm.is_game_cleared and next_portal.enabled, "%d스테이지 보스 토벌 → 다음 스테이지 텔레포트" % n)
@@ -1434,25 +1581,25 @@ func _test_hidden_dungeon(main: Node2D, heli_end: BossHelicion) -> void:
 	_check(_item_pickups(main.get_node("Entities")).size() == items_before + 2, "고대 용의 보물상자: 장비 2개")
 
 
-## 마지막 스테이지(37) 보스 토벌 → 모든 스테이지 클리어 / 비늘 없이 35스테이지 보스를 쓰러뜨리면 히든 없음
+## 마지막 스테이지(40) 보스 토벌 → 모든 스테이지 클리어 / 비늘 없이 35스테이지 보스를 쓰러뜨리면 히든 없음
 func _test_final_and_no_hidden(main: Node2D, final_boss: Enemy) -> void:
 	var stage := main.get_node("StageManager") as StageManager
 	var field_portal := main.get_node("Entities/FieldPortal") as Portal
 	var gate := main.get_node("Entities/BossGate") as BossGate
 	var next_portal_end := main.get_node("Entities/NextStagePortal") as Portal
-	print("[엔딩 - 37스테이지 보스 토벌]")
+	print("[엔딩 - 40스테이지 보스 토벌]")
 	stage.ending_delay = 600.0  # 아래 테스트가 끝난 뒤 엔딩 화면을 따로 검사
 	var kills_before: int = _gm.total_kills
 	if final_boss != null:
 		final_boss.take_damage(9999999, Vector2.ZERO, false, 999999)
 	await _frames(4)
-	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(37스테이지) 보스 토벌 → 모든 스테이지 클리어")
+	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(40스테이지) 보스 토벌 → 모든 스테이지 클리어")
 	_check(_gm.total_kills > kills_before and _gm.play_time > 0.0, "엔딩 기록: 처치 %d마리 · 플레이 %s" % [_gm.total_kills, _gm.get_play_time_text()])
 	_check(stage.get_chest() == null and not next_portal_end.enabled and get_tree().get_nodes_in_group(&"enemies").is_empty(), "마지막 스테이지: 상자 / 텔레포트 없음, 남은 졸개 정리")
-	_check(_gm.faith_damage_bonus == 0.0 and get_tree().get_nodes_in_group(&"hostile_zones").is_empty(), "아스타로트가 쓰러지면 신앙·저주의 땅 정리")
+	_check(_gm.faith_damage_bonus == 0.0 and get_tree().get_nodes_in_group(&"hostile_zones").is_empty() and _gm.stolen_weapon == null, "보스가 쓰러지면 신앙·장판·빼앗긴 무기 정리")
 	stage.go_to_next_stage()
 	await _frames(3)
-	_check(_gm.stage == 37 and get_tree().current_scene == main, "37스테이지 이후 반복 스테이지 없음")
+	_check(_gm.stage == 40 and get_tree().current_scene == main, "40스테이지 이후 반복 스테이지 없음")
 
 	print("[히든 조건 없이 35스테이지 보스 토벌]")
 	_gm.dragon_scales.clear()
