@@ -414,7 +414,7 @@ func _clear_enemies() -> void:
 		if leftover != null and not leftover.is_dead():
 			leftover.despawn()
 	# 바닥 장판(점액·불바다·마법 장판)과 떨어지던 마법, 티탄이 박아 둔 바위, 마리오네트 스위치, 레비아탄 폭풍 지대도 함께 정리
-	for group in [&"ground_zones", &"sky_strikes", &"cover_rocks", &"puppet_switches", &"storm_fields"]:
+	for group in [&"ground_zones", &"sky_strikes", &"cover_rocks", &"puppet_switches", &"storm_fields", &"ice_pillars", &"abyss_torches"]:
 		for node in get_tree().get_nodes_in_group(group):
 			node.queue_free()
 

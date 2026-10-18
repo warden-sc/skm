@@ -88,7 +88,7 @@ func _item_pickups(entities: Node) -> Array:
 	return entities.get_children().filter(func(n: Node) -> bool: return n is Pickup and (n as Pickup).kind == Pickup.Kind.ITEM)
 
 
-## 11~24스테이지: 잡몹 · 보스 패턴 · 보스 기믹. 24스테이지 보스(마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
+## 11~27스테이지: 잡몹 · 보스 패턴 · 보스 기믹. 27스테이지 보스(마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
 func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 	var player := main.get_node("Entities/Player") as Player
 	var pool := main.get_node("ProjectilePool") as ProjectilePool
@@ -112,11 +112,14 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 		22: ["사막 도적", "사막 독사", "미라"],
 		23: ["하위 뱀파이어", "흡혈 박쥐", "구울"],
 		24: ["독 도마뱀", "독두꺼비", "맹독 거미"],
+		25: ["태양 사제", "월광 궁수", "별빛 정령"],
+		26: ["서리 늑대", "얼음 골렘", "설인"],
+		27: ["그림자 추적자", "어둠 박쥐", "심연의 눈"],
 	}
-	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁", 16: "바람의 봉우리", 17: "거인의 감옥", 18: "인형 극장", 19: "폭풍의 바다", 20: "대마법사의 탑", 21: "기계 신전", 22: "모래 폭풍의 사막", 23: "피의 성", 24: "맹독의 늪"}
-	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "천공의 수호자 그리핀", 17: "추방된 자 티탄", 18: "꼭두각시 마리오네트", 19: "폭풍의 지배자 레비아탄", 20: "대마법사 아르카나", 21: "기계의 정점 테모스", 22: "사막의 암살자 스콜피언", 23: "피의 군주 벨", 24: "맹독의 패주 바실리스크"}
+	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁", 16: "바람의 봉우리", 17: "거인의 감옥", 18: "인형 극장", 19: "폭풍의 바다", 20: "대마법사의 탑", 21: "기계 신전", 22: "모래 폭풍의 사막", 23: "피의 성", 24: "맹독의 늪", 25: "해와 달의 신전", 26: "빙결의 궁전", 27: "심연"}
+	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "천공의 수호자 그리핀", 17: "추방된 자 티탄", 18: "꼭두각시 마리오네트", 19: "폭풍의 지배자 레비아탄", 20: "대마법사 아르카나", 21: "기계의 정점 테모스", 22: "사막의 암살자 스콜피언", 23: "피의 군주 벨", 24: "맹독의 패주 바실리스크", 25: "해의 쌍둥이 솔", 26: "빙결의 여왕 글라시아", 27: "심연의 군주 녹스"}
 	var final_boss: Enemy = null
-	for n in range(first, 25):
+	for n in range(first, 28):
 		next_portal.interacted.emit()
 		await _frames(3)
 		print("[%d스테이지 - %s]" % [n, stage_names[n]])
@@ -736,8 +739,156 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 					if _count_nodes_of("AoeStrike") > 0:
 						seen24["aoe"] = true)
 				_check(seen24["aoe"], "바실리스크 패턴: 석화의 눈 · 꼬리 휩쓸기 · 독니 돌진 · 소환")
-				final_boss = basil
-		if n < 24:
+			25:
+				var sol := boss as BossTwin
+				await _survive(10)
+				var luna := sol.partner
+				_check(luna != null and is_instance_valid(luna) and luna.display_name == "달의 쌍둥이 루나" and luna.max_hp == sol.max_hp, "[기믹] 해의 쌍둥이 솔이 달의 쌍둥이 루나를 불러냄 (체력 따로)")
+				if luna != null:
+					sol.set_physics_process(false)
+					luna.set_physics_process(false)
+					luna.global_position = sol.global_position + Vector2(40, 0)
+					sol._update_resonance()
+					luna._update_resonance()
+					_check(sol.is_resonating() and sol.defense == sol._base_defense + sol.resonance_defense and luna.defense == luna._base_defense + luna.resonance_defense, "[기믹] 공명: 둘이 붙어 있으면 둘 다 방어력 +%d" % sol.resonance_defense)
+					luna.global_position = sol.global_position + Vector2(200, 60)
+					sol._update_resonance()
+					luna._update_resonance()
+					_check(not sol.is_resonating() and sol.defense == sol._base_defense, "떨어뜨리면 공명이 풀림")
+					luna.take_damage(999999, Vector2.ZERO, false, 9999)
+					var hp_fallen := luna.hp
+					luna.take_damage(500, Vector2.ZERO, false, 9999)
+					_check(luna.is_fallen() and not luna.is_dead() and luna.hp == hp_fallen and sol.is_reviving_partner(), "[기믹] 한쪽 체력이 다 닳으면 「쓰러짐」 (공격이 닿지 않음), 다른 쪽이 되살릴 준비")
+					sol.set_physics_process(true)
+					sol._revive_left = 0.05
+					await _survive(10)
+					_check(not luna.is_fallen() and luna.hp == roundi(luna.max_hp * luna.revive_ratio) and luna.get_revive_count() == 1, "제때 쓰러뜨리지 못하면 쓰러진 쪽이 되살아남 (체력 50%%)")
+					sol.take_damage(999999, Vector2.ZERO, false, 9999)
+					await _frames(2)
+					_check(sol.is_fallen() and not sol.is_dead() and not next_portal.enabled and luna.is_reviving_partner(), "솔이 먼저 쓰러져도 루나가 살아 있으면 끝나지 않음")
+					luna.set_physics_process(true)
+					luna._revive_left = 0.05
+					await _survive(10)
+					_check(not sol.is_fallen() and sol.hp > 0, "루나도 솔을 되살림")
+					var seen25 := {"aoe": false, "shot": false}
+					await _survive(600, func() -> void:
+						if _count_nodes_of("AoeStrike") > 0:
+							seen25["aoe"] = true
+						for c in pool.get_children():
+							if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+								seen25["shot"] = true)
+					_check(seen25["aoe"] and seen25["shot"], "쌍둥이 패턴: 솔(돌진·플레어·햇살) · 루나(달빛 탄막·초승달 화살·서리)")
+					luna.take_damage(999999, Vector2.ZERO, false, 9999)
+					await _frames(2)
+					sol.take_damage(999999, Vector2.ZERO, false, 9999)
+					await _frames(4)
+					_check(sol.is_dead() and (not is_instance_valid(luna) or luna.is_dead()) and next_portal.enabled, "[기믹] 한쪽이 쓰러진 동안 다른 쪽도 쓰러뜨리면 함께 소멸 → 토벌")
+			26:
+				var gla := boss as BossGlacia
+				await _survive(5)
+				_check(gla.get_pillars().size() == 4, "[기믹] 빙결의 궁전에 얼음 기둥 4개 (엄폐물)")
+				gla._blizzard_cooldown = 999.0
+				gla.set_physics_process(false)
+				gla.set_physics_process(true)
+				var hold26 := boss_center + Vector2(0, 100)
+				gla.chill = 0.0
+				await _survive(120, func() -> void:
+					player.global_position = hold26
+					player.velocity = Vector2.ZERO)
+				_check(gla.chill > 35.0 and _gm.player_status.contains("냉기"), "[기믹] 가만히 있으면 냉기가 쌓임 (%.0f%% · %s)" % [gla.chill, _gm.player_status])
+				gla.add_chill(100.0)
+				_check(player.is_charmed() and _gm.player_status.contains("빙결") and gla.get_freeze_count() == 1, "냉기가 가득 차면 빙결 (조작 불가)")
+				await _survive(int(gla.freeze_time * 60) + 10)
+				player.global_position = boss_center + Vector2(-80, 100)
+				gla.chill = 60.0
+				Input.action_press(&"move_right")
+				await _survive(40)
+				Input.action_release(&"move_right")
+				_check(gla.chill < 50.0, "움직이면 냉기가 빠짐 (%.0f%%)" % gla.chill)
+				gla.chill = 0.0
+				var open_spot := boss_center + Vector2(-40, 100)
+				for cand in [Vector2(-40, 100), Vector2(0, 40), Vector2(-100, 0), Vector2(0, 200), Vector2(-140, 120)]:
+					var sheltered := false
+					for pp in gla.get_pillars():
+						if pp.shelters(boss_center + cand, Vector2.RIGHT):
+							sheltered = true
+					if not sheltered:
+						open_spot = boss_center + cand
+						break
+				player.global_position = open_spot
+				gla.begin_blizzard()
+				gla._wind = Vector2.RIGHT
+				await _survive(62, func() -> void:
+					player.global_position = open_spot)
+				var x0 := player.global_position.x
+				await _survive(45, func() -> void:
+					player.global_position.y = open_spot.y
+					gla.chill = 0.0)
+				_check(gla.is_blizzard() and player.global_position.x > x0 + 15.0 and gla.get_pushed_frames() > 0, "[기믹] 눈보라: 바람에 밀려남 (+%.0f, %d프레임)" % [player.global_position.x - x0, gla.get_pushed_frames()])
+				var pil := gla.get_pillars()[0]
+				var behind := pil.global_position + Vector2(30, 0)
+				var sheltered0 := gla.get_sheltered_frames()
+				await _survive(30, func() -> void:
+					player.global_position = behind
+					gla.chill = 0.0)
+				_check(gla.get_sheltered_frames() > sheltered0 + 20, "바람이 오는 쪽에 기둥을 두고 뒤에 서면 바람을 피함")
+				gla._blizzard_left = 0.01
+				gla._blizzard_cooldown = 999.0
+				await _survive(5)
+				gla.mirror()
+				var reflected := {"shot": false}
+				await _survive(50, func() -> void:
+					for c in pool.get_children():
+						var pr := c as Projectile
+						if pr.is_active and pr.get_team() == ProjectileSpec.Team.ENEMY:
+							for pp in gla.get_pillars():
+								if pr.global_position.distance_to(pp.global_position) < 60.0:
+									reflected["shot"] = true)
+				_check(reflected["shot"], "[기믹] 얼음 거울: 기둥이 냉기를 사방으로 반사")
+				var seen26 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					gla.chill = 0.0
+					if _count_nodes_of("AoeStrike") > 0:
+						seen26["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen26["shot"] = true)
+				_check(seen26["aoe"] and seen26["shot"], "글라시아 패턴: 고드름 · 서리 폭발 · 얼음 파편 · 얼음 거울")
+			27:
+				var nox := boss as BossNox
+				await _survive(5)
+				var torches := nox.get_torches()
+				var all_off := torches.size() == 4
+				for t in torches:
+					if t.lit:
+						all_off = false
+				_check(nox.get_veil() != null and all_off, "[기믹] 보스방이 어둠에 잠김 + 꺼진 횃불 4개")
+				nox.set_physics_process(false)
+				var torch0 := torches[0]
+				player.global_position = torch0.global_position
+				await _frames(3)
+				_check(torch0.lit, "[기믹] 횃불을 밟으면 불이 붙음")
+				player.global_position = boss_center + Vector2(0, 100)
+				nox.global_position = torch0.global_position + Vector2(30, 20)
+				nox._update_exposed()
+				_check(nox.is_exposed() and nox.defense == roundi(nox._base_defense * (1.0 - nox.exposed_reduction)), "[기믹] 녹스가 횃불 빛 안에 들어오면 빛에 드러나 방어력 -%d%% (%d)" % [roundi(nox.exposed_reduction * 100.0), nox.defense])
+				nox.global_position = torches[3].global_position + Vector2(0, -60)
+				if torches[3].global_position.distance_to(torch0.global_position) < 200.0:
+					nox.global_position = boss_center + Vector2(0, 260)
+				nox._update_exposed()
+				_check(not nox.is_exposed() and nox.defense == nox._base_defense, "어둠 속에서는 방어력 그대로")
+				nox.set_physics_process(true)
+				nox.extinguish()
+				await _survive(90)
+				_check(not torch0.lit and nox.get_extinguish_count() == 1, "[기믹] 녹스가 그림자 손으로 횃불을 끔")
+				var glow := {"seen": false}
+				await _survive(600, func() -> void:
+					for node in get_tree().current_scene.get_children():
+						if node is AoeStrike and (node as Node2D).z_index > 90:
+							glow["seen"] = true)
+				_check(glow["seen"], "녹스 패턴: 그림자 발톱 · 공허의 고리 · 그림자 습격 (어둠 위로 빛나는 예고)")
+				final_boss = nox
+		if n < 27:
 			boss.take_damage(999999, Vector2.ZERO, false, 9999)
 			await _frames(4)
 			_check(not _gm.is_game_cleared and next_portal.enabled, "%d스테이지 보스 토벌 → 다음 스테이지 텔레포트" % n)
@@ -1767,18 +1918,18 @@ func _run() -> void:
 
 	final_boss = await _test_late_stages(main)
 
-	print("[엔딩 - 24스테이지 보스 토벌]")
+	print("[엔딩 - 27스테이지 보스 토벌]")
 	var kills_before: int = _gm.total_kills
 	stage.ending_delay = 600.0  # 아래 테스트가 끝난 뒤 엔딩 화면을 따로 검사
 	if final_boss != null:
 		final_boss.take_damage(999999, Vector2.ZERO, false, 9999)
 	await _frames(4)
-	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(24스테이지) 보스 토벌 → 모든 스테이지 클리어")
+	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(27스테이지) 보스 토벌 → 모든 스테이지 클리어")
 	_check(_gm.total_kills > kills_before and _gm.play_time > 0.0, "엔딩 기록: 처치 %d마리 · 플레이 %s" % [_gm.total_kills, _gm.get_play_time_text()])
 	_check(stage.get_chest() == null and not next_portal.enabled and get_tree().get_nodes_in_group(&"enemies").is_empty(), "마지막 스테이지: 상자 / 텔레포트 없음, 남은 졸개 정리")
 	stage.go_to_next_stage()
 	await _frames(3)
-	_check(_gm.stage == 24, "24스테이지 이후 반복 스테이지 없음")
+	_check(_gm.stage == 27, "27스테이지 이후 반복 스테이지 없음")
 
 	print("[난이도 배율]")
 	_gm.difficulty = _gm.Difficulty.VERY_HARD

@@ -113,6 +113,10 @@ var _charm_label: String = "매혹"
 var _puppet_master: Node2D
 var _puppet_strength: float = 0.0
 var _puppet_threads: int = 0
+## 눈보라 등 바깥에서 미는 힘 (이번 프레임만, px/s)
+var _push: Vector2 = Vector2.ZERO
+## 냉기 게이지 (빙결의 여왕) 0~100 — 표시용, 값은 보스가 관리
+var _chill: float = 0.0
 ## 죽음의 낙인 (사신): 쌓이면 사형 선고 → 잠시 후 큰 피해 (대시로 피할 수 있음)
 const DEATH_MARK_MAX := 5
 const DEATH_MARK_KEEP_TIME := 8.0
@@ -197,7 +201,12 @@ func _physics_process(delta: float) -> void:
 		if Input.is_action_just_pressed(&"dash") and _dash_cooldown_left <= 0.0 and not is_charmed() and not is_puppeted():
 			_start_dash(input_dir)
 
+	# 미는 힘은 이번 프레임 이동에만 더하고 속도에는 남기지 않음 (쌓이지 않게)
+	var push := _push
+	_push = Vector2.ZERO
+	velocity += push
 	move_and_slide()
+	velocity -= push
 	_update_visuals(delta)
 
 
@@ -283,6 +292,20 @@ func release_puppet() -> void:
 	_puppet_master = null
 	_puppet_strength = 0.0
 	_puppet_threads = 0
+
+
+## 바깥에서 미는 힘 (눈보라). 매 프레임 호출해야 계속 밀림
+func apply_push(push_velocity: Vector2) -> void:
+	_push += push_velocity
+
+
+## 냉기 게이지 표시 (빙결의 여왕이 매 프레임 알려 줌, 0 이면 숨김)
+func set_chill(value: float) -> void:
+	_chill = clampf(value, 0.0, 100.0)
+
+
+func get_chill() -> float:
+	return _chill
 
 
 func is_puppeted() -> bool:
@@ -451,6 +474,7 @@ func teleport_to(at_global: Vector2, camera_bounds: Rect2) -> void:
 	death_marks = 0
 	_execution_left = -1.0
 	release_puppet()
+	_chill = 0.0
 	set_camera_bounds(camera_bounds)
 
 
@@ -549,6 +573,8 @@ func _update_status(delta: float) -> void:
 		parts.append("꼭두각시: 남은 실 %d개 (구속력 %d%%) — 맵 가장자리 스위치를 밟아라" % [_puppet_threads, roundi(_puppet_strength * 100.0)])
 	if _burn_left > 0.0:
 		parts.append("%s %.1f초 (0.5초마다 -%d%s)" % ["독" if _burn_is_poison else "화상", _burn_left, get_burn_tick_damage(), " · 포션 회복 -50%" if _burn_is_poison else ""])
+	if _chill > 0.5:
+		parts.append("냉기 %d%% (멈추면 쌓임, 가득 차면 빙결)" % roundi(_chill))
 	if _armor_break_left > 0.0:
 		parts.append("방어력 감소 -%d (%.1f초)" % [_armor_break_amount, _armor_break_left])
 	if _floor_status_left > 0.0:
