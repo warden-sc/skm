@@ -39,6 +39,7 @@ static func spawn(context: Node, at_global: Vector2, strike_radius: float, strik
 	strike.slow_duration = slow_time
 	strike.fx_gravity = gravity
 	strike.z_index = -5  # 바닥 위, 캐릭터 아래
+	strike.add_to_group(&"aoe_strikes")
 	root.add_child(strike)
 	strike.global_position = at_global
 	return strike

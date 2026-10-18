@@ -1813,6 +1813,7 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 				_check(pro.freed == 4 and pro.leash_radius() == INF and pro.get_status_text().contains("완전 해방"), "사슬을 모두 끊으면 완전 해방")
 				var seen49 := {"aoe": false, "shot": false}
 				await _survive(600, func() -> void:
+					player._invincible_left = 1.0  # 완전 해방 불기둥(×1.48)은 장비 없는 테스트 캐릭터를 한 방에 쓰러뜨림 — 패턴 확인만
 					if _count_nodes_of("AoeStrike") > 0:
 						seen49["aoe"] = true
 					for c in pool.get_children():
@@ -1866,6 +1867,7 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 				player.global_position = boss_center + Vector2(0, 90)
 				var seen50 := {"aoe": false, "shot": false}
 				await _survive(600, func() -> void:
+					player._invincible_left = 1.0  # 무기가 바뀐 공격(×1.15~1.3)은 장비 없는 테스트 캐릭터를 한 방에 쓰러뜨림 — 패턴 확인만
 					if _count_nodes_of("AoeStrike") > 0:
 						seen50["aoe"] = true
 					for c in pool.get_children():
@@ -1977,9 +1979,11 @@ func _test_final_and_no_hidden(main: Node2D, final_boss: Enemy) -> void:
 	print("[엔딩 - 50스테이지 보스 토벌]")
 	stage.ending_delay = 600.0  # 아래 테스트가 끝난 뒤 엔딩 화면을 따로 검사
 	var kills_before: int = _gm.total_kills
+	var pending := AoeStrike.spawn(main, player.global_position, 40.0, 0.03, 9999, Color.RED)
 	if final_boss != null:
 		final_boss.take_damage(9999999, Vector2.ZERO, false, 999999)
 	await _frames(4)
+	_check(not is_instance_valid(pending) and not _gm.is_player_dead, "보스가 쓰러지면 아직 터지지 않은 예고 장판도 사라짐")
 	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(50스테이지) 보스 토벌 → 모든 스테이지 클리어")
 	_check(_gm.total_kills > kills_before and _gm.play_time > 0.0, "엔딩 기록: 처치 %d마리 · 플레이 %s" % [_gm.total_kills, _gm.get_play_time_text()])
 	_check(stage.get_chest() == null and not next_portal_end.enabled and get_tree().get_nodes_in_group(&"enemies").is_empty(), "마지막 스테이지: 상자 / 텔레포트 없음, 남은 졸개 정리")
