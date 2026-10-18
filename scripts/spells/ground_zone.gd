@@ -1,6 +1,6 @@
 class_name GroundZone
 extends Node2D
-## 바닥 장판 (점액 웅덩이 / 불타는 땅 / 크라켄의 먹물 / 아르케오스의 시간 모래).
+## 바닥 장판 (점액 웅덩이 / 불타는 땅 / 크라켄의 먹물 / 아르케오스의 시간 모래 / 아스타로트의 저주의 땅).
 ## - 플레이어 지팡이 마법이 남기면 적에게 피해·감속
 ## - hostile = true 이면 적(보스)이 깐 장판: 밟은 플레이어가 느려지거나(점액) 화상을 입음(불)
 ##
@@ -8,11 +8,11 @@ extends Node2D
 ## - 바닥 위 · 캐릭터 아래(z_index -5)에 그려지고, 끝나기 직전에 서서히 사라집니다.
 ## - 적 판정은 거리 계산이라 물리 콜백 타이밍 문제가 없습니다.
 
-enum Kind { SLIME, FIRE, INK, SAND }
+enum Kind { SLIME, FIRE, INK, SAND, CURSE }
 
 const TICK_TIME := 0.5
 ## 밟았을 때 상태 표시 이름
-const FLOOR_NAMES := {Kind.SLIME: "점액 바닥", Kind.FIRE: "불바다", Kind.INK: "먹물 바닥", Kind.SAND: "시간의 모래"}
+const FLOOR_NAMES := {Kind.SLIME: "점액 바닥", Kind.FIRE: "불바다", Kind.INK: "먹물 바닥", Kind.SAND: "시간의 모래", Kind.CURSE: "저주의 땅"}
 const FADE_TIME := 0.4
 
 var kind: Kind = Kind.SLIME
@@ -86,6 +86,8 @@ func get_color() -> Color:
 			return Color(0.32, 0.22, 0.42)
 		Kind.SAND:
 			return Color(0.95, 0.8, 0.45)
+		Kind.CURSE:
+			return Color(0.5, 0.15, 0.45)
 	return Color(0.35, 0.85, 0.3)
 
 
@@ -155,6 +157,12 @@ func _draw() -> void:
 		for i in 3:
 			draw_arc(Vector2.ZERO, r * (0.35 + 0.3 * i), _elapsed * (1.5 - i * 0.6), _elapsed * (1.5 - i * 0.6) + PI * 1.3, 24, Color(color, 0.6 * alpha), 1.0)
 		draw_arc(Vector2.ZERO, r, 0.0, TAU, 40, Color(color, 0.8 * alpha), 1.0)
+	elif kind == Kind.CURSE:
+		draw_circle(Vector2.ZERO, r * wobble, Color(0.12, 0.02, 0.1, 0.6 * alpha))
+		for i in 5:  # 저주 문양
+			var a := _elapsed * 0.6 + i * TAU / 5.0
+			draw_line(Vector2.from_angle(a) * r * 0.3, Vector2.from_angle(a + 0.9) * r * 0.8, Color(color.lightened(0.3), 0.6 * alpha), 1.0)
+		draw_arc(Vector2.ZERO, r * wobble, 0.0, TAU, 40, Color(0.75, 0.3, 0.7, 0.7 * alpha), 1.0)
 	else:
 		draw_circle(Vector2.ZERO, r * wobble, Color(0.15, 0.45, 0.12, 0.55 * alpha))
 		draw_circle(Vector2(-r * 0.15, -r * 0.1), r * 0.65, Color(color, 0.45 * alpha))

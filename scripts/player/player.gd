@@ -124,6 +124,10 @@ var _root_label: String = ""
 var _slip_left: float = 0.0
 ## 부패 (헬리시온): 포션 회복 불가
 var _decay_left: float = 0.0
+## 성흔 (세라핀): 포션 회복이 피해로 바뀜
+var _stigma_left: float = 0.0
+## 신앙 게이지 표시 (아스타로트가 매 프레임 알려 줌, 0 이면 숨김)
+var _faith: float = 0.0
 ## 죽음의 낙인 (사신): 쌓이면 사형 선고 → 잠시 후 큰 피해 (대시로 피할 수 있음)
 const DEATH_MARK_MAX := 5
 const DEATH_MARK_KEEP_TIME := 8.0
@@ -347,6 +351,32 @@ func is_decayed() -> bool:
 	return _decay_left > 0.0
 
 
+## 성흔: duration 동안 포션의 회복이 피해로 바뀜
+func apply_stigma(duration: float) -> void:
+	if _is_dead:
+		return
+	_stigma_left = maxf(_stigma_left, duration)
+	FloatingText.spawn(self, global_position + Vector2(0, -20), "성흔!", Color(1.0, 0.9, 0.5), true)
+
+
+func is_stigmatized() -> bool:
+	return _stigma_left > 0.0
+
+
+## 신앙 게이지 (0~100). 높을수록 공격력이 오름 — 가득 차면 아스타로트가 광신화를 검
+func set_faith(value: float) -> void:
+	_faith = clampf(value, 0.0, 100.0)
+	GameManager.faith_damage_bonus = _faith / 100.0 * FAITH_MAX_BONUS
+
+
+func get_faith() -> float:
+	return _faith
+
+
+## 신앙 100% 일 때 공격력 보너스
+const FAITH_MAX_BONUS := 0.5
+
+
 func release_root() -> void:
 	_root_left = 0.0
 
@@ -529,6 +559,8 @@ func teleport_to(at_global: Vector2, camera_bounds: Rect2) -> void:
 	_root_left = 0.0
 	_slip_left = 0.0
 	_decay_left = 0.0
+	_stigma_left = 0.0
+	set_faith(0.0)
 	set_camera_bounds(camera_bounds)
 
 
@@ -617,7 +649,11 @@ func _update_status(delta: float) -> void:
 		_burn_particles.emitting = _burn_left > 0.0
 	_slip_left = maxf(_slip_left - delta, 0.0)
 	_decay_left = maxf(_decay_left - delta, 0.0)
-	GameManager.potion_heal_multiplier = 0.0 if _decay_left > 0.0 else (0.5 if _burn_left > 0.0 and _burn_is_poison else 1.0)
+	_stigma_left = maxf(_stigma_left - delta, 0.0)
+	if _stigma_left > 0.0:
+		GameManager.potion_heal_multiplier = -1.0
+	else:
+		GameManager.potion_heal_multiplier = 0.0 if _decay_left > 0.0 else (0.5 if _burn_left > 0.0 and _burn_is_poison else 1.0)
 	var parts := PackedStringArray()
 	if _execution_left >= 0.0:
 		parts.append("사형 선고 %.1f초! (대시로 회피)" % _execution_left)
@@ -633,6 +669,10 @@ func _update_status(delta: float) -> void:
 		parts.append(_root_label)
 	if _decay_left > 0.0:
 		parts.append("부패 %.1f초 (포션 회복 불가)" % _decay_left)
+	if _stigma_left > 0.0:
+		parts.append("성흔 %.1f초 (포션 회복이 피해로)" % _stigma_left)
+	if _faith > 0.5:
+		parts.append("신앙 %d%% (공격력 +%d%%, 가득 차면 광신화)" % [roundi(_faith), roundi(_faith / 100.0 * FAITH_MAX_BONUS * 100.0)])
 	if _slip_left > 0.0:
 		parts.append("빙판 (미끄러움)")
 	if _chill > 0.5:

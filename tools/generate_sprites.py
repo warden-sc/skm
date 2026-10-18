@@ -4326,6 +4326,173 @@ def save_late9_sprites():
         save(painter(), "tiles", f"{name}.png")
 
 
+
+# ---------------------------------------------------------------- 36~37스테이지 (하늘 성채)
+def seraphine():
+    """심판의 천사 세라핀 (48x52): 여섯 장의 흰 날개, 금빛 후광, 흰 법의, 천칭을 든 손"""
+    img = canvas(48, 52)
+    wing, wing_d = _c(245, 245, 235), _c(200, 200, 190)
+    for k, (dy, span) in enumerate(((10, 22), (20, 21), (30, 17))):   # 여섯 날개 (좌우 3쌍)
+        for side in (-1, 1):
+            tip = (24 + side * span, dy - 6)
+            low = (24 + side * (span - 4), dy + 6)
+            _poly(img, [(24 + side * 4, dy + 4), tip, low], wing if k % 2 == 0 else wing_d)
+            _line(img, (24 + side * 4, dy + 4), tip, _c(220, 210, 170))
+    ellipse(img, 24, 7, 7, 2, (255, 225, 120, 220))     # 후광
+    ellipse(img, 24, 7, 5, 1.2, (0, 0, 0, 0))
+    ellipse(img, 24, 12, 4, 4, _c(250, 225, 200))       # 얼굴
+    rect(img, 20, 8, 28, 10, _c(250, 230, 150))         # 금발
+    put(img, [(22, 12), (26, 12)], _c(120, 170, 255))
+    for y in range(16, 51):                             # 법의
+        half = 3 + (y - 16) * 0.3
+        for x in range(int(24 - half), int(24 + half) + 1):
+            img.putpixel((x, y), _c(250, 250, 245) if (x + y) % 9 else _c(225, 215, 180))
+    rect(img, 23, 18, 25, 48, _c(240, 200, 90))         # 금빛 띠
+    _line(img, (34, 22), (42, 22), _c(240, 200, 90))    # 천칭
+    _line(img, (38, 18), (38, 22), _c(240, 200, 90))
+    put(img, [(34, 24), (35, 25), (33, 25), (42, 24), (41, 25), (43, 25)], _c(255, 220, 110))
+    return outline(img, (90, 80, 50, 255))
+
+
+def astaroth():
+    """타락한 신 아스타로트 (48x56): 부러진 검은 후광, 뒤틀린 뿔, 검보라 옷, 붉게 빛나는 눈, 찢어진 날개"""
+    img = canvas(48, 56)
+    robe, robe_d, skin = _c(60, 30, 70), _c(34, 16, 42), _c(150, 130, 150)
+    for side in (-1, 1):                                # 찢어진 검은 날개
+        _poly(img, [(24 + side * 5, 22), (24 + side * 23, 6), (24 + side * 20, 24), (24 + side * 22, 34), (24 + side * 8, 30)], _c(40, 26, 46))
+        for i in range(3):
+            put(img, [(24 + side * (14 + i * 3), 18 + i * 4)], (0, 0, 0, 0))
+    _line(img, (14, 6), (20, 3), _c(80, 70, 60))        # 부러진 후광
+    _line(img, (28, 3), (34, 6), _c(80, 70, 60))
+    ellipse(img, 24, 14, 5, 5, skin)                    # 얼굴
+    put(img, [(22, 13), (26, 13)], _c(255, 50, 60))
+    rect(img, 22, 17, 26, 17, _c(80, 30, 40))
+    for side in (-1, 1):                                # 뒤틀린 뿔
+        put(img, [(24 + side * 4, 9), (24 + side * 6, 7), (24 + side * 7, 5), (24 + side * 6, 3), (24 + side * 8, 2)], _c(200, 190, 170))
+    for y in range(19, 55):                             # 옷
+        half = 4 + (y - 19) * 0.38
+        for x in range(int(24 - half), int(24 + half) + 1):
+            img.putpixel((x, y), robe if (x * 3 + y) % 8 else robe_d)
+    for x, y in ((20, 30), (28, 36), (22, 44), (30, 48)):   # 금 간 성문(聖紋)
+        put(img, [(x, y), (x + 1, y + 1)], _c(200, 150, 60))
+    for side in (-1, 1):                                # 팔
+        rect(img, 24 + side * 9, 22, 24 + side * 10, 34, skin)
+        put(img, [(24 + side * 10, 35), (24 + side * 11, 36)], _c(180, 40, 60))
+    return outline(img, (16, 6, 20, 255))
+
+
+def faith_statue():
+    """아스타로트의 신상 (16x30): 기도하는 모습의 검은 석상, 붉은 눈"""
+    img = canvas(16, 30)
+    rect(img, 2, 25, 13, 29, _c(90, 80, 90))
+    for y in range(8, 25):
+        half = 3 + (y - 8) * 0.18
+        rect(img, int(7.5 - half), y, int(7.5 + half), y, _c(110, 96, 110) if y % 4 else _c(80, 70, 84))
+    ellipse(img, 7.5, 5, 3, 3.5, _c(120, 106, 120))
+    put(img, [(6, 5), (9, 5)], _c(255, 60, 80))
+    put(img, [(7, 12), (8, 12), (7, 13), (8, 13)], _c(150, 136, 150))   # 모은 손
+    return outline(img)
+
+
+def angel_soldier():
+    """천사 병사 (14x18): 흰 갑옷, 작은 날개, 창"""
+    img = canvas(14, 18)
+    put(img, [(2, 6), (1, 7), (2, 8), (11, 6), (12, 7), (11, 8)], _c(240, 240, 230))
+    ellipse(img, 7, 4, 2.5, 2.5, _c(245, 220, 190))
+    rect(img, 5, 1, 9, 2, _c(230, 200, 100))
+    rect(img, 5, 7, 9, 13, _c(220, 225, 235))
+    rect(img, 5, 14, 6, 17, _c(180, 185, 200))
+    rect(img, 8, 14, 9, 17, _c(180, 185, 200))
+    rect(img, 12, 2, 12, 15, _c(200, 170, 90))
+    put(img, [(12, 1), (11, 2), (13, 2)], _c(240, 240, 250))
+    return outline(img)
+
+
+def ophanim():
+    """오파님 (16x16): 눈이 박힌 불타는 금빛 바퀴"""
+    img = canvas(16)
+    for a in range(0, 360, 12):
+        r = math.radians(a)
+        put(img, [(int(round(7.5 + 6.5 * math.cos(r))), int(round(7.5 + 6.5 * math.sin(r))))], _c(250, 210, 90))
+    for a in range(0, 360, 90):
+        r = math.radians(a + 45)
+        x, y = int(round(7.5 + 4 * math.cos(r))), int(round(7.5 + 4 * math.sin(r)))
+        put(img, [(x, y)], _c(255, 255, 255))
+        put(img, [(x, y + 1)], _c(60, 120, 220))
+    ellipse(img, 7.5, 7.5, 1.8, 1.8, _c(255, 245, 200))
+    return outline(img, (110, 80, 20, 255))
+
+
+def choir_doll():
+    """성가대 인형 (12x16): 입을 벌린 하얀 인형"""
+    img = canvas(12, 16)
+    ellipse(img, 6, 5, 3.5, 3.5, _c(240, 235, 225))
+    put(img, [(4, 4), (8, 4)], _c(40, 40, 50))
+    ellipse(img, 6, 7, 1, 1.2, _c(60, 30, 40))
+    for y in range(9, 16):
+        half = 2 + (y - 9) * 0.4
+        rect(img, int(6 - half), y, int(6 + half), y, _c(230, 225, 210) if y % 2 else _c(200, 180, 120))
+    return outline(img)
+
+
+def fanatic():
+    """광신도 (14x18): 두건 쓴 검붉은 옷의 신도, 단검"""
+    img = canvas(14, 18)
+    for y in range(3, 18):
+        half = 2.5 + (y - 3) * 0.25
+        rect(img, int(7 - half), y, int(7 + half), y, _c(110, 30, 40) if y % 3 else _c(80, 20, 28))
+    ellipse(img, 7, 4, 3, 3, _c(80, 20, 28))
+    put(img, [(6, 5), (8, 5)], _c(255, 230, 120))
+    rect(img, 11, 8, 11, 12, _c(200, 200, 210))
+    return outline(img)
+
+
+def fallen_priest():
+    """타락 사제 (14x18): 검보라 법의, 뒤집힌 성표"""
+    img = canvas(14, 18)
+    for y in range(5, 18):
+        half = 2.5 + (y - 5) * 0.32
+        rect(img, int(7 - half), y, int(7 + half), y, _c(70, 40, 90) if y % 3 else _c(46, 24, 60))
+    ellipse(img, 7, 4, 3, 3, _c(170, 150, 160))
+    rect(img, 4, 1, 10, 2, _c(46, 24, 60))
+    put(img, [(6, 4), (8, 4)], _c(200, 60, 200))
+    rect(img, 7, 9, 7, 14, _c(200, 160, 70))
+    rect(img, 5, 12, 9, 12, _c(200, 160, 70))
+    return outline(img)
+
+
+def broken_angel():
+    """날개 꺾인 천사 (18x14): 꺾인 검은 날개로 기어 다니는 타락 천사"""
+    img = canvas(18, 14)
+    ellipse(img, 9, 9, 5, 3, _c(150, 140, 150))
+    ellipse(img, 14, 7, 2.5, 2.5, _c(200, 190, 190))
+    put(img, [(15, 6)], _c(255, 60, 80))
+    _poly(img, [(8, 7), (3, 1), (6, 8)], _c(60, 50, 64))
+    _poly(img, [(10, 7), (12, 0), (11, 8)], _c(80, 70, 84))
+    for x in (5, 8, 11):
+        put(img, [(x, 12), (x, 13)], _c(110, 100, 110))
+    return outline(img)
+
+
+def floor_heaven_court():
+    return _floor(341, (220, 215, 200), 5, [(6, (245, 240, 225, 255), 5), (5, (200, 190, 160, 255), 2), (4, (255, 225, 140, 255), 1)])
+
+
+def floor_fallen_temple():
+    return _floor(351, (66, 50, 66), 5, [(6, (46, 34, 48, 255), 4), (5, (120, 60, 80, 255), 2), (3, (200, 150, 70, 255), 1)])
+
+
+def save_late10_sprites():
+    for name, painter in (("seraphine", seraphine), ("astaroth", astaroth), ("faith_statue", faith_statue),
+                          ("angel_soldier", angel_soldier), ("ophanim", ophanim), ("choir_doll", choir_doll),
+                          ("fanatic", fanatic), ("fallen_priest", fallen_priest), ("broken_angel", broken_angel)):
+        save(painter(), "characters", f"{name}.png")
+    save(orb((255, 255, 240), (255, 210, 110)), "projectiles", "holy_orb.png")
+    save(orb((240, 160, 240), (90, 20, 80)), "projectiles", "corrupt_orb.png")
+    for name, painter in (("floor_heaven_court", floor_heaven_court), ("floor_fallen_temple", floor_fallen_temple)):
+        save(painter(), "tiles", f"{name}.png")
+
+
 def main():
     save(from_map(PLAYER), "characters", "player.png")
     save(from_map(SLIME), "characters", "slime.png")
@@ -4453,6 +4620,7 @@ def main():
     save_late7_sprites()
     save_late8_sprites()
     save_late9_sprites()
+    save_late10_sprites()
 
     save(bar_under(), "ui", "bar_under.png")
     save(bar((200, 50, 70)), "ui", "bar_hp.png")

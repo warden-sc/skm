@@ -121,6 +121,8 @@ var accessory_slots: Array[AccessoryData] = [null, null, null]
 var potions: Dictionary = {}
 ## 플레이어 쪽 공격력 배율 (반지 공격력 보너스 반영)
 var damage_multiplier: float = 1.0
+## 신앙 게이지로 오르는 공격력 (37스테이지 아스타로트, Player 가 매 프레임 갱신)
+var faith_damage_bonus: float = 0.0
 
 var stage: int = 1
 var stage_name: String = ""
@@ -163,6 +165,7 @@ func reset_game() -> void:
 	dash_cooldown_remaining = 0.0
 	gold = STARTING_GOLD
 	damage_multiplier = 1.0
+	faith_damage_bonus = 0.0
 	stage = 1
 	stage_name = ""
 	location_name = ""
@@ -326,7 +329,7 @@ func tick_regen(delta: float) -> void:
 
 ## 지속 피해(화상 등) 배율: 방어력 15 에서 절반, 높을수록 덜 들어옴
 const DOT_DEFENSE_HALF := 15.0
-## 포션 회복량 배율 (독에 걸리면 Player 가 0.5 로 낮춤 — 바실리스크 기믹, 부패면 0 — 헬리시온 기믹)
+## 포션 회복량 배율 (독 0.5 — 바실리스크 / 부패 0 — 헬리시온 / 성흔 -1 = 회복이 피해로 — 세라핀)
 var potion_heal_multiplier: float = 1.0
 
 
@@ -401,7 +404,7 @@ func get_crit_chance(weapon: WeaponData = null) -> float:
 
 ## 장착 무기로 1타 데미지 굴리기 (반지·팔찌 반영). 결과에 방어력 관통("armor_pen")도 담아 줍니다.
 func roll_weapon_damage(weapon: WeaponData) -> Dictionary:
-	var roll := weapon.roll_damage(damage_multiplier, get_crit_chance_bonus(), get_crit_damage_bonus())
+	var roll := weapon.roll_damage(damage_multiplier * (1.0 + faith_damage_bonus), get_crit_chance_bonus(), get_crit_damage_bonus())
 	roll["armor_pen"] = get_armor_pen(weapon)
 	return roll
 
@@ -604,6 +607,13 @@ func use_potion(potion: PotionData = null) -> bool:
 	if hp >= max_hp:
 		show_notice("체력이 가득 차 있습니다", Color(0.8, 0.9, 1.0))
 		return false
+	if potion_heal_multiplier < 0.0:
+		# 성흔 (36스테이지 세라핀): 포션의 회복이 피해로 바뀜 (포션은 소모됨)
+		potions[potion.id] = get_potion_count(potion.id) - 1
+		potions_changed.emit()
+		show_notice("성흔! 포션의 회복이 피해로 바뀌었다", Color(1.0, 0.85, 0.5))
+		damage_player(maxi(1, roundi(potion.get_heal(max_hp) * -potion_heal_multiplier)))
+		return true
 	if potion_heal_multiplier <= 0.0:
 		show_notice("부패! 지금은 포션으로 회복할 수 없다", Color(0.7, 0.9, 0.6))
 		return false

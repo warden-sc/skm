@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/stage_data.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/tiles/floor_fallen_temple.png" id="2_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/boss_astaroth.tscn" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/fanatic.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/fallen_priest.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/broken_angel.tscn" id="6_res"]
+
+[resource]
+script = ExtResource("1_res")
+stage_name = "타락한 신전"
+floor_texture = ExtResource("2_res")
+wall_tint = Color(0.5, 0.4, 0.5, 1)
+ambient_color = Color(0.8, 0.72, 0.82, 1)
+boss_spawn_offset = Vector2(0, 30)
+boss_intro_text = "광신도들의 기도가 메아리치는 신전 — 타락한 신 아스타로트가 부러진 후광 아래에서 눈을 뜬다…"
+enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
+enemy_weights = Array[float]([1.1, 1.0, 0.9])
+boss_scene = ExtResource("3_res")
+kill_target = 30
+spawn_interval = 1.6
+max_alive = 8

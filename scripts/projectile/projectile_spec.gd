@@ -41,6 +41,8 @@ var charm_duration: float = 0.0
 var charm_label: String = "매혹"
 ## 적 탄: 맞으면 쌓이는 「죽음의 낙인」 수
 var death_mark: int = 0
+## 적 탄: 맞으면 「성흔」 (포션 회복이 피해로) 시간 — 세라핀
+var stigma_duration: float = 0.0
 ## 적 탄: 맞으면 「부패」 (포션 회복 불가) 시간 — 헬리시온
 var decay_duration: float = 0.0
 ## 매혹을 건 적 (매혹된 플레이어가 끌려가는 쪽)
