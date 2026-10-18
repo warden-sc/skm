@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/stage_data.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/tiles/floor_void_lair.png" id="2_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/boss_void_worm.tscn" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/void_larva.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/void_apostle.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/rift_beast.tscn" id="6_res"]
+
+[resource]
+script = ExtResource("1_res")
+stage_name = "공허의 둥지"
+floor_texture = ExtResource("2_res")
+wall_tint = Color(0.36, 0.26, 0.44, 1)
+ambient_color = Color(0.66, 0.56, 0.76, 1)
+boss_spawn_offset = Vector2(0, 30)
+boss_intro_text = "차원의 틈이 갈라지고 — 공허의 포식자 보이드 웜이 땅을 뚫고 솟아오른다…"
+enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
+enemy_weights = Array[float]([1.2, 0.9, 1.0])
+boss_scene = ExtResource("3_res")
+kill_target = 26
+spawn_interval = 1.6
+max_alive = 8

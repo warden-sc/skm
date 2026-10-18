@@ -1,0 +1,47 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/boss_nightmare.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/nightmare.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/shadow.png" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/nightmare_illusion.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/dream_imp.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/sleep_fairy.tscn" id="6_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/arcane_orb.png" id="7_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/sleep_orb.png" id="8_res"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 12.0
+
+[node name="BossNightmare" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_res")
+display_name = "몽마 나이트메어"
+max_hp = 38000
+defense = 32
+move_speed = 50.0
+contact_damage = 68
+knockback_resistance = 0.98
+is_boss = true
+gold_min = 4500
+gold_max = 5000
+item_drop_chance = 1.0
+illusion_scene = ExtResource("4_res")
+minion_scenes = Array[PackedScene]([ExtResource("5_res"), ExtResource("6_res")])
+dream_texture = ExtResource("7_res")
+sleep_texture = ExtResource("8_res")
+item_drop_ids = Array[StringName]([&"star_ring"])
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(2.2, 2.2)
+texture = ExtResource("3_res")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -29)
+scale = Vector2(1.3, 1.3)
+texture = ExtResource("2_res")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -20)
+shape = SubResource("CircleShape2D_hit")

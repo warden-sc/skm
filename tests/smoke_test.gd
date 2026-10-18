@@ -88,7 +88,7 @@ func _item_pickups(entities: Node) -> Array:
 	return entities.get_children().filter(func(n: Node) -> bool: return n is Pickup and (n as Pickup).kind == Pickup.Kind.ITEM)
 
 
-## 11~27스테이지: 잡몹 · 보스 패턴 · 보스 기믹. 27스테이지 보스(마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
+## 11~30스테이지: 잡몹 · 보스 패턴 · 보스 기믹. 30스테이지 보스(현재 마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
 func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 	var player := main.get_node("Entities/Player") as Player
 	var pool := main.get_node("ProjectilePool") as ProjectilePool
@@ -115,11 +115,14 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 		25: ["태양 사제", "월광 궁수", "별빛 정령"],
 		26: ["서리 늑대", "얼음 골렘", "설인"],
 		27: ["그림자 추적자", "어둠 박쥐", "심연의 눈"],
+		28: ["공허 유충", "공허 사도", "균열 짐승"],
+		29: ["몽마 하수인", "꿈먹는 맥", "잠의 요정"],
+		30: ["불꽃 정령", "물의 정령", "바위 정령"],
 	}
-	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁", 16: "바람의 봉우리", 17: "거인의 감옥", 18: "인형 극장", 19: "폭풍의 바다", 20: "대마법사의 탑", 21: "기계 신전", 22: "모래 폭풍의 사막", 23: "피의 성", 24: "맹독의 늪", 25: "해와 달의 신전", 26: "빙결의 궁전", 27: "심연"}
-	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "천공의 수호자 그리핀", 17: "추방된 자 티탄", 18: "꼭두각시 마리오네트", 19: "폭풍의 지배자 레비아탄", 20: "대마법사 아르카나", 21: "기계의 정점 테모스", 22: "사막의 암살자 스콜피언", 23: "피의 군주 벨", 24: "맹독의 패주 바실리스크", 25: "해의 쌍둥이 솔", 26: "빙결의 여왕 글라시아", 27: "심연의 군주 녹스"}
+	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁", 16: "바람의 봉우리", 17: "거인의 감옥", 18: "인형 극장", 19: "폭풍의 바다", 20: "대마법사의 탑", 21: "기계 신전", 22: "모래 폭풍의 사막", 23: "피의 성", 24: "맹독의 늪", 25: "해와 달의 신전", 26: "빙결의 궁전", 27: "심연", 28: "공허의 둥지", 29: "꿈의 경계", 30: "정령의 성역"}
+	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "천공의 수호자 그리핀", 17: "추방된 자 티탄", 18: "꼭두각시 마리오네트", 19: "폭풍의 지배자 레비아탄", 20: "대마법사 아르카나", 21: "기계의 정점 테모스", 22: "사막의 암살자 스콜피언", 23: "피의 군주 벨", 24: "맹독의 패주 바실리스크", 25: "해의 쌍둥이 솔", 26: "빙결의 여왕 글라시아", 27: "심연의 군주 녹스", 28: "공허의 포식자 보이드 웜", 29: "몽마 나이트메어", 30: "대정령 벨페르 가이아"}
 	var final_boss: Enemy = null
-	for n in range(first, 28):
+	for n in range(first, 31):
 		next_portal.interacted.emit()
 		await _frames(3)
 		print("[%d스테이지 - %s]" % [n, stage_names[n]])
@@ -887,8 +890,150 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 						if node is AoeStrike and (node as Node2D).z_index > 90:
 							glow["seen"] = true)
 				_check(glow["seen"], "녹스 패턴: 그림자 발톱 · 공허의 고리 · 그림자 습격 (어둠 위로 빛나는 예고)")
-				final_boss = nox
-		if n < 27:
+			28:
+				var worm := boss as BossVoidWorm
+				await _survive(5)
+				var spot28 := boss_center + Vector2(0, 90)
+				player.global_position = spot28
+				worm.begin_swallow()
+				var hp_w0 := worm.hp
+				worm.take_damage(5000, Vector2.ZERO, false, 9999)
+				_check(worm.get_swallow_state() == BossVoidWorm.Swallow.BURROW and not worm.sprite.visible and worm.hp == hp_w0 and not worm.can_be_hit_by(Enemy.HitKind.BOW), "[기믹] 보이드 웜이 땅속으로 파고듦 (공격이 닿지 않음)")
+				await _survive(int((worm.burrow_time + worm.mouth_warn) * 60) + 10, func() -> void:
+					player.global_position = spot28)
+				_check(worm.is_player_inside() and player.is_rooted() and not player.can_attack() == false and _gm.player_status.contains("삼켜짐") and worm.get_wall() != null, "[기믹] 발밑의 입을 못 피하면 삼켜짐 (이동 불가 · 공격 가능 · 위벽 등장)")
+				_gm.hp = _gm.max_hp
+				var hp_in: int = _gm.hp
+				await _frames(40)
+				_check(_gm.hp < hp_in, "삼켜진 동안 소화되며 체력이 깎임 (-%d)" % (hp_in - _gm.hp))
+				_gm.hp = _gm.max_hp
+				var hp_burst := worm.hp
+				if worm.get_wall() != null:
+					worm.get_wall().take_damage(999999)
+				await _frames(3)
+				_check(not worm.is_player_inside() and worm.get_escape_count() == 1 and not player.is_rooted() and worm.hp < hp_burst and worm.is_stunned(), "위벽을 부수면 탈출 + 웜이 속이 터져 큰 피해·기절")
+				worm._stun_left = 0.0
+				worm.begin_swallow()
+				worm._swallow_left = 0.01
+				var spot28b := player.global_position
+				await _survive(int(worm.mouth_warn * 60) + 10, func() -> void:
+					player.global_position = spot28b)
+				var inside_again := worm.is_player_inside()
+				worm._swallow_left = 0.01
+				await _survive(5)
+				_check(inside_again and not worm.is_player_inside() and not player.is_rooted() and worm.get_escape_count() == 1, "위벽을 못 부수면 시간이 지나 뱉어냄")
+				for i in 3:
+					stage._add_enemy((load("res://scenes/enemies/void_larva.tscn") as PackedScene).instantiate() as Enemy, worm.global_position + Vector2.from_angle(TAU * i / 3.0) * 50.0, stage.boss_room.get_arena_rect())
+				await _frames(3)
+				var power0 := worm.power
+				var eaten := worm.devour()
+				_check(eaten >= 3 and worm.growth == mini(eaten, BossVoidWorm.MAX_GROWTH) and worm.power > power0 * 1.25, "[기믹] 포식: 잡몹을 삼킬수록 성장 (%d마리 · 공격력 x%.2f)" % [eaten, worm.power / power0])
+				worm._swallow_cooldown = 999.0
+				var seen28 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen28["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen28["shot"] = true)
+				_check(seen28["aoe"] and seen28["shot"], "보이드 웜 패턴: 공허 토사물 · 몸통 내려치기 · 소환 · 포식")
+			29:
+				var mare := boss as BossNightmare
+				await _survive(5)
+				mare.begin_illusion()
+				await _frames(3)
+				var ills := mare.get_illusions()
+				var no_shadow := not ills.is_empty()
+				for ill in ills:
+					if (ill.get_node("Shadow") as CanvasItem).visible:
+						no_shadow = false
+				_check(ills.size() == mare.illusion_count and no_shadow and (mare.get_node("Shadow") as CanvasItem).visible, "[기믹] 환각: 똑같은 환영 %d개 — 진짜만 그림자가 있음" % ills.size())
+				ills[0].take_damage(100)
+				await _frames(2)
+				_check(mare.get_illusions().size() == mare.illusion_count - 1 and mare.is_illusion_active() and mare.get_caught_count() == 0, "환영을 때리면 흩어질 뿐")
+				mare.take_damage(500, Vector2.ZERO, false, 9999)
+				await _frames(2)
+				_check(not mare.is_illusion_active() and mare.get_illusions().is_empty() and mare.get_caught_count() == 1 and mare.is_stunned(), "진짜를 때리면 「들켰다!」 → 환영이 모두 사라지고 휘청임")
+				mare._stun_left = 0.0
+				mare.set_physics_process(false)
+				var spot29 := mare.get_hit_center() + Vector2(0, 80)
+				player.global_position = spot29
+				await _frames(1)
+				mare.sleep_orbs()
+				var slept := {"sleep": false}
+				await _survive(120, func() -> void:
+					player.global_position = spot29
+					if player.is_charmed() and _gm.player_status.contains("수면"):
+						slept["sleep"] = true)
+				_check(slept["sleep"], "[기믹] 수면 구체에 맞으면 잠듦 (조작 불가)")
+				mare.set_physics_process(true)
+				var seen29 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen29["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen29["shot"] = true)
+				_check(seen29["aoe"] and seen29["shot"], "나이트메어 패턴: 꿈의 고리 · 악몽의 손 · 수면 구체 · 환각")
+				if mare.is_illusion_active():
+					mare.end_illusion(false)
+			30:
+				var gaia := boss as BossGaia
+				await _survive(5)
+				_check(gaia.get_cores().size() == 4 and gaia.get_blessing_names().size() == 4 and gaia.defense == gaia._base_defense + 20 and is_equal_approx(gaia.move_speed, gaia._base_speed * 1.5) and gaia.burn_damage > 0, "[기믹] 네 원소의 정령핵 → 가호 4개 (방어력 +20 · 이속 1.5배 · 화상 · 재생)")
+				gaia.take_damage(6000, Vector2.ZERO, false, 9999)
+				var hp_r := gaia.hp
+				await _survive(90)
+				_check(gaia.hp > hp_r, "물의 가호: 체력 재생 (+%d)" % (gaia.hp - hp_r))
+				gaia.get_core(BossGaia.Element.EARTH).take_damage(999999)
+				await _frames(3)
+				_check(not gaia.has_blessing(BossGaia.Element.EARTH) and gaia.defense == gaia._base_defense, "대지의 핵을 부수면 방어력 가호가 사라짐")
+				gaia.get_core(BossGaia.Element.FIRE).take_damage(999999)
+				gaia.get_core(BossGaia.Element.WIND).take_damage(999999)
+				await _frames(3)
+				_check(gaia.burn_damage == 0 and is_equal_approx(gaia.move_speed, gaia._base_speed) and not gaia.is_earth_breath(), "불·바람의 핵을 부수면 화상·이속 가호도 사라짐")
+				gaia.get_core(BossGaia.Element.WATER).take_damage(999999)
+				await _frames(3)
+				_check(gaia.get_cores().is_empty() and gaia.is_earth_breath(), "[기믹] 핵이 모두 부서지면 「대지의 숨결」 시작")
+				gaia.set_physics_process(false)
+				var spot30 := boss_center + Vector2(-60, 90)
+				player.global_position = spot30
+				gaia.begin_collapse()
+				var warned := gaia.field.get_warned().has(gaia.field.tile_of(spot30))
+				gaia.set_physics_process(true)
+				gaia._collapse_timer = 999.0
+				var hits0 := gaia.get_collapse_hits()
+				await _survive(int(gaia.collapse_warn * 60) + 6, func() -> void:
+					player.global_position = spot30)
+				_check(warned and gaia.get_collapse_hits() == hits0 + 1, "금 간 구역이 무너질 때 그 위에 있으면 큰 피해")
+				gaia.take_damage(gaia.hp - roundi(gaia.max_hp * 0.08), Vector2.ZERO, false, 999999)
+				await _frames(3)
+				_check(gaia.is_seed_planted() and gaia.get_seed() != null, "[기믹] 체력 10%% 이하 → 세계수의 씨앗을 심음")
+				var hp_s := gaia.hp
+				gaia._seed_left = 0.01
+				await _survive(3)
+				_check(gaia.did_seed_heal() and gaia.hp >= hp_s + roundi(gaia.max_hp * gaia.seed_heal) - 5, "씨앗을 못 부수면 크게 회복 (+%d)" % (gaia.hp - hp_s))
+				gaia._seed_planted = false
+				gaia._seed_healed = false
+				gaia.plant_seed()
+				await _frames(3)
+				var hp_s2 := gaia.hp
+				if gaia.get_seed() != null:
+					gaia.get_seed().take_damage(999999)
+				gaia._seed_left = 0.01
+				await _survive(3)
+				_check(not gaia.did_seed_heal() and gaia.hp <= hp_s2 + 50, "씨앗을 부수면 회복하지 못함")
+				gaia._collapse_timer = 0.5
+				var seen30 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen30["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen30["shot"] = true)
+				_check(seen30["aoe"] and seen30["shot"] and gaia.get_collapse_count() >= 2, "가이아 패턴: 불꽃 · 물결 · 돌풍 · 지진 · 대지의 숨결 반복")
+				final_boss = gaia
+		if n < 30:
 			boss.take_damage(999999, Vector2.ZERO, false, 9999)
 			await _frames(4)
 			_check(not _gm.is_game_cleared and next_portal.enabled, "%d스테이지 보스 토벌 → 다음 스테이지 텔레포트" % n)
@@ -1918,18 +2063,18 @@ func _run() -> void:
 
 	final_boss = await _test_late_stages(main)
 
-	print("[엔딩 - 27스테이지 보스 토벌]")
+	print("[엔딩 - 30스테이지 보스 토벌]")
 	var kills_before: int = _gm.total_kills
 	stage.ending_delay = 600.0  # 아래 테스트가 끝난 뒤 엔딩 화면을 따로 검사
 	if final_boss != null:
 		final_boss.take_damage(999999, Vector2.ZERO, false, 9999)
 	await _frames(4)
-	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(27스테이지) 보스 토벌 → 모든 스테이지 클리어")
+	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(30스테이지) 보스 토벌 → 모든 스테이지 클리어")
 	_check(_gm.total_kills > kills_before and _gm.play_time > 0.0, "엔딩 기록: 처치 %d마리 · 플레이 %s" % [_gm.total_kills, _gm.get_play_time_text()])
 	_check(stage.get_chest() == null and not next_portal.enabled and get_tree().get_nodes_in_group(&"enemies").is_empty(), "마지막 스테이지: 상자 / 텔레포트 없음, 남은 졸개 정리")
 	stage.go_to_next_stage()
 	await _frames(3)
-	_check(_gm.stage == 27, "27스테이지 이후 반복 스테이지 없음")
+	_check(_gm.stage == 30, "30스테이지 이후 반복 스테이지 없음")
 
 	print("[난이도 배율]")
 	_gm.difficulty = _gm.Difficulty.VERY_HARD

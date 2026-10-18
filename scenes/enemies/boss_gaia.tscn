@@ -1,0 +1,55 @@
+[gd_scene load_steps=15 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/boss_gaia.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/gaia.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/shadow.png" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/core_fire.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/core_water.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/core_wind.tscn" id="6_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/core_earth.tscn" id="7_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/world_seed.tscn" id="8_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/fire_spirit.tscn" id="9_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/water_spirit.tscn" id="10_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/rock_spirit.tscn" id="11_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/fireball.png" id="12_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/mana_bolt.png" id="13_res"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 14.0
+
+[node name="BossGaia" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_res")
+display_name = "대정령 벨페르 가이아"
+max_hp = 42000
+defense = 34
+move_speed = 40.0
+contact_damage = 70
+knockback_resistance = 1.0
+is_boss = true
+aura_element = 5
+aura_amount = 8
+gold_min = 5000
+gold_max = 5500
+item_drop_chance = 1.0
+core_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res"), ExtResource("7_res")])
+seed_scene = ExtResource("8_res")
+minion_scenes = Array[PackedScene]([ExtResource("9_res"), ExtResource("10_res"), ExtResource("11_res")])
+fire_texture = ExtResource("12_res")
+water_texture = ExtResource("13_res")
+item_drop_ids = Array[StringName]([&"holy_sword"])
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(2.8, 2.8)
+texture = ExtResource("3_res")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -34)
+scale = Vector2(1.3, 1.3)
+texture = ExtResource("2_res")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -24)
+shape = SubResource("CircleShape2D_hit")

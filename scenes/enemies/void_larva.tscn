@@ -1,0 +1,37 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/hellhound.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/void_larva.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/shadow.png" id="3_res"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 6.0
+
+[node name="VoidLarva" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_res")
+display_name = "공허 유충"
+max_hp = 560
+defense = 22
+move_speed = 84.0
+contact_damage = 56
+gold_min = 58
+gold_max = 80
+item_drop_chance = 0.1
+circle_distance = 60.0
+trail_element = 8
+item_drop_ids = Array[StringName]([&"holy_sword", &"solaris_bow", &"arcana_staff", &"colossus_bulwark", &"paladin_plate", &"gatekeeper_horns", &"windwalker_boots", &"dragonscale_bracelet", &"star_ring", &"life_pendant"])
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(1.2, 1.2)
+texture = ExtResource("3_res")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -5)
+texture = ExtResource("2_res")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -4)
+shape = SubResource("CircleShape2D_hit")

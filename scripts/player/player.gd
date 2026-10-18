@@ -117,6 +117,9 @@ var _puppet_threads: int = 0
 var _push: Vector2 = Vector2.ZERO
 ## 냉기 게이지 (빙결의 여왕) 0~100 — 표시용, 값은 보스가 관리
 var _chill: float = 0.0
+## 묶임 (보이드 웜에게 삼켜짐 등): 남은 시간 / 상태 이름 — 이동·대시 불가, 공격은 가능
+var _root_left: float = 0.0
+var _root_label: String = ""
 ## 죽음의 낙인 (사신): 쌓이면 사형 선고 → 잠시 후 큰 피해 (대시로 피할 수 있음)
 const DEATH_MARK_MAX := 5
 const DEATH_MARK_KEEP_TIME := 8.0
@@ -186,6 +189,8 @@ func _physics_process(delta: float) -> void:
 			input_dir = Vector2.ZERO
 			if _charmer != null and is_instance_valid(_charmer):
 				input_dir = global_position.direction_to(_charmer.global_position) * 0.35
+		elif _root_left > 0.0:
+			input_dir = Vector2.ZERO
 		elif is_puppeted():
 			# 꼭두각시: 내 입력과 마리오네트가 끄는 방향이 구속력(strength) 비율로 섞임
 			var pull: Vector2 = _puppet_master.call(&"get_puppet_pull", self)
@@ -198,7 +203,7 @@ func _physics_process(delta: float) -> void:
 		else:
 			velocity = velocity.move_toward(Vector2.ZERO, friction * delta)
 
-		if Input.is_action_just_pressed(&"dash") and _dash_cooldown_left <= 0.0 and not is_charmed() and not is_puppeted():
+		if Input.is_action_just_pressed(&"dash") and _dash_cooldown_left <= 0.0 and not is_charmed() and not is_puppeted() and _root_left <= 0.0:
 			_start_dash(input_dir)
 
 	# 미는 힘은 이번 프레임 이동에만 더하고 속도에는 남기지 않음 (쌓이지 않게)
@@ -302,6 +307,23 @@ func apply_push(push_velocity: Vector2) -> void:
 ## 냉기 게이지 표시 (빙결의 여왕이 매 프레임 알려 줌, 0 이면 숨김)
 func set_chill(value: float) -> void:
 	_chill = clampf(value, 0.0, 100.0)
+
+
+## 묶임: duration 동안 이동·대시 불가 (공격·가드는 가능). label 은 상태 표시 이름
+func apply_root(duration: float, label: String) -> void:
+	if _is_dead:
+		return
+	_root_left = maxf(_root_left, duration)
+	_root_label = label
+	velocity = Vector2.ZERO
+
+
+func release_root() -> void:
+	_root_left = 0.0
+
+
+func is_rooted() -> bool:
+	return _root_left > 0.0
 
 
 func get_chill() -> float:
@@ -475,6 +497,7 @@ func teleport_to(at_global: Vector2, camera_bounds: Rect2) -> void:
 	_execution_left = -1.0
 	release_puppet()
 	_chill = 0.0
+	_root_left = 0.0
 	set_camera_bounds(camera_bounds)
 
 
@@ -573,6 +596,8 @@ func _update_status(delta: float) -> void:
 		parts.append("꼭두각시: 남은 실 %d개 (구속력 %d%%) — 맵 가장자리 스위치를 밟아라" % [_puppet_threads, roundi(_puppet_strength * 100.0)])
 	if _burn_left > 0.0:
 		parts.append("%s %.1f초 (0.5초마다 -%d%s)" % ["독" if _burn_is_poison else "화상", _burn_left, get_burn_tick_damage(), " · 포션 회복 -50%" if _burn_is_poison else ""])
+	if _root_left > 0.0:
+		parts.append(_root_label)
 	if _chill > 0.5:
 		parts.append("냉기 %d%% (멈추면 쌓임, 가득 차면 빙결)" % roundi(_chill))
 	if _armor_break_left > 0.0:
@@ -682,6 +707,7 @@ func _update_timers(delta: float) -> void:
 	_potion_cooldown_left = maxf(_potion_cooldown_left - delta, 0.0)
 	_slow_left = maxf(_slow_left - delta, 0.0)
 	_armor_break_left = maxf(_armor_break_left - delta, 0.0)
+	_root_left = maxf(_root_left - delta, 0.0)
 	_dash_time_left = maxf(_dash_time_left - delta, 0.0)
 	if _dash_cooldown_left > 0.0:
 		_dash_cooldown_left = maxf(_dash_cooldown_left - delta, 0.0)

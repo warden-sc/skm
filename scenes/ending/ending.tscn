@@ -60,7 +60,7 @@ offset_right = -20.0
 offset_bottom = -12.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 5
 
 [node name="TheEnd" type="Label" parent="Layout"]
 unique_name_in_owner = true
@@ -75,7 +75,7 @@ horizontal_alignment = 1
 [node name="StoryBox" type="VBoxContainer" parent="Layout"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/separation = 3
+theme_override_constants/separation = 2
 
 [node name="Spacer" type="Control" parent="Layout"]
 layout_mode = 2

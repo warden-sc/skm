@@ -3665,6 +3665,248 @@ def save_late7_sprites():
         save(painter(), "tiles", f"{name}.png")
 
 
+# ---------------------------------------------------------------- 28~30스테이지
+def void_worm():
+    """공허의 포식자 보이드 웜 (56x46): 보랏빛 마디의 거대 지렁이, 둥근 이빨 고리의 입, 몸에 별빛 무늬"""
+    img = canvas(56, 46)
+    body, body_d, glow = _c(70, 40, 100), _c(40, 22, 60), _c(190, 140, 255)
+    for i in range(26):                              # 땅에서 솟은 몸 (마디)
+        t = i / 25.0
+        cx = 34 - int(round(10 * math.sin(t * math.pi * 0.9)))
+        cy = 44 - i
+        w = 7 - i // 9
+        rect(img, cx - w, cy, cx + w, cy, body if i % 4 else body_d)
+        if i % 5 == 2:
+            put(img, [(cx - w + 2, cy), (cx + w - 3, cy)], glow)
+    ellipse(img, 26, 12, 11, 10, body)               # 머리
+    ellipse(img, 26, 12, 7, 6.5, _c(20, 8, 26))      # 입
+    for a in range(0, 360, 30):                      # 이빨 고리
+        r = math.radians(a)
+        put(img, [(int(round(26 + 6 * math.cos(r))), int(round(12 + 5.5 * math.sin(r))))], _c(240, 230, 210))
+    ellipse(img, 26, 12, 2.5, 2.5, _c(150, 60, 220))  # 목구멍의 공허
+    rect(img, 10, 44, 46, 45, _c(60, 50, 60))         # 뚫고 나온 땅
+    return outline(img, (14, 6, 20, 255))
+
+
+def stomach_wall():
+    """보이드 웜의 위벽 (16x18): 삼켜졌을 때 안에서 때려 부수는 살덩이 — 체력이 따로"""
+    img = canvas(16, 18)
+    ellipse(img, 7.5, 9, 7, 8.5, _c(170, 70, 110))
+    ellipse(img, 7.5, 9, 4.5, 6, _c(210, 100, 140))
+    for y in (4, 8, 12):
+        put(img, [(5, y), (6, y + 1), (9, y), (10, y + 1)], _c(120, 40, 80))
+    return outline(img, (60, 10, 40, 255))
+
+
+def void_larva():
+    """공허 유충 (16x10): 꿈틀대는 보랏빛 애벌레"""
+    img = canvas(16, 10)
+    for i in range(12):
+        x = 2 + i
+        y = 5 + int(round(1.5 * math.sin(i * 0.9)))
+        rect(img, x, y - 2, x, y + 1, _c(110, 60, 150) if i % 3 else _c(70, 40, 100))
+    put(img, [(13, 3), (13, 4)], _c(220, 180, 255))
+    return outline(img)
+
+
+def void_apostle():
+    """공허 사도 (16x16): 별빛이 새는 보랏빛 로브, 얼굴 대신 공허"""
+    img = canvas(16)
+    robe, robe_d = _c(60, 36, 90), _c(36, 20, 56)
+    for y in range(4, 16):
+        half = 3 + (y - 4) * 0.35
+        rect(img, int(7.5 - half), y, int(7.5 + half), y, robe if y % 3 else robe_d)
+    ellipse(img, 7.5, 4, 3.5, 3.5, robe_d)
+    ellipse(img, 7.5, 4.5, 2, 2, _c(10, 4, 16))
+    put(img, [(7, 4), (8, 4)], _c(200, 150, 255))
+    put(img, [(5, 9), (10, 11), (7, 13)], _c(220, 200, 255))
+    return outline(img)
+
+
+def rift_beast():
+    """균열 짐승 (18x14): 몸에 차원 균열이 갈라진 네발 짐승"""
+    img = canvas(18, 14)
+    fur, fur_d = _c(50, 40, 70), _c(30, 24, 44)
+    ellipse(img, 8, 8, 6, 3.5, fur)
+    ellipse(img, 14, 6, 3, 2.5, fur)
+    put(img, [(15, 5)], _c(220, 120, 255))
+    for x in (4, 7, 10, 12):
+        rect(img, x, 11, x, 13, fur_d)
+    put(img, [(5, 7), (6, 8), (7, 7), (8, 8), (9, 7)], _c(200, 140, 255))
+    return outline(img)
+
+
+def nightmare():
+    """몽마 나이트메어 (32x44): 뿔 달린 검은 말 머리의 악마, 별이 박힌 검보라 망토, 붉은 눈"""
+    img = canvas(32, 44)
+    dark, dark_d, mane = _c(62, 48, 84), _c(32, 24, 46), _c(140, 70, 210)
+    for y in range(16, 43):                          # 망토
+        half = 5 + (y - 16) * 0.35
+        for x in range(int(15.5 - half), int(15.5 + half) + 1):
+            img.putpixel((x, y), dark if (x + y) % 6 else dark_d)
+    for x, y in ((10, 30), (20, 26), (14, 37), (22, 38)):
+        put(img, [(x, y)], _c(220, 200, 255))
+    ellipse(img, 16, 9, 6, 7, dark)                  # 말 머리
+    rect(img, 10, 11, 14, 15, dark)                  # 주둥이
+    put(img, [(11, 14), (12, 14)], _c(60, 40, 70))
+    put(img, [(15, 7), (18, 7)], _c(255, 50, 60))
+    for i in range(6):                               # 불꽃 갈기
+        put(img, [(20 + i // 2, 3 + i * 2), (21 + i // 2, 4 + i * 2)], mane)
+    put(img, [(13, 2), (12, 1), (12, 0), (19, 2), (20, 1), (20, 0)], _c(200, 190, 210))  # 뿔
+    return outline(img, (10, 4, 16, 255))
+
+
+def dream_imp():
+    """몽마 하수인 (14x14): 작은 날개의 꼬마 악마"""
+    img = canvas(14)
+    skin = _c(110, 60, 140)
+    ellipse(img, 7, 7, 4, 4, skin)
+    put(img, [(5, 6), (8, 6)], _c(255, 230, 80))
+    put(img, [(4, 2), (4, 3), (10, 2), (10, 3)], _c(220, 200, 230))
+    put(img, [(1, 6), (2, 5), (2, 7), (12, 6), (11, 5), (11, 7)], _c(70, 30, 90))
+    put(img, [(6, 9), (7, 9)], _c(255, 255, 255))
+    return outline(img)
+
+
+def baku():
+    """꿈먹는 맥 (22x18): 코끼리 코의 몽환적인 맥"""
+    img = canvas(22, 18)
+    hide, hide_d = _c(150, 140, 180), _c(100, 90, 130)
+    ellipse(img, 11, 9, 8, 5, hide)
+    ellipse(img, 4, 7, 3.5, 3, hide)
+    put(img, [(1, 9), (1, 10), (2, 11), (2, 12)], hide_d)
+    put(img, [(4, 6)], _c(40, 30, 60))
+    for x in (6, 10, 14, 17):
+        rect(img, x, 13, x + 1, 17, hide_d)
+    put(img, [(10, 6), (13, 7), (15, 9)], _c(220, 200, 255))
+    return outline(img)
+
+
+def sleep_fairy():
+    """잠의 요정 (12x14): 졸린 눈의 작은 요정, 반투명 날개"""
+    img = canvas(12, 14)
+    ellipse(img, 6, 6, 2.5, 2.5, _c(240, 220, 230))
+    put(img, [(5, 6), (7, 6)], _c(80, 60, 100))
+    rect(img, 5, 9, 7, 12, _c(180, 160, 230))
+    put(img, [(1, 5), (2, 6), (1, 7), (10, 5), (9, 6), (10, 7), (2, 8), (9, 8)], (220, 230, 255, 160))
+    put(img, [(6, 1), (6, 2)], _c(255, 240, 160))
+    return outline(img)
+
+
+def gaia():
+    """대정령 벨페르 가이아 (40x52): 나뭇잎 머리칼, 대지빛 피부, 덩굴과 꽃의 드레스, 머리 위 네 원소의 빛"""
+    img = canvas(40, 52)
+    leaf, leaf_d, skin = _c(90, 170, 80), _c(50, 110, 50), _c(190, 160, 120)
+    dress, dress_d, flower = _c(80, 130, 70), _c(50, 90, 46), _c(240, 200, 230)
+    for i, col in enumerate([(240, 90, 50), (80, 160, 240), (170, 240, 200), (170, 130, 80)]):  # 네 원소의 빛
+        a = math.radians(-160 + i * 47)
+        ellipse(img, 20 + 15 * math.cos(a), 12 + 10 * math.sin(a), 2, 2, _c(*col))
+    ellipse(img, 20, 14, 9, 9, leaf)                 # 나뭇잎 머리칼
+    for x in range(11, 30, 3):
+        put(img, [(x, 22), (x + 1, 24), (x, 26)], leaf_d)
+    rect(img, 16, 10, 24, 18, skin)
+    put(img, [(18, 13), (22, 13)], _c(120, 240, 160))
+    put(img, [(19, 16), (20, 16), (21, 16)], _c(150, 100, 80))
+    for y in range(19, 51):                          # 덩굴 드레스
+        half = 5 + (y - 19) * 0.45
+        for x in range(int(20 - half), int(20 + half) + 1):
+            img.putpixel((x, y), dress if (x * 2 + y) % 7 else dress_d)
+    for x, y in ((14, 30), (25, 34), (18, 42), (28, 46), (11, 47)):
+        put(img, [(x, y), (x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)], flower)
+        put(img, [(x, y)], _c(255, 220, 90))
+    for side in (-1, 1):                             # 팔 + 덩굴
+        rect(img, 20 + side * 8, 21, 20 + side * 9, 30, skin)
+        put(img, [(20 + side * 10, 31), (20 + side * 11, 33), (20 + side * 10, 35)], leaf_d)
+    return outline(img, (20, 40, 20, 255))
+
+
+def element_core(col, col_d):
+    """정령핵 (16x18): 받침 위에 떠 있는 원소 결정"""
+    img = canvas(16, 18)
+    rect(img, 3, 14, 12, 17, _c(110, 104, 96))
+    for y in range(13):
+        w = 4 - abs(y - 6) * 0.6
+        rect(img, int(7.5 - w), y, int(7.5 + w), y, col if y < 7 else col_d)
+    put(img, [(6, 3), (6, 4)], _c(255, 255, 255))
+    return outline(img)
+
+
+def world_seed():
+    """세계수의 씨앗 (16x20): 빛나는 어린 싹 — 다 자라면 가이아가 크게 회복"""
+    img = canvas(16, 20)
+    ellipse(img, 7.5, 16, 6, 3, _c(110, 80, 50))
+    rect(img, 7, 6, 8, 15, _c(90, 160, 70))
+    ellipse(img, 4.5, 6, 3, 2, _c(130, 220, 100))
+    ellipse(img, 10.5, 4, 3, 2, _c(130, 220, 100))
+    ellipse(img, 7.5, 2, 2, 2, _c(255, 250, 180))
+    return outline(img)
+
+
+def fire_spirit():
+    """불꽃 정령 (14x16)"""
+    img = canvas(14, 16)
+    for y in range(16):
+        w = max(0, 5 - abs(y - 10) * 0.6) if y > 3 else (y * 0.7)
+        rect(img, int(7 - w), y, int(7 + w), y, _c(255, 120, 40) if y > 6 else _c(255, 200, 80))
+    put(img, [(5, 10), (8, 10)], _c(60, 20, 10))
+    return outline(img, (120, 30, 10, 255))
+
+
+def water_spirit():
+    """물의 정령 (14x16)"""
+    img = canvas(14, 16)
+    ellipse(img, 7, 9, 5.5, 6, (100, 170, 240, 220))
+    ellipse(img, 7, 3, 2.5, 3, (140, 200, 250, 220))
+    put(img, [(5, 8), (8, 8)], _c(20, 60, 120))
+    put(img, [(4, 6), (5, 5)], _c(230, 245, 255))
+    return outline(img, (30, 70, 140, 255))
+
+
+def rock_spirit():
+    """바위 정령 (18x16)"""
+    img = canvas(18, 16)
+    ellipse(img, 9, 9, 7, 6, _c(140, 120, 96))
+    ellipse(img, 7, 7, 3, 2, _c(170, 150, 120))
+    put(img, [(7, 9), (11, 9)], _c(255, 200, 80))
+    rect(img, 2, 13, 5, 15, _c(100, 86, 70))
+    rect(img, 12, 13, 15, 15, _c(100, 86, 70))
+    put(img, [(6, 4), (12, 5), (9, 3)], _c(120, 200, 100))
+    return outline(img)
+
+
+def floor_void_lair():
+    """공허의 둥지: 검보라 살갗 같은 땅 + 별빛 균열"""
+    img = _floor(251, (48, 30, 56), 4, [(6, (70, 40, 84, 255), 3), (4, (180, 140, 240, 255), 1), (5, (32, 20, 40, 255), 2)])
+    return img
+
+
+def floor_dream():
+    """꿈의 경계: 보랏빛 구름 + 반짝이는 별"""
+    img = _floor(261, (70, 60, 100), 6, [(6, (96, 84, 130, 255), 4), (6, (230, 220, 255, 255), 1)])
+    return img
+
+
+def floor_gaia():
+    """정령의 성역: 풀과 이끼 낀 돌, 작은 꽃"""
+    img = _floor(271, (80, 120, 66), 6, [(6, (120, 116, 100, 255), 3), (5, (60, 96, 50, 255), 2), (4, (240, 200, 230, 255), 1)])
+    return img
+
+
+def save_late8_sprites():
+    for name, painter in (("void_worm", void_worm), ("stomach_wall", stomach_wall), ("void_larva", void_larva),
+                          ("void_apostle", void_apostle), ("rift_beast", rift_beast), ("nightmare", nightmare),
+                          ("dream_imp", dream_imp), ("baku", baku), ("sleep_fairy", sleep_fairy), ("gaia", gaia),
+                          ("world_seed", world_seed), ("fire_spirit", fire_spirit), ("water_spirit", water_spirit),
+                          ("rock_spirit", rock_spirit)):
+        save(painter(), "characters", f"{name}.png")
+    for name, col, col_d in (("core_fire", (255, 110, 50), (190, 50, 30)), ("core_water", (100, 180, 250), (40, 100, 200)),
+                             ("core_wind", (170, 250, 200), (90, 190, 140)), ("core_earth", (200, 150, 90), (130, 90, 50))):
+        save(element_core(_c(*col), _c(*col_d)), "characters", f"{name}.png")
+    save(orb((255, 240, 255), (200, 140, 255)), "projectiles", "sleep_orb.png")
+    for name, painter in (("floor_void_lair", floor_void_lair), ("floor_dream", floor_dream), ("floor_gaia", floor_gaia)):
+        save(painter(), "tiles", f"{name}.png")
+
+
 def main():
     save(from_map(PLAYER), "characters", "player.png")
     save(from_map(SLIME), "characters", "slime.png")
@@ -3790,6 +4032,7 @@ def main():
     save_late5_sprites()
     save_late6_sprites()
     save_late7_sprites()
+    save_late8_sprites()
 
     save(bar_under(), "ui", "bar_under.png")
     save(bar((200, 50, 70)), "ui", "bar_hp.png")

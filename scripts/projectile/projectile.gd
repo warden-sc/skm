@@ -136,7 +136,7 @@ func _on_body_entered(body: Node2D) -> void:
 				if _spec.burn_damage > 0:
 					player.apply_burn(_spec.burn_damage, _spec.burn_duration, _spec.burn_poison)
 				if _spec.charm_duration > 0.0:
-					player.apply_charm(_spec.charm_duration, _spec.charmer)
+					player.apply_charm(_spec.charm_duration, _spec.charmer, _spec.charm_label)
 				if _spec.death_mark > 0:
 					player.add_death_mark(_spec.death_mark)
 				_impact(global_position, null)
