@@ -1,0 +1,49 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/boss_polyphemus.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/polyphemus.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/shadow.png" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/cyclops_eye.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/sheep.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/young_cyclops.tscn" id="6_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/cave_wolf.tscn" id="7_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/boulder.png" id="8_res"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 16.0
+
+[node name="BossPolyphemus" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_res")
+display_name = "외눈 거인 폴리페모스"
+max_hp = 66000
+defense = 36
+move_speed = 40.0
+contact_damage = 86
+knockback_resistance = 1.0
+is_boss = true
+aura_element = 4
+aura_amount = 0
+gold_min = 8000
+gold_max = 8500
+item_drop_chance = 1.0
+eye_scene = ExtResource("4_res")
+sheep_scene = ExtResource("5_res")
+minion_scenes = Array[PackedScene]([ExtResource("6_res"), ExtResource("7_res")])
+boulder_texture = ExtResource("8_res")
+item_drop_ids = Array[StringName]([&"colossus_bulwark"])
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(3.2, 3.2)
+texture = ExtResource("3_res")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -30)
+scale = Vector2(1.3, 1.3)
+texture = ExtResource("2_res")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -22)
+shape = SubResource("CircleShape2D_hit")

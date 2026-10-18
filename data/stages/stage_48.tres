@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/stage_data.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/tiles/floor_hero_trial.png" id="2_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/boss_heracles.tscn" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/hero_trainee.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/centaur_archer.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/lion_cub.tscn" id="6_res"]
+
+[resource]
+script = ExtResource("1_res")
+stage_name = "영웅의 시련장"
+floor_texture = ExtResource("2_res")
+wall_tint = Color(0.78, 0.68, 0.5, 1)
+ambient_color = Color(1.0, 0.95, 0.86, 1)
+boss_spawn_offset = Vector2(0, 30)
+boss_intro_text = "열두 과업을 마친 영웅이 시련장에 섰다 — 네메아 사자 가죽을 두른 헤라클레스가 몽둥이를 든다…"
+enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
+enemy_weights = Array[float]([1.1, 0.9, 1.0])
+boss_scene = ExtResource("3_res")
+kill_target = 35
+spawn_interval = 1.6
+max_alive = 8

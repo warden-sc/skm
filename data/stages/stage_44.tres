@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/stage_data.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/tiles/floor_strait.png" id="2_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/boss_scylla.tscn" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/strait_shark.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/serpent_warrior.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/siren_witch.tscn" id="6_res"]
+
+[resource]
+script = ExtResource("1_res")
+stage_name = "메시나 해협"
+floor_texture = ExtResource("2_res")
+wall_tint = Color(0.42, 0.6, 0.68, 1)
+ambient_color = Color(0.82, 0.92, 0.96, 1)
+boss_spawn_offset = Vector2(0, -110)
+boss_intro_text = "해협 한가운데 소용돌이가 입을 벌리고 — 벼랑 끝에서 스킬라가 여섯 머리를 늘어뜨린다…"
+enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
+enemy_weights = Array[float]([1.1, 1.0, 0.9])
+boss_scene = ExtResource("3_res")
+kill_target = 33
+spawn_interval = 1.6
+max_alive = 8

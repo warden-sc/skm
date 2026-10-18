@@ -139,6 +139,9 @@ const DRAGON_SCALE_STAGES: Array[int] = [30, 31, 32, 33, 34, 35]
 var dragon_scales: Array[int] = []
 ## 히든 보스(고대 드래곤 아르케)를 쓰러뜨렸는지
 var hidden_cleared: bool = false
+## 장비가 아닌 보물 (예: 49스테이지 프로메테우스의 「프로메테우스의 불씨」). 장비 조정 때 쓰임을 정할 예정
+const KEY_ITEM_NAMES := {&"prometheus_ember": "프로메테우스의 불씨"}
+var key_items: Array[StringName] = []
 ## 헤르메스(40스테이지)가 훔쳐 간 무기 — 돌려받기 전까지 무기 칸·가방에서 빠짐
 var stolen_weapon: WeaponData
 ## 이번 모험에서 처치한 몬스터 수 (보스·소환된 졸개 포함)
@@ -178,6 +181,7 @@ func reset_game() -> void:
 	dragon_scales.clear()
 	hidden_cleared = false
 	stolen_weapon = null
+	key_items.clear()
 	total_kills = 0
 	play_time = 0.0
 	items.clear()

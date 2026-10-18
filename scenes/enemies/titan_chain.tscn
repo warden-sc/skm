@@ -1,0 +1,40 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/boss_part.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/titan_chain.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/shadow.png" id="3_res"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 10.0
+
+[node name="TitanChain" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_res")
+display_name = "티탄의 사슬"
+max_hp = 2000
+defense = 30
+gold_min = 80
+gold_max = 120
+move_speed = 0.0
+contact_damage = 0
+knockback_resistance = 1.0
+item_drop_chance = 0.0
+follow_boss = false
+bar_color = Color(0.8, 0.8, 0.9, 1)
+bar_y = -36.0
+bob_amount = 0.0
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(1.2, 1.2)
+texture = ExtResource("3_res")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -14)
+scale = Vector2(1.5, 1.5)
+texture = ExtResource("2_res")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -14)
+shape = SubResource("CircleShape2D_hit")

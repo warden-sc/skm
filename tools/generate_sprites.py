@@ -4831,6 +4831,635 @@ def save_late12_sprites():
     save(floor_lerna_swamp(), "tiles", "floor_lerna_swamp.png")
 
 
+
+# ---------------------------------------------------------------- 42~45스테이지 (괴물들의 바다·동굴·사막)
+def polyphemus():
+    """외눈 거인 폴리페모스 (44x56): 털가죽 옷, 큰 몸, 이마의 눈 자리(눈은 따로), 몽둥이"""
+    img = canvas(44, 56)
+    skin, skin_d, fur = _c(200, 160, 120), _c(150, 110, 80), _c(120, 90, 60)
+    rect(img, 13, 40, 19, 54, skin_d)
+    rect(img, 25, 40, 31, 54, skin_d)
+    ellipse(img, 22, 30, 13, 12, skin)
+    rect(img, 9, 32, 35, 42, fur)                      # 털가죽 허리
+    for x in range(10, 35, 3):
+        put(img, [(x, 42), (x + 1, 43)], _c(90, 66, 44))
+    rect(img, 3, 20, 8, 36, skin_d)                    # 팔
+    rect(img, 36, 20, 41, 36, skin_d)
+    rect(img, 39, 4, 42, 36, _c(110, 80, 50))          # 몽둥이
+    ellipse(img, 40.5, 6, 3, 4, _c(130, 96, 60))
+    ellipse(img, 22, 11, 8, 8, skin)                   # 머리
+    rect(img, 16, 3, 28, 5, _c(90, 60, 40))            # 머리털
+    ellipse(img, 22, 10, 3.5, 3, _c(90, 60, 50))       # 눈구멍 (눈은 BossPart)
+    rect(img, 19, 15, 25, 16, _c(120, 50, 40))         # 입
+    return outline(img, (50, 30, 16, 255))
+
+
+def cyclops_eye():
+    """폴리페모스의 외눈 (12x10)"""
+    img = canvas(12, 10)
+    ellipse(img, 5.5, 4.5, 5, 4, _c(245, 240, 230))
+    ellipse(img, 5.5, 4.5, 2.5, 2.5, _c(200, 120, 40))
+    ellipse(img, 5.5, 4.5, 1.2, 1.2, _c(20, 10, 10))
+    put(img, [(4, 3)], _c(255, 255, 255))
+    return outline(img, (60, 20, 20, 255))
+
+
+def sheep():
+    """양 (16x12)"""
+    img = canvas(16, 12)
+    for x, y in ((5, 5), (8, 4), (11, 5), (6, 7), (10, 7), (8, 6)):
+        ellipse(img, x, y, 3, 2.5, _c(240, 238, 228))
+    ellipse(img, 13.5, 5, 2, 2, _c(60, 56, 50))
+    put(img, [(14, 4)], _c(255, 255, 255))
+    for x in (5, 7, 10, 12):
+        rect(img, x, 9, x, 11, _c(60, 56, 50))
+    return outline(img, (90, 86, 80, 255))
+
+
+def young_cyclops():
+    """어린 키클롭스 (20x20)"""
+    img = canvas(20)
+    ellipse(img, 10, 12, 6, 6, _c(190, 150, 110))
+    ellipse(img, 10, 5, 4, 4, _c(200, 160, 120))
+    ellipse(img, 10, 5, 1.6, 1.6, _c(250, 250, 240))
+    put(img, [(10, 5)], _c(30, 20, 10))
+    rect(img, 6, 15, 14, 17, _c(120, 90, 60))
+    rect(img, 7, 18, 8, 19, _c(150, 110, 80))
+    rect(img, 12, 18, 13, 19, _c(150, 110, 80))
+    rect(img, 16, 6, 17, 16, _c(110, 80, 50))
+    return outline(img)
+
+
+def cave_wolf():
+    """동굴 늑대 (18x12)"""
+    img = canvas(18, 12)
+    ellipse(img, 8, 6, 6, 3, _c(90, 86, 90))
+    ellipse(img, 14, 4, 2.5, 2, _c(100, 96, 100))
+    put(img, [(15, 3)], _c(255, 220, 80))
+    put(img, [(13, 1), (14, 1)], _c(80, 76, 80))
+    for x in (4, 7, 10, 12):
+        rect(img, x, 9, x, 11, _c(70, 66, 70))
+    put(img, [(1, 5), (2, 5), (2, 4)], _c(80, 76, 80))
+    return outline(img)
+
+
+def cyclops_slinger():
+    """키클롭스 투석병 (14x18)"""
+    img = canvas(14, 18)
+    ellipse(img, 7, 4, 3, 3, _c(200, 160, 120))
+    ellipse(img, 7, 4, 1.2, 1.2, _c(250, 250, 240))
+    rect(img, 4, 8, 10, 13, _c(130, 100, 70))
+    rect(img, 5, 14, 6, 17, _c(150, 110, 80))
+    rect(img, 8, 14, 9, 17, _c(150, 110, 80))
+    put(img, [(11, 6), (12, 5), (13, 4)], _c(110, 80, 50))
+    ellipse(img, 12.5, 3, 1.5, 1.5, _c(130, 120, 110))
+    return outline(img)
+
+
+def cerberus():
+    """케르베로스 몸통 (48x38): 거대한 검은 개의 몸 (머리는 따로), 뱀 꼬리"""
+    img = canvas(48, 38)
+    fur, fur_d = _c(50, 40, 46), _c(30, 24, 28)
+    ellipse(img, 24, 22, 16, 9, fur)
+    for x in (12, 18, 30, 36):                          # 다리
+        rect(img, x, 28, x + 3, 36, fur_d)
+        put(img, [(x, 36), (x + 3, 36)], _c(200, 190, 170))
+    for k in range(3):                                  # 목 세 개
+        rect(img, 15 + k * 8, 8, 19 + k * 8, 16, fur)
+    for i in range(10):                                 # 뱀 꼬리
+        put(img, [(7 - i // 2, 20 - i), (6 - i // 2, 20 - i)], _c(70, 110, 60))
+    put(img, [(2, 10)], _c(255, 230, 60))
+    for x in range(14, 36, 4):
+        put(img, [(x, 15), (x + 1, 16)], _c(120, 40, 40))
+    return outline(img, (12, 6, 10, 255))
+
+
+def cerberus_head(col, eye):
+    """케르베로스의 머리 (16x14): 속성 빛이 도는 개 머리"""
+    img = canvas(16, 14)
+    fur = _c(54, 44, 50)
+    ellipse(img, 8, 7, 6, 5, fur)
+    rect(img, 9, 7, 15, 10, fur)
+    put(img, [(14, 7)], _c(20, 20, 20))
+    put(img, [(10, 11), (13, 11)], _c(240, 240, 230))
+    put(img, [(7, 5), (8, 5)], eye)
+    put(img, [(3, 1), (4, 2), (5, 1)], fur)
+    for x, y in ((4, 9), (6, 11), (9, 12)):
+        put(img, [(x, y)], col)
+    return outline(img, (12, 6, 10, 255))
+
+
+def lyre():
+    """오르페우스의 리라 (14x20)"""
+    img = canvas(14, 20)
+    for side in (-1, 1):
+        for i in range(12):
+            put(img, [(int(7 + side * (2 + 3 * math.sin(i / 11 * math.pi))), 3 + i)], _c(230, 190, 90))
+    rect(img, 3, 3, 11, 4, _c(210, 170, 80))
+    for x in (5, 7, 9):
+        rect(img, x, 5, x, 14, (250, 245, 220, 200))
+    rect(img, 4, 15, 10, 16, _c(200, 160, 70))
+    rect(img, 6, 17, 8, 19, _c(150, 120, 60))
+    return outline(img, (80, 60, 20, 255))
+
+
+def underworld_hound():
+    """명계 개 (18x12)"""
+    img = canvas(18, 12)
+    ellipse(img, 8, 6, 6, 3, _c(50, 40, 46))
+    ellipse(img, 14, 4, 2.5, 2, _c(60, 50, 56))
+    put(img, [(15, 3)], _c(255, 90, 60))
+    for x in (4, 7, 10, 12):
+        rect(img, x, 9, x, 11, _c(30, 24, 28))
+    put(img, [(5, 3), (8, 3), (11, 3)], _c(255, 120, 60))
+    return outline(img)
+
+
+def shade_soldier():
+    """망령 병사 (14x18)"""
+    img = canvas(14, 18)
+    for y in range(3, 18):
+        half = 2.5 + (y - 3) * 0.2
+        rect(img, int(7 - half), y, int(7 + half), y, (90, 110, 130, 200))
+    ellipse(img, 7, 4, 3, 3, (130, 150, 170, 220))
+    put(img, [(6, 4), (8, 4)], _c(150, 230, 255))
+    rect(img, 11, 3, 11, 14, _c(160, 170, 180))
+    return outline(img, (20, 30, 40, 255))
+
+
+def charon_shade():
+    """카론의 망령 (14x18): 노를 든 두건의 뱃사공 망령"""
+    img = canvas(14, 18)
+    for y in range(3, 18):
+        half = 3 + (y - 3) * 0.25
+        rect(img, int(7 - half), y, int(7 + half), y, _c(40, 40, 50) if y % 3 else _c(28, 28, 36))
+    ellipse(img, 7, 4, 3, 3, _c(28, 28, 36))
+    put(img, [(6, 5), (8, 5)], _c(140, 255, 200))
+    rect(img, 12, 1, 12, 16, _c(110, 90, 60))
+    rect(img, 11, 15, 13, 17, _c(110, 90, 60))
+    return outline(img)
+
+
+def scylla():
+    """스킬라 (44x48): 상반신은 바다 요정, 하반신에서 개 머리 여섯이 뻗은 괴물"""
+    img = canvas(44, 48)
+    skin, sea, sea_d = _c(160, 200, 190), _c(40, 90, 110), _c(24, 60, 76)
+    ellipse(img, 22, 34, 14, 10, sea)                    # 하반신 (바위·물결)
+    for k in range(6):                                   # 개 머리 여섯
+        a = math.radians(200 + k * 28)
+        hx, hy = 22 + 18 * math.cos(a) * 1.1, 34 + 14 * math.sin(a) * -0.6 + 6
+        _line(img, (22, 34), (int(hx), int(hy)), sea_d)
+        ellipse(img, hx, hy, 3, 2.5, _c(70, 60, 70))
+        put(img, [(int(hx) + 1, int(hy) - 1)], _c(255, 80, 60))
+    ellipse(img, 22, 20, 6, 8, skin)                     # 상반신
+    ellipse(img, 22, 9, 5, 5, skin)
+    for i in range(8):                                   # 머리칼 (해초)
+        put(img, [(16 + i, 4 + (i % 3)), (16 + i, 5 + (i % 3))], _c(40, 120, 90))
+    put(img, [(20, 9), (24, 9)], _c(255, 230, 80))
+    return outline(img, (10, 30, 36, 255))
+
+
+def strait_shark():
+    """해협 상어 (20x12)"""
+    img = canvas(20, 12)
+    ellipse(img, 9, 7, 8, 3, _c(110, 130, 150))
+    ellipse(img, 9, 8, 6, 1.5, _c(220, 230, 235))
+    _poly(img, [(8, 4), (10, 0), (12, 4)], _c(90, 110, 130))
+    _poly(img, [(1, 7), (0, 3), (3, 6)], _c(90, 110, 130))
+    put(img, [(15, 6)], _c(20, 20, 20))
+    return outline(img)
+
+
+def serpent_warrior():
+    """바다뱀 전사 (14x18): 뱀 비늘의 해신 병사, 삼지창"""
+    img = canvas(14, 18)
+    ellipse(img, 7, 4, 3, 3, _c(70, 140, 130))
+    put(img, [(6, 4), (8, 4)], _c(255, 230, 60))
+    rect(img, 4, 8, 10, 13, _c(50, 110, 110))
+    for i in range(4):
+        put(img, [(6 + (i % 2), 14 + i)], _c(40, 90, 90))
+    rect(img, 12, 2, 12, 15, _c(200, 190, 140))
+    put(img, [(11, 2), (13, 2), (12, 1)], _c(220, 220, 230))
+    return outline(img)
+
+
+def siren_witch():
+    """해협의 마녀 (12x16)"""
+    img = canvas(12, 16)
+    ellipse(img, 6, 4, 2.5, 2.5, _c(200, 230, 220))
+    rect(img, 3, 2, 9, 3, _c(60, 150, 160))
+    put(img, [(5, 4), (7, 4)], _c(40, 60, 120))
+    for y in range(7, 16):
+        half = 1.5 + (y - 7) * 0.4
+        rect(img, int(6 - half), y, int(6 + half), y, _c(60, 120, 160) if y % 2 else _c(40, 90, 130))
+    return outline(img)
+
+
+def antaeus():
+    """대지의 거인 안타이오스 (42x54): 흙빛 근육질 레슬러, 모래 묻은 다리"""
+    img = canvas(42, 54)
+    skin, skin_d = _c(170, 110, 70), _c(120, 76, 46)
+    rect(img, 12, 38, 18, 52, skin_d)
+    rect(img, 24, 38, 30, 52, skin_d)
+    rect(img, 11, 50, 19, 53, _c(200, 170, 110))
+    rect(img, 23, 50, 31, 53, _c(200, 170, 110))
+    ellipse(img, 21, 26, 13, 12, skin)
+    rect(img, 10, 34, 32, 39, _c(200, 170, 90))         # 허리띠
+    rect(img, 2, 16, 8, 32, skin_d)                    # 팔
+    rect(img, 34, 16, 40, 32, skin_d)
+    ellipse(img, 5, 33, 4, 3, skin)
+    ellipse(img, 37, 33, 4, 3, skin)
+    ellipse(img, 21, 9, 6, 6, skin)
+    rect(img, 15, 3, 27, 5, _c(60, 40, 30))
+    put(img, [(19, 9), (23, 9)], _c(40, 20, 10))
+    rect(img, 18, 13, 24, 14, _c(60, 40, 30))          # 수염
+    return outline(img, (40, 20, 10, 255))
+
+
+def libyan_fighter():
+    """리비아 투사 (14x18)"""
+    img = canvas(14, 18)
+    ellipse(img, 7, 4, 3, 3, _c(170, 110, 70))
+    rect(img, 4, 1, 10, 2, _c(60, 40, 30))
+    rect(img, 4, 8, 10, 12, _c(170, 110, 70))
+    rect(img, 4, 12, 10, 13, _c(200, 170, 90))
+    rect(img, 5, 14, 6, 17, _c(120, 76, 46))
+    rect(img, 8, 14, 9, 17, _c(120, 76, 46))
+    return outline(img)
+
+
+def desert_hyena():
+    """사막 하이에나 (18x12)"""
+    img = canvas(18, 12)
+    ellipse(img, 8, 6, 6, 3, _c(180, 150, 100))
+    ellipse(img, 14, 5, 2.5, 2, _c(170, 140, 90))
+    for x, y in ((5, 5), (8, 6), (11, 5)):
+        put(img, [(x, y)], _c(100, 80, 50))
+    put(img, [(15, 4)], _c(40, 30, 20))
+    for x in (4, 7, 10, 12):
+        rect(img, x, 9, x, 11, _c(130, 106, 70))
+    return outline(img)
+
+
+def sand_wisp():
+    """모래 정령 (12x16)"""
+    img = canvas(12, 16)
+    for y in range(2, 15):
+        w = 4 - abs(y - 8) * 0.35
+        rect(img, int(6 - w), y, int(6 + w), y, (220, 190, 120, 210))
+    put(img, [(4, 6), (7, 6)], _c(120, 70, 30))
+    for x, y in ((2, 13), (9, 14), (5, 15)):
+        put(img, [(x, y)], _c(230, 200, 140))
+    return outline(img, (100, 70, 30, 255))
+
+
+def floor_cyclops_cave():
+    return _floor(401, (90, 84, 74), 5, [(6, (70, 64, 56, 255), 4), (5, (120, 112, 98, 255), 2), (3, (230, 226, 210, 255), 1)])
+
+
+def floor_underworld_gate():
+    return _floor(411, (46, 40, 52), 5, [(6, (30, 26, 36, 255), 4), (5, (80, 50, 60, 255), 2), (3, (255, 120, 60, 255), 1)])
+
+
+def floor_strait():
+    return _floor(421, (60, 110, 130), 6, [(6, (80, 140, 160, 255), 5), (5, (40, 80, 100, 255), 2), (4, (220, 240, 245, 255), 1)])
+
+
+def floor_libya_arena():
+    return _floor(431, (200, 170, 115), 6, [(6, (220, 190, 135, 255), 4), (5, (170, 140, 90, 255), 2), (3, (140, 90, 60, 255), 1)])
+
+
+def save_late13_sprites():
+    for name, painter in (("polyphemus", polyphemus), ("cyclops_eye", cyclops_eye), ("sheep", sheep), ("young_cyclops", young_cyclops),
+                          ("cave_wolf", cave_wolf), ("cyclops_slinger", cyclops_slinger), ("cerberus", cerberus),
+                          ("underworld_hound", underworld_hound), ("shade_soldier", shade_soldier), ("charon_shade", charon_shade),
+                          ("scylla", scylla), ("strait_shark", strait_shark), ("serpent_warrior", serpent_warrior), ("siren_witch", siren_witch),
+                          ("antaeus", antaeus), ("libyan_fighter", libyan_fighter), ("desert_hyena", desert_hyena), ("sand_wisp", sand_wisp)):
+        save(painter(), "characters", f"{name}.png")
+    for name, col, eye in (("cerberus_head_fire", (255, 120, 40), (255, 200, 60)), ("cerberus_head_ice", (140, 210, 255), (180, 240, 255)),
+                           ("cerberus_head_poison", (130, 220, 90), (200, 255, 120))):
+        save(cerberus_head(_c(*col), _c(*eye)), "characters", f"{name}.png")
+    save(lyre(), "world", "lyre.png")
+    for name, painter in (("floor_cyclops_cave", floor_cyclops_cave), ("floor_underworld_gate", floor_underworld_gate),
+                          ("floor_strait", floor_strait), ("floor_libya_arena", floor_libya_arena)):
+        save(painter(), "tiles", f"{name}.png")
+
+
+
+# ---------------------------------------------------------------- 46~49스테이지 (괴물과 영웅, 사슬의 티탄)
+def arachne():
+    """거미 여인 아라크네 (44x44): 상반신은 직조공 여인, 하반신은 커다란 거미"""
+    img = canvas(44, 44)
+    body, body_d, skin = _c(60, 44, 70), _c(36, 26, 44), _c(220, 200, 210)
+    for side in (-1, 1):                               # 거미 다리 8개
+        for k in range(4):
+            x0, y0 = 22 + side * 6, 28 + k * 2
+            x1, y1 = 22 + side * (16 + k * 2), 24 + k * 5
+            _line(img, (x0, y0), (x1, y1), body_d)
+            _line(img, (x1, y1), (x1 + side * 3, y1 + 8), body_d)
+    ellipse(img, 22, 32, 10, 8, body)                  # 거미 배
+    for x, y in ((18, 30), (26, 30), (22, 35)):
+        put(img, [(x, y)], _c(200, 60, 80))
+    ellipse(img, 22, 18, 5, 6, skin)                   # 상반신
+    rect(img, 18, 18, 26, 24, _c(110, 70, 130))
+    ellipse(img, 22, 9, 4.5, 4.5, skin)
+    rect(img, 17, 4, 27, 8, _c(30, 20, 40))            # 머리칼
+    for x in (20, 21, 23, 24):
+        put(img, [(x, 9)], _c(220, 40, 60))            # 여러 눈
+    return outline(img, (14, 8, 18, 255))
+
+
+def loom():
+    """아라크네의 베틀 (24x24)"""
+    img = canvas(24, 24)
+    wood = _c(120, 86, 56)
+    rect(img, 2, 2, 4, 23, wood)
+    rect(img, 19, 2, 21, 23, wood)
+    rect(img, 2, 2, 21, 4, wood)
+    rect(img, 2, 18, 21, 20, wood)
+    for x in range(5, 19, 2):
+        rect(img, x, 5, x, 17, (235, 235, 245, 220))
+    for y in range(6, 17, 3):
+        rect(img, 5, y, 18, y, _c(160, 100, 180))
+    return outline(img)
+
+
+def spider_maiden():
+    """거미 시녀 (14x18)"""
+    img = canvas(14, 18)
+    ellipse(img, 7, 4, 3, 3, _c(210, 190, 200))
+    rect(img, 4, 1, 10, 2, _c(30, 20, 40))
+    put(img, [(6, 4), (8, 4)], _c(220, 40, 60))
+    rect(img, 4, 8, 10, 12, _c(90, 60, 110))
+    for side in (-1, 1):
+        put(img, [(7 + side * 4, 13), (7 + side * 5, 15), (7 + side * 6, 17)], _c(36, 26, 44))
+    ellipse(img, 7, 14, 3, 2.5, _c(60, 44, 70))
+    return outline(img)
+
+
+def cave_spider():
+    """동굴 거미 (16x12)"""
+    img = canvas(16, 12)
+    ellipse(img, 8, 6, 4, 3, _c(70, 60, 60))
+    ellipse(img, 8, 3, 2, 2, _c(80, 70, 70))
+    put(img, [(7, 2), (9, 2)], _c(220, 40, 60))
+    for side in (-1, 1):
+        for k in range(4):
+            put(img, [(8 + side * (4 + k % 2 + 1), 3 + k * 2), (8 + side * (6 + k % 2), 4 + k * 2)], _c(50, 40, 40))
+    return outline(img)
+
+
+def weaver_spider():
+    """실 뽑는 거미 (14x14)"""
+    img = canvas(14)
+    ellipse(img, 7, 8, 4, 3.5, _c(200, 200, 215))
+    ellipse(img, 7, 4, 2, 2, _c(170, 170, 190))
+    put(img, [(6, 3), (8, 3)], _c(120, 40, 160))
+    for side in (-1, 1):
+        for k in range(3):
+            put(img, [(7 + side * (5 + k % 2), 5 + k * 3)], _c(140, 140, 160))
+    rect(img, 7, 12, 7, 13, (240, 240, 255, 200))
+    return outline(img)
+
+
+def echidna():
+    """괴물의 어머니 에키드나 (40x50): 상반신은 여인, 하반신은 커다란 뱀 꼬리"""
+    img = canvas(40, 50)
+    sc, sc_d, skin = _c(70, 110, 80), _c(40, 70, 50), _c(210, 180, 160)
+    for i in range(30):                                 # 뱀 꼬리 (똬리)
+        t = i / 29.0
+        a = t * math.pi * 2.2
+        ellipse(img, 20 + 12 * math.cos(a) * (1 - t * 0.4), 38 + 6 * math.sin(a), 4.5 - t * 2, 4.5 - t * 2, sc if i % 3 else sc_d)
+    ellipse(img, 20, 22, 6, 9, skin)                    # 상반신
+    rect(img, 15, 22, 25, 28, _c(90, 40, 80))
+    ellipse(img, 20, 10, 5, 5, skin)
+    for i in range(10):                                 # 뱀 머리칼
+        put(img, [(14 + i, 5 + (i % 3)), (14 + i, 6 + (i % 2))], _c(60, 100, 60))
+    put(img, [(18, 10), (22, 10)], _c(255, 220, 60))
+    return outline(img, (16, 30, 20, 255))
+
+
+def monster_egg():
+    """괴물의 알 (14x16)"""
+    img = canvas(14, 16)
+    ellipse(img, 6.5, 8.5, 5.5, 7, _c(200, 180, 150))
+    for x, y in ((4, 5), (8, 8), (5, 11), (9, 4)):
+        put(img, [(x, y), (x + 1, y)], _c(140, 80, 120))
+    put(img, [(4, 3), (5, 3)], _c(240, 230, 210))
+    return outline(img)
+
+
+def baby_chimera():
+    """꼬마 키메라 (18x14)"""
+    img = canvas(18, 14)
+    ellipse(img, 8, 8, 6, 4, _c(200, 150, 70))
+    ellipse(img, 14, 6, 3, 3, _c(210, 160, 80))
+    put(img, [(15, 5)], _c(30, 20, 10))
+    put(img, [(12, 3), (13, 2)], _c(220, 220, 200))
+    for i in range(5):
+        put(img, [(2 - i // 3, 7 - i)], _c(80, 140, 70))
+    for x in (5, 9, 11):
+        rect(img, x, 11, x, 13, _c(150, 110, 50))
+    return outline(img)
+
+
+def baby_cerberus():
+    """꼬마 케르베로스 (18x14): 머리 셋 달린 강아지"""
+    img = canvas(18, 14)
+    ellipse(img, 8, 9, 6, 3.5, _c(60, 50, 56))
+    for k in range(3):
+        ellipse(img, 11 + k * 2.5, 5 - (k % 2), 2, 2, _c(70, 60, 66))
+        put(img, [(12 + int(k * 2.5), 4 - (k % 2))], _c(255, 120, 60))
+    for x in (4, 7, 10, 12):
+        rect(img, x, 11, x, 13, _c(40, 32, 36))
+    return outline(img)
+
+
+def nanny_harpy():
+    """괴물 유모 하피 (14x16)"""
+    img = canvas(14, 16)
+    ellipse(img, 7, 4, 2.5, 2.5, _c(220, 190, 170))
+    rect(img, 5, 1, 9, 2, _c(90, 60, 90))
+    put(img, [(6, 4), (8, 4)], _c(255, 230, 60))
+    rect(img, 5, 7, 9, 11, _c(120, 90, 120))
+    for side in (-1, 1):
+        for i in range(4):
+            put(img, [(7 + side * (3 + i), 6 + i // 2)], _c(140, 100, 140) if i % 2 else _c(100, 70, 100))
+    put(img, [(5, 13), (9, 13)], _c(230, 200, 80))
+    return outline(img)
+
+
+def nest_guard():
+    """둥지 파수꾼 (14x18): 뱀 비늘 갑옷의 반인반수 경비병"""
+    img = canvas(14, 18)
+    ellipse(img, 7, 4, 3, 3, _c(90, 130, 90))
+    put(img, [(6, 4), (8, 4)], _c(255, 220, 60))
+    rect(img, 4, 8, 10, 13, _c(70, 100, 70))
+    rect(img, 5, 14, 6, 17, _c(50, 70, 50))
+    rect(img, 8, 14, 9, 17, _c(50, 70, 50))
+    rect(img, 12, 3, 12, 15, _c(180, 180, 190))
+    return outline(img)
+
+
+def heracles():
+    """영웅 헤라클레스 (34x48): 네메아 사자 가죽을 머리에 쓰고 몽둥이를 든 근육질 영웅"""
+    img = canvas(34, 48)
+    skin, pelt, pelt_d = _c(220, 170, 120), _c(210, 160, 70), _c(160, 110, 40)
+    rect(img, 11, 34, 15, 46, skin)
+    rect(img, 19, 34, 23, 46, skin)
+    rect(img, 10, 44, 16, 47, _c(120, 80, 40))
+    rect(img, 18, 44, 24, 47, _c(120, 80, 40))
+    ellipse(img, 17, 25, 9, 10, skin)
+    rect(img, 9, 28, 25, 34, pelt_d)                    # 가죽 허리
+    rect(img, 4, 16, 8, 30, skin)                       # 팔
+    rect(img, 26, 16, 30, 30, skin)
+    ellipse(img, 17, 10, 5, 5, skin)
+    ellipse(img, 17, 7, 8, 6, pelt)                     # 사자 가죽 머리
+    for x in (10, 12, 22, 24):
+        put(img, [(x, 3), (x, 4)], pelt_d)
+    put(img, [(13, 6), (21, 6)], _c(40, 30, 20))        # 사자 눈
+    put(img, [(15, 10), (19, 10)], _c(60, 40, 20))
+    rect(img, 29, 6, 32, 34, _c(110, 80, 50))           # 몽둥이
+    ellipse(img, 30.5, 7, 3, 4, _c(130, 96, 60))
+    for side in (-1, 1):                                # 가죽 앞발 (어깨)
+        put(img, [(17 + side * 9, 15), (17 + side * 10, 16), (17 + side * 10, 17)], pelt)
+    return outline(img, (50, 30, 10, 255))
+
+
+def hero_trainee():
+    """영웅 견습생 (14x18)"""
+    img = canvas(14, 18)
+    ellipse(img, 7, 4, 3, 3, _c(220, 170, 120))
+    rect(img, 4, 1, 10, 2, _c(200, 60, 40))
+    rect(img, 4, 8, 10, 13, _c(180, 160, 120))
+    rect(img, 5, 14, 6, 17, _c(220, 170, 120))
+    rect(img, 8, 14, 9, 17, _c(220, 170, 120))
+    ellipse(img, 2, 10, 2, 3, _c(190, 140, 60))
+    rect(img, 12, 4, 12, 14, _c(200, 200, 210))
+    return outline(img)
+
+
+def centaur_archer():
+    """켄타우로스 궁수 (18x18)"""
+    img = canvas(18)
+    ellipse(img, 8, 12, 6, 3.5, _c(140, 100, 60))
+    for x in (4, 7, 10, 12):
+        rect(img, x, 14, x, 17, _c(100, 70, 40))
+    rect(img, 12, 5, 15, 11, _c(220, 180, 140))
+    ellipse(img, 13.5, 3, 2.5, 2.5, _c(220, 180, 140))
+    put(img, [(14, 3)], _c(40, 30, 20))
+    for i in range(7):
+        put(img, [(17, 3 + i)], _c(150, 110, 60))
+    return outline(img)
+
+
+def lion_cub():
+    """네메아 새끼사자 (18x12)"""
+    img = canvas(18, 12)
+    ellipse(img, 8, 6, 6, 3, _c(220, 170, 80))
+    ellipse(img, 14, 4, 3, 3, _c(200, 150, 60))
+    put(img, [(15, 3)], _c(40, 30, 20))
+    for x in (4, 7, 10, 12):
+        rect(img, x, 9, x, 11, _c(170, 120, 50))
+    put(img, [(1, 5), (2, 4)], _c(170, 120, 50))
+    return outline(img)
+
+
+def prometheus():
+    """사슬에 묶인 티탄 프로메테우스 (40x52): 불씨를 쥔 손, 팔목의 끊어진 쇠고랑, 불타는 듯한 눈"""
+    img = canvas(40, 52)
+    skin, skin_d = _c(170, 130, 100), _c(120, 90, 70)
+    rect(img, 13, 36, 18, 50, skin_d)
+    rect(img, 22, 36, 27, 50, skin_d)
+    ellipse(img, 20, 26, 11, 11, skin)
+    rect(img, 9, 33, 31, 38, _c(90, 70, 60))
+    rect(img, 3, 16, 8, 32, skin_d)
+    rect(img, 32, 16, 37, 32, skin_d)
+    for x in (2, 31):                                   # 쇠고랑
+        rect(img, x, 28, x + 7, 30, _c(110, 110, 120))
+    ellipse(img, 5.5, 13, 3, 4, _c(255, 160, 40))       # 손에 쥔 불씨
+    ellipse(img, 5.5, 13, 1.5, 2, _c(255, 240, 150))
+    ellipse(img, 20, 10, 6, 6, skin)
+    rect(img, 14, 3, 26, 6, _c(80, 60, 50))
+    put(img, [(18, 10), (22, 10)], _c(255, 140, 40))
+    rect(img, 17, 14, 23, 16, _c(80, 60, 50))           # 수염
+    return outline(img, (40, 24, 14, 255))
+
+
+def titan_chain():
+    """티탄의 사슬 (12x20): 바위에 박힌 굵은 쇠사슬"""
+    img = canvas(12, 20)
+    ellipse(img, 5.5, 16, 5, 3.5, _c(110, 100, 90))
+    for k in range(5):
+        y = 2 + k * 3
+        ellipse(img, 5.5, y, 2.5 if k % 2 == 0 else 1.5, 1.6, _c(150, 150, 160))
+        put(img, [(5, y)], (0, 0, 0, 0))
+    return outline(img)
+
+
+def caucasus_eagle():
+    """바위산 독수리 (18x12)"""
+    img = canvas(18, 12)
+    ellipse(img, 9, 7, 4, 2.5, _c(100, 70, 40))
+    ellipse(img, 13, 5, 2, 2, _c(230, 230, 220))
+    put(img, [(15, 5)], _c(240, 190, 60))
+    for i in range(8):
+        put(img, [(8 - i, 5 - i // 3), (8 - i, 6 - i // 3)], _c(120, 86, 50) if i % 2 else _c(80, 56, 30))
+    return outline(img)
+
+
+def chain_warden():
+    """사슬 감시자 (14x18)"""
+    img = canvas(14, 18)
+    ellipse(img, 7, 4, 3, 3, _c(120, 120, 130))
+    rect(img, 5, 3, 9, 3, _c(40, 40, 50))
+    rect(img, 4, 8, 10, 13, _c(90, 90, 100))
+    rect(img, 5, 14, 6, 17, _c(70, 70, 80))
+    rect(img, 8, 14, 9, 17, _c(70, 70, 80))
+    for k in range(4):
+        put(img, [(11 + (k % 2), 6 + k * 2)], _c(160, 160, 170))
+    return outline(img)
+
+
+def ember_spirit():
+    """불씨 정령 (12x14)"""
+    img = canvas(12, 14)
+    for y in range(14):
+        w = max(0, 4 - abs(y - 9) * 0.6) if y > 3 else y * 0.6
+        rect(img, int(6 - w), y, int(6 + w), y, _c(255, 140, 40) if y > 6 else _c(255, 230, 120))
+    put(img, [(4, 9), (7, 9)], _c(80, 20, 10))
+    return outline(img, (120, 40, 10, 255))
+
+
+def floor_web_temple():
+    return _floor(441, (70, 62, 78), 5, [(6, (50, 44, 58, 255), 4), (5, (110, 100, 120, 255), 2), (4, (230, 230, 240, 255), 1)])
+
+
+def floor_monster_nest():
+    return _floor(451, (96, 84, 64), 6, [(6, (76, 64, 48, 255), 4), (5, (130, 110, 80, 255), 2), (4, (210, 190, 160, 255), 1)])
+
+
+def floor_hero_trial():
+    return _floor(461, (180, 160, 120), 5, [(6, (200, 180, 140, 255), 5), (5, (150, 130, 96, 255), 2), (3, (220, 120, 60, 255), 1)])
+
+
+def floor_caucasus():
+    return _floor(471, (100, 96, 92), 6, [(6, (80, 76, 74, 255), 4), (5, (130, 126, 120, 255), 2), (4, (255, 140, 50, 255), 1)])
+
+
+def save_late14_sprites():
+    for name, painter in (("arachne", arachne), ("loom", loom), ("spider_maiden", spider_maiden), ("cave_spider", cave_spider),
+                          ("weaver_spider", weaver_spider), ("echidna", echidna), ("monster_egg", monster_egg), ("baby_chimera", baby_chimera),
+                          ("baby_cerberus", baby_cerberus), ("nanny_harpy", nanny_harpy), ("nest_guard", nest_guard), ("heracles", heracles),
+                          ("hero_trainee", hero_trainee), ("centaur_archer", centaur_archer), ("lion_cub", lion_cub), ("prometheus", prometheus),
+                          ("titan_chain", titan_chain), ("caucasus_eagle", caucasus_eagle), ("chain_warden", chain_warden), ("ember_spirit", ember_spirit)):
+        save(painter(), "characters", f"{name}.png")
+    save(orb((255, 255, 255), (200, 200, 220)), "projectiles", "silk.png")
+    for name, painter in (("floor_web_temple", floor_web_temple), ("floor_monster_nest", floor_monster_nest),
+                          ("floor_hero_trial", floor_hero_trial), ("floor_caucasus", floor_caucasus)):
+        save(painter(), "tiles", f"{name}.png")
+
+
 def main():
     save(from_map(PLAYER), "characters", "player.png")
     save(from_map(SLIME), "characters", "slime.png")
@@ -4961,6 +5590,8 @@ def main():
     save_late10_sprites()
     save_late11_sprites()
     save_late12_sprites()
+    save_late13_sprites()
+    save_late14_sprites()
 
     save(bar_under(), "ui", "bar_under.png")
     save(bar((200, 50, 70)), "ui", "bar_hp.png")

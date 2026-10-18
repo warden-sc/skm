@@ -137,6 +137,11 @@ func _stats_text() -> String:
 		lines.append("치명타 확률 %d%% · 치명타 피해 x%.1f" % [roundi(GameManager.get_crit_chance(weapon) * 100.0), weapon.crit_multiplier + GameManager.get_crit_damage_bonus()])
 		lines.append("방어력 관통(방깍) %d · 공격력 +%d%%" % [GameManager.get_armor_pen(weapon), roundi(GameManager.get_attack_bonus() * 100.0)])
 	lines.append("방어력 %d · 최대 HP %d · 이속 +%d%% · 재생 %.1f/s" % [GameManager.get_total_defense(), GameManager.max_hp, roundi(GameManager.get_move_speed_bonus() * 100.0), GameManager.get_hp_regen()])
+	if not GameManager.key_items.is_empty():
+		var treasures := PackedStringArray()
+		for key in GameManager.key_items:
+			treasures.append(str(GameManager.KEY_ITEM_NAMES.get(key, key)))
+		lines.append("보물: " + ", ".join(treasures))
 	return "\n".join(lines)
 
 

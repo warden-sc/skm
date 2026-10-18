@@ -1,0 +1,47 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/boss_prometheus.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/prometheus.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/shadow.png" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/titan_chain.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/caucasus_eagle.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/chain_warden.tscn" id="6_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/fireball.png" id="7_res"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 16.0
+
+[node name="BossPrometheus" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_res")
+display_name = "사슬에 묶인 티탄 프로메테우스"
+max_hp = 80000
+defense = 34
+move_speed = 40.0
+contact_damage = 88
+knockback_resistance = 1.0
+is_boss = true
+aura_element = 1
+aura_amount = 6
+gold_min = 9600
+gold_max = 10100
+item_drop_chance = 1.0
+chain_scene = ExtResource("4_res")
+minion_scenes = Array[PackedScene]([ExtResource("5_res"), ExtResource("6_res")])
+fire_texture = ExtResource("7_res")
+item_drop_ids = Array[StringName]([&"solaris_bow"])
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(3.2, 3.2)
+texture = ExtResource("3_res")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -30)
+scale = Vector2(1.3, 1.3)
+texture = ExtResource("2_res")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -22)
+shape = SubResource("CircleShape2D_hit")
