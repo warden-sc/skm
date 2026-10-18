@@ -1,4 +1,4 @@
-[gd_scene load_steps=64 format=3]
+[gd_scene load_steps=65 format=3]
 
 [ext_resource type="Script" path="res://scripts/main/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/world/room.gd" id="2_room"]
@@ -60,6 +60,7 @@
 [ext_resource type="Resource" path="res://data/stages/stage_38.tres" id="58_stage38"]
 [ext_resource type="Resource" path="res://data/stages/stage_39.tres" id="59_stage39"]
 [ext_resource type="Resource" path="res://data/stages/stage_40.tres" id="60_stage40"]
+[ext_resource type="Resource" path="res://data/stages/stage_41.tres" id="61_stage41"]
 [ext_resource type="Resource" path="res://data/stages/stage_hidden.tres" id="56_stagehidden"]
 [ext_resource type="PackedScene" path="res://scenes/world/pickup.tscn" id="24_pickup"]
 [ext_resource type="PackedScene" path="res://scenes/world/chest.tscn" id="25_chest"]
@@ -163,7 +164,7 @@ script = ExtResource("18_fade")
 script = ExtResource("19_stage")
 entities_root = NodePath("../Entities")
 player = NodePath("../Entities/Player")
-stages = Array[ExtResource("20_stagedata")]([ExtResource("21_stage1"), ExtResource("22_stage2"), ExtResource("23_stage3"), ExtResource("24_stage4"), ExtResource("25_stage5"), ExtResource("26_stage6"), ExtResource("27_stage7"), ExtResource("28_stage8"), ExtResource("29_stage9"), ExtResource("30_stage10"), ExtResource("31_stage11"), ExtResource("32_stage12"), ExtResource("33_stage13"), ExtResource("34_stage14"), ExtResource("35_stage15"), ExtResource("36_stage16"), ExtResource("37_stage17"), ExtResource("38_stage18"), ExtResource("39_stage19"), ExtResource("40_stage20"), ExtResource("41_stage21"), ExtResource("42_stage22"), ExtResource("43_stage23"), ExtResource("44_stage24"), ExtResource("45_stage25"), ExtResource("46_stage26"), ExtResource("47_stage27"), ExtResource("48_stage28"), ExtResource("49_stage29"), ExtResource("50_stage30"), ExtResource("51_stage31"), ExtResource("52_stage32"), ExtResource("53_stage33"), ExtResource("54_stage34"), ExtResource("55_stage35"), ExtResource("56_stage36"), ExtResource("57_stage37"), ExtResource("58_stage38"), ExtResource("59_stage39"), ExtResource("60_stage40")])
+stages = Array[ExtResource("20_stagedata")]([ExtResource("21_stage1"), ExtResource("22_stage2"), ExtResource("23_stage3"), ExtResource("24_stage4"), ExtResource("25_stage5"), ExtResource("26_stage6"), ExtResource("27_stage7"), ExtResource("28_stage8"), ExtResource("29_stage9"), ExtResource("30_stage10"), ExtResource("31_stage11"), ExtResource("32_stage12"), ExtResource("33_stage13"), ExtResource("34_stage14"), ExtResource("35_stage15"), ExtResource("36_stage16"), ExtResource("37_stage17"), ExtResource("38_stage18"), ExtResource("39_stage19"), ExtResource("40_stage20"), ExtResource("41_stage21"), ExtResource("42_stage22"), ExtResource("43_stage23"), ExtResource("44_stage24"), ExtResource("45_stage25"), ExtResource("46_stage26"), ExtResource("47_stage27"), ExtResource("48_stage28"), ExtResource("49_stage29"), ExtResource("50_stage30"), ExtResource("51_stage31"), ExtResource("52_stage32"), ExtResource("53_stage33"), ExtResource("54_stage34"), ExtResource("55_stage35"), ExtResource("56_stage36"), ExtResource("57_stage37"), ExtResource("58_stage38"), ExtResource("59_stage39"), ExtResource("60_stage40"), ExtResource("61_stage41")])
 camp_room = NodePath("../Rooms/CampRoom")
 field_room = NodePath("../Rooms/FieldRoom")
 boss_room = NodePath("../Rooms/BossRoom")

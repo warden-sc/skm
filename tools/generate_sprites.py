@@ -4721,6 +4721,116 @@ def save_late11_sprites():
         save(painter(), "tiles", f"{name}.png")
 
 
+
+# ---------------------------------------------------------------- 41스테이지 (레르나의 늪)
+def hydra():
+    """머리 아홉의 히드라 몸통 (52x40): 늪빛 비늘의 거대한 몸, 목이 돋는 어깨 (머리는 따로)"""
+    img = canvas(52, 40)
+    sc, sc_d, belly = _c(70, 120, 80), _c(40, 80, 50), _c(170, 190, 120)
+    for i in range(14):                                # 꼬리
+        t = i / 13.0
+        ellipse(img, 4 + 14 * t, 32 - 3 * math.sin(t * 3), 1.5 + 2.5 * t, 1.5 + 2.5 * t, sc if i % 3 else sc_d)
+    ellipse(img, 28, 26, 17, 11, sc)                   # 몸통
+    ellipse(img, 30, 30, 11, 5, belly)
+    for x in range(16, 42, 4):                         # 등 비늘
+        put(img, [(x, 16), (x + 1, 15)], sc_d)
+    for x in (18, 24, 34, 40):                         # 다리
+        rect(img, x, 34, x + 2, 39, sc_d)
+    for k in range(5):                                 # 목이 돋는 어깨 (목 밑동)
+        cx = 18 + k * 6
+        ellipse(img, cx, 14, 3, 3, sc)
+    return outline(img, (16, 36, 20, 255))
+
+
+def hydra_head():
+    """히드라의 머리 (16x16): 독니를 드러낸 뱀 머리 + 목 일부"""
+    img = canvas(16)
+    sc, sc_d = _c(80, 140, 90), _c(44, 90, 56)
+    rect(img, 6, 9, 9, 15, sc_d)                       # 목
+    ellipse(img, 8, 6, 6, 4.5, sc)
+    rect(img, 9, 7, 14, 9, sc)                         # 주둥이
+    put(img, [(10, 10), (13, 10)], _c(250, 250, 230))  # 독니
+    put(img, [(8, 4), (9, 4)], _c(255, 230, 60))
+    put(img, [(4, 2), (5, 1), (7, 1)], _c(200, 220, 140))   # 볏
+    return outline(img, (16, 36, 20, 255))
+
+
+def hydra_stump():
+    """잘린 히드라의 목 (12x12): 꿈틀거리는 붉은 단면"""
+    img = canvas(12, 12)
+    rect(img, 3, 4, 8, 11, _c(44, 90, 56))
+    ellipse(img, 5.5, 4, 3.5, 2.5, _c(200, 60, 60))
+    ellipse(img, 5.5, 4, 2, 1.2, _c(240, 130, 110))
+    return outline(img, (40, 16, 16, 255))
+
+
+def brazier(lit):
+    """성화대 (14x24): 돌 받침 위의 화로 — 불이 붙었으면 불꽃"""
+    img = canvas(14, 24)
+    rect(img, 5, 12, 8, 21, _c(120, 110, 100))
+    rect(img, 3, 21, 10, 23, _c(100, 92, 84))
+    ellipse(img, 6.5, 11, 6, 3, _c(90, 70, 50))
+    if lit:
+        for y in range(1, 11):
+            w = (10 - y) * 0.45
+            rect(img, int(6.5 - w), y, int(6.5 + w), y, _c(255, 160, 40) if y > 5 else _c(255, 230, 120))
+    else:
+        put(img, [(5, 9), (7, 8), (8, 9)], _c(60, 60, 60))
+    return outline(img)
+
+
+def swamp_snake():
+    """늪 뱀 (18x10)"""
+    img = canvas(18, 10)
+    for i in range(14):
+        x = 2 + i
+        y = 5 + int(round(2 * math.sin(i * 0.8)))
+        rect(img, x, y - 1, x, y + 1, _c(90, 130, 70) if i % 3 else _c(60, 90, 50))
+    put(img, [(15, 4)], _c(255, 230, 60))
+    put(img, [(17, 5)], _c(200, 40, 40))
+    return outline(img)
+
+
+def hydra_spawn():
+    """히드라 새끼 (16x14): 머리 둘 달린 작은 독룡"""
+    img = canvas(16, 14)
+    ellipse(img, 7, 9, 5, 3.5, _c(80, 140, 90))
+    for dx in (0, 4):
+        rect(img, 9 + dx // 2, 4, 10 + dx // 2, 7, _c(60, 110, 70))
+        ellipse(img, 11 + dx // 2, 3, 2, 1.8, _c(90, 150, 100))
+        put(img, [(12 + dx // 2, 2)], _c(255, 230, 60))
+    for x in (4, 8):
+        put(img, [(x, 12), (x, 13)], _c(44, 90, 56))
+    return outline(img)
+
+
+def swamp_shaman():
+    """늪지 주술사 (14x18): 이끼 로브의 리자드맨 주술사"""
+    img = canvas(14, 18)
+    for y in range(6, 18):
+        half = 2.5 + (y - 6) * 0.3
+        rect(img, int(7 - half), y, int(7 + half), y, _c(70, 90, 50) if y % 3 else _c(50, 66, 36))
+    ellipse(img, 7, 4, 3, 3, _c(110, 150, 90))
+    rect(img, 8, 4, 11, 5, _c(110, 150, 90))
+    put(img, [(7, 3)], _c(255, 220, 60))
+    rect(img, 2, 3, 2, 16, _c(110, 80, 50))
+    put(img, [(1, 2), (2, 1), (3, 2)], _c(140, 220, 120))
+    return outline(img)
+
+
+def floor_lerna_swamp():
+    return _floor(391, (70, 90, 60), 5, [(6, (50, 70, 44, 255), 4), (5, (100, 120, 70, 255), 2), (4, (150, 200, 110, 255), 1)])
+
+
+def save_late12_sprites():
+    for name, painter in (("hydra", hydra), ("hydra_head", hydra_head), ("hydra_stump", hydra_stump),
+                          ("swamp_snake", swamp_snake), ("hydra_spawn", hydra_spawn), ("swamp_shaman", swamp_shaman)):
+        save(painter(), "characters", f"{name}.png")
+    save(brazier(True), "world", "brazier_lit.png")
+    save(brazier(False), "world", "brazier_out.png")
+    save(floor_lerna_swamp(), "tiles", "floor_lerna_swamp.png")
+
+
 def main():
     save(from_map(PLAYER), "characters", "player.png")
     save(from_map(SLIME), "characters", "slime.png")
@@ -4850,6 +4960,7 @@ def main():
     save_late9_sprites()
     save_late10_sprites()
     save_late11_sprites()
+    save_late12_sprites()
 
     save(bar_under(), "ui", "bar_under.png")
     save(bar((200, 50, 70)), "ui", "bar_hp.png")

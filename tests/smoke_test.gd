@@ -88,7 +88,7 @@ func _item_pickups(entities: Node) -> Array:
 	return entities.get_children().filter(func(n: Node) -> bool: return n is Pickup and (n as Pickup).kind == Pickup.Kind.ITEM)
 
 
-## 11~40스테이지: 잡몹 · 보스 패턴 · 보스 기믹 (+ 30~35 고대 용의 비늘 → 35스테이지 뒤 히든 던전). 40스테이지 보스(현재 마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
+## 11~41스테이지: 잡몹 · 보스 패턴 · 보스 기믹 (+ 30~35 고대 용의 비늘 → 35스테이지 뒤 히든 던전). 41스테이지 보스(현재 마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
 func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 	var player := main.get_node("Entities/Player") as Player
 	var pool := main.get_node("ProjectilePool") as ProjectilePool
@@ -128,11 +128,12 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 		38: ["청동 병사", "바위 게", "청동 사수"],
 		39: ["황소 전사", "미궁 파수꾼", "미궁 망령"],
 		40: ["사티로스", "님프", "페가수스"],
+		41: ["늪 뱀", "히드라 새끼", "늪지 주술사"],
 	}
-	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁", 16: "바람의 봉우리", 17: "거인의 감옥", 18: "인형 극장", 19: "폭풍의 바다", 20: "대마법사의 탑", 21: "기계 신전", 22: "모래 폭풍의 사막", 23: "피의 성", 24: "맹독의 늪", 25: "해와 달의 신전", 26: "빙결의 궁전", 27: "심연", 28: "공허의 둥지", 29: "꿈의 경계", 30: "정령의 성역", 31: "폭풍의 협곡", 32: "대지의 균열", 33: "얼어붙은 호수", 34: "용암 화산", 35: "용의 묘지", 36: "천상의 법정", 37: "타락한 신전", 38: "청동의 해안", 39: "크노소스의 미궁", 40: "구름 위의 길"}
-	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "천공의 수호자 그리핀", 17: "추방된 자 티탄", 18: "꼭두각시 마리오네트", 19: "폭풍의 지배자 레비아탄", 20: "대마법사 아르카나", 21: "기계의 정점 테모스", 22: "사막의 암살자 스콜피언", 23: "피의 군주 벨", 24: "맹독의 패주 바실리스크", 25: "해의 쌍둥이 솔", 26: "빙결의 여왕 글라시아", 27: "심연의 군주 녹스", 28: "공허의 포식자 보이드 웜", 29: "몽마 나이트메어", 30: "대정령 벨페르 가이아", 31: "바람의 드래곤 제피로스", 32: "대지의 드래곤 테라곤", 33: "얼음의 드래곤 코퀴로스", 34: "화염의 드래곤 베르단", 35: "언데드 드래곤 헬리시온", 36: "심판의 천사 세라핀", 37: "타락한 신 아스타로트", 38: "청동 거인 탈로스", 39: "미궁의 미노타우로스", 40: "전령의 신 헤르메스"}
+	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁", 16: "바람의 봉우리", 17: "거인의 감옥", 18: "인형 극장", 19: "폭풍의 바다", 20: "대마법사의 탑", 21: "기계 신전", 22: "모래 폭풍의 사막", 23: "피의 성", 24: "맹독의 늪", 25: "해와 달의 신전", 26: "빙결의 궁전", 27: "심연", 28: "공허의 둥지", 29: "꿈의 경계", 30: "정령의 성역", 31: "폭풍의 협곡", 32: "대지의 균열", 33: "얼어붙은 호수", 34: "용암 화산", 35: "용의 묘지", 36: "천상의 법정", 37: "타락한 신전", 38: "청동의 해안", 39: "크노소스의 미궁", 40: "구름 위의 길", 41: "레르나의 늪"}
+	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "천공의 수호자 그리핀", 17: "추방된 자 티탄", 18: "꼭두각시 마리오네트", 19: "폭풍의 지배자 레비아탄", 20: "대마법사 아르카나", 21: "기계의 정점 테모스", 22: "사막의 암살자 스콜피언", 23: "피의 군주 벨", 24: "맹독의 패주 바실리스크", 25: "해의 쌍둥이 솔", 26: "빙결의 여왕 글라시아", 27: "심연의 군주 녹스", 28: "공허의 포식자 보이드 웜", 29: "몽마 나이트메어", 30: "대정령 벨페르 가이아", 31: "바람의 드래곤 제피로스", 32: "대지의 드래곤 테라곤", 33: "얼음의 드래곤 코퀴로스", 34: "화염의 드래곤 베르단", 35: "언데드 드래곤 헬리시온", 36: "심판의 천사 세라핀", 37: "타락한 신 아스타로트", 38: "청동 거인 탈로스", 39: "미궁의 미노타우로스", 40: "전령의 신 헤르메스", 41: "머리 아홉의 히드라"}
 	var final_boss: Enemy = null
-	for n in range(first, 41):
+	for n in range(first, 42):
 		next_portal.interacted.emit()
 		await _frames(3)
 		print("[%d스테이지 - %s]" % [n, stage_names[n]])
@@ -1486,10 +1487,69 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
 							seen40["shot"] = true)
 				_check(seen40["aoe"] and seen40["shot"], "헤르메스 패턴: 뱀 지팡이 · 질풍 차기 · 도둑의 손 · 편지 · 소환")
-				final_boss = herm
+			41:
+				var hydra := boss as BossHydra
+				await _survive(5)
+				var lit_count := 0
+				for b in hydra.braziers:
+					if b.lit:
+						lit_count += 1
+				_check(hydra.get_heads().size() == hydra.start_heads and lit_count == 4 and hydra.defense == hydra._base_defense + hydra.head_armor * hydra.start_heads,
+						"[기믹] 히드라 머리 %d개 (머리마다 방어력 +%d) · 성화대 4개" % [hydra.start_heads, hydra.head_armor])
+				hydra.get_heads()[0].take_damage(9999999)
+				await _frames(3)
+				var stumps := hydra.get_stumps()
+				_check(hydra.get_cut_count() == 1 and stumps.size() == 1 and hydra.get_heads().size() == hydra.start_heads - 1, "머리를 자르면 잘린 목이 남음")
+				if not stumps.is_empty():
+					stumps[0].take_damage(500)
+				await _frames(2)
+				_check(hydra.get_burned_count() == 0 and hydra.get_stumps().size() == 1, "불 없이 잘린 목을 때리면 소용없음")
+				if not stumps.is_empty():
+					hydra._stump_left[stumps[0]] = 0.01
+				await _frames(4)
+				_check(hydra.get_regrown_count() == 1 and hydra.get_stumps().is_empty() and hydra.get_heads().size() == hydra.start_heads + 1, "[기믹] 지지지 않은 목에서 머리 두 개가 돋아남 (%d개)" % hydra.get_heads().size())
+				var brazier := hydra.braziers[0]
+				await _survive(5, func() -> void:
+					player.global_position = brazier.global_position + Vector2(0, 6))
+				_check(player.has_fire_enchant() and _gm.player_status.contains("불꽃 부여"), "[기믹] 성화대에 다가가면 무기에 「불꽃 부여」")
+				var heads_now := hydra.get_heads().size()
+				hydra.get_heads()[0].take_damage(9999999)
+				await _frames(3)
+				var hp41 := hydra.hp
+				var stumps2 := hydra.get_stumps()
+				if not stumps2.is_empty():
+					stumps2[0].take_damage(1)
+				await _frames(2)
+				_check(hydra.get_burned_count() == 1 and hydra.get_stumps().is_empty() and hydra.get_heads().size() == heads_now - 1 and hydra.hp < hp41,
+						"불꽃 부여 중에 잘린 목을 때리면 지져짐 → 다시 자라지 않음 + 히드라가 피해")
+				var doused := hydra.douse_brazier()
+				_check(doused != null and not doused.lit, "히드라의 물줄기가 성화대를 꺼 버림")
+				if doused != null:
+					doused._relight_left = 0.01
+				await _frames(3)
+				_check(doused != null and doused.lit, "꺼진 성화대는 잠시 뒤 다시 붙음")
+				player._fire_enchant_left = 0.0
+				var flame41 := ItemDB.get_item(&"flame_blade") as WeaponData
+				_gm.add_item(flame41)
+				_gm.equip_item(flame41)
+				var by_weapon_off := hydra.can_cauterize()
+				hydra.fire_weapons_cauterize = true
+				var by_weapon_on := hydra.can_cauterize()
+				hydra.fire_weapons_cauterize = false
+				_check(not by_weapon_off and by_weapon_on, "불속성 무기로 지지기는 기본으로 꺼져 있음 (설정으로 켤 수 있음)")
+				player.global_position = boss_center + Vector2(0, 90)
+				var seen41 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					if _count_nodes_of("AoeStrike") > 0:
+						seen41["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen41["shot"] = true)
+				_check(seen41["aoe"] and seen41["shot"], "히드라 패턴: 독니 · 독 늪 · 물줄기 · 소환")
+				final_boss = hydra
 		if n == 35:
 			await _test_hidden_dungeon(main, boss as BossHelicion)
-		elif n < 40:
+		elif n < 41:
 			boss.take_damage(999999, Vector2.ZERO, false, 9999)
 			await _frames(4)
 			_check(not _gm.is_game_cleared and next_portal.enabled, "%d스테이지 보스 토벌 → 다음 스테이지 텔레포트" % n)
@@ -1581,25 +1641,25 @@ func _test_hidden_dungeon(main: Node2D, heli_end: BossHelicion) -> void:
 	_check(_item_pickups(main.get_node("Entities")).size() == items_before + 2, "고대 용의 보물상자: 장비 2개")
 
 
-## 마지막 스테이지(40) 보스 토벌 → 모든 스테이지 클리어 / 비늘 없이 35스테이지 보스를 쓰러뜨리면 히든 없음
+## 마지막 스테이지(41) 보스 토벌 → 모든 스테이지 클리어 / 비늘 없이 35스테이지 보스를 쓰러뜨리면 히든 없음
 func _test_final_and_no_hidden(main: Node2D, final_boss: Enemy) -> void:
 	var stage := main.get_node("StageManager") as StageManager
 	var field_portal := main.get_node("Entities/FieldPortal") as Portal
 	var gate := main.get_node("Entities/BossGate") as BossGate
 	var next_portal_end := main.get_node("Entities/NextStagePortal") as Portal
-	print("[엔딩 - 40스테이지 보스 토벌]")
+	print("[엔딩 - 41스테이지 보스 토벌]")
 	stage.ending_delay = 600.0  # 아래 테스트가 끝난 뒤 엔딩 화면을 따로 검사
 	var kills_before: int = _gm.total_kills
 	if final_boss != null:
 		final_boss.take_damage(9999999, Vector2.ZERO, false, 999999)
 	await _frames(4)
-	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(40스테이지) 보스 토벌 → 모든 스테이지 클리어")
+	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(41스테이지) 보스 토벌 → 모든 스테이지 클리어")
 	_check(_gm.total_kills > kills_before and _gm.play_time > 0.0, "엔딩 기록: 처치 %d마리 · 플레이 %s" % [_gm.total_kills, _gm.get_play_time_text()])
 	_check(stage.get_chest() == null and not next_portal_end.enabled and get_tree().get_nodes_in_group(&"enemies").is_empty(), "마지막 스테이지: 상자 / 텔레포트 없음, 남은 졸개 정리")
 	_check(_gm.faith_damage_bonus == 0.0 and get_tree().get_nodes_in_group(&"hostile_zones").is_empty() and _gm.stolen_weapon == null, "보스가 쓰러지면 신앙·장판·빼앗긴 무기 정리")
 	stage.go_to_next_stage()
 	await _frames(3)
-	_check(_gm.stage == 40 and get_tree().current_scene == main, "40스테이지 이후 반복 스테이지 없음")
+	_check(_gm.stage == 41 and get_tree().current_scene == main and get_tree().get_nodes_in_group(&"braziers").is_empty(), "41스테이지 이후 반복 스테이지 없음 (성화대 정리)")
 
 	print("[히든 조건 없이 35스테이지 보스 토벌]")
 	_gm.dragon_scales.clear()

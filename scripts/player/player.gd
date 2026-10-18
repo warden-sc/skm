@@ -128,6 +128,9 @@ var _decay_left: float = 0.0
 var _stigma_left: float = 0.0
 ## 신앙 게이지 표시 (아스타로트가 매 프레임 알려 줌, 0 이면 숨김)
 var _faith: float = 0.0
+## 불꽃 부여 (히드라 보스방의 화로): 남은 시간 동안 무기에 불이 붙음 → 잘린 히드라 목을 지질 수 있음
+var _fire_enchant_left: float = 0.0
+var _fire_enchant_particles: CPUParticles2D
 ## 죽음의 낙인 (사신): 쌓이면 사형 선고 → 잠시 후 큰 피해 (대시로 피할 수 있음)
 const DEATH_MARK_MAX := 5
 const DEATH_MARK_KEEP_TIME := 8.0
@@ -373,6 +376,19 @@ func get_faith() -> float:
 	return _faith
 
 
+## 불꽃 부여 (화로에 닿으면 duration 동안)
+func apply_fire_enchant(duration: float) -> void:
+	if _is_dead:
+		return
+	if _fire_enchant_left <= 0.0:
+		FloatingText.spawn(self, global_position + Vector2(0, -22), "불꽃 부여!", Color(1.0, 0.6, 0.2), true)
+	_fire_enchant_left = maxf(_fire_enchant_left, duration)
+
+
+func has_fire_enchant() -> bool:
+	return _fire_enchant_left > 0.0
+
+
 ## 신앙 100% 일 때 공격력 보너스
 const FAITH_MAX_BONUS := 0.5
 
@@ -560,6 +576,7 @@ func teleport_to(at_global: Vector2, camera_bounds: Rect2) -> void:
 	_slip_left = 0.0
 	_decay_left = 0.0
 	_stigma_left = 0.0
+	_fire_enchant_left = 0.0
 	set_faith(0.0)
 	set_camera_bounds(camera_bounds)
 
@@ -650,6 +667,9 @@ func _update_status(delta: float) -> void:
 	_slip_left = maxf(_slip_left - delta, 0.0)
 	_decay_left = maxf(_decay_left - delta, 0.0)
 	_stigma_left = maxf(_stigma_left - delta, 0.0)
+	_fire_enchant_left = maxf(_fire_enchant_left - delta, 0.0)
+	if _fire_enchant_particles != null:
+		_fire_enchant_particles.emitting = _fire_enchant_left > 0.0
 	if _stigma_left > 0.0:
 		GameManager.potion_heal_multiplier = -1.0
 	else:
@@ -671,6 +691,8 @@ func _update_status(delta: float) -> void:
 		parts.append("부패 %.1f초 (포션 회복 불가)" % _decay_left)
 	if _stigma_left > 0.0:
 		parts.append("성흔 %.1f초 (포션 회복이 피해로)" % _stigma_left)
+	if _fire_enchant_left > 0.0:
+		parts.append("불꽃 부여 %.1f초 (잘린 목을 지질 수 있음)" % _fire_enchant_left)
 	if _faith > 0.5:
 		parts.append("신앙 %d%% (공격력 +%d%%, 가득 차면 광신화)" % [roundi(_faith), roundi(_faith / 100.0 * FAITH_MAX_BONUS * 100.0)])
 	if _slip_left > 0.0:
@@ -877,6 +899,10 @@ func _setup_windup_visuals() -> void:
 	_burn_particles.z_index = 3
 	_burn_particles.emitting = false
 	add_child(_burn_particles)
+	_fire_enchant_particles = Fx.make_aura(Color(1.0, 0.55, 0.15), 14, 4.0, Vector2(0, -50), 0.45)
+	_fire_enchant_particles.z_index = 4
+	_fire_enchant_particles.emitting = false
+	_weapon_pivot.add_child(_fire_enchant_particles)
 	_charm_particles = Fx.make_aura(Color(1.0, 0.45, 0.8), 8, 6.0, Vector2(0, -30), 0.7)
 	_charm_particles.position = Vector2(0, -14)
 	_charm_particles.z_index = 3
