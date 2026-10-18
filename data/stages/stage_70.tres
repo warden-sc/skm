@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/stage_data.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/tiles/floor_sun_temple.png" id="2_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/boss_apollo.tscn" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/temple_guardian.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/helios_priest.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/light_wisp.tscn" id="6_res"]
+
+[resource]
+script = ExtResource("1_res")
+stage_name = "델포이의 태양 신전"
+floor_texture = ExtResource("2_res")
+wall_tint = Color(0.8, 0.7, 0.5, 1)
+ambient_color = Color(1.0, 0.96, 0.86, 1)
+boss_spawn_offset = Vector2(0, -30)
+boss_intro_text = "해시계 기둥 사이로 햇살이 쏟아지고, 은빛 활을 든 태양의 신 아폴론이 신전 계단을 내려온다…"
+enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
+enemy_weights = Array[float]([1.1, 0.9, 1.0])
+boss_scene = ExtResource("3_res")
+kill_target = 40
+spawn_interval = 1.6
+max_alive = 8

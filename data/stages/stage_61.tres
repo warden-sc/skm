@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/stage_data.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/tiles/floor_oechalia.png" id="2_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/boss_eurytus.tscn" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/oechalia_archer.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/oechalia_spearman.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/oechalia_hound.tscn" id="6_res"]
+
+[resource]
+script = ExtResource("1_res")
+stage_name = "오이칼리아의 활터"
+floor_texture = ExtResource("2_res")
+wall_tint = Color(0.54, 0.62, 0.44, 1)
+ambient_color = Color(0.88, 0.92, 0.8, 1)
+boss_spawn_offset = Vector2(0, -20)
+boss_intro_text = "과녁 세 개가 선 활터 끝에서, 아폴론에게도 지지 않겠다던 활의 왕 에우리토스가 시위를 당긴다…"
+enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
+enemy_weights = Array[float]([1.0, 1.0, 1.0])
+boss_scene = ExtResource("3_res")
+kill_target = 38
+spawn_interval = 1.6
+max_alive = 8

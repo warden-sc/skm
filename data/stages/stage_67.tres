@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/stage_data.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/tiles/floor_pactolus.png" id="2_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/boss_midas.tscn" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/golden_soldier.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/donkey_eared_servant.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/golden_reed_sprite.tscn" id="6_res"]
+
+[resource]
+script = ExtResource("1_res")
+stage_name = "팍톨로스 강가"
+floor_texture = ExtResource("2_res")
+wall_tint = Color(0.66, 0.58, 0.4, 1)
+ambient_color = Color(0.98, 0.92, 0.74, 1)
+boss_intro_text = "금모래가 반짝이는 강가에서, 손끝이 닿는 것마다 황금으로 바꾸는 미다스 왕이 왕관 아래 귀를 감춘다…"
+enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
+enemy_weights = Array[float]([1.0, 1.0, 1.0])
+boss_scene = ExtResource("3_res")
+kill_target = 38
+spawn_interval = 1.6
+max_alive = 8

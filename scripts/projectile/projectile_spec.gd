@@ -45,6 +45,8 @@ var death_mark: int = 0
 var stigma_duration: float = 0.0
 ## 적 탄: 맞으면 「부패」 (포션 회복 불가) 시간 — 헬리시온
 var decay_duration: float = 0.0
+## 맞으면 「역병」 시간 — 아폴론
+var plague_duration: float = 0.0
 ## 매혹을 건 적 (매혹된 플레이어가 끌려가는 쪽)
 var charmer: Node2D
 

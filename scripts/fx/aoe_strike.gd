@@ -20,6 +20,8 @@ var burn_poison: bool = false
 var death_mark: int = 0
 ## 맞으면 「부패」(포션 회복 불가) 시간 — 헬리시온
 var decay_duration: float = 0.0
+## true 면 예고 표시만 하고 피해는 없음 (카산드라의 예언 표식)
+var harmless: bool = false
 
 var _elapsed: float = 0.0
 var _done: bool = false
@@ -63,9 +65,10 @@ func _draw() -> void:
 
 func _detonate() -> void:
 	_done = true
-	Fx.explosion(self, global_position, color, radius, 2, fx_gravity)
+	if not harmless:
+		Fx.explosion(self, global_position, color, radius, 2, fx_gravity)
 	var player := get_tree().get_first_node_in_group(&"player") as Player
-	if player != null and player.global_position.distance_to(global_position) <= radius + 4.0:
+	if not harmless and player != null and player.global_position.distance_to(global_position) <= radius + 4.0:
 		var result := player.take_hit(damage, global_position)
 		if result == Player.HitResult.DAMAGED and slow_duration > 0.0:
 			player.apply_slow(0.5, slow_duration)

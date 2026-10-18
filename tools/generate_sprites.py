@@ -6224,6 +6224,435 @@ def save_late17_sprites():
         save(painter(), "tiles", f"{name}.png")
 
 
+# ---------------------------------------------------------------- 61~70스테이지 (델포이와 태양의 길)
+def _hero(w, h, skin, tunic, tunic_d, helm, crest=None, cape=None, weapon=None, shield=None, eye=(50, 40, 30), bow=None):
+    """61~70 보스용 사람형 영웅 (34x44 기준)"""
+    img = canvas(w, h)
+    cx = w // 2
+    if cape:
+        _poly(img, [(cx - 9, 16), (cx + 8, 16), (cx + 11, h - 6), (cx - 12, h - 6)], _c(*cape))
+    rect(img, cx - 5, h - 12, cx - 3, h - 1, skin)
+    rect(img, cx + 2, h - 12, cx + 4, h - 1, skin)
+    rect(img, cx - 6, h - 4, cx - 2, h - 1, tunic_d)
+    rect(img, cx + 1, h - 4, cx + 5, h - 1, tunic_d)
+    rect(img, cx - 7, 17, cx + 6, h - 12, tunic)
+    rect(img, cx - 7, h - 16, cx + 6, h - 12, tunic_d)
+    ellipse(img, cx - 0.5, 11, 5, 5, skin)
+    rect(img, cx - 6, 4, cx + 5, 8, helm)
+    put(img, [(cx - 3, 11), (cx + 2, 11)], _c(*eye))
+    if crest:
+        for i in range(10):
+            rect(img, cx - 5 + i, 1 - (1 if 3 < i < 7 else 0), cx - 5 + i, 3, _c(*crest))
+    if weapon:
+        rect(img, w - 6, 2, w - 5, h - 6, _c(*weapon))
+        _poly(img, [(w - 7, 3), (w - 6, 0), (w - 4, 0), (w - 3, 3)], _c(230, 230, 240))
+    if bow:
+        for y in range(8, 34):
+            x = w - 5 + int(round(3 * math.sin((y - 8) / 26 * math.pi)))
+            put(img, [(x, y)], _c(*bow))
+        _line(img, (w - 5, 8), (w - 5, 33), _c(240, 240, 230))
+    if shield:
+        ellipse(img, 5, 26, 5, 7, _c(*shield))
+        ellipse(img, 5, 26, 2, 3, _c(min(shield[0] + 40, 255), min(shield[1] + 40, 255), min(shield[2] + 40, 255)))
+    return img
+
+
+# ---- 61 활의 왕 에우리토스
+def eurytus():
+    """활의 왕 에우리토스 (34x44): 녹색 사냥 옷, 금관, 거대한 활"""
+    return outline(_hero(34, 44, _c(210, 165, 125), _c(60, 110, 70), _c(40, 80, 50), _c(230, 190, 80), cape=(90, 60, 40), bow=(160, 110, 60)),
+                   (30, 20, 10, 255))
+
+
+def archery_target():
+    """과녁 (18x20)"""
+    img = canvas(18, 20)
+    rect(img, 8, 12, 9, 19, _c(110, 80, 50))
+    for r, col in ((8, (240, 235, 220)), (6, (200, 50, 50)), (4, (240, 235, 220)), (2, (200, 50, 50))):
+        ellipse(img, 8.5, 8, r, r, _c(*col))
+    return outline(img)
+
+
+def oechalia_archer():
+    return _warrior(14, 20, _c(210, 165, 125), _c(60, 110, 70), _c(40, 80, 50), _c(110, 80, 50), weapon=(160, 110, 60))
+
+
+def oechalia_spearman():
+    return _warrior(16, 22, _c(210, 165, 125), _c(150, 140, 110), _c(100, 90, 70), _c(230, 190, 80), crest=(60, 110, 70), weapon=(130, 100, 60), shield=(60, 110, 70))
+
+
+def oechalia_hound():
+    return _beast(18, 12, _c(170, 130, 90), _c(120, 90, 60), (255, 220, 120))
+
+
+def floor_oechalia():
+    return _floor(613, (86, 104, 70), 5, [(6, (70, 86, 56, 255), 4), (5, (110, 130, 90, 255), 2), (3, (230, 200, 90, 255), 1)])
+
+
+# ---- 62 델포이의 거대 뱀 피톤
+def python_serpent():
+    """델포이의 거대 뱀 피톤 (52x40): 굵게 똬리를 튼 금록색 뱀"""
+    img = canvas(52, 40)
+    body, body_d, belly = _c(110, 140, 60), _c(70, 95, 40), _c(220, 200, 120)
+    ellipse(img, 26, 30, 22, 9, body_d)
+    ellipse(img, 26, 28, 18, 7, body)
+    ellipse(img, 26, 22, 13, 6, body_d)
+    ellipse(img, 26, 20, 10, 5, body)
+    for x in range(10, 44, 4):
+        put(img, [(x, 30), (x + 1, 31)], belly)
+    rect(img, 30, 6, 35, 20, body)
+    ellipse(img, 35, 6, 7, 5, body)
+    put(img, [(37, 4), (33, 4)], _c(255, 60, 40))
+    _line(img, (42, 7), (46, 8), _c(220, 60, 60))
+    for x, y in ((14, 24), (20, 26), (32, 26), (38, 24)):
+        put(img, [(x, y)], _c(230, 200, 80))
+    return outline(img, (20, 30, 10, 255))
+
+
+def laurel_branch():
+    """월계수 가지 (16x12)"""
+    img = canvas(16, 12)
+    _line(img, (1, 10), (14, 2), _c(110, 80, 40))
+    for x, y in ((3, 7), (6, 5), (9, 4), (12, 2), (5, 9), (8, 7), (11, 5)):
+        ellipse(img, x, y, 1.6, 1.0, _c(70, 150, 60))
+    return outline(img)
+
+
+def delphi_viper():
+    img = canvas(18, 12)
+    for i in range(14):
+        x = 2 + i
+        y = 7 + int(round(2 * math.sin(i * 0.8)))
+        rect(img, x, y - 1, x, y, _c(120, 150, 60) if i % 3 else _c(80, 100, 40))
+    ellipse(img, 15, 4, 2.5, 2, _c(130, 160, 70))
+    put(img, [(16, 3)], _c(255, 60, 40))
+    return outline(img)
+
+
+def oracle_fume():
+    return _wisp(16, 16, (230, 220, 255), (150, 130, 190))
+
+
+def python_spawn():
+    """피톤의 새끼 (16x12)"""
+    img = canvas(16, 12)
+    ellipse(img, 8, 8, 6, 3, _c(110, 140, 60))
+    ellipse(img, 13, 4, 2.5, 2.2, _c(120, 150, 70))
+    put(img, [(14, 3)], _c(255, 60, 40))
+    return outline(img)
+
+
+def floor_delphi_cleft():
+    return _floor(619, (96, 90, 76), 5, [(6, (78, 72, 60, 255), 4), (5, (130, 122, 104, 255), 2), (3, (60, 50, 40, 255), 1)])
+
+
+# ---- 63 태양 전차를 몬 파에톤
+def phaethon():
+    """태양 전차를 몬 파에톤 (46x40): 황금 전차 위의 소년, 불꽃 말"""
+    img = canvas(46, 40)
+    _poly(img, [(6, 22), (32, 22), (30, 32), (8, 32)], _c(230, 180, 60))     # 전차
+    ellipse(img, 12, 33, 5, 5, _c(200, 140, 40))
+    ellipse(img, 12, 33, 2, 2, _c(255, 220, 120))
+    ellipse(img, 27, 33, 5, 5, _c(200, 140, 40))
+    ellipse(img, 27, 33, 2, 2, _c(255, 220, 120))
+    rect(img, 15, 10, 22, 22, _c(240, 230, 210))                           # 소년
+    ellipse(img, 18.5, 7, 4, 4, _c(220, 175, 130))
+    rect(img, 14, 2, 23, 4, _c(255, 200, 60))
+    put(img, [(17, 7), (20, 7)], _c(60, 40, 30))
+    ellipse(img, 39, 22, 6, 4, _c(255, 150, 50))                           # 불꽃 말
+    ellipse(img, 43, 16, 3, 3, _c(255, 170, 60))
+    for x in (35, 38, 41):
+        rect(img, x, 26, x, 30, _c(230, 110, 40))
+    _line(img, (24, 14), (40, 18), _c(220, 200, 120))                      # 고삐
+    for x, y in ((36, 12), (40, 10), (44, 12), (3, 20), (6, 16)):
+        put(img, [(x, y)], _c(255, 230, 120))
+    return outline(img, (60, 30, 10, 255))
+
+
+def rein_pillar():
+    """고삐 기둥 (14x24)"""
+    img = canvas(14, 24)
+    rect(img, 4, 4, 9, 23, _c(210, 190, 140))
+    rect(img, 3, 2, 10, 4, _c(230, 210, 160))
+    _line(img, (9, 6), (13, 2), _c(240, 200, 80))
+    _line(img, (9, 8), (13, 12), _c(240, 200, 80))
+    put(img, [(6, 10), (6, 16)], _c(180, 160, 110))
+    return outline(img)
+
+
+def flame_horse():
+    return _beast(20, 14, _c(255, 150, 50), _c(220, 100, 30), (255, 255, 180), mane=(255, 220, 90))
+
+
+def burning_charioteer():
+    return _warrior(16, 22, _c(220, 175, 130), _c(230, 180, 60), _c(180, 120, 40), _c(255, 200, 60), crest=(255, 120, 40), weapon=(200, 150, 60))
+
+
+def ember_sprite():
+    return _wisp(14, 14, (255, 240, 160), (255, 140, 40))
+
+
+def floor_sun_road():
+    return _floor(631, (120, 92, 60), 5, [(6, (100, 74, 48, 255), 4), (5, (160, 120, 70, 255), 2), (4, (255, 170, 60, 255), 1)])
+
+
+# ---- 64 예언자 카산드라
+def cassandra():
+    """예언자 카산드라 (32x44): 흰 옷, 풀어헤친 머리, 월계관"""
+    img = _hero(32, 44, _c(225, 185, 150), _c(235, 230, 240), _c(180, 170, 200), _c(70, 40, 30), cape=(120, 60, 120))
+    for y in range(8, 22):
+        put(img, [(9, y), (22, y)], _c(70, 40, 30))
+    for x in (11, 14, 18, 21):
+        put(img, [(x, 3)], _c(90, 160, 70))
+    put(img, [(13, 11), (18, 11)], _c(120, 180, 255))
+    return outline(img, (30, 20, 30, 255))
+
+
+def trojan_sentry():
+    return _warrior(16, 22, _c(210, 165, 125), _c(140, 60, 50), _c(100, 40, 30), _c(200, 160, 80), crest=(220, 200, 80), weapon=(150, 150, 160), shield=(140, 60, 50))
+
+
+def cursed_seer():
+    return _wisp(14, 16, (200, 140, 255), (110, 60, 150))
+
+
+def horse_soldier():
+    return _warrior(16, 22, _c(205, 160, 120), _c(150, 110, 70), _c(100, 70, 40), _c(160, 160, 170), crest=(60, 80, 160), weapon=(150, 150, 160))
+
+
+def floor_troy():
+    return _floor(641, (112, 96, 80), 5, [(6, (92, 78, 64, 255), 4), (5, (150, 130, 106, 255), 2), (3, (160, 80, 200, 255), 1)])
+
+
+# ---- 65 코로니스의 까마귀
+def coronis_raven():
+    """코로니스의 까마귀 (44x34): 반은 흰 깃, 반은 검은 깃"""
+    img = canvas(44, 34)
+    _poly(img, [(0, 8), (18, 16), (18, 24), (3, 20)], _c(240, 240, 245))
+    _poly(img, [(43, 8), (25, 16), (25, 24), (40, 20)], _c(30, 30, 40))
+    ellipse(img, 22, 20, 7, 9, _c(60, 60, 70))
+    rect(img, 15, 12, 21, 28, _c(230, 230, 235))
+    ellipse(img, 22, 9, 5, 5, _c(40, 40, 50))
+    _poly(img, [(25, 9), (31, 11), (25, 12)], _c(80, 80, 90))
+    put(img, [(23, 8)], _c(255, 220, 80))
+    rect(img, 19, 29, 19, 33, _c(60, 60, 60))
+    rect(img, 25, 29, 25, 33, _c(60, 60, 60))
+    return outline(img, (15, 15, 20, 255))
+
+
+def black_crow():
+    return _bird(14, 12, _c(40, 40, 50), _c(25, 25, 35), (255, 220, 80), (90, 90, 100))
+
+
+def feather_shade():
+    return _wisp(14, 14, (90, 90, 110), (30, 30, 40))
+
+
+def crow_hunter():
+    return _warrior(14, 20, _c(205, 160, 120), _c(60, 60, 70), _c(40, 40, 50), _c(50, 50, 60), weapon=(150, 110, 60))
+
+
+def floor_raven_grove():
+    return _floor(653, (70, 76, 64), 5, [(6, (54, 60, 50, 255), 4), (5, (100, 106, 90, 255), 2), (3, (240, 240, 240, 255), 1)])
+
+
+# ---- 66 영웅 아킬레우스
+def achilles():
+    """영웅 아킬레우스 (34x44): 청동 갑옷, 말총 투구, 원형 방패"""
+    img = _hero(34, 44, _c(215, 170, 130), _c(200, 160, 80), _c(140, 100, 40), _c(200, 160, 80), crest=(240, 240, 230), weapon=(130, 100, 60), shield=(200, 160, 80))
+    put(img, [(13, 43), (14, 43)], _c(255, 80, 80))                         # 뒤꿈치
+    return outline(img, (40, 25, 10, 255))
+
+
+def myrmidon():
+    return _warrior(16, 22, _c(205, 160, 120), _c(70, 70, 80), _c(40, 40, 50), _c(90, 90, 100), crest=(60, 60, 70), weapon=(150, 150, 160))
+
+
+def myrmidon_shield():
+    return _warrior(16, 22, _c(205, 160, 120), _c(70, 70, 80), _c(40, 40, 50), _c(90, 90, 100), crest=(200, 160, 80), shield=(90, 90, 100))
+
+
+def greek_javelin():
+    return _warrior(14, 20, _c(205, 160, 120), _c(160, 140, 100), _c(110, 90, 60), _c(160, 160, 170), weapon=(140, 110, 70))
+
+
+def floor_troy_beach():
+    return _floor(659, (190, 170, 120), 5, [(6, (170, 150, 100, 255), 4), (5, (210, 195, 150, 255), 2), (3, (90, 120, 160, 255), 1)])
+
+
+# ---- 67 황금 손의 왕 미다스
+def midas():
+    """황금 손의 왕 미다스 (34x44): 보라 망토, 금관, 황금 손, 당나귀 귀"""
+    img = _hero(34, 44, _c(215, 170, 130), _c(150, 60, 160), _c(100, 40, 110), _c(240, 200, 60), cape=(110, 40, 120))
+    _poly(img, [(10, 6), (8, 0), (12, 4)], _c(160, 140, 130))              # 당나귀 귀
+    _poly(img, [(23, 6), (25, 0), (21, 4)], _c(160, 140, 130))
+    for x in (12, 16, 20):
+        put(img, [(x, 3)], _c(255, 240, 120))
+    ellipse(img, 4, 26, 3, 3, _c(255, 210, 60))                            # 황금 손
+    ellipse(img, 29, 26, 3, 3, _c(255, 210, 60))
+    return outline(img, (40, 20, 40, 255))
+
+
+def golden_soldier():
+    return _warrior(16, 22, _c(240, 200, 80), _c(230, 190, 60), _c(180, 140, 30), _c(240, 200, 60), crest=(255, 240, 150), weapon=(240, 200, 80), eye=(120, 80, 20))
+
+
+def donkey_eared_servant():
+    img = _warrior(14, 20, _c(210, 165, 125), _c(150, 60, 160), _c(100, 40, 110), _c(160, 140, 130))
+    put(img, [(4, 0), (9, 0)], _c(160, 140, 130))
+    return img
+
+
+def golden_reed_sprite():
+    return _wisp(14, 16, (255, 240, 150), (200, 170, 60))
+
+
+def floor_pactolus():
+    return _floor(661, (130, 112, 70), 5, [(6, (110, 94, 56, 255), 4), (5, (170, 150, 90, 255), 2), (4, (250, 210, 80, 255), 1)])
+
+
+# ---- 68 트로이의 영웅 헥토르
+def hector():
+    """트로이의 영웅 헥토르 (34x44): 빛나는 투구, 붉은 망토, 창과 방패"""
+    return outline(_hero(34, 44, _c(210, 165, 125), _c(170, 140, 90), _c(120, 95, 60), _c(220, 200, 120), crest=(200, 40, 40), cape=(160, 40, 40),
+                         weapon=(130, 100, 60), shield=(160, 40, 40)), (40, 15, 10, 255))
+
+
+def light_altar():
+    """빛의 제단 (18x18)"""
+    img = canvas(18, 18)
+    rect(img, 3, 9, 14, 17, _c(220, 210, 180))
+    rect(img, 2, 7, 15, 9, _c(240, 230, 200))
+    ellipse(img, 8.5, 4, 3, 3, _c(255, 240, 160))
+    put(img, [(8, 3)], _c(255, 255, 255))
+    return outline(img)
+
+
+def trojan_guard():
+    return _warrior(16, 22, _c(210, 165, 125), _c(160, 40, 40), _c(110, 25, 25), _c(220, 200, 120), crest=(200, 40, 40), weapon=(150, 150, 160), shield=(160, 40, 40))
+
+
+def trojan_archer():
+    return _warrior(14, 20, _c(210, 165, 125), _c(160, 120, 80), _c(110, 80, 50), _c(170, 60, 50), weapon=(160, 110, 60))
+
+
+def trojan_charioteer():
+    """트로이 전차병 (20x18)"""
+    img = canvas(20, 18)
+    rect(img, 2, 9, 13, 13, _c(170, 130, 60))
+    ellipse(img, 5, 14, 3, 3, _c(120, 90, 40))
+    ellipse(img, 11, 14, 3, 3, _c(120, 90, 40))
+    rect(img, 6, 2, 9, 9, _c(160, 40, 40))
+    ellipse(img, 7.5, 1.5, 1.6, 1.6, _c(210, 165, 125))
+    ellipse(img, 17, 10, 2.5, 3, _c(140, 100, 70))
+    return outline(img)
+
+
+def floor_troy_wall():
+    return _floor(673, (140, 120, 96), 5, [(6, (120, 100, 78, 255), 4), (5, (176, 156, 128, 255), 2), (3, (200, 50, 50, 255), 1)])
+
+
+# ---- 69 델포이의 여사제 피티아
+def pythia():
+    """델포이의 여사제 피티아 (32x44): 보랏빛 베일, 월계수, 연기"""
+    img = _hero(32, 44, _c(220, 180, 150), _c(120, 90, 170), _c(80, 60, 120), _c(150, 130, 190), cape=(90, 70, 140))
+    for x in (10, 13, 18, 21):
+        put(img, [(x, 4)], _c(90, 160, 70))
+    put(img, [(13, 11), (18, 11)], _c(230, 220, 255))
+    for x, y in ((6, 6), (25, 4), (27, 10), (4, 12)):
+        put(img, [(x, y)], (220, 210, 255, 180))
+    return outline(img, (30, 20, 40, 255))
+
+
+def tripod():
+    """신탁의 삼발이 (18x22)"""
+    img = canvas(18, 22)
+    ellipse(img, 9, 6, 7, 3, _c(200, 160, 80))
+    _line(img, (3, 7), (1, 21), _c(170, 130, 60))
+    _line(img, (15, 7), (17, 21), _c(170, 130, 60))
+    _line(img, (9, 9), (9, 21), _c(170, 130, 60))
+    for x, y in ((7, 2), (10, 1), (12, 3)):
+        put(img, [(x, y)], (220, 210, 255, 200))
+    return outline(img)
+
+
+def oracle_guard():
+    return _warrior(16, 22, _c(210, 165, 125), _c(240, 235, 220), _c(190, 180, 160), _c(220, 200, 120), crest=(90, 160, 70), weapon=(150, 150, 160), shield=(240, 235, 220))
+
+
+def smoke_maiden():
+    return _wisp(14, 16, (240, 230, 255), (140, 120, 180))
+
+
+def delphi_pilgrim():
+    return _warrior(14, 20, _c(210, 165, 125), _c(170, 160, 140), _c(120, 110, 90), _c(90, 160, 70))
+
+
+def floor_delphi_temple():
+    return _floor(683, (150, 140, 128), 5, [(6, (130, 120, 108, 255), 4), (5, (190, 180, 166, 255), 2), (3, (150, 120, 200, 255), 1)])
+
+
+# ---- 70 태양의 신 아폴론
+def apollo():
+    """태양의 신 아폴론 (40x54): 금빛 머리, 월계관, 흰 옷, 은빛 활, 등 뒤의 햇무리"""
+    img = canvas(40, 54)
+    for i in range(16):                                    # 햇무리
+        a = math.tau * i / 16
+        put(img, [(int(20 + 16 * math.cos(a)), int(14 + 14 * math.sin(a)))], _c(255, 220, 100))
+    hero = _hero(34, 44, _c(230, 190, 150), _c(245, 240, 230), _c(210, 200, 180), _c(255, 210, 80), cape=(255, 190, 70), bow=(210, 215, 230))
+    img.alpha_composite(hero, (3, 10))
+    for x in (12, 15, 19, 22):
+        put(img, [(x + 3, 13)], _c(90, 170, 70))
+    return outline(img, (60, 40, 10, 255))
+
+
+def temple_guardian():
+    return _warrior(16, 22, _c(210, 165, 125), _c(240, 220, 160), _c(200, 170, 100), _c(255, 210, 80), crest=(255, 240, 180), weapon=(230, 200, 100), shield=(255, 210, 80))
+
+
+def helios_priest():
+    return _warrior(14, 20, _c(210, 165, 125), _c(255, 230, 170), _c(220, 180, 100), _c(255, 210, 80), weapon=(255, 220, 120))
+
+
+def light_wisp():
+    return _wisp(14, 14, (255, 255, 220), (255, 210, 90))
+
+
+def plague_arrow():
+    """역병의 화살 (14x5)"""
+    img = canvas(14, 5)
+    rect(img, 0, 2, 10, 2, _c(200, 205, 220))
+    _poly(img, [(10, 0), (13, 2), (10, 4)], _c(140, 200, 80))
+    put(img, [(1, 1), (1, 3), (2, 1), (2, 3)], _c(120, 160, 60))
+    return outline(img, (30, 40, 20, 255))
+
+
+def floor_sun_temple():
+    return _floor(691, (200, 176, 120), 5, [(6, (180, 156, 100, 255), 4), (5, (230, 210, 160, 255), 2), (4, (255, 220, 100, 255), 1)])
+
+
+def save_late18_sprites():
+    for name, painter in (("eurytus", eurytus), ("archery_target", archery_target), ("oechalia_archer", oechalia_archer), ("oechalia_spearman", oechalia_spearman),
+                          ("oechalia_hound", oechalia_hound), ("python_serpent", python_serpent), ("laurel_branch", laurel_branch), ("delphi_viper", delphi_viper),
+                          ("oracle_fume", oracle_fume), ("python_spawn", python_spawn), ("phaethon", phaethon), ("rein_pillar", rein_pillar),
+                          ("flame_horse", flame_horse), ("burning_charioteer", burning_charioteer), ("ember_sprite", ember_sprite), ("cassandra", cassandra),
+                          ("trojan_sentry", trojan_sentry), ("cursed_seer", cursed_seer), ("horse_soldier", horse_soldier), ("coronis_raven", coronis_raven),
+                          ("black_crow", black_crow), ("feather_shade", feather_shade), ("crow_hunter", crow_hunter), ("achilles", achilles),
+                          ("myrmidon", myrmidon), ("myrmidon_shield", myrmidon_shield), ("greek_javelin", greek_javelin), ("midas", midas),
+                          ("golden_soldier", golden_soldier), ("donkey_eared_servant", donkey_eared_servant), ("golden_reed_sprite", golden_reed_sprite),
+                          ("hector", hector), ("light_altar", light_altar), ("trojan_guard", trojan_guard), ("trojan_archer", trojan_archer),
+                          ("trojan_charioteer", trojan_charioteer), ("pythia", pythia), ("tripod", tripod), ("oracle_guard", oracle_guard),
+                          ("smoke_maiden", smoke_maiden), ("delphi_pilgrim", delphi_pilgrim), ("apollo", apollo), ("temple_guardian", temple_guardian),
+                          ("helios_priest", helios_priest), ("light_wisp", light_wisp)):
+        save(painter(), "characters", f"{name}.png")
+    save(plague_arrow(), "projectiles", "plague_arrow.png")
+    for name, painter in (("floor_oechalia", floor_oechalia), ("floor_delphi_cleft", floor_delphi_cleft), ("floor_sun_road", floor_sun_road),
+                          ("floor_troy", floor_troy), ("floor_raven_grove", floor_raven_grove), ("floor_troy_beach", floor_troy_beach),
+                          ("floor_pactolus", floor_pactolus), ("floor_troy_wall", floor_troy_wall), ("floor_delphi_temple", floor_delphi_temple),
+                          ("floor_sun_temple", floor_sun_temple)):
+        save(painter(), "tiles", f"{name}.png")
+
+
 def main():
     save(from_map(PLAYER), "characters", "player.png")
     save(from_map(SLIME), "characters", "slime.png")
@@ -6359,6 +6788,7 @@ def main():
     save_late15_sprites()
     save_late16_sprites()
     save_late17_sprites()
+    save_late18_sprites()
 
     save(bar_under(), "ui", "bar_under.png")
     save(bar((200, 50, 70)), "ui", "bar_hp.png")

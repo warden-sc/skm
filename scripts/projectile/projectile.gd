@@ -149,6 +149,8 @@ func _on_body_entered(body: Node2D) -> void:
 					player.apply_decay(_spec.decay_duration)
 				if _spec.stigma_duration > 0.0:
 					player.apply_stigma(_spec.stigma_duration)
+				if _spec.plague_duration > 0.0:
+					player.apply_plague(_spec.plague_duration)
 				_impact(global_position, null)
 				release()
 			Player.HitResult.BLOCKED:

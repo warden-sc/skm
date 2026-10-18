@@ -130,6 +130,11 @@ var _stigma_left: float = 0.0
 var _faith: float = 0.0
 ## 불꽃 부여 (히드라 보스방의 화로): 남은 시간 동안 무기에 불이 붙음 → 잘린 히드라 목을 지질 수 있음
 var _fire_enchant_left: float = 0.0
+## 역병 (70스테이지 아폴론의 화살): 포션 회복 절반 + 2초마다 발밑에 역병 장판
+var _plague_left: float = 0.0
+var _plague_tick: float = 0.0
+## 신탁의 연기 (69스테이지): 연기 속에 있는 동안 조준이 흔들림
+var _smoke_left: float = 0.0
 var _fire_enchant_particles: CPUParticles2D
 ## 죽음의 낙인 (사신): 쌓이면 사형 선고 → 잠시 후 큰 피해 (대시로 피할 수 있음)
 const DEATH_MARK_MAX := 5
@@ -292,6 +297,8 @@ func apply_charm(duration: float, charmer: Node2D = null, label: String = "매�
 		color = Color(0.75, 0.75, 0.7)
 	elif label == "공포":
 		color = Color(0.75, 0.3, 0.35)
+	elif label == "황금화":
+		color = Color(1.0, 0.85, 0.3)
 	FloatingText.spawn(self, global_position + Vector2(0, -20), label + "!", color, true)
 
 
@@ -348,6 +355,33 @@ const SLIP_TRACTION := 0.12
 ## 빙판 위에 있음 (매 프레임 호출해야 유지)
 func mark_slippery() -> void:
 	_slip_left = 0.1
+
+
+## 신탁의 연기 속 (매 프레임 호출): 조준이 흔들림
+func mark_smoke() -> void:
+	_smoke_left = 0.1
+
+
+func is_in_smoke() -> bool:
+	return _smoke_left > 0.0
+
+
+## 역병: duration 동안 포션 회복 절반 + 2초마다 발밑에 역병 장판이 퍼짐
+func apply_plague(duration: float) -> void:
+	if _is_dead:
+		return
+	if _plague_left <= 0.0:
+		_plague_tick = 2.0
+		FloatingText.spawn(self, global_position + Vector2(0, -20), "역병!", Color(0.6, 0.8, 0.3), true)
+	_plague_left = maxf(_plague_left, duration)
+
+
+func cure_plague() -> void:
+	_plague_left = 0.0
+
+
+func is_plagued() -> bool:
+	return _plague_left > 0.0
 
 
 func is_slippery() -> bool:
@@ -679,19 +713,30 @@ func _update_status(delta: float) -> void:
 	_decay_left = maxf(_decay_left - delta, 0.0)
 	_stigma_left = maxf(_stigma_left - delta, 0.0)
 	_fire_enchant_left = maxf(_fire_enchant_left - delta, 0.0)
+	_smoke_left = maxf(_smoke_left - delta, 0.0)
+	if _plague_left > 0.0:
+		_plague_left = maxf(_plague_left - delta, 0.0)
+		_plague_tick -= delta
+		if _plague_tick <= 0.0:
+			_plague_tick = 2.0
+			GroundZone.spawn_hostile(self, global_position, GroundZone.Kind.CURSE, 22.0, 5.0, 0.7, 8, 2.0)
 	if _fire_enchant_particles != null:
 		_fire_enchant_particles.emitting = _fire_enchant_left > 0.0
 	if _stigma_left > 0.0:
 		GameManager.potion_heal_multiplier = -1.0
 	else:
-		GameManager.potion_heal_multiplier = 0.0 if _decay_left > 0.0 else (0.5 if _burn_left > 0.0 and _burn_is_poison else 1.0)
+		GameManager.potion_heal_multiplier = 0.0 if _decay_left > 0.0 else (0.5 if (_burn_left > 0.0 and _burn_is_poison) or _plague_left > 0.0 else 1.0)
 	var parts := PackedStringArray()
 	if _execution_left >= 0.0:
 		parts.append("사형 선고 %.1f초! (대시로 회피)" % _execution_left)
 	elif death_marks > 0:
 		parts.append("죽음의 낙인 %d/%d" % [death_marks, DEATH_MARK_MAX])
 	if _charm_left > 0.0:
-		parts.append("%s %.1f초 (%s)" % [_charm_label, _charm_left, "행동불능" if _charm_label == "공포" else "조작 불가"])
+		parts.append("%s %.1f초 (%s)" % [_charm_label, _charm_left, "행동불능" if _charm_label in ["공포", "황금화"] else "조작 불가"])
+	if _plague_left > 0.0:
+		parts.append("역병 %.1f초 (포션 회복 절반 · 발밑에 역병이 퍼짐)" % _plague_left)
+	if _smoke_left > 0.0:
+		parts.append("신탁의 연기 (조준이 흔들림)")
 	if is_puppeted():
 		parts.append("꼭두각시: 남은 실 %d개 (구속력 %d%%) — 맵 가장자리 스위치를 밟아라" % [_puppet_threads, roundi(_puppet_strength * 100.0)])
 	if _burn_left > 0.0:
@@ -801,6 +846,8 @@ func _update_aim(delta: float) -> void:
 	var to_mouse := get_global_mouse_position() - _weapon_pivot.global_position
 	if to_mouse.length_squared() > 4.0:
 		_aim_direction = to_mouse.normalized()
+	if _smoke_left > 0.0:  # 신탁의 연기: 조준이 크게 흔들림
+		_aim_direction = _aim_direction.rotated(sin(_anim_time * 7.0) * 0.45)
 
 	var weight := 1.0 - exp(-aim_turn_speed * delta)
 	_weapon_pivot.rotation = lerp_angle(_weapon_pivot.rotation, _aim_direction.angle(), weight)
@@ -872,6 +919,8 @@ func _update_visuals(delta: float) -> void:
 				_body_sprite.modulate = Color(0.6, 0.6, 0.58)
 			"공포":
 				_body_sprite.modulate = Color(0.55, 0.45, 0.6)
+			"황금화":
+				_body_sprite.modulate = Color(1.3, 1.1, 0.4)
 			_:
 				_body_sprite.modulate = Color(1.0, 0.6, 0.9)
 	elif _burn_left > 0.0:

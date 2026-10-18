@@ -481,9 +481,11 @@ func _release_projectiles() -> void:
 	var pool := ProjectilePool.find(get_tree())
 	if pool != null:
 		pool.release_all()
-	# 보스가 쓰러진 뒤 아직 터지지 않은 예고 장판이 플레이어를 때리지 않도록 정리
+	# 보스가 쓰러진 뒤 아직 터지지 않은 예고 장판 · 보스가 남긴 해로운 장판이 플레이어를 때리지 않도록 정리
 	for strike in get_tree().get_nodes_in_group(&"aoe_strikes"):
 		strike.queue_free()
+	for zone in get_tree().get_nodes_in_group(&"hostile_zones"):
+		zone.queue_free()
 
 
 # ============================================================ 사망 / 드랍
