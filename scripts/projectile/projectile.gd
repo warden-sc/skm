@@ -83,6 +83,12 @@ func get_team() -> int:
 func _physics_process(delta: float) -> void:
 	if not is_active:
 		return
+	# 바람 (제피로스 · 아르케): 속력은 그대로, 바람 쪽으로 궤도가 휨
+	var wind := WindField.get_wind_at(global_position)
+	if wind != Vector2.ZERO:
+		var keep_speed := _velocity.length()
+		_velocity = (_velocity + wind * delta).normalized() * keep_speed
+		rotation = _velocity.angle()
 	var step := _velocity * delta
 	global_position += step
 	_travelled += step.length()
@@ -139,6 +145,8 @@ func _on_body_entered(body: Node2D) -> void:
 					player.apply_charm(_spec.charm_duration, _spec.charmer, _spec.charm_label)
 				if _spec.death_mark > 0:
 					player.add_death_mark(_spec.death_mark)
+				if _spec.decay_duration > 0.0:
+					player.apply_decay(_spec.decay_duration)
 				_impact(global_position, null)
 				release()
 			Player.HitResult.BLOCKED:

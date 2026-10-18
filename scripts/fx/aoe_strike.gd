@@ -18,6 +18,8 @@ var burn_duration: float = 0.0
 var burn_poison: bool = false
 ## 맞으면 쌓이는 「죽음의 낙인」 수
 var death_mark: int = 0
+## 맞으면 「부패」(포션 회복 불가) 시간 — 헬리시온
+var decay_duration: float = 0.0
 
 var _elapsed: float = 0.0
 var _done: bool = false
@@ -70,6 +72,8 @@ func _detonate() -> void:
 			player.apply_burn(burn_damage, burn_duration, burn_poison)
 		if result == Player.HitResult.DAMAGED and death_mark > 0:
 			player.add_death_mark(death_mark)
+		if result == Player.HitResult.DAMAGED and decay_duration > 0.0:
+			player.apply_decay(decay_duration)
 	var tween := create_tween()
 	tween.tween_property(self, "modulate:a", 0.0, 0.15)
 	tween.tween_callback(queue_free)

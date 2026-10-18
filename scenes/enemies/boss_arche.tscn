@@ -1,0 +1,50 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/boss_arche.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/arche.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/shadow.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/ancient_orb.png" id="4_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/wind_blade.png" id="5_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/rock.png" id="6_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/ice_shard.png" id="7_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/fireball.png" id="8_res"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 18.0
+
+[node name="BossArche" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_res")
+display_name = "고대 드래곤 아르케"
+max_hp = 72000
+defense = 38
+move_speed = 40.0
+contact_damage = 84
+knockback_resistance = 1.0
+is_boss = true
+aura_element = 6
+aura_amount = 10
+gold_min = 9000
+gold_max = 10000
+item_drop_chance = 1.0
+ancient_texture = ExtResource("4_res")
+wind_texture = ExtResource("5_res")
+rock_texture = ExtResource("6_res")
+ice_texture = ExtResource("7_res")
+fire_texture = ExtResource("8_res")
+item_drop_ids = Array[StringName]([&"holy_sword"])
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(3.8, 3.8)
+texture = ExtResource("3_res")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -36)
+scale = Vector2(1.4, 1.4)
+texture = ExtResource("2_res")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -26)
+shape = SubResource("CircleShape2D_hit")

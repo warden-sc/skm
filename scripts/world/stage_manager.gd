@@ -10,6 +10,12 @@ extends Node
 ##   다음 스테이지 텔레포트[E] → 다음 스테이지 야영지
 ##   마지막 스테이지 보스 토벌 → 「모든 스테이지 클리어」 → ending_delay 초 뒤 엔딩 화면 → 난이도 선택으로
 ##
+## 히든 던전 (이스터에그)
+##   30~35스테이지 사냥터의 정해진 구석에 「고대 용의 비늘」이 하나씩 희미하게 숨겨져 있음 (닿으면 주움)
+##   6개를 모두 모은 채 HIDDEN_GATE_STAGE(35) 보스를 쓰러뜨리면, 보물상자를 연 뒤 「고대의 문」이 열림
+##   고대의 문[E] → 보스방이 고대 용의 둥지로 바뀌고 히든 보스(hidden_stage.boss_scene) 등장 (잡몹 없음)
+##   히든 보스 토벌 → 특별 보물상자(장비 2개) + 다음 스테이지 텔레포트 (마지막 스테이지면 엔딩)
+##
 ## 드랍 등급
 ##   일반 몬스터: 스테이지 등급까지만 (1스테이지 일반·희귀 / 2스테이지 레어까지 / 3스테이지 전설까지)
 ##   보물상자   : 다음 스테이지 등급 (1스테이지 보스 → 레어, 2스테이지 이후 → 전설) 검/활/지팡이/방패/투구/갑옷 중 하나
@@ -22,6 +28,11 @@ const LOCATION_CAMP := "야영지"
 const LOCATION_FIELD := "사냥터"
 const LOCATION_BOSS := "보스방"
 const ENDING_SCENE := "res://scenes/ending/ending.tscn"
+const LOCATION_HIDDEN := "고대 용의 둥지"
+const PORTAL_SCENE := "res://scenes/world/portal.tscn"
+const ANCIENT_PORTAL_TEXTURE := "res://assets/sprites/world/portal_ancient.png"
+## 이 스테이지 보스를 비늘을 모두 모은 채 쓰러뜨리면 히든 던전이 열림
+const HIDDEN_GATE_STAGE := 35
 
 @export var entities_root: Node2D
 @export var player: Player
@@ -47,6 +58,8 @@ const ENDING_SCENE := "res://scenes/ending/ending.tscn"
 @export var screen_fade: ScreenFade
 @export var pickup_scene: PackedScene
 @export var chest_scene: PackedScene
+## 히든 던전 구성 (보스·바닥·분위기). 비워 두면 히든 던전 없음
+@export var hidden_stage: StageData
 
 @export_group("Balance")
 @export var min_spawn_distance: float = 150.0
@@ -70,6 +83,11 @@ var _ending_timer: Timer
 var _ambient: CanvasModulate
 ## 보스방 장식 (빈 옥좌 등)
 var _boss_decor: Sprite2D
+## 히든 던전: 고대의 문 / 열릴 차례인지 / 지금 히든 보스전인지 / 이번 스테이지에서 이미 깼는지
+var _hidden_portal: Portal
+var _hidden_pending: bool = false
+var _hidden_active: bool = false
+var _hidden_done: bool = false
 
 
 func _ready() -> void:
@@ -81,6 +99,7 @@ func _ready() -> void:
 	camp_portal.interacted.connect(return_to_camp)
 	boss_gate.interacted.connect(enter_boss_room)
 	next_stage_portal.interacted.connect(go_to_next_stage)
+	_create_hidden_portal()
 	_ending_timer = Timer.new()
 	_ending_timer.one_shot = true
 	_ending_timer.timeout.connect(go_to_ending)
@@ -162,10 +181,18 @@ func enter_boss_room() -> void:
 		_travel(_do_enter_boss_room)
 
 
-## 보스방 → 다음 스테이지 야영지 (보스 토벌 후, 마지막 스테이지가 아닐 때)
+## 보스방 → 다음 스테이지 야영지 (보스 토벌 후). 마지막 스테이지에서 히든 던전이 열렸던 경우엔 엔딩으로
 func go_to_next_stage() -> void:
-	if _state == State.CLEARED and not is_final_stage():
-		_travel(_do_go_to_next_stage)
+	if _state != State.CLEARED:
+		return
+	if is_final_stage():
+		if not next_stage_portal.enabled:
+			return
+		if not GameManager.is_game_cleared:
+			GameManager.report_game_cleared()
+		go_to_ending()
+		return
+	_travel(_do_go_to_next_stage)
 
 
 ## 모든 스테이지 클리어 → 엔딩 화면 (엔딩에서 난이도 선택 화면으로 돌아감)
@@ -205,6 +232,7 @@ func _do_enter_field() -> void:
 	_state = State.FIELD
 	_spawn_timer = 0.6
 	GameManager.set_location(LOCATION_FIELD)
+	_place_dragon_scale()
 	if boss_gate.is_open():
 		GameManager.show_notice("보스방이 열려 있습니다! 사냥터 북쪽의 문으로 가세요", Color(1.0, 0.6, 0.5))
 	else:
@@ -257,6 +285,11 @@ func _setup_stage(stage: int) -> void:
 		(room as Room).apply_theme(data.floor_texture, data.wall_tint)
 	_ambient.color = data.ambient_color
 	_set_boss_decor(data)
+	_hidden_pending = false
+	_hidden_active = false
+	_hidden_done = false
+	if _hidden_portal != null:
+		_hidden_portal.enabled = false
 	_kills = 0
 	_kill_target = data.kill_target
 	GameManager.set_kill_progress(_kills, _kill_target)
@@ -289,11 +322,11 @@ func get_boss_decor() -> Sprite2D:
 func _spawn_boss() -> void:
 	if _state != State.BOSS or _boss != null:
 		return
-	var boss := get_stage_data().boss_scene.instantiate() as Enemy
+	var data := hidden_stage if _hidden_active else get_stage_data()
+	var boss := data.boss_scene.instantiate() as Enemy
 	assert(boss != null, "boss_scene 루트에는 Enemy 계열 스크립트가 필요합니다.")
 	_boss = boss
 	boss.health_changed.connect(_on_boss_health_changed)
-	var data := get_stage_data()
 	var at := boss_spawn.global_position + data.boss_spawn_offset
 	_add_enemy(boss, at, boss_room.get_arena_rect())
 	Fx.explosion(player, at, Color(1.0, 0.4, 0.4), 50.0, 3)
@@ -308,17 +341,32 @@ func _on_boss_defeated() -> void:
 	_release_projectiles()
 	GameManager.heal_full()
 	_clear_enemies()
-	if is_final_stage():
+	if _hidden_active:
+		_on_hidden_boss_defeated()
+		return
+	_hidden_pending = is_hidden_gate_ready()
+	if is_final_stage() and not _hidden_pending:
 		_on_final_boss_defeated()
 		return
-	# 보물상자 + 다음 스테이지 텔레포트
+	# 보물상자 + 다음 스테이지 텔레포트 (히든 던전이 열릴 차례면 상자를 연 뒤 고대의 문)
+	_spawn_chest(false)
+	next_stage_portal.set_prompt(_next_portal_prompt())
+	next_stage_portal.enabled = true
+	if _hidden_pending:
+		GameManager.show_notice("보스 토벌! …고대 용의 비늘들이 떨리기 시작한다. 보물상자를 열어 보세요", Color(1.0, 0.9, 0.6))
+	else:
+		GameManager.show_notice("보스 토벌! 보물상자를 열고 텔레포트로 다음 스테이지로 가세요", Color(1.0, 0.85, 0.4))
+
+
+func _spawn_chest(hidden_reward: bool) -> void:
 	var chest := chest_scene.instantiate() as Chest
-	chest.opened.connect(_on_chest_opened)
+	chest.opened.connect(_on_chest_opened.bind(hidden_reward))
 	_chest = chest
 	_add_entity(chest, chest_spot.global_position)
-	next_stage_portal.set_prompt("[E] STAGE %d 로 이동" % (GameManager.stage + 1))
-	next_stage_portal.enabled = true
-	GameManager.show_notice("보스 토벌! 보물상자를 열고 텔레포트로 다음 스테이지로 가세요", Color(1.0, 0.85, 0.4))
+
+
+func _next_portal_prompt() -> String:
+	return "[E] 여정을 마치기 (엔딩)" if is_final_stage() else "[E] STAGE %d 로 이동" % (GameManager.stage + 1)
 
 
 ## 마지막 보스 토벌: 상자/텔레포트 대신 잠시 뒤 엔딩
@@ -330,23 +378,30 @@ func _on_final_boss_defeated() -> void:
 	_ending_timer.start(maxf(ending_delay, 0.05))
 
 
-func _on_chest_opened(chest: Chest) -> void:
+func _on_chest_opened(chest: Chest, hidden_reward: bool = false) -> void:
 	var rarity := ItemData.max_rarity_for_stage(GameManager.stage + 1)
 	var candidates := ItemDB.get_chest_candidates(rarity)
 	var not_owned := candidates.filter(func(it: ItemData) -> bool: return not GameManager.owns_item(it.id))
 	var pool: Array = not_owned if not not_owned.is_empty() else candidates
-	if not pool.is_empty():
-		var item: ItemData = pool.pick_random()
+	pool = pool.duplicate()
+	pool.shuffle()
+	var names := PackedStringArray()
+	for i in mini(2 if hidden_reward else 1, pool.size()):
+		var item: ItemData = pool[i]
 		var drop := pickup_scene.instantiate() as Pickup
 		drop.setup_item(item)
-		_add_entity(drop, chest.global_position + Vector2(0, 14))
-		GameManager.show_notice("보물상자: [%s] %s" % [item.get_rarity_name(), item.display_name], item.get_rarity_color())
-	var gold := roundi(60.0 * GameManager.stage * float(GameManager.get_difficulty_info()["gold"]))
+		_add_entity(drop, chest.global_position + Vector2(-12.0 * i if hidden_reward else 0.0, 14))
+		names.append("[%s] %s" % [item.get_rarity_name(), item.display_name])
+	if not names.is_empty():
+		GameManager.show_notice(("고대 용의 보물: " if hidden_reward else "보물상자: ") + ", ".join(names), Color(1.0, 0.9, 0.55) if hidden_reward else (pool[0] as ItemData).get_rarity_color())
+	var gold := roundi(60.0 * GameManager.stage * float(GameManager.get_difficulty_info()["gold"]) * (3.0 if hidden_reward else 1.0))
 	for i in 4:
 		var coin := pickup_scene.instantiate() as Pickup
 		@warning_ignore("integer_division")
 		coin.setup_gold(gold / 4)
 		_add_entity(coin, chest.global_position)
+	if _hidden_pending and not hidden_reward:
+		open_hidden_portal()
 
 
 func _on_boss_health_changed(current: int, max_hp: int) -> void:
@@ -414,7 +469,7 @@ func _clear_enemies() -> void:
 		if leftover != null and not leftover.is_dead():
 			leftover.despawn()
 	# 바닥 장판(점액·불바다·마법 장판)과 떨어지던 마법, 티탄이 박아 둔 바위, 마리오네트 스위치, 레비아탄 폭풍 지대도 함께 정리
-	for group in [&"ground_zones", &"sky_strikes", &"cover_rocks", &"puppet_switches", &"storm_fields", &"ice_pillars", &"abyss_torches"]:
+	for group in [&"ground_zones", &"sky_strikes", &"cover_rocks", &"puppet_switches", &"storm_fields", &"ice_pillars", &"abyss_torches", &"dragon_scales"]:
 		for node in get_tree().get_nodes_in_group(group):
 			node.queue_free()
 
@@ -469,6 +524,117 @@ func _spawn_drops(at_global: Vector2, enemy: Enemy) -> void:
 	var drop := pickup_scene.instantiate() as Pickup
 	drop.setup_item(allowed.pick_random())
 	_add_entity(drop, at_global)
+
+
+# ============================================================ 히든 던전
+func is_hidden_gate_ready() -> bool:
+	return hidden_stage != null and not _hidden_done and GameManager.stage == HIDDEN_GATE_STAGE and GameManager.has_all_dragon_scales()
+
+
+func is_in_hidden_dungeon() -> bool:
+	return _hidden_active
+
+
+func get_hidden_portal() -> Portal:
+	return _hidden_portal
+
+
+func _create_hidden_portal() -> void:
+	var scene := load(PORTAL_SCENE) as PackedScene
+	if scene == null:
+		return
+	_hidden_portal = scene.instantiate() as Portal
+	_hidden_portal.name = "HiddenPortal"
+	_hidden_portal.portal_color = Color(1.0, 0.9, 0.6)
+	if ResourceLoader.exists(ANCIENT_PORTAL_TEXTURE):
+		_hidden_portal.portal_texture = load(ANCIENT_PORTAL_TEXTURE) as Texture2D
+	_hidden_portal.prompt_text = "[E] 고대의 문 — 고대 용의 둥지 (히든)"
+	_hidden_portal.enabled = false
+	_hidden_portal.position = entities_root.to_local(next_stage_portal.global_position + Vector2(-260, 0))
+	_hidden_portal.interacted.connect(enter_hidden_dungeon)
+	entities_root.add_child.call_deferred(_hidden_portal)
+
+
+## 비늘 6개 + 35스테이지 보스 토벌 + 상자 오픈 → 고대의 문
+func open_hidden_portal() -> void:
+	_hidden_pending = false
+	if _hidden_portal == null:
+		return
+	_hidden_portal.enabled = true
+	Fx.explosion(player, _hidden_portal.global_position + Vector2(0, -16), Color(1.0, 0.9, 0.6), 60.0, 3)
+	GameManager.show_notice("여섯 개의 고대 용의 비늘이 공명한다… 「고대의 문」이 열렸다!", Color(1.0, 0.92, 0.6))
+
+
+func enter_hidden_dungeon() -> void:
+	if _state == State.CLEARED and _hidden_portal != null and _hidden_portal.enabled:
+		_travel(_do_enter_hidden_dungeon)
+
+
+func _do_enter_hidden_dungeon() -> void:
+	for node in entities_root.get_children():
+		var pickup := node as Pickup
+		if pickup != null:
+			pickup.collect()
+	if is_instance_valid(_chest):
+		_chest.queue_free()
+	_chest = null
+	_hidden_portal.enabled = false
+	next_stage_portal.enabled = false
+	_hidden_active = true
+	_clear_enemies()
+	_release_projectiles()
+	boss_room.apply_theme(hidden_stage.floor_texture, hidden_stage.wall_tint)
+	_ambient.color = hidden_stage.ambient_color
+	_set_boss_decor(hidden_stage)
+	player.teleport_to(boss_arrival.global_position, boss_room.get_bounds())
+	_state = State.BOSS
+	GameManager.set_stage(GameManager.stage, "히든 · " + hidden_stage.stage_name)
+	GameManager.set_location(LOCATION_HIDDEN)
+	GameManager.show_notice("「%s」 — 공기가 무겁다. 무언가 아주 오래된 것이 깨어난다…" % hidden_stage.stage_name, Color(1.0, 0.9, 0.6))
+	get_tree().create_timer(boss_entry_delay, false).timeout.connect(_spawn_boss)
+
+
+func _on_hidden_boss_defeated() -> void:
+	_hidden_active = false
+	_hidden_done = true
+	GameManager.hidden_cleared = true
+	_spawn_chest(true)
+	next_stage_portal.set_prompt(_next_portal_prompt())
+	next_stage_portal.enabled = true
+	GameManager.show_notice("고대 드래곤 토벌! 고대 용의 보물상자가 나타났다", Color(1.0, 0.92, 0.6))
+
+
+## 30~35스테이지 사냥터: 정해진 자리에 고대 용의 비늘 (이미 주웠으면 없음)
+func _place_dragon_scale() -> void:
+	var stage := GameManager.stage
+	if hidden_stage == null or not GameManager.DRAGON_SCALE_STAGES.has(stage) or GameManager.has_dragon_scale(stage):
+		return
+	var scale_node := DragonScale.new()
+	scale_node.collected.connect(_on_dragon_scale_collected.bind(stage))
+	_add_entity(scale_node, get_dragon_scale_spot(stage))
+
+
+## 스테이지마다 정해진 비늘 자리 (사냥터 구석 — 매번 같은 곳)
+func get_dragon_scale_spot(stage: int) -> Vector2:
+	var arena := field_room.get_arena_rect()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 9973 * stage + 31
+	# 왼쪽 위 구석은 HUD 패널에 가려 보이지 않으므로 나머지 세 구석 중 하나
+	var corners: Array[Vector2] = [Vector2(arena.end.x, arena.position.y), Vector2(arena.position.x, arena.end.y), arena.end]
+	var corner := corners[rng.randi() % corners.size()]
+	var inward := (arena.get_center() - corner).sign() * Vector2(rng.randf_range(20.0, 70.0), rng.randf_range(16.0, 46.0))
+	return corner + inward
+
+
+func _on_dragon_scale_collected(_scale: DragonScale, stage: int) -> void:
+	if not GameManager.collect_dragon_scale(stage):
+		return
+	var count := GameManager.get_dragon_scale_count()
+	var total := GameManager.DRAGON_SCALE_STAGES.size()
+	if count >= total:
+		GameManager.show_notice("고대 용의 비늘 (%d/%d) — 비늘들이 하나의 이름을 속삭인다… 「아르케」" % [count, total], Color(1.0, 0.92, 0.6))
+	else:
+		GameManager.show_notice("고대 용의 비늘을 주웠다 (%d/%d) — 아주 오래된 힘이 느껴진다" % [count, total], Color(1.0, 0.9, 0.6))
 
 
 # ============================================================ 기타

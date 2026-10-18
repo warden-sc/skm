@@ -120,6 +120,10 @@ var _chill: float = 0.0
 ## 묶임 (보이드 웜에게 삼켜짐 등): 남은 시간 / 상태 이름 — 이동·대시 불가, 공격은 가능
 var _root_left: float = 0.0
 var _root_label: String = ""
+## 빙판 위 (코퀴로스): 매 프레임 mark_slippery() 로 켜짐 → 가속·마찰이 크게 줄어 미끄러짐
+var _slip_left: float = 0.0
+## 부패 (헬리시온): 포션 회복 불가
+var _decay_left: float = 0.0
 ## 죽음의 낙인 (사신): 쌓이면 사형 선고 → 잠시 후 큰 피해 (대시로 피할 수 있음)
 const DEATH_MARK_MAX := 5
 const DEATH_MARK_KEEP_TIME := 8.0
@@ -198,10 +202,11 @@ func _physics_process(delta: float) -> void:
 		var speed := max_speed * (1.0 + GameManager.get_move_speed_bonus()) * _guard.get_move_multiplier() * _attack.get_move_multiplier()
 		if _slow_left > 0.0:
 			speed *= _slow_multiplier
+		var traction := SLIP_TRACTION if _slip_left > 0.0 else 1.0
 		if input_dir != Vector2.ZERO:
-			velocity = velocity.move_toward(input_dir * speed, acceleration * delta)
+			velocity = velocity.move_toward(input_dir * speed, acceleration * traction * delta)
 		else:
-			velocity = velocity.move_toward(Vector2.ZERO, friction * delta)
+			velocity = velocity.move_toward(Vector2.ZERO, friction * traction * delta)
 
 		if Input.is_action_just_pressed(&"dash") and _dash_cooldown_left <= 0.0 and not is_charmed() and not is_puppeted() and _root_left <= 0.0:
 			_start_dash(input_dir)
@@ -316,6 +321,30 @@ func apply_root(duration: float, label: String) -> void:
 	_root_left = maxf(_root_left, duration)
 	_root_label = label
 	velocity = Vector2.ZERO
+
+
+## 빙판: 미끄러지는 정도 (가속·마찰 배율)
+const SLIP_TRACTION := 0.12
+
+
+## 빙판 위에 있음 (매 프레임 호출해야 유지)
+func mark_slippery() -> void:
+	_slip_left = 0.1
+
+
+func is_slippery() -> bool:
+	return _slip_left > 0.0
+
+
+## 부패: duration 동안 포션으로 회복할 수 없음
+func apply_decay(duration: float) -> void:
+	if _is_dead:
+		return
+	_decay_left = maxf(_decay_left, duration)
+
+
+func is_decayed() -> bool:
+	return _decay_left > 0.0
 
 
 func release_root() -> void:
@@ -498,6 +527,8 @@ func teleport_to(at_global: Vector2, camera_bounds: Rect2) -> void:
 	release_puppet()
 	_chill = 0.0
 	_root_left = 0.0
+	_slip_left = 0.0
+	_decay_left = 0.0
 	set_camera_bounds(camera_bounds)
 
 
@@ -584,7 +615,9 @@ func _update_status(delta: float) -> void:
 		_charm_particles.emitting = _charm_left > 0.0
 	if _burn_particles != null:
 		_burn_particles.emitting = _burn_left > 0.0
-	GameManager.potion_heal_multiplier = 0.5 if _burn_left > 0.0 and _burn_is_poison else 1.0
+	_slip_left = maxf(_slip_left - delta, 0.0)
+	_decay_left = maxf(_decay_left - delta, 0.0)
+	GameManager.potion_heal_multiplier = 0.0 if _decay_left > 0.0 else (0.5 if _burn_left > 0.0 and _burn_is_poison else 1.0)
 	var parts := PackedStringArray()
 	if _execution_left >= 0.0:
 		parts.append("사형 선고 %.1f초! (대시로 회피)" % _execution_left)
@@ -598,6 +631,10 @@ func _update_status(delta: float) -> void:
 		parts.append("%s %.1f초 (0.5초마다 -%d%s)" % ["독" if _burn_is_poison else "화상", _burn_left, get_burn_tick_damage(), " · 포션 회복 -50%" if _burn_is_poison else ""])
 	if _root_left > 0.0:
 		parts.append(_root_label)
+	if _decay_left > 0.0:
+		parts.append("부패 %.1f초 (포션 회복 불가)" % _decay_left)
+	if _slip_left > 0.0:
+		parts.append("빙판 (미끄러움)")
 	if _chill > 0.5:
 		parts.append("냉기 %d%% (멈추면 쌓임, 가득 차면 빙결)" % roundi(_chill))
 	if _armor_break_left > 0.0:

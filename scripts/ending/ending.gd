@@ -20,10 +20,12 @@ const STORY := [
 	"왕은 충직한 기사단장의 이름을 부르며 잠들었고, 오랜 저주가 풀렸다.",
 	"금단의 연구소와 마도 공장, 가라앉은 신전과 시간의 회랑, 거울의 미궁을 지나",
 	"그리핀과 티탄, 마리오네트와 레비아탄, 아르카나와 테모스, 스콜피언과 벨, 바실리스크를 넘어",
-	"쌍둥이와 빙결의 여왕, 심연의 녹스, 공허의 웜과 꿈속의 나이트메어를 지나",
-	"마침내 대정령 벨페르 가이아가 고개를 숙이고, 네 원소가 다시 고요해졌다.",
+	"쌍둥이와 빙결의 여왕, 심연의 녹스, 공허의 웜과 나이트메어, 대정령 가이아를 지나",
+	"마침내 바람·대지·얼음·화염의 용과 불사의 헬리시온이 쓰러지고, 용의 묘지에 정적이 찾아왔다.",
 	"이름 없는 성기사의 전설은 그렇게 시작되었다.",
 ]
+## 히든 보스(고대 드래곤 아르케)를 쓰러뜨렸으면 마지막 줄이 바뀜
+const HIDDEN_LAST_LINE := "…그리고 아무도 모르는 고대 용 아르케의 이름이, 그 전설의 맨 끝에 새겨졌다."
 
 @onready var _the_end: Label = %TheEnd
 @onready var _story_box: VBoxContainer = %StoryBox
@@ -43,9 +45,12 @@ func _ready() -> void:
 	_return_button.pressed.connect(return_to_difficulty_select)
 	_record.text = build_record_text()
 	var info := GameManager.get_difficulty_info()
-	_record_title.text = "모험 기록 — 난이도: %s" % info["name"]
+	_record_title.text = "모험 기록 — 난이도: %s%s" % [info["name"], "  · 히든 클리어" if GameManager.hidden_cleared else ""]
 	_record_title.add_theme_color_override(&"font_color", info["color"])
-	for line in STORY:
+	var story: Array = STORY.duplicate()
+	if GameManager.hidden_cleared:
+		story[story.size() - 1] = HIDDEN_LAST_LINE
+	for line in story:
 		var label := Label.new()
 		label.text = line
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

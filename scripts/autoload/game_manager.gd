@@ -132,6 +132,11 @@ var is_boss_active: bool = false
 # --- 엔딩용 기록 ---
 ## 모든 스테이지의 보스를 쓰러뜨렸는지
 var is_game_cleared: bool = false
+## 히든 던전: 30~35스테이지 사냥터에 숨겨진 「고대 용의 비늘」을 주운 스테이지 번호
+const DRAGON_SCALE_STAGES: Array[int] = [30, 31, 32, 33, 34, 35]
+var dragon_scales: Array[int] = []
+## 히든 보스(고대 드래곤 아르케)를 쓰러뜨렸는지
+var hidden_cleared: bool = false
 ## 이번 모험에서 처치한 몬스터 수 (보스·소환된 졸개 포함)
 var total_kills: int = 0
 ## 이번 모험의 플레이 시간(초). 일시정지(상점·인벤토리) 중에는 늘지 않음
@@ -165,6 +170,8 @@ func reset_game() -> void:
 	kill_target = 0
 	is_boss_active = false
 	is_game_cleared = false
+	dragon_scales.clear()
+	hidden_cleared = false
 	total_kills = 0
 	play_time = 0.0
 	items.clear()
@@ -319,7 +326,7 @@ func tick_regen(delta: float) -> void:
 
 ## 지속 피해(화상 등) 배율: 방어력 15 에서 절반, 높을수록 덜 들어옴
 const DOT_DEFENSE_HALF := 15.0
-## 포션 회복량 배율 (독에 걸리면 Player 가 0.5 로 낮춤 — 바실리스크 기믹)
+## 포션 회복량 배율 (독에 걸리면 Player 가 0.5 로 낮춤 — 바실리스크 기믹, 부패면 0 — 헬리시온 기믹)
 var potion_heal_multiplier: float = 1.0
 
 
@@ -597,6 +604,9 @@ func use_potion(potion: PotionData = null) -> bool:
 	if hp >= max_hp:
 		show_notice("체력이 가득 차 있습니다", Color(0.8, 0.9, 1.0))
 		return false
+	if potion_heal_multiplier <= 0.0:
+		show_notice("부패! 지금은 포션으로 회복할 수 없다", Color(0.7, 0.9, 0.6))
+		return false
 	var before := hp
 	heal_player(maxi(1, roundi(potion.get_heal(max_hp) * potion_heal_multiplier)))
 	potions[potion.id] = get_potion_count(potion.id) - 1
@@ -760,6 +770,26 @@ func report_kill() -> void:
 
 
 ## 마지막 스테이지 보스 토벌 → 엔딩
+## 고대 용의 비늘 줍기 (새로 주웠으면 true)
+func collect_dragon_scale(at_stage: int) -> bool:
+	if dragon_scales.has(at_stage) or not DRAGON_SCALE_STAGES.has(at_stage):
+		return false
+	dragon_scales.append(at_stage)
+	return true
+
+
+func has_dragon_scale(at_stage: int) -> bool:
+	return dragon_scales.has(at_stage)
+
+
+func get_dragon_scale_count() -> int:
+	return dragon_scales.size()
+
+
+func has_all_dragon_scales() -> bool:
+	return dragon_scales.size() >= DRAGON_SCALE_STAGES.size()
+
+
 func report_game_cleared() -> void:
 	is_game_cleared = true
 	game_cleared.emit()

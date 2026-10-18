@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/stage_data.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/tiles/floor_storm_canyon.png" id="2_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/boss_zephyros.tscn" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/sylph.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/storm_harpy.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/storm_hawk.tscn" id="6_res"]
+
+[resource]
+script = ExtResource("1_res")
+stage_name = "폭풍의 협곡"
+floor_texture = ExtResource("2_res")
+wall_tint = Color(0.6, 0.68, 0.62, 1)
+ambient_color = Color(0.88, 0.94, 0.9, 1)
+boss_spawn_offset = Vector2(0, 40)
+boss_intro_text = "협곡에 돌풍이 몰아치고 — 바람의 드래곤 제피로스가 폭풍을 타고 내려앉는다…"
+enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
+enemy_weights = Array[float]([1.0, 1.1, 1.0])
+boss_scene = ExtResource("3_res")
+kill_target = 28
+spawn_interval = 1.6
+max_alive = 8

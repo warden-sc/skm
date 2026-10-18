@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/stage_data.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/tiles/floor_ancient_nest.png" id="2_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/boss_arche.tscn" id="3_res"]
+
+[resource]
+script = ExtResource("1_res")
+stage_name = "고대 용의 둥지"
+floor_texture = ExtResource("2_res")
+wall_tint = Color(0.78, 0.66, 0.46, 1)
+ambient_color = Color(1.0, 0.95, 0.85, 1)
+boss_spawn_offset = Vector2(0, 30)
+boss_intro_text = "모든 용의 근원 — 고대 드래곤 아르케가 천천히 눈을 뜬다…"
+enemy_scenes = Array[PackedScene]([])
+enemy_weights = Array[float]([])
+boss_scene = ExtResource("3_res")
+kill_target = 1
+spawn_interval = 1.6
+max_alive = 8
