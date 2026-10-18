@@ -80,6 +80,8 @@ func _get_move_velocity(delta: float) -> Vector2:
 	if not _started and has_target():
 		_started = true
 		_intro_left = intro_time
+		# 보스방 맨 위(체력 바 · 이름 아래)에 가려지지 않게 옥좌를 조금 아래에 둠
+		global_position = _area().get_center() + Vector2(0, -25)
 		throne = FieldProp.spawn(self, global_position + Vector2(0, -6), throne_texture, Color(1.0, 0.3, 0.15))
 		GameManager.show_notice("무저갱의 옥좌 위에서, 마왕 아바돈이 천천히 눈을 뜬다…", Color(1.0, 0.4, 0.3))
 	if _seated:
@@ -93,9 +95,11 @@ func rise() -> void:
 		return
 	_seated = false
 	_intro_left = 0.0
-	pit = AbyssPit.spawn(self, _area().get_center() + Vector2(0, 30))
+	pit = AbyssPit.spawn(self, _area().get_center() + Vector2(0, 40))
 	if pit != null:
 		pit.fall_callback = _on_fall
+		if has_target() and pit.contains(_player.global_position):  # 열리는 자리에 서 있었으면 피해 없이 가장자리로
+			_player.global_position = _safe_rim(_player.global_position)
 	_sin_left = sin_time
 	_apply_sin()
 	Fx.shockwave(self, get_hit_center(), Color(1.0, 0.3, 0.15), 160.0, 0.7)
@@ -117,8 +121,25 @@ func can_be_hit_by(kind: HitKind) -> bool:
 func _on_fall(player: Player) -> void:
 	_falls += 1
 	player.take_unblockable_hit(roundi(GameManager.max_hp * fall_ratio), pit.global_position, false)
-	player.global_position = pit.rim_point(player.global_position)
+	player.global_position = _safe_rim(player.global_position)
 	GameManager.show_notice("무저갱에 떨어졌다! 가장자리로 간신히 기어 나왔다", Color(1.0, 0.4, 0.3))
+
+
+## 구덩이 가장자리 밖이면서 보스방 안인 자리 — 벽 쪽으로 튕겨 나가 다시 구덩이로 밀려 들어가지 않게
+func _safe_rim(from: Vector2) -> Vector2:
+	var area := _area().grow(-12.0)
+	var dir := pit.global_position.direction_to(from)
+	if dir == Vector2.ZERO:
+		dir = Vector2.DOWN
+	var best := pit.rim_point(from)
+	if area.has_point(best):
+		return best
+	for i in range(1, 9):
+		for side in [1.0, -1.0]:
+			var at: Vector2 = pit.global_position + dir.rotated(side * i * TAU / 16.0) * (pit.radius + 30.0)
+			if area.has_point(at):
+				return at
+	return best.clamp(area.position, area.end)
 
 
 # ============================================================ 기믹 2: 일곱 대죄의 힘
@@ -141,7 +162,7 @@ func _apply_sin() -> void:
 			for i in 4:
 				var at := Vector2(randf_range(area.position.x, area.end.x), randf_range(area.position.y, area.end.y))
 				if pit != null and pit.contains(at):
-					at = pit.rim_point(at, 40.0)
+					at = pit.rim_point(at, 40.0).clamp(area.position, area.end)
 				var coin := CarryItem.spawn(self, at, coin_texture, "금화 더미", Color(1.0, 0.85, 0.3))
 				if coin != null:
 					coin.follow_player = false

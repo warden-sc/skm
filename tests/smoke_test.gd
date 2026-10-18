@@ -3252,9 +3252,10 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 					player.global_position = boss_center + Vector2(200, 120))
 				_check(ab.pit.radius > r90, "[기믹] 바닥 없는 구덩이가 점점 넓어짐 (%.0f → %.0f)" % [r90, ab.pit.radius])
 				player._invincible_left = 0.0
+				var falls90 := ab.get_fall_count()
 				player.global_position = ab.pit.global_position
 				await _frames(3)
-				_check(ab.get_fall_count() == 1 and not ab.pit.contains(player.global_position), "[기믹] 구덩이에 빠지면 큰 피해를 입고 가장자리로 튕겨 나옴")
+				_check(ab.get_fall_count() == falls90 + 1 and not ab.pit.contains(player.global_position), "[기믹] 구덩이에 빠지면 큰 피해를 입고 가장자리로 튕겨 나옴")
 				_gm.hp = _gm.max_hp
 				_check(ab.current_sin == BossAbaddon.Sin.GREED and ab.coins.size() == 4, "[기믹] 일곱 대죄의 힘 — 「탐욕」: 금화 더미 쟁탈")
 				ab._sin_left = 999.0
