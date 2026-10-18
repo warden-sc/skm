@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/stage_data.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/tiles/floor_trumpet_sky.png" id="2_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/boss_trumpet_angel.tscn" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/hail_spirit.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/blood_tide.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/wormwood_wisp.tscn" id="6_res"]
+
+[resource]
+script = ExtResource("1_res")
+stage_name = "일곱 나팔의 하늘"
+floor_texture = ExtResource("2_res")
+wall_tint = Color(0.66, 0.62, 0.72, 1)
+ambient_color = Color(0.96, 0.94, 1.0, 1)
+boss_spawn_offset = Vector2(0, -20)
+boss_intro_text = "하늘이 갈라지고 금빛 나팔을 든 천사가 내려온다 — 첫째 나팔이 울리려 한다…"
+enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
+enemy_weights = Array[float]([1.0, 1.0, 1.0])
+boss_scene = ExtResource("3_res")
+kill_target = 42
+spawn_interval = 1.6
+max_alive = 8

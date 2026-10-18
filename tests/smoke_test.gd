@@ -88,7 +88,7 @@ func _item_pickups(entities: Node) -> Array:
 	return entities.get_children().filter(func(n: Node) -> bool: return n is Pickup and (n as Pickup).kind == Pickup.Kind.ITEM)
 
 
-## 11~80스테이지: 잡몹 · 보스 패턴 · 보스 기믹 (+ 30~35 고대 용의 비늘 → 35스테이지 뒤 히든 던전). 80스테이지 보스(현재 마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
+## 11~90스테이지: 잡몹 · 보스 패턴 · 보스 기믹 (+ 30~35 고대 용의 비늘 → 35스테이지 뒤 히든 던전). 90스테이지 보스(현재 마지막 보스)를 쓰러뜨리지 않은 채 돌려줌
 func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 	var player := main.get_node("Entities/Player") as Player
 	var pool := main.get_node("ProjectilePool") as ProjectilePool
@@ -168,11 +168,21 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 		78: ["밤올빼미", "그림자 정찰병", "어둠의 정령"],
 		79: ["청동 호플리테스", "아크로폴리스 궁수", "청동 올빼미"],
 		80: ["아테네 호플리테스", "지혜의 올빼미", "아테나의 사도"],
+		81: ["탐욕의 임프", "황금 도둑", "보물 상자 미믹"],
+		82: ["졸음 정령", "꾸벅이는 구울", "거대 달팽이"],
+		83: ["파리 떼", "식탐 구울", "구더기"],
+		84: ["서큐버스 창병", "매혹의 정령", "사슬 사냥개"],
+		85: ["역병의 기병", "굶주린 망자", "전쟁의 사냥개"],
+		86: ["표 받은 광신도", "예언자의 시종", "짐승의 우상"],
+		87: ["사막의 진", "감시자 천사", "네피림"],
+		88: ["무저갱의 기어 나오는 것", "연기 악마", "타락한 병사"],
+		89: ["우박 정령", "핏빛 물결", "쓴 별의 정령"],
+		90: ["타락한 천사병", "지옥의 망령", "무저갱의 메뚜기"],
 	}
-	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁", 16: "바람의 봉우리", 17: "거인의 감옥", 18: "인형 극장", 19: "폭풍의 바다", 20: "대마법사의 탑", 21: "기계 신전", 22: "모래 폭풍의 사막", 23: "피의 성", 24: "맹독의 늪", 25: "해와 달의 신전", 26: "빙결의 궁전", 27: "심연", 28: "공허의 둥지", 29: "꿈의 경계", 30: "정령의 성역", 31: "폭풍의 협곡", 32: "대지의 균열", 33: "얼어붙은 호수", 34: "용암 화산", 35: "용의 묘지", 36: "천상의 법정", 37: "타락한 신전", 38: "청동의 해안", 39: "크노소스의 미궁", 40: "구름 위의 길", 41: "레르나의 늪", 42: "키클롭스의 동굴", 43: "명계의 문", 44: "메시나 해협", 45: "리비아의 투기장", 46: "거미줄 신전", 47: "괴물들의 둥지", 48: "영웅의 시련장", 49: "코카서스의 바위산", 50: "헤파이스토스의 대장간", 51: "스팀팔로스 호수", 52: "카드모스의 밭", 53: "아레스의 숲", 54: "테미스키라", 55: "거인의 들판", 56: "칼리돈의 사냥터", 57: "해골 신전", 58: "플레그라 들판", 59: "군신의 숲", 60: "군신의 전장", 61: "오이칼리아의 활터", 62: "델포이의 갈라진 땅", 63: "태양의 길", 64: "불타는 트로이", 65: "까마귀의 숲", 66: "트로이의 해변", 67: "팍톨로스 강가", 68: "트로이 성벽", 69: "델포이 신전", 70: "델포이의 태양 신전", 71: "트로이 해안", 72: "트로이 성문", 73: "안개의 전장", 74: "리키아의 하늘", 75: "그리스 진영", 76: "이타카의 궁전", 77: "테베의 일곱 성문", 78: "올빼미의 밤", 79: "아크로폴리스", 80: "파르테논"}
-	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "천공의 수호자 그리핀", 17: "추방된 자 티탄", 18: "꼭두각시 마리오네트", 19: "폭풍의 지배자 레비아탄", 20: "대마법사 아르카나", 21: "기계의 정점 테모스", 22: "사막의 암살자 스콜피언", 23: "피의 군주 벨", 24: "맹독의 패주 바실리스크", 25: "해의 쌍둥이 솔", 26: "빙결의 여왕 글라시아", 27: "심연의 군주 녹스", 28: "공허의 포식자 보이드 웜", 29: "몽마 나이트메어", 30: "대정령 벨페르 가이아", 31: "바람의 드래곤 제피로스", 32: "대지의 드래곤 테라곤", 33: "얼음의 드래곤 코퀴로스", 34: "화염의 드래곤 베르단", 35: "언데드 드래곤 헬리시온", 36: "심판의 천사 세라핀", 37: "타락한 신 아스타로트", 38: "청동 거인 탈로스", 39: "미궁의 미노타우로스", 40: "전령의 신 헤르메스", 41: "머리 아홉의 히드라", 42: "외눈 거인 폴리페모스", 43: "명계의 문지기 케르베로스", 44: "스킬라와 카립디스", 45: "대지의 거인 안타이오스", 46: "거미 여인 아라크네", 47: "괴물의 어머니 에키드나", 48: "영웅 헤라클레스", 49: "사슬에 묶인 티탄 프로메테우스", 50: "대장장이 신 헤파이스토스", 51: "스팀팔로스의 괴조", 52: "용의 이빨 전사 스파르토이", 53: "잠들지 않는 콜키스의 용", 54: "아마존 여왕 히폴리테", 55: "거인 형제 오토스와 에피알테스", 56: "칼리돈의 영웅 멜레아그로스", 57: "해골 신전의 기사 키크노스", 58: "불의 거인 엔켈라도스", 59: "마르스의 늑대 루푸스", 60: "전쟁의 신 마르스", 61: "활의 왕 에우리토스", 62: "델포이의 거대 뱀 피톤", 63: "태양 전차를 몬 파에톤", 64: "예언자 카산드라", 65: "코로니스의 까마귀", 66: "영웅 아킬레우스", 67: "황금 손의 왕 미다스", 68: "트로이의 영웅 헥토르", 69: "델포이의 여사제 피티아", 70: "태양의 신 아폴론", 71: "라오콘의 바다뱀 포르케스와 카리보이아", 72: "트로이 목마", 73: "영웅 디오메데스", 74: "페가수스를 탄 벨레로폰", 75: "큰 아이아스", 76: "오디세우스", 77: "티데우스", 78: "아테나의 올빼미 글라우크스", 79: "아크로폴리스의 청동 수호상", 80: "지혜의 신 아테나"}
+	var stage_names := {11: "금단의 연구소", 12: "마도 공장", 13: "가라앉은 신전", 14: "시간의 회랑", 15: "거울의 미궁", 16: "바람의 봉우리", 17: "거인의 감옥", 18: "인형 극장", 19: "폭풍의 바다", 20: "대마법사의 탑", 21: "기계 신전", 22: "모래 폭풍의 사막", 23: "피의 성", 24: "맹독의 늪", 25: "해와 달의 신전", 26: "빙결의 궁전", 27: "심연", 28: "공허의 둥지", 29: "꿈의 경계", 30: "정령의 성역", 31: "폭풍의 협곡", 32: "대지의 균열", 33: "얼어붙은 호수", 34: "용암 화산", 35: "용의 묘지", 36: "천상의 법정", 37: "타락한 신전", 38: "청동의 해안", 39: "크노소스의 미궁", 40: "구름 위의 길", 41: "레르나의 늪", 42: "키클롭스의 동굴", 43: "명계의 문", 44: "메시나 해협", 45: "리비아의 투기장", 46: "거미줄 신전", 47: "괴물들의 둥지", 48: "영웅의 시련장", 49: "코카서스의 바위산", 50: "헤파이스토스의 대장간", 51: "스팀팔로스 호수", 52: "카드모스의 밭", 53: "아레스의 숲", 54: "테미스키라", 55: "거인의 들판", 56: "칼리돈의 사냥터", 57: "해골 신전", 58: "플레그라 들판", 59: "군신의 숲", 60: "군신의 전장", 61: "오이칼리아의 활터", 62: "델포이의 갈라진 땅", 63: "태양의 길", 64: "불타는 트로이", 65: "까마귀의 숲", 66: "트로이의 해변", 67: "팍톨로스 강가", 68: "트로이 성벽", 69: "델포이 신전", 70: "델포이의 태양 신전", 71: "트로이 해안", 72: "트로이 성문", 73: "안개의 전장", 74: "리키아의 하늘", 75: "그리스 진영", 76: "이타카의 궁전", 77: "테베의 일곱 성문", 78: "올빼미의 밤", 79: "아크로폴리스", 80: "파르테논", 81: "탐욕의 금고", 82: "나태의 늪", 83: "폭식의 연회장", 84: "색욕의 궁전", 85: "묵시록의 들판", 86: "거짓 신전", 87: "광야", 88: "무저갱의 문", 89: "일곱 나팔의 하늘", 90: "무저갱"}
+	var boss_names := {11: "금단의 실험체 키메라", 12: "폭주한 마도기신 레기온", 13: "심해의 포식자 크라켄", 14: "모래시계의 파수꾼 아르케오스", 15: "거울에 갇힌 미혹의 도플갱어", 16: "천공의 수호자 그리핀", 17: "추방된 자 티탄", 18: "꼭두각시 마리오네트", 19: "폭풍의 지배자 레비아탄", 20: "대마법사 아르카나", 21: "기계의 정점 테모스", 22: "사막의 암살자 스콜피언", 23: "피의 군주 벨", 24: "맹독의 패주 바실리스크", 25: "해의 쌍둥이 솔", 26: "빙결의 여왕 글라시아", 27: "심연의 군주 녹스", 28: "공허의 포식자 보이드 웜", 29: "몽마 나이트메어", 30: "대정령 벨페르 가이아", 31: "바람의 드래곤 제피로스", 32: "대지의 드래곤 테라곤", 33: "얼음의 드래곤 코퀴로스", 34: "화염의 드래곤 베르단", 35: "언데드 드래곤 헬리시온", 36: "심판의 천사 세라핀", 37: "타락한 신 아스타로트", 38: "청동 거인 탈로스", 39: "미궁의 미노타우로스", 40: "전령의 신 헤르메스", 41: "머리 아홉의 히드라", 42: "외눈 거인 폴리페모스", 43: "명계의 문지기 케르베로스", 44: "스킬라와 카립디스", 45: "대지의 거인 안타이오스", 46: "거미 여인 아라크네", 47: "괴물의 어머니 에키드나", 48: "영웅 헤라클레스", 49: "사슬에 묶인 티탄 프로메테우스", 50: "대장장이 신 헤파이스토스", 51: "스팀팔로스의 괴조", 52: "용의 이빨 전사 스파르토이", 53: "잠들지 않는 콜키스의 용", 54: "아마존 여왕 히폴리테", 55: "거인 형제 오토스와 에피알테스", 56: "칼리돈의 영웅 멜레아그로스", 57: "해골 신전의 기사 키크노스", 58: "불의 거인 엔켈라도스", 59: "마르스의 늑대 루푸스", 60: "전쟁의 신 마르스", 61: "활의 왕 에우리토스", 62: "델포이의 거대 뱀 피톤", 63: "태양 전차를 몬 파에톤", 64: "예언자 카산드라", 65: "코로니스의 까마귀", 66: "영웅 아킬레우스", 67: "황금 손의 왕 미다스", 68: "트로이의 영웅 헥토르", 69: "델포이의 여사제 피티아", 70: "태양의 신 아폴론", 71: "라오콘의 바다뱀 포르케스와 카리보이아", 72: "트로이 목마", 73: "영웅 디오메데스", 74: "페가수스를 탄 벨레로폰", 75: "큰 아이아스", 76: "오디세우스", 77: "티데우스", 78: "아테나의 올빼미 글라우크스", 79: "아크로폴리스의 청동 수호상", 80: "지혜의 신 아테나", 81: "탐욕의 마왕 마몬", 82: "나태의 마왕 벨페고르", 83: "폭식의 마왕 바알제붑", 84: "색욕의 마왕 아스모데우스", 85: "묵시록의 네 기사", 86: "거짓 예언자", 87: "광야의 타락천사 아자젤", 88: "무저갱의 열쇠를 든 타락한 별", 89: "일곱 나팔의 천사", 90: "마왕 아바돈"}
 	var final_boss: Enemy = null
-	for n in range(first, 81):
+	for n in range(first, 91):
 		next_portal.interacted.emit()
 		await _frames(3)
 		print("[%d스테이지 - %s]" % [n, stage_names[n]])
@@ -2958,10 +2968,337 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 						s.take_damage(9999999, Vector2.ZERO, false, 999999)  # 마지막 일격이 방패벽에 막히지 않게
 				ath.insight.clear()
 				await _frames(2)
-				final_boss = ath
+			81:
+				var mam := boss as BossMammon
+				await _survive(10)
+				mam._pile_left = 999.0
+				mam.scatter_piles([mam.global_position + Vector2(10, 0), boss_center + Vector2(-220, 110), boss_center + Vector2(220, 110)])
+				await _frames(3)
+				_check(mam.greed == 1 and mam.get_eaten_count() == 1 and mam.defense == mam._base_defense + mam.greed_defense and mam.power > mam._base_power, "[기믹] 마몬이 금화 더미를 먹으면 탐욕 +1 (몸집 · 방어력 · 공격력)")
+				var gold81: int = _gm.gold
+				player._invincible_left = 2.0
+				player.global_position = mam.live_piles()[0].global_position
+				await _frames(3)
+				_check(mam.greed == 0 and _gm.gold == gold81 + mam.pile_gold and mam.get_stolen_count() == 1, "[기믹] 플레이어가 먼저 주우면 골드를 얻고 마몬의 탐욕 -1")
+				player.global_position = boss_center + Vector2(0, 90)
+				var seen81 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					player._invincible_left = 1.0
+					if _count_nodes_of("AoeStrike") > 0:
+						seen81["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen81["shot"] = true)
+				_check(seen81["aoe"] and seen81["shot"], "마몬 패턴: 금화 비 · 금화 자루 · 황금 탄막 · 소환")
+			82:
+				var bp := boss as BossBelphegor
+				await _survive(10)
+				player.global_position = bp.global_position + Vector2(0, 50)
+				await _frames(3)
+				_check(player.is_slowed() and _gm.player_status.contains("나태"), "[기믹] 나태의 오라 안에서는 느려짐")
+				bp.take_damage(roundi(bp.max_hp * 0.2), Vector2.ZERO, false, 999999)
+				bp.fall_asleep()
+				var hp82 := bp.hp
+				await _survive(60, func() -> void:
+					player._invincible_left = 1.0)
+				_check(bp.is_asleep() and bp.hp > hp82 and bp.get_healed_total() > 0, "[기믹] 깊은 잠에 빠지면 회복 (+%d)" % bp.get_healed_total())
+				hp82 = bp.hp
+				bp.take_damage(1000, Vector2.ZERO, false, 999999)
+				_check(not bp.is_asleep() and hp82 - bp.hp == roundi(1000 * bp.wake_multiplier) and bp.is_stunned(), "[기믹] 잠든 벨페고르를 때리면 깨어나며 휘청 (피해 x%.1f)" % bp.wake_multiplier)
+				bp._stun_left = 0.0
+				bp._idle = 0.0
+				await _survive(int(bp.sleep_after * 60) + 10, func() -> void:
+					player._invincible_left = 1.0)
+				_check(bp.is_asleep() and bp.get_sleep_count() == 2, "공격받지 않으면 다시 잠듦")
+				bp.take_damage(10, Vector2.ZERO, false, 999999)
+				bp._stun_left = 0.0
+				var seen82 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					player._invincible_left = 1.0
+					if bp.is_asleep():
+						bp.take_damage(10, Vector2.ZERO, false, 999999)
+					if _count_nodes_of("AoeStrike") > 0:
+						seen82["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen82["shot"] = true)
+				_check(seen82["aoe"] and seen82["shot"], "벨페고르 패턴: 하품 · 털썩 · 졸음 구슬 · 소환")
+			83:
+				var bz := boss as BossBeelzebub
+				await _survive(10)
+				_check(bz.swarm != null, "[기믹] 파리 떼가 플레이어를 따라다님")
+				bz.swarm.global_position = player.global_position
+				await _frames(2)
+				_check(player.is_slowed() and _gm.player_status.contains("파리"), "파리 떼 안에서는 시야가 가려지고 느려짐")
+				bz._devour_left = 999.0
+				for e in get_tree().get_nodes_in_group(&"enemies"):
+					if e != bz:
+						(e as Enemy).despawn()
+				var food := (load("res://scenes/enemies/maggot.tscn") as PackedScene).instantiate() as Enemy
+				stage._add_enemy(food, bz.global_position + Vector2(30, 0), stage.boss_room.get_arena_rect())
+				await _frames(3)
+				bz.take_damage(roundi(bz.max_hp * 0.1), Vector2.ZERO, false, 999999)
+				var hp83 := bz.hp
+				var pow83 := bz.power
+				_check(bz.devour() and bz.feasts == 1 and bz.hp > hp83 and bz.power > pow83, "[기믹] 폭식: 졸개를 잡아먹어 회복하고 강해짐")
+				await _frames(2)
+				_check(not bz.devour(), "먹을 졸개가 없으면 잡아먹지 못함")
+				bz.global_position = boss_center
+				player.global_position = boss_center + Vector2(0, 90)
+				var seen83 := {"aoe": false, "shot": false}
+				bz.cast(BossBeelzebub.Pattern.MAGGOTS)  # 탄막 패턴은 순서상 늦게 나옴
+				await _survive(600, func() -> void:
+					player._invincible_left = 1.0
+					player.global_position = bz.global_position + Vector2(0, 90)  # 보스가 플레이어 위에 겹치면 탄이 쏘자마자 맞아 사라짐
+					if _count_nodes_of("AoeStrike") > 0:
+						seen83["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen83["shot"] = true)
+				_check(seen83["aoe"] and seen83["shot"], "바알제붑 패턴: 토사물 · 날갯짓 · 구더기 · 소환")
+			84:
+				var asm := boss as BossAsmodeus
+				await _survive(10)
+				_check(asm.get_pillars().size() == 3 and asm.is_chained(), "[기믹] 욕망의 사슬 — 사슬 기둥 3개")
+				asm._stun_left = 99.0
+				var dir84 := Vector2.RIGHT if asm.global_position.x < boss_center.x else Vector2.LEFT
+				player._invincible_left = 2.0
+				player.global_position = asm.global_position + dir84 * (asm.tether() + 70.0)
+				await _frames(1)
+				var d84 := asm.global_position.distance_to(player.global_position)
+				await _frames(8)
+				_check(d84 > asm.tether() and asm.get_pull_count() > 0 and asm.global_position.distance_to(player.global_position) < d84, "[기믹] 사슬 길이보다 멀어지면 끌려감")
+				for p in asm.get_pillars():
+					p.take_damage(9999999, Vector2.ZERO, false, 999999)
+				await _frames(2)
+				_check(not asm.is_chained() and asm.is_stunned(), "[기믹] 사슬 기둥을 모두 부수면 사슬이 끊어지고 휘청")
+				asm._stun_left = 0.0
+				player.global_position = boss_center + Vector2(0, 90)
+				var seen84 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					player._invincible_left = 1.0
+					player._charm_left = 0.0
+					if _count_nodes_of("AoeStrike") > 0:
+						seen84["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen84["shot"] = true)
+				_check(seen84["aoe"] and seen84["shot"], "아스모데우스 패턴: 사슬 채찍 · 매혹의 입맞춤 · 욕망의 불꽃 · 소환")
+			85:
+				var hm := boss as BossHorsemen
+				await _survive(10)
+				_check(hm.rider == BossHorsemen.Rider.CONQUEST and hm.sprite.texture == BossHorsemen.RIDER_TEXTURES[0], "[기믹] 흰 말의 기사 「정복」부터")
+				hm.take_damage(roundi(hm.max_hp * 0.27), Vector2.ZERO, false, 999999)
+				await _frames(2)
+				_check(hm.rider == BossHorsemen.Rider.WAR and hm.sprite.texture == BossHorsemen.RIDER_TEXTURES[1], "[기믹] 체력이 1/4 깎일 때마다 다음 기사로 교대 (붉은 말 「전쟁」)")
+				var hp85 := hm.hp
+				hm.take_damage(1000, Vector2.ZERO, false, 999999)
+				_check(hm.hp == hp85, "기사가 바뀌는 동안은 무적")
+				hm._swap_left = 0.0
+				hm.take_damage(roundi(hm.max_hp * 0.25), Vector2.ZERO, false, 999999)
+				_check(hm.rider == BossHorsemen.Rider.FAMINE, "검은 말 「기근」")
+				hm._swap_left = 0.0
+				hm.take_damage(roundi(hm.max_hp * 0.25), Vector2.ZERO, false, 999999)
+				await _survive(int(1.3 * 60) + 6, func() -> void:
+					player._invincible_left = 1.0)
+				_check(hm.rider == BossHorsemen.Rider.DEATH and hm.is_reviving(), "[기믹] 창백한 말 「죽음」이 쓰러진 기사들을 되살리려 의식을 올림")
+				hm.take_damage(roundi(hm.max_hp * hm.revive_break) + 10, Vector2.ZERO, false, 999999)
+				_check(not hm.is_reviving() and hm.get_interrupt_count() == 1 and hm.is_stunned(), "[기믹] 의식 동안 크게 몰아치면 의식이 끊기며 휘청")
+				hm._stun_left = 0.0
+				var seen85 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					player._invincible_left = 1.0
+					if _count_nodes_of("AoeStrike") > 0:
+						seen85["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen85["shot"] = true)
+				_check(seen85["aoe"] and seen85["shot"], "네 기사 패턴: 기사마다 다른 공격 · 소환")
+			86:
+				var fp := boss as BossFalseProphet
+				await _survive(10)
+				fp.mark_player()
+				var hp86 := fp.hp
+				fp.take_damage(1000, Vector2.ZERO, false, 999999)
+				await _frames(2)
+				_check(fp.is_player_marked() and fp.hp == hp86 and _gm.player_status.contains("짐승의 표"), "[기믹] 짐승의 표가 찍히면 공격이 들어가지 않음")
+				player._invincible_left = 2.0
+				player.global_position = fp.springs[0].global_position
+				await _frames(3)
+				_check(not fp.is_player_marked() and fp.get_cleanse_count() == 1, "[기믹] 정화의 샘에 들어가면 표가 씻겨 나감")
+				hp86 = fp.hp
+				fp.take_damage(1000, Vector2.ZERO, false, 999999)
+				_check(hp86 - fp.hp == 1000, "표를 씻으면 다시 공격이 들어감")
+				player.global_position = boss_center + Vector2(0, 90)
+				var seen86 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					player._invincible_left = 1.0
+					fp._mark_left = 0.0
+					if _count_nodes_of("AoeStrike") > 0:
+						seen86["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen86["shot"] = true)
+				_check(seen86["aoe"] and seen86["shot"], "거짓 예언자 패턴: 하늘의 불 · 짐승의 표 · 거짓말 탄막 · 소환")
+				fp._mark_left = 0.0
+			87:
+				var az := boss as BossAzazel
+				await _survive(10)
+				_check(az.has_goat() and az.gate != null, "[기믹] 속죄양(검은 염소) · 광야의 문")
+				var hp87 := az.hp
+				az.take_damage(10000, Vector2.ZERO, false, 999999)
+				var kept87 := roundi(10000 * az.shield_ratio)
+				_check(hp87 - az.hp == kept87 and az.goat.sins == 10000 - kept87, "[기믹] 속죄양이 피해를 떠안음 (본체 %d%%만)" % roundi(az.shield_ratio * 100.0))
+				hp87 = az.hp
+				player.global_position = boss_center + Vector2(0, 120)
+				az.goat.global_position = az.gate_position()
+				await _frames(3)
+				_check(not az.has_goat() and az.get_exile_count() == 1 and hp87 - az.hp == 10000 - kept87 and az.is_stunned(), "[기믹] 염소를 광야의 문으로 몰아내면 떠안은 죄가 한꺼번에 아자젤에게")
+				az._goat_left = 0.01
+				await _frames(3)
+				_check(az.has_goat(), "염소는 잠시 뒤 다시 나타남")
+				az._stun_left = 0.0
+				var seen87 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					player._invincible_left = 1.0
+					if _count_nodes_of("AoeStrike") > 0:
+						seen87["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen87["shot"] = true)
+				_check(seen87["aoe"] and seen87["shot"], "아자젤 패턴: 칼날 · 모래 폭풍 · 검은 날개 · 소환")
+				az.exile_goat()
+				az._goat_left = 999.0
+			88:
+				var fs := boss as BossFallenStar
+				await _survive(10)
+				_check(fs.is_gate_open() and fs.holds_key(), "[기믹] 무저갱의 문이 열려 있고 별이 열쇠를 쥠")
+				var n88 := get_tree().get_nodes_in_group(&"enemies").size()
+				fs._crawl_left = 0.01
+				await _frames(3)
+				_check(get_tree().get_nodes_in_group(&"enemies").size() > n88, "열린 문에서 졸개가 기어 나옴")
+				fs.key_part.take_damage(9999999, Vector2.ZERO, false, 999999)
+				await _frames(3)
+				_check(not fs.holds_key() and fs.dropped_key != null and fs.dropped_key.available, "[기믹] 별이 쥔 열쇠를 부수면 바닥에 떨어짐")
+				player._invincible_left = 3.0
+				player.global_position = fs.dropped_key.global_position
+				await _frames(3)
+				_check(fs.dropped_key.is_carried(), "열쇠를 집어 듦")
+				player.global_position = fs.gate_position()
+				await _frames(3)
+				_check(not fs.is_gate_open() and fs.is_stunned() and fs.defense == fs._base_defense - fs.close_defense, "[기믹] 열쇠를 문으로 가져가면 무저갱의 문이 닫힘 (휘청 · 방어력 -%d)" % fs.close_defense)
+				fs._stun_left = 0.0
+				player.global_position = boss_center + Vector2(0, 90)
+				var seen88 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					player._invincible_left = 1.0
+					if _count_nodes_of("AoeStrike") > 0:
+						seen88["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen88["shot"] = true)
+				_check(seen88["aoe"] and seen88["shot"], "타락한 별 패턴: 별빛 · 연기 · 열쇠 휘두르기 · 소환")
+			89:
+				var ta := boss as BossTrumpetAngel
+				await _survive(10)
+				player._invincible_left = 5.0
+				_check(ta.has_trumpet() and ta.next_plague == BossTrumpetAngel.Plague.HAIL, "[기믹] 천사의 나팔 · 첫 재앙 「우박과 불」")
+				_check(ta.blow_trumpet() and ta.next_plague == BossTrumpetAngel.Plague.BLOOD_SEA, "나팔을 불면 순서대로 재앙이 내림 (① 우박과 불)")
+				var zones89 := get_tree().get_nodes_in_group(&"hostile_zones").size()
+				ta.blow_trumpet()
+				_check(get_tree().get_nodes_in_group(&"hostile_zones").size() > zones89, "② 피로 물든 바다")
+				ta.blow_trumpet()
+				ta.blow_trumpet()
+				_check(ta.is_dark() and ta.veil != null, "④ 어두워진 해 — 시야가 좁아짐")
+				var e89 := get_tree().get_nodes_in_group(&"enemies").size()
+				ta.blow_trumpet()
+				await _frames(3)
+				_check(get_tree().get_nodes_in_group(&"enemies").size() >= e89 + 3 and ta.next_plague == BossTrumpetAngel.Plague.HAIL, "⑤ 무저갱 — 메뚜기가 기어 나오고 재앙이 처음으로 돌아감")
+				ta.trumpet.take_damage(9999999, Vector2.ZERO, false, 999999)
+				await _frames(2)
+				_check(not ta.has_trumpet() and ta.get_skipped_count() == 1 and ta.next_plague == BossTrumpetAngel.Plague.BLOOD_SEA and not ta.blow_trumpet(), "[기믹] 나팔을 부수면 다음 재앙(우박과 불)이 끊기고 휘청")
+				ta._regrow_left = 0.01
+				await _frames(3)
+				_check(ta.has_trumpet(), "나팔은 잠시 뒤 다시 듦")
+				ta._stun_left = 0.0
+				_gm.hp = _gm.max_hp
+				ta.global_position = boss_center
+				player.global_position = boss_center + Vector2(0, 90)
+				var seen89 := {"aoe": false, "shot": false}
+				ta.cast(BossTrumpetAngel.Pattern.FEATHER)  # 탄막 패턴은 순서상 늦게 나옴
+				await _survive(600, func() -> void:
+					player._invincible_left = 1.0
+					player.global_position = ta.global_position + Vector2(0, 90)  # 보스가 플레이어 위에 겹치면 탄이 쏘자마자 맞아 사라짐
+					if _count_nodes_of("AoeStrike") > 0:
+						seen89["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen89["shot"] = true)
+				_check(seen89["aoe"] and seen89["shot"], "나팔 천사 패턴: 나팔 · 빛의 창 · 합창 · 깃털")
+			90:
+				var ab := boss as BossAbaddon
+				await _survive(10)
+				_check(ab.is_seated() and ab.throne != null and not ab.can_be_hit_by(Enemy.HitKind.MELEE), "[등장] 마왕 아바돈이 옥좌에 앉아 있음 (무적)")
+				var hp90 := ab.hp
+				ab.take_damage(5000, Vector2.ZERO, false, 999999)
+				_check(ab.hp == hp90, "옥좌에 앉아 있는 동안 피해 없음")
+				await _survive(int(ab.intro_time * 60) + 10, func() -> void:
+					player._invincible_left = 1.0)
+				_check(not ab.is_seated() and ab.pit != null and ab.can_be_hit_by(Enemy.HitKind.MELEE), "[등장] 잠시 뒤 옥좌에서 일어나며 싸움이 시작됨 · 무저갱이 열림")
+				var r90 := ab.pit.radius
+				await _survive(60, func() -> void:
+					player._invincible_left = 1.0
+					player.global_position = boss_center + Vector2(200, 120))
+				_check(ab.pit.radius > r90, "[기믹] 바닥 없는 구덩이가 점점 넓어짐 (%.0f → %.0f)" % [r90, ab.pit.radius])
+				player._invincible_left = 0.0
+				player.global_position = ab.pit.global_position
+				await _frames(3)
+				_check(ab.get_fall_count() == 1 and not ab.pit.contains(player.global_position), "[기믹] 구덩이에 빠지면 큰 피해를 입고 가장자리로 튕겨 나옴")
+				_gm.hp = _gm.max_hp
+				_check(ab.current_sin == BossAbaddon.Sin.GREED and ab.coins.size() == 4, "[기믹] 일곱 대죄의 힘 — 「탐욕」: 금화 더미 쟁탈")
+				ab._sin_left = 999.0
+				ab.next_sin()
+				ab._sin_left = 999.0
+				player._invincible_left = 2.0
+				player.global_position = ab.global_position + Vector2(40, 0)
+				await _frames(3)
+				_check(ab.current_sin == BossAbaddon.Sin.SLOTH and player.is_slowed(), "「나태」: 느려지는 오라")
+				ab.next_sin()
+				ab._sin_left = 999.0
+				var food90 := (load("res://scenes/enemies/hell_wraith.tscn") as PackedScene).instantiate() as Enemy
+				stage._add_enemy(food90, ab.global_position + Vector2(40, 20), stage.boss_room.get_arena_rect())
+				await _frames(2)
+				ab._sin_tick = 0.0
+				await _frames(3)
+				_check(ab.current_sin == BossAbaddon.Sin.GLUTTONY and food90.is_dead(), "「폭식」: 졸개를 잡아먹음")
+				ab.next_sin()
+				ab._sin_left = 999.0
+				var dir90 := Vector2.RIGHT if ab.global_position.x < boss_center.x else Vector2.LEFT
+				player.global_position = ab.global_position + dir90 * 230.0
+				await _frames(1)
+				var d90 := ab.global_position.distance_to(player.global_position)
+				await _frames(6)
+				_check(ab.current_sin == BossAbaddon.Sin.LUST and ab.global_position.distance_to(player.global_position) < d90, "「색욕」: 사슬로 끌어당김")
+				ab.take_damage(ab.hp - roundi(ab.max_hp * 0.45), Vector2.ZERO, false, 999999)
+				await _frames(3)
+				_check(ab.phase_two and ab.veil != null, "[기믹] 체력 50% 이하 — 파괴자 아폴리온 각성 · 무저갱의 연기")
+				ab._ground_left = 0.01
+				await _frames(3)
+				_check(ab.is_flying() and ab.airborne and not ab.can_be_hit_by(Enemy.HitKind.MELEE) and ab.can_be_hit_by(Enemy.HitKind.BOW), "아폴리온이 날아오르면 활만 닿음")
+				player.global_position = boss_center + Vector2(-200, 120)
+				var seen90 := {"aoe": false, "shot": false}
+				await _survive(600, func() -> void:
+					player._invincible_left = 1.0
+					if _count_nodes_of("AoeStrike") > 0:
+						seen90["aoe"] = true
+					for c in pool.get_children():
+						if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+							seen90["shot"] = true)
+				_check(seen90["aoe"] and seen90["shot"], "아바돈 패턴: 전갈 꼬리 · 지옥불 · 무저갱 탄막 · 소환")
+				final_boss = ab
 		if n == 35:
 			await _test_hidden_dungeon(main, boss as BossHelicion)
-		elif n < 80:
+		elif n < 90:
 			boss.take_damage(999999, Vector2.ZERO, false, 9999)
 			await _frames(4)
 			_check(not _gm.is_game_cleared and next_portal.enabled, "%d스테이지 보스 토벌 → 다음 스테이지 텔레포트" % n)
@@ -3053,14 +3390,14 @@ func _test_hidden_dungeon(main: Node2D, heli_end: BossHelicion) -> void:
 	_check(_item_pickups(main.get_node("Entities")).size() == items_before + 2, "고대 용의 보물상자: 장비 2개")
 
 
-## 마지막 스테이지(80) 보스 토벌 → 모든 스테이지 클리어 / 비늘 없이 35스테이지 보스를 쓰러뜨리면 히든 없음
+## 마지막 스테이지(90) 보스 토벌 → 모든 스테이지 클리어 / 비늘 없이 35스테이지 보스를 쓰러뜨리면 히든 없음
 func _test_final_and_no_hidden(main: Node2D, final_boss: Enemy) -> void:
 	var player := main.get_node("Entities/Player") as Player
 	var stage := main.get_node("StageManager") as StageManager
 	var field_portal := main.get_node("Entities/FieldPortal") as Portal
 	var gate := main.get_node("Entities/BossGate") as BossGate
 	var next_portal_end := main.get_node("Entities/NextStagePortal") as Portal
-	print("[엔딩 - 80스테이지 보스 토벌]")
+	print("[엔딩 - 90스테이지 보스 토벌]")
 	stage.ending_delay = 600.0  # 아래 테스트가 끝난 뒤 엔딩 화면을 따로 검사
 	var kills_before: int = _gm.total_kills
 	var pending := AoeStrike.spawn(main, player.global_position, 40.0, 0.03, 9999, Color.RED)
@@ -3068,14 +3405,14 @@ func _test_final_and_no_hidden(main: Node2D, final_boss: Enemy) -> void:
 		final_boss.take_damage(9999999, Vector2.ZERO, false, 999999)
 	await _frames(4)
 	_check(not is_instance_valid(pending) and not _gm.is_player_dead, "보스가 쓰러지면 아직 터지지 않은 예고 장판도 사라짐")
-	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(80스테이지) 보스 토벌 → 모든 스테이지 클리어")
+	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(90스테이지) 보스 토벌 → 모든 스테이지 클리어")
 	_check(_gm.total_kills > kills_before and _gm.play_time > 0.0, "엔딩 기록: 처치 %d마리 · 플레이 %s" % [_gm.total_kills, _gm.get_play_time_text()])
 	_check(stage.get_chest() == null and not next_portal_end.enabled and get_tree().get_nodes_in_group(&"enemies").is_empty(), "마지막 스테이지: 상자 / 텔레포트 없음, 남은 졸개 정리")
 	_check(_gm.faith_damage_bonus == 0.0 and get_tree().get_nodes_in_group(&"hostile_zones").is_empty() and _gm.stolen_weapon == null, "보스가 쓰러지면 신앙·장판·빼앗긴 무기 정리")
 	stage.go_to_next_stage()
 	await _frames(3)
 	_check(_gm.key_items.has(&"prometheus_ember"), "프로메테우스를 쓰러뜨리면 보물 「프로메테우스의 불씨」")
-	_check(_gm.stage == 80 and get_tree().current_scene == main, "80스테이지 이후 반복 스테이지 없음")
+	_check(_gm.stage == 90 and get_tree().current_scene == main, "90스테이지 이후 반복 스테이지 없음")
 	_check(get_tree().get_nodes_in_group(&"storm_fields").is_empty() and not player.is_rooted() and not player.is_charmed() and not player.is_plagued(), "마지막 보스가 쓰러지면 보스방 장치 정리 · 공포 풀림 (fields %d · 묶임 %s %s)" % [get_tree().get_nodes_in_group(&"storm_fields").size(), player.is_rooted(), player._root_label])
 
 	print("[히든 조건 없이 35스테이지 보스 토벌]")

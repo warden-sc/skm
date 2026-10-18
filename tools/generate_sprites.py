@@ -7104,6 +7104,498 @@ def save_late19_sprites():
         save(painter(), "tiles", f"{name}.png")
 
 
+# ---------------------------------------------------------------- 81~90스테이지 (대죄의 마왕 → 묵시록 → 무저갱)
+def _demon(w, h, skin, skin_d, cloth, horn, eye, wings=None, belly=None):
+    """마왕 공용 몸통 (뿔 · 날개)"""
+    rgba = lambda c: tuple(c) if len(c) == 4 else _c(*c)
+    horn, eye = rgba(horn), rgba(eye)
+    img = canvas(w, h)
+    cx = w // 2
+    if wings:
+        _poly(img, [(cx - 6, 18), (1, 6), (4, 24), (cx - 6, 28)], rgba(wings))
+        _poly(img, [(cx + 5, 18), (w - 2, 6), (w - 5, 24), (cx + 5, 28)], rgba(wings))
+    rect(img, cx - 7, h - 14, cx - 3, h - 1, skin_d)
+    rect(img, cx + 2, h - 14, cx + 6, h - 1, skin_d)
+    ellipse(img, cx - 0.5, h * 0.55, w * 0.26, h * 0.22, skin)
+    if belly:
+        ellipse(img, cx - 0.5, h * 0.6, w * 0.16, h * 0.14, rgba(belly))
+    rect(img, cx - 8, int(h * 0.62), cx + 7, int(h * 0.74), cloth)
+    rect(img, 3, int(h * 0.36), 7, int(h * 0.62), skin_d)
+    rect(img, w - 8, int(h * 0.36), w - 4, int(h * 0.62), skin_d)
+    ellipse(img, cx - 0.5, h * 0.24, 6, 6, skin)
+    _poly(img, [(cx - 6, int(h * 0.18)), (cx - 10, int(h * 0.04)), (cx - 4, int(h * 0.14))], horn)
+    _poly(img, [(cx + 5, int(h * 0.18)), (cx + 9, int(h * 0.04)), (cx + 3, int(h * 0.14))], horn)
+    put(img, [(cx - 3, int(h * 0.23)), (cx + 2, int(h * 0.23))], eye)
+    return img
+
+
+# ---- 81 탐욕의 마왕 마몬
+def mammon():
+    """탐욕의 마왕 마몬 (40x50): 금빛 피부, 금관, 금화 자루"""
+    img = _demon(40, 50, _c(200, 160, 70), _c(150, 110, 40), _c(120, 40, 40), _c(240, 220, 120), (255, 60, 40), belly=(230, 190, 90))
+    rect(img, 15, 4, 24, 7, _c(255, 220, 80))
+    for x in (15, 19, 23):
+        put(img, [(x, 2), (x, 3)], _c(255, 230, 120))
+    ellipse(img, 33, 36, 5, 6, _c(150, 110, 60))
+    for x, y in ((31, 31), (34, 30), (36, 33)):
+        put(img, [(x, y)], _c(255, 220, 80))
+    return outline(img, (50, 30, 10, 255))
+
+
+def coin_pile():
+    """금화 더미 (16x12)"""
+    img = canvas(16, 12)
+    ellipse(img, 8, 8, 7, 4, _c(220, 170, 50))
+    ellipse(img, 8, 6, 5, 3, _c(245, 200, 70))
+    for x, y in ((5, 5), (9, 4), (11, 7), (6, 8)):
+        put(img, [(x, y)], _c(255, 245, 170))
+    return outline(img, (90, 60, 10, 255))
+
+
+def greed_imp():
+    return _wisp(14, 14, (255, 220, 100), (160, 110, 30))
+
+
+def gilded_thief():
+    return _warrior(14, 20, _c(200, 160, 120), _c(90, 60, 40), _c(60, 40, 30), _c(220, 180, 60), weapon=(220, 180, 70))
+
+
+def treasure_mimic():
+    """보물 상자 미믹 (18x14)"""
+    img = canvas(18, 14)
+    rect(img, 1, 5, 16, 13, _c(140, 90, 40))
+    rect(img, 1, 1, 16, 5, _c(170, 115, 55))
+    rect(img, 1, 5, 16, 6, _c(220, 180, 70))
+    for x in (4, 7, 10, 13):
+        put(img, [(x, 6), (x, 7)], _c(240, 240, 230))
+    put(img, [(6, 3), (11, 3)], _c(255, 60, 40))
+    return outline(img)
+
+
+def floor_greed_vault():
+    return _floor(811, (110, 86, 50), 5, [(6, (92, 70, 40, 255), 4), (5, (150, 120, 70, 255), 2), (4, (255, 210, 70, 255), 1)])
+
+
+# ---- 82 나태의 마왕 벨페고르
+def belphegor():
+    """나태의 마왕 벨페고르 (44x40): 옥좌 겸 변기에 늘어진 뚱뚱한 악마"""
+    img = canvas(44, 40)
+    rect(img, 6, 22, 37, 39, _c(90, 70, 60))                  # 늘어진 의자
+    rect(img, 4, 18, 8, 39, _c(70, 55, 45))
+    rect(img, 35, 18, 39, 39, _c(70, 55, 45))
+    ellipse(img, 22, 24, 13, 11, _c(150, 110, 130))
+    ellipse(img, 22, 27, 9, 7, _c(180, 140, 160))
+    ellipse(img, 22, 10, 7, 6, _c(150, 110, 130))
+    _poly(img, [(16, 7), (12, 0), (18, 5)], _c(220, 210, 190))
+    _poly(img, [(28, 7), (32, 0), (26, 5)], _c(220, 210, 190))
+    rect(img, 18, 9, 20, 9, _c(30, 20, 30))                   # 감긴 눈
+    rect(img, 24, 9, 26, 9, _c(30, 20, 30))
+    put(img, [(22, 13), (21, 14), (23, 14)], _c(90, 50, 70))
+    return outline(img, (30, 20, 30, 255))
+
+
+def sloth_wisp():
+    return _wisp(14, 14, (200, 190, 230), (110, 100, 140))
+
+
+def drowsy_ghoul():
+    return _warrior(16, 22, _c(150, 140, 150), _c(90, 80, 100), _c(60, 55, 70), _c(80, 70, 90), eye=(200, 200, 255))
+
+
+def snail_beast():
+    """거대 달팽이 (18x12)"""
+    img = canvas(18, 12)
+    rect(img, 2, 8, 16, 11, _c(150, 140, 120))
+    ellipse(img, 8, 6, 5, 5, _c(170, 110, 140))
+    ellipse(img, 8, 6, 2.5, 2.5, _c(130, 80, 110))
+    _line(img, (15, 7), (17, 3), _c(150, 140, 120))
+    put(img, [(17, 2)], _c(40, 30, 30))
+    return outline(img)
+
+
+def floor_sloth_bog():
+    return _floor(821, (90, 84, 100), 5, [(6, (74, 68, 84, 255), 4), (5, (120, 112, 134, 255), 2), (3, (160, 140, 200, 255), 1)])
+
+
+# ---- 83 폭식의 마왕 바알제붑
+def beelzebub():
+    """폭식의 마왕 바알제붑 (46x44): 파리 머리, 거대한 배, 투명한 날개"""
+    img = canvas(46, 44)
+    _poly(img, [(18, 16), (2, 4), (6, 22)], (200, 220, 240, 170))
+    _poly(img, [(28, 16), (44, 4), (40, 22)], (200, 220, 240, 170))
+    ellipse(img, 23, 28, 14, 13, _c(70, 90, 50))
+    ellipse(img, 23, 31, 10, 9, _c(110, 130, 70))
+    ellipse(img, 23, 11, 8, 7, _c(40, 50, 40))
+    ellipse(img, 19, 10, 3.5, 4, _c(180, 30, 30))            # 겹눈
+    ellipse(img, 27, 10, 3.5, 4, _c(180, 30, 30))
+    for x, y in ((18, 9), (20, 11), (26, 9), (28, 11)):
+        put(img, [(x, y)], _c(255, 90, 90))
+    rect(img, 22, 16, 23, 19, _c(30, 30, 30))
+    rect(img, 15, 39, 18, 43, _c(50, 60, 40))
+    rect(img, 28, 39, 31, 43, _c(50, 60, 40))
+    return outline(img, (20, 25, 15, 255))
+
+
+def fly_swarm():
+    return _wisp(14, 14, (90, 100, 60), (30, 35, 25))
+
+
+def glutton_ghoul():
+    return _warrior(18, 22, _c(150, 160, 110), _c(110, 100, 70), _c(80, 70, 50), _c(90, 80, 60), eye=(255, 200, 60))
+
+
+def maggot():
+    """구더기 (16x10)"""
+    img = canvas(16, 10)
+    for i in range(5):
+        ellipse(img, 3 + i * 2.6, 6, 2.6, 2.4, _c(230, 225, 200) if i % 2 else _c(210, 205, 180))
+    put(img, [(14, 5)], _c(60, 40, 30))
+    return outline(img)
+
+
+def floor_glutton_hall():
+    return _floor(829, (86, 92, 60), 5, [(6, (70, 76, 48, 255), 4), (5, (120, 126, 84, 255), 2), (3, (160, 60, 50, 255), 1)])
+
+
+# ---- 84 색욕의 마왕 아스모데우스
+def asmodeus():
+    """색욕의 마왕 아스모데우스 (40x52): 진홍 피부, 박쥐 날개, 사슬"""
+    img = _demon(40, 52, _c(190, 70, 90), _c(140, 40, 60), _c(60, 20, 40), _c(60, 40, 50), (255, 220, 120), wings=(90, 30, 60))
+    for i in range(6):
+        put(img, [(30 + i % 2, 30 + i * 2)], _c(200, 200, 210))
+    return outline(img, (40, 10, 20, 255))
+
+
+def chain_pillar():
+    """욕망의 사슬 기둥 (14x26)"""
+    img = canvas(14, 26)
+    rect(img, 4, 4, 9, 25, _c(90, 60, 80))
+    rect(img, 3, 2, 10, 4, _c(120, 80, 110))
+    for y in range(6, 24, 4):
+        ellipse(img, 11, y, 2, 1.5, _c(200, 200, 210))
+    put(img, [(6, 10), (6, 16)], _c(255, 120, 160))
+    return outline(img)
+
+
+def succubus_lancer():
+    return _warrior(14, 20, _c(220, 160, 170), _c(130, 40, 80), _c(90, 25, 60), _c(60, 40, 50), weapon=(200, 200, 210))
+
+
+def charm_wisp():
+    return _wisp(14, 14, (255, 170, 210), (180, 60, 120))
+
+
+def chain_hound():
+    return _beast(18, 12, _c(120, 50, 70), _c(80, 30, 50), (255, 200, 120))
+
+
+def floor_lust_palace():
+    return _floor(839, (100, 60, 80), 5, [(6, (82, 46, 64, 255), 4), (5, (140, 86, 110, 255), 2), (3, (255, 150, 190, 255), 1)])
+
+
+# ---- 85 묵시록의 네 기사
+def _horseman(horse, horse_d, rider, eye, weapon):
+    img = canvas(46, 44)
+    ellipse(img, 21, 28, 14, 7, _c(*horse))
+    rect(img, 31, 16, 36, 28, _c(*horse))
+    ellipse(img, 38, 15, 6, 4, _c(*horse))
+    put(img, [(40, 14)], _c(*eye))
+    for x in (11, 15, 26, 30):
+        rect(img, x, 33, x + 1, 43, _c(*horse_d))
+    rect(img, 17, 10, 25, 22, _c(*rider))
+    ellipse(img, 21, 7, 4, 4, _c(*rider))
+    put(img, [(20, 6), (23, 6)], _c(*eye))
+    if weapon:
+        weapon(img)
+    return img
+
+
+def horseman_conquest():
+    """흰 말의 기사 — 정복 (46x44): 활과 면류관"""
+    def w(img):
+        for y in range(2, 22):
+            put(img, [(29 + int(round(2 * math.sin((y - 2) / 20 * math.pi))), y)], _c(220, 200, 120))
+        rect(img, 18, 2, 24, 3, _c(255, 220, 80))
+    return outline(_horseman((240, 240, 245), (200, 200, 210), (230, 230, 240), (80, 120, 255), w), (40, 40, 60, 255))
+
+
+def horseman_war():
+    """붉은 말의 기사 — 전쟁 (46x44): 큰 칼"""
+    def w(img):
+        _line(img, (26, 14), (34, 0), _c(220, 220, 230))
+        rect(img, 25, 14, 27, 15, _c(120, 80, 40))
+    return outline(_horseman((190, 40, 40), (140, 25, 25), (130, 30, 30), (255, 220, 80), w), (40, 10, 10, 255))
+
+
+def horseman_famine():
+    """검은 말의 기사 — 기근 (46x44): 저울"""
+    def w(img):
+        _line(img, (28, 4), (28, 14), _c(200, 190, 150))
+        _line(img, (24, 6), (32, 6), _c(200, 190, 150))
+        ellipse(img, 24, 9, 2, 1, _c(200, 190, 150))
+        ellipse(img, 32, 9, 2, 1, _c(200, 190, 150))
+    return outline(_horseman((40, 40, 50), (25, 25, 30), (60, 55, 50), (200, 200, 120), w), (10, 10, 15, 255))
+
+
+def horseman_death():
+    """창백한 말의 기사 — 죽음 (46x44): 큰 낫"""
+    def w(img):
+        rect(img, 28, 0, 29, 22, _c(110, 90, 70))
+        _poly(img, [(29, 0), (40, 3), (36, 6)], _c(210, 215, 220))
+    return outline(_horseman((170, 190, 160), (120, 140, 110), (60, 60, 70), (120, 255, 160), w), (20, 30, 20, 255))
+
+
+def plague_rider():
+    return _warrior(16, 22, _c(170, 180, 150), _c(90, 100, 70), _c(60, 70, 50), _c(80, 90, 60), weapon=(150, 150, 120), eye=(200, 255, 120))
+
+
+def famine_ghoul():
+    return _warrior(14, 20, _c(170, 160, 140), _c(80, 75, 70), _c(55, 50, 45), _c(60, 55, 50), eye=(220, 220, 120))
+
+
+def war_hound():
+    return _beast(20, 13, _c(170, 50, 40), _c(120, 30, 25), (255, 220, 80), mane=(90, 20, 20))
+
+
+def floor_apocalypse():
+    return _floor(851, (96, 76, 70), 5, [(6, (78, 60, 56, 255), 4), (5, (130, 104, 96, 255), 2), (3, (200, 60, 40, 255), 1)])
+
+
+# ---- 86 거짓 예언자
+def false_prophet():
+    """거짓 예언자 (34x46): 어린양의 뿔, 용의 목소리, 붉은 법의"""
+    img = _hero(34, 46, _c(210, 180, 160), _c(150, 30, 40), _c(100, 20, 30), _c(240, 235, 220), cape=(60, 20, 30))
+    _poly(img, [(11, 6), (8, 0), (13, 4)], _c(240, 235, 220))
+    _poly(img, [(22, 6), (25, 0), (20, 4)], _c(240, 235, 220))
+    put(img, [(14, 11), (19, 11)], _c(255, 80, 60))
+    rect(img, 27, 4, 28, 40, _c(160, 130, 80))
+    ellipse(img, 27.5, 4, 3, 3, _c(200, 40, 40))
+    return outline(img, (40, 10, 15, 255))
+
+
+def beast_image():
+    """짐승의 우상 (16x22)"""
+    img = canvas(16, 22)
+    rect(img, 3, 16, 12, 21, _c(120, 110, 100))
+    ellipse(img, 7.5, 10, 6, 6, _c(150, 60, 50))
+    _poly(img, [(3, 6), (1, 0), (6, 4)], _c(200, 190, 170))
+    _poly(img, [(12, 6), (14, 0), (9, 4)], _c(200, 190, 170))
+    put(img, [(5, 9), (10, 9)], _c(255, 220, 60))
+    return outline(img)
+
+
+def marked_zealot():
+    return _warrior(16, 22, _c(205, 160, 120), _c(150, 30, 40), _c(100, 20, 30), _c(80, 30, 40), weapon=(150, 150, 160), eye=(255, 60, 40))
+
+
+def prophet_acolyte():
+    return _warrior(14, 20, _c(205, 160, 120), _c(100, 20, 30), _c(70, 15, 20), _c(240, 235, 220))
+
+
+def floor_false_temple():
+    return _floor(859, (110, 70, 70), 5, [(6, (90, 56, 56, 255), 4), (5, (150, 100, 100, 255), 2), (3, (230, 210, 120, 255), 1)])
+
+
+# ---- 87 광야의 타락천사 아자젤
+def azazel():
+    """광야의 타락천사 아자젤 (42x52): 검게 탄 날개, 대장장이의 칼, 사막 천"""
+    img = _demon(42, 52, _c(170, 140, 120), _c(120, 95, 80), _c(150, 120, 80), _c(80, 70, 60), (255, 160, 60), wings=(40, 35, 40))
+    rect(img, 35, 8, 36, 40, _c(200, 200, 210))
+    rect(img, 33, 30, 38, 31, _c(150, 120, 60))
+    return outline(img, (30, 20, 15, 255))
+
+
+def scapegoat():
+    """속죄양 — 검은 염소 (20x16)"""
+    img = _beast(20, 16, _c(50, 45, 50), _c(30, 28, 32), (255, 80, 60), horns=(220, 210, 190))
+    put(img, [(17, 4), (18, 3)], _c(220, 210, 190))
+    return img
+
+
+def wilderness_gate():
+    """광야의 문 (24x30)"""
+    img = canvas(24, 30)
+    rect(img, 2, 4, 5, 29, _c(150, 120, 80))
+    rect(img, 18, 4, 21, 29, _c(150, 120, 80))
+    rect(img, 1, 1, 22, 4, _c(170, 140, 90))
+    rect(img, 6, 6, 17, 29, (230, 200, 140, 120))
+    for x, y in ((9, 14), (13, 20), (11, 25)):
+        put(img, [(x, y)], _c(255, 230, 170))
+    return outline(img)
+
+
+def desert_jinn():
+    return _wisp(16, 16, (255, 200, 120), (180, 100, 40))
+
+
+def watcher_angel():
+    return _warrior(16, 22, _c(190, 170, 150), _c(70, 60, 70), _c(45, 40, 50), _c(170, 160, 140), crest=(30, 30, 35), weapon=(200, 200, 210), eye=(255, 160, 60))
+
+
+def nephilim_brute():
+    return _warrior(18, 24, _c(190, 150, 120), _c(120, 100, 70), _c(80, 65, 45), _c(100, 80, 60), weapon=(120, 90, 50))
+
+
+def floor_wilderness():
+    return _floor(869, (170, 140, 100), 5, [(6, (150, 120, 84, 255), 4), (5, (196, 166, 124, 255), 2), (3, (120, 90, 60, 255), 1)])
+
+
+# ---- 88 무저갱의 열쇠를 든 타락한 별
+def fallen_star():
+    """무저갱의 열쇠를 든 타락한 별 (40x50): 빛이 꺼져 가는 별의 천사"""
+    img = _hero(34, 44, _c(200, 200, 220), _c(60, 60, 90), _c(40, 40, 70), _c(220, 220, 240), cape=(30, 30, 60))
+    big = canvas(40, 50)
+    for i in range(12):
+        a = math.tau * i / 12
+        put(big, [(int(20 + 18 * math.cos(a)), int(14 + 13 * math.sin(a)))], _c(255, 230, 140))
+    big.alpha_composite(img, (3, 6))
+    return outline(big, (20, 20, 40, 255))
+
+
+def abyss_key():
+    """무저갱의 열쇠 (16x10)"""
+    img = canvas(16, 10)
+    ellipse(img, 4, 5, 3.5, 3.5, _c(200, 160, 80))
+    ellipse(img, 4, 5, 1.5, 1.5, (0, 0, 0, 0))
+    rect(img, 7, 4, 15, 5, _c(200, 160, 80))
+    rect(img, 12, 6, 13, 8, _c(200, 160, 80))
+    rect(img, 14, 6, 15, 7, _c(200, 160, 80))
+    return outline(img, (60, 40, 10, 255))
+
+
+def abyss_crawler():
+    return _beast(18, 12, _c(60, 40, 60), _c(40, 25, 40), (255, 90, 60))
+
+
+def smoke_fiend():
+    return _wisp(16, 16, (120, 100, 110), (50, 40, 50))
+
+
+def fallen_soldier():
+    return _warrior(16, 22, _c(180, 180, 200), _c(50, 50, 70), _c(30, 30, 45), _c(90, 90, 110), crest=(30, 30, 45), weapon=(160, 160, 180), eye=(255, 80, 60))
+
+
+def floor_abyss_gate():
+    return _floor(877, (56, 48, 60), 5, [(6, (42, 36, 46, 255), 4), (5, (80, 70, 86, 255), 2), (4, (255, 110, 50, 255), 1)])
+
+
+# ---- 89 일곱 나팔의 천사
+def trumpet_angel():
+    """일곱 나팔의 천사 (44x50): 흰 날개, 금빛 나팔"""
+    img = canvas(44, 50)
+    _poly(img, [(16, 16), (0, 2), (4, 26), (16, 28)], _c(240, 240, 250))
+    _poly(img, [(28, 16), (43, 2), (39, 26), (28, 28)], _c(240, 240, 250))
+    hero = _hero(30, 40, _c(230, 200, 170), _c(245, 240, 230), _c(210, 200, 180), _c(240, 210, 120))
+    img.alpha_composite(hero, (7, 10))
+    _poly(img, [(27, 20), (40, 14), (41, 20), (28, 22)], _c(240, 200, 80))
+    return outline(img, (60, 50, 20, 255))
+
+
+def angel_trumpet():
+    """일곱 나팔 (16x8)"""
+    img = canvas(16, 8)
+    rect(img, 0, 3, 10, 4, _c(230, 190, 70))
+    _poly(img, [(10, 1), (15, 0), (15, 7), (10, 6)], _c(250, 210, 90))
+    put(img, [(2, 2), (2, 5)], _c(200, 160, 50))
+    return outline(img, (80, 60, 10, 255))
+
+
+def hail_spirit():
+    return _wisp(14, 14, (230, 240, 255), (140, 170, 220))
+
+
+def blood_tide():
+    return _wisp(14, 14, (255, 120, 120), (150, 20, 30))
+
+
+def wormwood_wisp():
+    return _wisp(14, 14, (180, 230, 140), (70, 120, 50))
+
+
+def floor_trumpet_sky():
+    return _floor(887, (150, 140, 160), 5, [(6, (130, 120, 140, 255), 4), (5, (190, 180, 200, 255), 2), (3, (240, 200, 90, 255), 1)])
+
+
+# ---- 90 마왕 아바돈
+def abaddon():
+    """무저갱의 왕 아바돈 (48x60): 검은 뿔 왕관, 거대한 박쥐 날개, 전갈 꼬리"""
+    img = canvas(48, 60)
+    _poly(img, [(18, 20), (0, 4), (2, 30), (16, 36)], _c(50, 30, 50))
+    _poly(img, [(30, 20), (47, 4), (45, 30), (32, 36)], _c(50, 30, 50))
+    for x0, x1 in ((2, 16), (46, 32)):
+        _line(img, (x0, 6), (x1, 30), _c(90, 50, 80))
+    body = _demon(36, 48, _c(110, 50, 60), _c(70, 30, 40), _c(30, 20, 30), _c(30, 25, 30), (255, 70, 30))
+    img.alpha_composite(body, (6, 10))
+    for x in (17, 21, 25, 29):
+        _poly(img, [(x, 12), (x + 1, 6), (x + 2, 12)], _c(40, 30, 40))       # 뿔 왕관
+    for i in range(8):                                                   # 전갈 꼬리
+        put(img, [(36 + i // 2, 54 - i * 2)], _c(80, 40, 50))
+    _poly(img, [(40, 38), (44, 34), (42, 40)], _c(200, 180, 120))
+    return outline(img, (20, 5, 10, 255))
+
+
+def abaddon_throne():
+    """아바돈의 옥좌 (40x40)"""
+    img = canvas(40, 40)
+    rect(img, 4, 4, 35, 39, _c(50, 35, 45))
+    rect(img, 8, 8, 31, 30, _c(80, 30, 40))
+    for x in (4, 12, 20, 28, 35):
+        _poly(img, [(x - 2, 4), (x, 0), (x + 2, 4)], _c(60, 45, 55))
+    rect(img, 2, 22, 7, 39, _c(60, 45, 55))
+    rect(img, 32, 22, 37, 39, _c(60, 45, 55))
+    put(img, [(19, 14), (20, 14)], _c(255, 80, 40))
+    return outline(img, (15, 5, 10, 255))
+
+
+def abyss_locust():
+    """무저갱의 메뚜기 (18x14): 사람 얼굴, 전갈 꼬리"""
+    img = canvas(18, 14)
+    ellipse(img, 9, 8, 6, 3, _c(150, 130, 60))
+    ellipse(img, 15, 6, 2.5, 2.5, _c(210, 180, 150))
+    put(img, [(16, 5)], _c(30, 20, 20))
+    _poly(img, [(6, 6), (1, 1), (9, 5)], (220, 220, 200, 180))
+    for i in range(4):
+        put(img, [(2 - i // 2, 9 - i)], _c(110, 60, 40))
+    for x in (6, 9, 12):
+        put(img, [(x, 11), (x, 12)], _c(110, 90, 40))
+    return outline(img)
+
+
+def fallen_angel_soldier():
+    return _warrior(16, 22, _c(170, 160, 170), _c(40, 30, 40), _c(25, 20, 25), _c(70, 50, 70), crest=(120, 30, 40), weapon=(180, 170, 180), eye=(255, 70, 30))
+
+
+def hell_wraith():
+    return _wisp(16, 16, (255, 120, 80), (100, 20, 30))
+
+
+def floor_abyss_throne():
+    return _floor(899, (46, 34, 42), 5, [(6, (34, 24, 30, 255), 4), (5, (70, 50, 62, 255), 2), (4, (255, 80, 40, 255), 1)])
+
+
+def save_late20_sprites():
+    for name, painter in (("mammon", mammon), ("coin_pile", coin_pile), ("greed_imp", greed_imp), ("gilded_thief", gilded_thief),
+                          ("treasure_mimic", treasure_mimic), ("belphegor", belphegor), ("sloth_wisp", sloth_wisp), ("drowsy_ghoul", drowsy_ghoul),
+                          ("snail_beast", snail_beast), ("beelzebub", beelzebub), ("fly_swarm", fly_swarm), ("glutton_ghoul", glutton_ghoul),
+                          ("maggot", maggot), ("asmodeus", asmodeus), ("chain_pillar", chain_pillar), ("succubus_lancer", succubus_lancer),
+                          ("charm_wisp", charm_wisp), ("chain_hound", chain_hound), ("horseman_conquest", horseman_conquest), ("horseman_war", horseman_war),
+                          ("horseman_famine", horseman_famine), ("horseman_death", horseman_death), ("plague_rider", plague_rider),
+                          ("famine_ghoul", famine_ghoul), ("war_hound", war_hound), ("false_prophet", false_prophet), ("beast_image", beast_image),
+                          ("marked_zealot", marked_zealot), ("prophet_acolyte", prophet_acolyte), ("azazel", azazel), ("scapegoat", scapegoat),
+                          ("wilderness_gate", wilderness_gate), ("desert_jinn", desert_jinn), ("watcher_angel", watcher_angel),
+                          ("nephilim_brute", nephilim_brute), ("fallen_star", fallen_star), ("abyss_key", abyss_key), ("abyss_crawler", abyss_crawler),
+                          ("smoke_fiend", smoke_fiend), ("fallen_soldier", fallen_soldier), ("trumpet_angel", trumpet_angel),
+                          ("angel_trumpet", angel_trumpet), ("hail_spirit", hail_spirit), ("blood_tide", blood_tide), ("wormwood_wisp", wormwood_wisp),
+                          ("abaddon", abaddon), ("abaddon_throne", abaddon_throne), ("abyss_locust", abyss_locust),
+                          ("fallen_angel_soldier", fallen_angel_soldier), ("hell_wraith", hell_wraith)):
+        save(painter(), "characters", f"{name}.png")
+    for name, painter in (("floor_greed_vault", floor_greed_vault), ("floor_sloth_bog", floor_sloth_bog), ("floor_glutton_hall", floor_glutton_hall),
+                          ("floor_lust_palace", floor_lust_palace), ("floor_apocalypse", floor_apocalypse), ("floor_false_temple", floor_false_temple),
+                          ("floor_wilderness", floor_wilderness), ("floor_abyss_gate", floor_abyss_gate), ("floor_trumpet_sky", floor_trumpet_sky),
+                          ("floor_abyss_throne", floor_abyss_throne)):
+        save(painter(), "tiles", f"{name}.png")
+
+
 def main():
     save(from_map(PLAYER), "characters", "player.png")
     save(from_map(SLIME), "characters", "slime.png")
@@ -7241,6 +7733,7 @@ def main():
     save_late17_sprites()
     save_late18_sprites()
     save_late19_sprites()
+    save_late20_sprites()
 
     save(bar_under(), "ui", "bar_under.png")
     save(bar((200, 50, 70)), "ui", "bar_hp.png")
