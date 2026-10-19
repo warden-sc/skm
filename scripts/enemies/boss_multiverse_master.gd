@@ -443,7 +443,7 @@ func begin_spectate() -> void:
 	mode = Mode.SPECTATING
 	_spectate_left = spectate_time
 	champions.clear()
-	global_position = center + Vector2(0, -_area().size.y * 0.42)
+	global_position = center + Vector2(0, -50)  # 체력 바 · 이름 아래에 가려지지 않는 높이
 	airborne = true
 	var worlds: Array[int] = []
 	while worlds.size() < 3:
