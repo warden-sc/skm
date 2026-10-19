@@ -16,6 +16,10 @@ extends Node
 ##   고대의 문[E] → 보스방이 고대 용의 둥지로 바뀌고 히든 보스(hidden_stage.boss_scene) 등장 (잡몹 없음)
 ##   히든 보스 토벌 → 특별 보물상자(장비 2개) + 다음 스테이지 텔레포트 (마지막 스테이지면 엔딩)
 ##
+## 최종장
+##   마지막 스테이지 보스 토벌 → finale_delay 초 뒤 같은 보스방에 야영지의 상인이 나타나 최종 보스전(finale_stage.boss_scene)
+##   최종 보스 토벌 → 「모든 스테이지 클리어」 → 엔딩
+##
 ## 드랍 등급
 ##   일반 몬스터: 스테이지 등급까지만 (1스테이지 일반·희귀 / 2스테이지 레어까지 / 3스테이지 전설까지)
 ##   보물상자   : 다음 스테이지 등급 (1스테이지 보스 → 레어, 2스테이지 이후 → 전설) 검/활/지팡이/방패/투구/갑옷 중 하나
@@ -60,6 +64,8 @@ const HIDDEN_GATE_STAGE := 35
 @export var chest_scene: PackedScene
 ## 히든 던전 구성 (보스·바닥·분위기). 비워 두면 히든 던전 없음
 @export var hidden_stage: StageData
+## 최종장 구성 (마지막 스테이지 보스를 쓰러뜨린 뒤의 최종 보스). 비워 두면 마지막 스테이지 보스 토벌로 바로 엔딩
+@export var finale_stage: StageData
 
 @export_group("Balance")
 @export var min_spawn_distance: float = 150.0
@@ -68,6 +74,8 @@ const HIDDEN_GATE_STAGE := 35
 @export var boss_entry_delay: float = 1.2
 ## 마지막 보스를 쓰러뜨린 뒤 엔딩 화면으로 넘어가기까지의 시간(초)
 @export var ending_delay: float = 4.0
+## 마지막 스테이지 보스를 쓰러뜨린 뒤 최종 보스가 나타나기까지의 시간(초)
+@export var finale_delay: float = 3.0
 
 ## true 면 텔레포트 시 화면 전환 없이 즉시 이동 (테스트용)
 var instant_travel: bool = false
@@ -88,6 +96,9 @@ var _hidden_portal: Portal
 var _hidden_pending: bool = false
 var _hidden_active: bool = false
 var _hidden_done: bool = false
+## 최종장: 지금 최종 보스전인지 / 이번 스테이지에서 이미 깼는지
+var _finale_active: bool = false
+var _finale_done: bool = false
 
 
 func _ready() -> void:
@@ -100,6 +111,7 @@ func _ready() -> void:
 	boss_gate.interacted.connect(enter_boss_room)
 	next_stage_portal.interacted.connect(go_to_next_stage)
 	_create_hidden_portal()
+	add_to_group(&"stage_manager")
 	_ending_timer = Timer.new()
 	_ending_timer.one_shot = true
 	_ending_timer.timeout.connect(go_to_ending)
@@ -291,6 +303,8 @@ func _setup_stage(stage: int) -> void:
 	_hidden_pending = false
 	_hidden_active = false
 	_hidden_done = false
+	_finale_active = false
+	_finale_done = false
 	if _hidden_portal != null:
 		_hidden_portal.enabled = false
 	_kills = 0
@@ -325,7 +339,7 @@ func get_boss_decor() -> Sprite2D:
 func _spawn_boss() -> void:
 	if _state != State.BOSS or _boss != null:
 		return
-	var data := hidden_stage if _hidden_active else get_stage_data()
+	var data := hidden_stage if _hidden_active else (finale_stage if _finale_active else get_stage_data())
 	var boss := data.boss_scene.instantiate() as Enemy
 	assert(boss != null, "boss_scene 루트에는 Enemy 계열 스크립트가 필요합니다.")
 	_boss = boss
@@ -347,9 +361,17 @@ func _on_boss_defeated() -> void:
 	if _hidden_active:
 		_on_hidden_boss_defeated()
 		return
+	if _finale_active:
+		_finale_active = false
+		_finale_done = true
+		_on_final_boss_defeated()
+		return
 	_hidden_pending = is_hidden_gate_ready()
 	if is_final_stage() and not _hidden_pending:
-		_on_final_boss_defeated()
+		if finale_stage != null and not _finale_done:
+			_begin_finale()
+		else:
+			_on_final_boss_defeated()
 		return
 	# 보물상자 + 다음 스테이지 텔레포트 (히든 던전이 열릴 차례면 상자를 연 뒤 고대의 문)
 	_spawn_chest(false)
@@ -370,6 +392,37 @@ func _spawn_chest(hidden_reward: bool) -> void:
 
 func _next_portal_prompt() -> String:
 	return "[E] 여정을 마치기 (엔딩)" if is_final_stage() else "[E] STAGE %d 로 이동" % (GameManager.stage + 1)
+
+
+# ============================================================ 최종장
+func is_in_finale() -> bool:
+	return _finale_active
+
+
+## 마지막 스테이지 보스 토벌 → 잠시 뒤 최종 보스전
+func _begin_finale() -> void:
+	next_stage_portal.enabled = false
+	GameManager.show_notice("대천사가 쓰러졌다… 그런데 어디선가 느릿한 박수 소리가 들려온다", Color(1.0, 0.85, 0.5))
+	get_tree().create_timer(maxf(finale_delay, 0.05), false).timeout.connect(start_finale)
+
+
+## 최종 보스 등장 (테스트에서도 직접 호출)
+func start_finale() -> void:
+	if _state != State.CLEARED or _finale_done or _finale_active or GameManager.is_player_dead or finale_stage == null:
+		return
+	_finale_active = true
+	_state = State.BOSS
+	GameManager.set_stage(GameManager.stage, "최종장 · " + finale_stage.stage_name)
+	apply_world(finale_stage)
+	_spawn_boss()
+
+
+## 보스방을 다른 세계(스테이지)의 모습으로 바꿈 — 최종 보스의 세계 전환
+func apply_world(data: StageData) -> void:
+	if data == null:
+		return
+	boss_room.apply_theme(data.floor_texture, data.wall_tint)
+	_ambient.color = data.ambient_color
 
 
 ## 마지막 보스 토벌: 상자/텔레포트 대신 잠시 뒤 엔딩

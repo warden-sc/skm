@@ -3896,22 +3896,193 @@ func _test_hidden_dungeon(main: Node2D, heli_end: BossHelicion) -> void:
 	_check(_item_pickups(main.get_node("Entities")).size() == items_before + 2, "고대 용의 보물상자: 장비 2개")
 
 
-## 마지막 스테이지(100) 보스 토벌 → 모든 스테이지 클리어 / 비늘 없이 35스테이지 보스를 쓰러뜨리면 히든 없음
+## 최종장: 100스테이지 보스를 쓰러뜨린 뒤 상인 → 멀티버스의 주인. 쓰러뜨리지 않은 채 돌려줌
+func _test_finale(main: Node2D) -> BossMultiverseMaster:
+	var player := main.get_node("Entities/Player") as Player
+	var stage := main.get_node("StageManager") as StageManager
+	var pool := main.get_node("ProjectilePool") as ProjectilePool
+	print("[최종장 - 멀티버스의 끝]")
+	await _survive(int(stage.finale_delay * 60) + 10, func() -> void:
+		player._invincible_left = 1.0)
+	await _survive(int(stage.boss_entry_delay * 60) + 10, func() -> void:
+		player._invincible_left = 1.0)
+	var master := _find_boss() as BossMultiverseMaster
+	_check(stage.is_in_finale() and master != null and stage.get_state() == StageManager.State.BOSS and _gm.stage_name.contains("멀티버스의 끝"), "[최종장] 대천사가 쓰러지자 보스방에 상인이 나타남")
+	if master == null:
+		return null
+	var center := master.center
+	_check(master.mode == BossMultiverseMaster.Mode.MERCHANT and master.sprite.texture == master.merchant_texture and not master.can_be_hit_by(Enemy.HitKind.MELEE), "[최종장] 처음엔 야영지의 상인 모습 (무적)")
+	var hp := master.hp
+	master.take_damage(5000, Vector2.ZERO, false, 999999)
+	_check(master.hp == hp, "상인 모습일 때는 피해 없음")
+	await _survive(int(master.line_time * 60 * 2) + 30, func() -> void:
+		player._invincible_left = 1.0)
+	_check(master._line >= 2, "[최종장] 상인이 정체를 털어놓음 (대사 %d줄)" % master._line)
+	master._line = BossMultiverseMaster.LINES.size()
+	master._mode_left = 0.01
+	await _frames(3)
+	_check(master.mode == BossMultiverseMaster.Mode.TRANSFORM, "[최종장] 상인의 모습이 일그러지며 변신 시작")
+	await _survive(int(master.transform_time * 60) + 10, func() -> void:
+		player._invincible_left = 1.0)
+	_check(master.is_revealed() and master.sprite.texture == master.true_texture and master.display_name == "멀티버스의 주인" and master.world >= 0 and master.can_be_hit_by(Enemy.HitKind.MELEE), "[최종장] 멀티버스의 주인으로 변신 · 첫 세계 전환")
+	master._shift_left = 999.0
+	var worlds_ok := true
+	for w in BossMultiverseMaster.WORLD_STAGES.size():
+		master.shift_world(w)
+		await _frames(2)
+		var data := stage.get_stage_data(BossMultiverseMaster.WORLD_STAGES[w])
+		if master.world != w or stage.boss_room._floor.texture != data.floor_texture:
+			worlds_ok = false
+		match w:
+			BossMultiverseMaster.World.SLIME:
+				worlds_ok = worlds_ok and master._zones.size() == 7
+			BossMultiverseMaster.World.FOG:
+				worlds_ok = worlds_ok and master.veil != null
+			BossMultiverseMaster.World.ABYSS:
+				worlds_ok = worlds_ok and master.pit != null
+			BossMultiverseMaster.World.FLOOD:
+				worlds_ok = worlds_ok and master.flood != null
+	master._shift_left = 999.0
+	_check(worlds_ok and master.world2 == -1 and master.get_shift_count() >= 10, "[기믹] 세계 전환: 9개 세계의 보스방과 기믹으로 차례로 바뀜 (앞 세계 기믹은 정리)")
+	master._stun_left = 3.0
+	master.shift_world(BossMultiverseMaster.World.SLOTH)
+	player.global_position = master.global_position + Vector2(0, 60)
+	await _frames(3)
+	_check(player.is_slowed(), "[기믹] 나태의 늪 — 주인 곁에서 느려짐")
+	master.shift_world(BossMultiverseMaster.World.CHAIN)
+	player.global_position = master.global_position + Vector2(230, 0)
+	await _frames(1)
+	var d0 := master.global_position.distance_to(player.global_position)
+	await _frames(6)
+	_check(master.global_position.distance_to(player.global_position) < d0, "[기믹] 색욕의 궁전 — 멀어지면 사슬에 끌려감")
+	master.shift_world(BossMultiverseMaster.World.STONES)
+	master._stone_left = 999.0
+	master._stun_left = 3.0
+	player.global_position = center + Vector2(0, 150)
+	var hits := master.get_stone_hits()
+	hp = master.hp
+	master.roll_stone(master.get_hit_center() + Vector2(-300, 0), master.get_hit_center() + Vector2(300, 0), 0.2)
+	await _survive(150, func() -> void:
+		player._invincible_left = 1.0)
+	_check(master.get_stone_hits() == hits + 1 and master.hp < hp, "[기믹] 두라 평지 — 뜨인 돌이 주인을 치면 큰 피해 + 휘청")
+	master.shift_world(BossMultiverseMaster.World.REVELATION)
+	master._light_left = 999.0
+	player.global_position = center + Vector2(150, 40)
+	player._invincible_left = 0.0
+	master.announce_light(0)
+	var lit := false
+	for i in 110:
+		_gm.hp = 9999
+		player.global_position = center + Vector2(150, 40)
+		await get_tree().physics_frame
+		if _gm.hp < 9999:
+			lit = true
+	_gm.hp = _gm.max_hp
+	_check(lit, "[기믹] 백합의 정원 — 주인이 흉내 낸 전언: 선포한 곳에 빛")
+	master.shift_world(BossMultiverseMaster.World.ABYSS)
+	master.pit.radius = 40.0
+	player._invincible_left = 0.0
+	player.global_position = master.pit.global_position
+	var fell := false
+	for i in 3:
+		_gm.hp = 9999
+		await get_tree().physics_frame
+		if _gm.hp < 9999:
+			fell = true
+	_gm.hp = _gm.max_hp
+	_check(fell and not master.pit.contains(player.global_position), "[기믹] 무저갱 — 구덩이에 빠지면 큰 피해 + 가장자리로")
+	master.shift_world(BossMultiverseMaster.World.SLIME)
+	master._shift_left = 999.0
+	master._stun_left = 0.0
+	player._invincible_left = 1.0
+	player.global_position = center + Vector2(0, 120)
+	# 관람석
+	master.take_damage(roundi(master.max_hp * 0.26), Vector2.ZERO, false, 999999)
+	await _frames(4)
+	_check(master.mode == BossMultiverseMaster.Mode.SPECTATING and master.living_champions().size() == 3 and not master.can_be_hit_by(Enemy.HitKind.BOW), "[기믹] 체력 75% — 관람석: 서로 다른 세계의 투사 셋을 싸움 붙임")
+	var champ := master.living_champions()[0]
+	var base_hp := ((load(champ.scene_file_path) as PackedScene).instantiate() as Enemy)
+	_check(champ.max_hp >= base_hp.max_hp * 2.9, "투사는 체력 3배")
+	base_hp.free()
+	hp = master.hp
+	master.take_damage(5000, Vector2.ZERO, false, 999999)
+	_check(master.hp == hp, "관람석에 있는 동안 주인은 무적")
+	for c in master.living_champions():
+		c.take_damage(99999999, Vector2.ZERO, false, 999999)
+	await _frames(3)
+	_check(master.mode == BossMultiverseMaster.Mode.FIGHT and master.get_fall_count() == 1 and master.is_stunned(), "[기믹] 투사를 모두 쓰러뜨리면 주인이 관람석에서 굴러떨어짐")
+	hp = master.hp
+	master.take_damage(1000, Vector2.ZERO, false, 999999)
+	_check(hp - master.hp >= 1400, "관람석에서 떨어진 동안 피해 1.5배")
+	master._fallen_left = 0.0
+	master._stun_left = 0.0
+	master.begin_spectate()
+	await _frames(3)
+	hp = master.hp
+	master._spectate_left = 0.01
+	await _frames(3)
+	_check(master.mode == BossMultiverseMaster.Mode.FIGHT and master.hp > hp and master.living_champions().is_empty(), "[기믹] 시간 안에 투사를 못 쓰러뜨리면 주인이 회복")
+	# 멀티버스의 균열
+	master._spectated[1] = true
+	master._spectated[2] = true
+	master.take_damage(master.hp - roundi(master.max_hp * 0.6), Vector2.ZERO, false, 999999)
+	await _frames(4)
+	_check(master.get_phase() == 2 and master.living_rifts().size() == 2, "[기믹] 체력 2/3 이하 — 멀티버스의 균열 둘이 열림")
+	hp = master.hp
+	master.take_damage(1000, Vector2.ZERO, false, 999999)
+	_check(hp - master.hp <= 620, "균열이 열려 있으면 주인에게 피해 60%")
+	for r in master.living_rifts():
+		r.take_damage(99999999, Vector2.ZERO, false, 999999)
+	await _frames(3)
+	_check(master.living_rifts().is_empty() and master._rift_left > 0.0, "균열을 모두 닫음")
+	master._rift_left = 0.01
+	await _frames(4)
+	_check(master.living_rifts().size() == 2, "닫은 균열은 잠시 뒤 다시 열림")
+	# 멀티버스 붕괴
+	master.hp = roundi(master.max_hp * 0.3)
+	var before := master.world
+	master.shift_world()
+	_check(master.get_phase() == 3 and master.world2 == before and master.world != before, "[기믹] 체력 1/3 이하 — 멀티버스 붕괴: 두 세계가 겹침")
+	master._shift_left = 999.0
+	player.global_position = center + Vector2(0, 120)
+	var seen := {"aoe": false, "shot": false}
+	await _survive(600, func() -> void:
+		player._invincible_left = 1.0
+		player.global_position = master.get_hit_center() + Vector2(0, 100)
+		if _count_nodes_of("AoeStrike") > 0:
+			seen["aoe"] = true
+		for c in pool.get_children():
+			if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
+				seen["shot"] = true)
+	_check(seen["aoe"] and seen["shot"], "멀티버스의 주인 패턴: 금화 폭풍 · 값 매기기 · 세계의 메아리 · 소환 · 균열의 탄")
+	master._spectate_left = 0.0
+	return master
+
+
+## 마지막 스테이지(100) 보스 토벌 → 최종장(멀티버스의 주인) 토벌 → 모든 스테이지 클리어 / 비늘 없이 35스테이지 보스를 쓰러뜨리면 히든 없음
 func _test_final_and_no_hidden(main: Node2D, final_boss: Enemy) -> void:
 	var player := main.get_node("Entities/Player") as Player
 	var stage := main.get_node("StageManager") as StageManager
 	var field_portal := main.get_node("Entities/FieldPortal") as Portal
 	var gate := main.get_node("Entities/BossGate") as BossGate
 	var next_portal_end := main.get_node("Entities/NextStagePortal") as Portal
-	print("[엔딩 - 100스테이지 보스 토벌]")
+	print("[100스테이지 보스 토벌 → 최종장]")
 	stage.ending_delay = 600.0  # 아래 테스트가 끝난 뒤 엔딩 화면을 따로 검사
-	var kills_before: int = _gm.total_kills
 	var pending := AoeStrike.spawn(main, player.global_position, 40.0, 0.03, 9999, Color.RED)
 	if final_boss != null:
 		final_boss.take_damage(9999999, Vector2.ZERO, false, 999999)
 	await _frames(4)
 	_check(not is_instance_valid(pending) and not _gm.is_player_dead, "보스가 쓰러지면 아직 터지지 않은 예고 장판도 사라짐")
-	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "마지막(100스테이지) 보스 토벌 → 모든 스테이지 클리어")
+	_check(not _gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED and not next_portal_end.enabled and stage.get_chest() == null, "100스테이지 보스 토벌 → 아직 엔딩이 아님 (상자 · 텔레포트 없이 최종장을 기다림)")
+	var master := await _test_finale(main)
+	print("[엔딩 - 최종 보스 토벌]")
+	var kills_before: int = _gm.total_kills
+	pending = AoeStrike.spawn(main, player.global_position, 40.0, 0.03, 9999, Color.RED)
+	if master != null:
+		master.take_damage(9999999, Vector2.ZERO, false, 999999)
+	await _frames(4)
+	_check(not is_instance_valid(pending) and not _gm.is_player_dead and not stage.is_in_finale(), "최종 보스가 쓰러지면 남은 예고 장판도 사라짐")
+	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "최종 보스(멀티버스의 주인) 토벌 → 모든 스테이지 클리어")
 	_check(_gm.total_kills > kills_before and _gm.play_time > 0.0, "엔딩 기록: 처치 %d마리 · 플레이 %s" % [_gm.total_kills, _gm.get_play_time_text()])
 	_check(stage.get_chest() == null and not next_portal_end.enabled and get_tree().get_nodes_in_group(&"enemies").is_empty(), "마지막 스테이지: 상자 / 텔레포트 없음, 남은 졸개 정리")
 	_check(_gm.faith_damage_bonus == 0.0 and get_tree().get_nodes_in_group(&"hostile_zones").is_empty() and _gm.stolen_weapon == null, "보스가 쓰러지면 신앙·장판·빼앗긴 무기 정리")

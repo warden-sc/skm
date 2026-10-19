@@ -8097,6 +8097,77 @@ def save_late21_sprites():
         save(painter(), "tiles", f"{name}.png")
 
 
+# ---------------------------------------------------------------- 최종장 (상인 = 멀티버스의 주인)
+def merchant_boss():
+    """보스방에 나타난 상인 (32x40): 야영지 상인과 같은 보라 모자 · 주황 옷 · 흰 수염, 손에는 금화 주머니"""
+    img = canvas(32, 40)
+    rect(img, 9, 34, 13, 39, _c(70, 50, 40))
+    rect(img, 18, 34, 22, 39, _c(70, 50, 40))
+    ellipse(img, 15.5, 27, 10, 9, _c(230, 120, 60))          # 주황 옷
+    rect(img, 6, 24, 25, 34, _c(230, 120, 60))
+    rect(img, 6, 30, 25, 31, _c(250, 170, 90))
+    for x, y in ((10, 27), (20, 28), (14, 32)):
+        put(img, [(x, y)], _c(250, 190, 120))
+    ellipse(img, 15.5, 15, 7, 6, _c(240, 200, 160))          # 얼굴
+    put(img, [(13, 14), (18, 14)], _c(40, 30, 30))
+    ellipse(img, 15.5, 19, 5, 3.5, _c(245, 245, 240))         # 흰 수염
+    rect(img, 3, 8, 28, 10, _c(130, 60, 160))                 # 넓은 챙 보라 모자
+    ellipse(img, 15.5, 6, 8, 5, _c(150, 75, 180))
+    rect(img, 8, 8, 23, 9, _c(90, 40, 120))
+    ellipse(img, 28, 28, 3.5, 4, _c(160, 120, 60))            # 금화 주머니
+    put(img, [(28, 25), (27, 29), (29, 30)], _c(255, 220, 90))
+    return outline(img, (40, 25, 30, 255))
+
+
+def multiverse_master():
+    """멀티버스의 주인 (58x70): 별이 흐르는 보라 망토, 왕관이 된 모자, 가슴의 균열, 둘레를 도는 세계의 조각"""
+    img = canvas(58, 70)
+    cx = 29
+    _poly(img, [(cx, 14), (cx - 22, 68), (cx + 22, 68)], _c(60, 25, 90))           # 망토
+    _poly(img, [(cx, 20), (cx - 16, 68), (cx + 16, 68)], _c(25, 15, 45))
+    rng = __import__("random").Random(1001)
+    for _ in range(26):                                                              # 망토 속 별
+        x, y = rng.randint(cx - 14, cx + 14), rng.randint(30, 66)
+        if abs(x - cx) < (y - 20) * 0.32:
+            put(img, [(x, y)], _c(*rng.choice([(255, 255, 230), (190, 220, 255), (255, 210, 120)])))
+    _poly(img, [(cx - 3, 30), (cx + 3, 30), (cx + 1, 46), (cx - 1, 46)], _c(255, 120, 220))  # 가슴의 균열
+    put(img, [(cx, 34), (cx, 38), (cx, 42)], _c(255, 240, 255))
+    ellipse(img, cx, 16, 7, 7, _c(220, 190, 160))                                     # 얼굴 (흰 수염이 길게)
+    _poly(img, [(cx - 5, 18), (cx + 5, 18), (cx, 30)], _c(245, 245, 240))
+    put(img, [(cx - 3, 14), (cx + 2, 14)], _c(255, 200, 60))
+    rect(img, cx - 13, 7, cx + 13, 9, _c(130, 60, 160))                               # 왕관이 된 모자
+    for x in range(cx - 9, cx + 10, 4):
+        _poly(img, [(x - 2, 7), (x, 0), (x + 2, 7)], _c(240, 200, 80))
+    for k, (ox, oy) in enumerate(((6, 26), (52, 26), (4, 50), (54, 50))):            # 세계의 조각
+        col = [(120, 220, 120), (120, 160, 255), (255, 140, 80), (255, 240, 160)][k]
+        ellipse(img, ox, oy, 3.5, 3.5, _c(*col))
+        put(img, [(ox - 1, oy - 1)], _c(255, 255, 255))
+    for x, y in ((14, 40), (44, 40), (20, 58), (38, 58)):                             # 떠다니는 금화
+        ellipse(img, x, y, 1.6, 1.6, _c(250, 210, 80))
+    return outline(img, (20, 5, 30, 255))
+
+
+def multiverse_rift():
+    """멀티버스의 균열 (26x30)"""
+    img = canvas(26, 30)
+    ellipse(img, 12.5, 15, 10, 14, _c(70, 20, 90))
+    ellipse(img, 12.5, 15, 6, 10, _c(160, 60, 200))
+    _poly(img, [(12, 3), (15, 15), (11, 27), (10, 15)], _c(255, 160, 240))
+    for x, y in ((8, 9), (17, 20), (14, 6)):
+        put(img, [(x, y)], _c(255, 255, 255))
+    return outline(img, (30, 5, 40, 255))
+
+
+def floor_multiverse():
+    return _floor(1101, (36, 26, 52), 5, [(6, (28, 20, 42, 255), 4), (5, (60, 44, 84, 255), 2), (4, (255, 230, 150, 255), 1), (3, (150, 200, 255, 255), 1)])
+
+
+def save_finale_sprites():
+    for name, painter in (("merchant_boss", merchant_boss), ("multiverse_master", multiverse_master), ("multiverse_rift", multiverse_rift)):
+        save(painter(), "characters", f"{name}.png")
+    save(floor_multiverse(), "tiles", "floor_multiverse.png")
+
+
 def main():
     save(from_map(PLAYER), "characters", "player.png")
     save(from_map(SLIME), "characters", "slime.png")
@@ -8236,6 +8307,7 @@ def main():
     save_late19_sprites()
     save_late20_sprites()
     save_late21_sprites()
+    save_finale_sprites()
 
     save(bar_under(), "ui", "bar_under.png")
     save(bar((200, 50, 70)), "ui", "bar_hp.png")

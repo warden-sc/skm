@@ -1,4 +1,4 @@
-[gd_scene load_steps=124 format=3]
+[gd_scene load_steps=125 format=3]
 
 [ext_resource type="Script" path="res://scripts/main/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/world/room.gd" id="2_room"]
@@ -120,6 +120,7 @@
 [ext_resource type="Resource" path="res://data/stages/stage_98.tres" id="118_stage98"]
 [ext_resource type="Resource" path="res://data/stages/stage_99.tres" id="119_stage99"]
 [ext_resource type="Resource" path="res://data/stages/stage_100.tres" id="120_stage100"]
+[ext_resource type="Resource" path="res://data/stages/stage_finale.tres" id="121_stagefinale"]
 [ext_resource type="Resource" path="res://data/stages/stage_hidden.tres" id="56_stagehidden"]
 [ext_resource type="PackedScene" path="res://scenes/world/pickup.tscn" id="24_pickup"]
 [ext_resource type="PackedScene" path="res://scenes/world/chest.tscn" id="25_chest"]
@@ -240,3 +241,4 @@ screen_fade = NodePath("../ScreenFade")
 pickup_scene = ExtResource("24_pickup")
 chest_scene = ExtResource("25_chest")
 hidden_stage = ExtResource("56_stagehidden")
+finale_stage = ExtResource("121_stagefinale")
