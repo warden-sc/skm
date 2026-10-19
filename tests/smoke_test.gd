@@ -4115,8 +4115,59 @@ func _test_final_and_no_hidden(main: Node2D, final_boss: Enemy) -> void:
 	_check(stage.get_state() == StageManager.State.CLEARED and not stage.get_hidden_portal().enabled and next_portal_end.prompt_text.contains("36"), "비늘이 모자라면 상자를 열어도 고대의 문이 열리지 않음 (36스테이지 텔레포트만)")
 
 
+## 대화창 · 대본 (자동 테스트는 대사를 끈 채 돌고, 여기서만 잠깐 켬)
+func _test_dialogue(main: Node2D) -> void:
+	print("[대화창 · 대본]")
+	var shop_ui := main.get_node("ShopUI")
+	var keeper := main.get_node("Entities/ShopKeeper") as ShopKeeper
+	_check(FileAccess.file_exists(Story.STORY_PATH) and Story.sections.has("1스테이지 도착") and Story.sections.has("100스테이지 보스 토벌") and Story.sections.has("50스테이지 상인") and Story.sections.has("히든 보스 등장") and Story.sections.has("최종장 등장") and Story.sections.has("엔딩"), "대본 파일: 1~100스테이지 · 히든 · 최종장 · 엔딩 구간이 모두 있음")
+	Story.enabled = true
+	Story.load_text("@초상화 해설 = res://assets/sprites/characters/merchant_boss.png\n[테스트]\n성기사: 첫 줄입니다. 이 줄은 글자가 한 자씩 나오는지 보려고 일부러 아주 길게 써 둔 대사입니다. 끝까지 나오려면 시간이 꽤 걸립니다.\n슬라임 킹: 꾸르르\n해설: 세 번째\n그냥 해설 줄\n# 메모\n[빈 구간]\n")
+	_check(Story.has_lines("테스트") and (Story.sections["테스트"] as Array).size() == 4 and not Story.has_lines("빈 구간"), "대본 읽기: 「이름: 대사」 · 이름 없는 줄 · 메모 · 빈 구간")
+	_check(not Story.play("빈 구간"), "빈 구간은 아무것도 나오지 않음")
+	_check(Story.play("테스트") and get_tree().paused and Story.is_playing(), "대화창이 뜨면 게임이 멈춤")
+	var box := Story.get_box()
+	_check(Story.portrait_for("성기사") != null and Story.portrait_for("슬라임 킹") != null and Story.portrait_for("해설") == Story.portraits["해설"] and Story.portrait_for("아무도아닌이름") == null, "초상화: 주인공 · 보스 이름으로 자동 · @초상화로 지정")
+	await get_tree().process_frame
+	_check(box.is_typing(), "글자가 한 자씩 나옴")
+	box.advance()
+	_check(not box.is_typing() and box.current_line()["name"] == "성기사", "넘기면 먼저 그 줄을 다 보여 줌")
+	box.advance()
+	_check(box.current_line()["name"] == "슬라임 킹", "다시 넘기면 다음 줄")
+	Story.skip()
+	_check(not Story.is_playing() and not get_tree().paused, "마지막 줄을 넘기면 대화창이 닫히고 게임이 다시 움직임")
+	_check(not Story.play("테스트"), "한 번 본 대사는 같은 모험에서 다시 나오지 않음")
+	Story.load_text("[1스테이지 도착]\n성기사: 도착했다\n")
+	get_tree().paused = true
+	Story.queue("1스테이지 도착")
+	for i in 3:
+		await get_tree().process_frame
+	_check(not Story.is_playing(), "상점 등으로 멈춰 있는 동안은 대사가 기다림")
+	get_tree().paused = false
+	for i in 3:
+		await get_tree().process_frame
+	_check(Story.is_playing(), "멈춤이 풀리면 이어서 대화창")
+	Story.skip()
+	Story.load_text("[상인]\n상인: 어서 오게, 손님\n")
+	keeper._interact()
+	_check(Story.is_playing() and Story.get_box().current_line()["name"] == "상인", "상인에게 말을 걸면 상점보다 먼저 대사")
+	Story.skip()
+	for i in 3:
+		await get_tree().process_frame
+	_check(shop_ui.visible and get_tree().paused, "대사가 끝나면 상점이 열림")
+	shop_ui.close()
+	keeper._interact()
+	await get_tree().process_frame
+	_check(not Story.is_playing() and shop_ui.visible, "같은 스테이지에서는 상인 대사가 한 번만 (바로 상점)")
+	shop_ui.close()
+	Story.reset()
+	Story.load_file(Story.STORY_PATH)
+	Story.enabled = false
+
+
 func _run() -> void:
 	_gm = get_node("/root/GameManager")
+	Story.enabled = false  # 대본에 대사가 채워져 있어도 자동 테스트가 대화창에서 멈추지 않게
 
 	print("[타이틀 / 난이도]")
 	var title: Control = (load("res://scenes/title/title.tscn") as PackedScene).instantiate()
@@ -4141,6 +4192,7 @@ func _run() -> void:
 	var player := main.get_node("Entities/Player") as Player
 	var entities := main.get_node("Entities") as Node2D
 	var pool := main.get_node("ProjectilePool") as ProjectilePool
+	await _test_dialogue(main)
 	var stage := main.get_node("StageManager") as StageManager
 	var hud := main.get_node("HUD") as HUD
 	var shop := main.get_node("ShopUI") as ShopUI

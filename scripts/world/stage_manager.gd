@@ -123,7 +123,8 @@ func _ready() -> void:
 	_arrive_at_camp()
 	# 문구는 띄우는 순간의 스테이지로 만듦 (그 사이 스테이지가 바뀌어도 맞는 번호가 나오게)
 	get_tree().create_timer(0.3, false).timeout.connect(func() -> void:
-		GameManager.show_notice("STAGE %d 「%s」 — 상인에게서 장비를 갖추고 텔레포트[E]로 사냥터에 가세요" % [GameManager.stage, GameManager.stage_name], Color(0.6, 1.0, 0.7)))
+		GameManager.show_notice("STAGE %d 「%s」 — 상인에게서 장비를 갖추고 텔레포트[E]로 사냥터에 가세요" % [GameManager.stage, GameManager.stage_name], Color(0.6, 1.0, 0.7))
+		Story.queue("%d스테이지 도착" % GameManager.stage))
 
 
 func _process(delta: float) -> void:
@@ -279,6 +280,7 @@ func _do_go_to_next_stage() -> void:
 	_setup_stage(next_stage)
 	_arrive_at_camp()
 	GameManager.show_notice("STAGE %d 「%s」 도착!" % [next_stage, GameManager.stage_name], Color(0.6, 1.0, 0.7))
+	Story.queue("%d스테이지 도착" % next_stage)
 	var unlocked := _rarity_unlocked_at(next_stage)
 	if unlocked != "":
 		_notice_later("상점에 %s 등급 장비가 입고되었습니다!" % unlocked, Color(1.0, 0.85, 0.4), 2.8)
@@ -349,11 +351,16 @@ func _spawn_boss() -> void:
 	Fx.explosion(player, at, Color(1.0, 0.4, 0.4), 50.0, 3)
 	GameManager.report_boss_spawned("%s  · 방어력 %d" % [boss.display_name, boss.defense], boss.max_hp)
 	GameManager.show_notice(data.boss_intro_text if data.boss_intro_text != "" else "보스 등장: %s" % boss.display_name, Color(1.0, 0.4, 0.5))
+	if _hidden_active:
+		Story.queue("히든 보스 등장")
+	elif not _finale_active:  # 최종장은 최종 보스가 직접 [최종장 등장] 대사를 띄움
+		Story.queue("%d스테이지 보스 등장" % GameManager.stage)
 
 
 func _on_boss_defeated() -> void:
 	_boss = null
 	_state = State.CLEARED
+	Story.queue("히든 보스 토벌" if _hidden_active else ("최종장 토벌" if _finale_active else "%d스테이지 보스 토벌" % GameManager.stage))
 	GameManager.report_boss_defeated()
 	_release_projectiles()
 	GameManager.heal_full()

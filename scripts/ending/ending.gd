@@ -64,6 +64,8 @@ func _ready() -> void:
 	_record_panel.modulate.a = 0.0
 	_record_panel.hide()
 	_add_light_particles()
+	if Story.play("엔딩"):
+		await Story.finished
 	_play_sequence()
 
 

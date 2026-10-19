@@ -22,4 +22,10 @@ extends Interactable
 
 func _interact() -> void:
 	super._interact()
+	# 대본에 이 스테이지의 상인 대사([N스테이지 상인], 없으면 [상인])가 있으면 스테이지마다 한 번 먼저 말을 건넴
+	var key := "%d스테이지 상인" % GameManager.stage
+	if not Story.has_lines(key):
+		key = "상인"
+	if Story.play(key, "상인@%d" % GameManager.stage):
+		await Story.finished
 	GameManager.request_shop(shop_name, stock_ids)

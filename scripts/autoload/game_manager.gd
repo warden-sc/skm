@@ -159,6 +159,7 @@ func _ready() -> void:
 func start_new_game(new_difficulty: Difficulty) -> void:
 	difficulty = new_difficulty
 	reset_game()
+	Story.reset()  # 새 모험에서는 대사를 처음부터
 
 
 ## 새 게임 / 재시작 시 모든 데이터를 초기화합니다. (난이도는 유지)

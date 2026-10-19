@@ -184,6 +184,7 @@ func reveal() -> void:
 		_player.shake_camera(8.0)
 	GameManager.show_notice("상인의 모습이 찢어지고 — 멀티버스의 주인이 정체를 드러낸다!", Color(1.0, 0.55, 1.0))
 	shift_world()
+	Story.queue("최종장 정체")
 
 
 func _begin_transform() -> void:
@@ -196,6 +197,10 @@ func _intro_process(delta: float) -> void:
 	_mode_left -= delta
 	if mode == Mode.MERCHANT:
 		if _mode_left <= 0.0:
+			if _line == 0 and Story.play("최종장 등장"):  # 대본에 정체 고백이 있으면 기본 대사 대신 대화창으로
+				_line = LINES.size()
+				_mode_left = 0.3
+				return
 			if _line < LINES.size():
 				GameManager.show_notice("상인: 「%s」" % LINES[_line], Color(1.0, 0.85, 0.55))
 				_line += 1
