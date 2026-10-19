@@ -102,11 +102,12 @@ func change_wind() -> void:
 	if get_wind() == null:
 		return
 	var current := wind.direction
-	var dir: Vector2 = (DIRECTIONS.pick_random() as Vector2).normalized()
-	for i in 4:
-		if dir.dot(current) < 0.6:
-			break
-		dir = (DIRECTIONS.pick_random() as Vector2).normalized()
+	# 지금과 확실히 다른 방향 중에서 고름 (같은 방향이 다시 나오지 않게)
+	var choices: Array[Vector2] = []
+	for d in DIRECTIONS:
+		if (d as Vector2).normalized().dot(current) < 0.6:
+			choices.append((d as Vector2).normalized())
+	var dir: Vector2 = choices.pick_random() if not choices.is_empty() else (DIRECTIONS.pick_random() as Vector2).normalized()
 	wind.set_wind(dir, wind_strength * (1.2 if phase_two else 1.0))
 	_wind_changes += 1
 	_wind_left = wind_interval * (0.7 if phase_two else 1.0)
