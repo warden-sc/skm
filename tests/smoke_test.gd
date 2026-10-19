@@ -4352,6 +4352,13 @@ func _test_gear(main: Node2D) -> void:
 	_check(int(_gm.get_set_counts().get(&"mythic", 0)) == 10 and is_equal_approx(_gm.get_master_damage_bonus(), 0.3) and _gm.get_damage_reduction() > 0.0,
 		"신화의 유산 10세트: 「억제의 권능」 멀티버스의 주인에게 주는 피해 +30%% · 받는 피해 -%d%%" % roundi(_gm.get_damage_reduction() * 100.0))
 	_check(_gm.weapon_slots[0].id == &"abaddon_sword" and player.get_dash_cooldown() < player.dash_cooldown, "헤르메스의 신발: 대시 대기시간 %.2f초 → %.2f초" % [player.dash_cooldown, player.get_dash_cooldown()])
+	var inv_ui := main.get_node("InventoryUI")
+	inv_ui.open()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var inv_panel := inv_ui.get_node("Panel") as Control
+	_check(Rect2(Vector2.ZERO, inv_panel.get_viewport_rect().size).encloses(inv_panel.get_global_rect()), "긴 장비 이름 · 세트 설명이 있어도 인벤토리 창이 화면 안에")
+	inv_ui.close()
 	# 사용 아이템 · 포션
 	var elixir := ItemDB.get_potion(&"elixir")
 	_check(elixir.rarity == ItemData.Rarity.LEGENDARY and elixir.get_unlock_stage() == 71 and ItemDB.get_shop_items().has(elixir) and elixir.get_heal(_gm.max_hp) >= _gm.max_hp, "전설 포션 「전설의 엘릭서」: 71스테이지부터 상점 · 체력 전부 + 재생")

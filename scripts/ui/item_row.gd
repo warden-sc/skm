@@ -33,6 +33,8 @@ static func build(item: ItemData, buttons: Array[Button], on_hover: Callable, lo
 	name_label.add_theme_color_override(&"font_outline_color", Color(0.08, 0.08, 0.12))
 	name_label.add_theme_constant_override(&"outline_size", 3)
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS  # 긴 이름 · 요약이 창을 넓히지 않게
+	name_label.custom_minimum_size = Vector2(40, 0)
 	row.add_child(name_label)
 
 	for button in buttons:
