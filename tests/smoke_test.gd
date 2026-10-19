@@ -3812,6 +3812,7 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 			_check(not _gm.is_game_cleared and next_portal.enabled, "%d스테이지 보스 토벌 → 다음 스테이지 텔레포트" % n)
 			if n == 50:
 				_check(not _gm.key_items.has(&"prometheus_ember") and _gm.has_relic(&"primal_flame"), "헤파이스토스가 불씨를 제련 → 「원초의 불꽃」 (신화 사용 아이템)")
+				_check(not _gm.use_relic(ItemDB.get_relic(&"primal_flame")) and not _gm.has_buff("원초의 불꽃"), "원초의 불꽃은 100스테이지 클리어 전까지 봉인 (쓸 수 없음)")
 	return final_boss
 
 
@@ -3894,6 +3895,9 @@ func _test_hidden_dungeon(main: Node2D, heli_end: BossHelicion) -> void:
 		await _frames(4)
 	_check(_gm.hidden_cleared and not stage.is_in_hidden_dungeon() and stage.get_chest() != null and next_portal_end.enabled and next_portal_end.prompt_text.contains("36") and not _gm.is_game_cleared, "아르케 토벌 → 고대 용의 보물상자 + 36스테이지 텔레포트")
 	_check(_gm.get_potion_count(&"dragon_blood") == StageManager.DRAGON_BLOOD_REWARD, "[히든] 아르케 토벌 → 신화 포션 「고대 용의 피」 %d병" % _gm.get_potion_count(&"dragon_blood"))
+	_gm.damage_player(100)
+	_check(ItemDB.get_potion(&"dragon_blood").is_sealed() and not _gm.use_potion(ItemDB.get_potion(&"dragon_blood")) and _gm.get_potion_count(&"dragon_blood") == StageManager.DRAGON_BLOOD_REWARD, "고대 용의 피는 100스테이지 클리어 전까지 봉인 (마실 수 없음)")
+	_gm.heal_full()
 	_check(WindField.active == null and get_tree().get_nodes_in_group(&"storm_fields").is_empty(), "아르케가 쓰러지면 바람·룬·빙판이 정리됨")
 	var items_before := _item_pickups(main.get_node("Entities")).size()
 	stage.get_chest()._interact()

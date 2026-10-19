@@ -278,7 +278,7 @@ func _die() -> void:
 		# 프로메테우스의 불씨 → 헤파이스토스가 쓰러지며 용광로에서 「원초의 불꽃」으로 제련
 		GameManager.key_items.erase(&"prometheus_ember")
 		GameManager.add_relic(ItemDB.get_relic(&"primal_flame"))
-		GameManager.show_notice("프로메테우스의 불씨가 용광로 속에서 다시 타올라 「원초의 불꽃」이 되었다! — [Z] 사용", Color(1.0, 0.6, 0.25))
+		GameManager.show_notice("프로메테우스의 불씨가 용광로 속에서 다시 타올라 「원초의 불꽃」이 되었다! — 봉인됨 · 100스테이지를 클리어하면 [Z] 로 사용", Color(1.0, 0.6, 0.25))
 	super._die()
 
 

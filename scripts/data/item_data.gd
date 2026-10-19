@@ -148,5 +148,6 @@ func get_extra_text() -> String:
 	if set_id != &"":
 		lines.append(ItemSets.describe(set_id))
 	if is_mythic():
-		lines.append("신화 장비 — 판매 불가" + ("  ·  [봉인] 100스테이지를 클리어하면 착용 가능" if is_sealed() else "  ·  봉인 해제됨"))
+		var verb := "사용" if (self is PotionData or self is RelicData) else "착용"
+		lines.append("신화 — 판매 불가" + ("  ·  [봉인] 100스테이지를 클리어하면 %s 가능" % verb if is_sealed() else "  ·  봉인 해제됨"))
 	return "\n".join(lines)

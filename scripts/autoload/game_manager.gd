@@ -689,6 +689,9 @@ func use_potion(potion: PotionData = null) -> bool:
 	if potion == null or get_potion_count(potion.id) <= 0:
 		show_notice("회복 포션이 없습니다! 야영지 상인에게서 구매하세요", Color(1.0, 0.6, 0.5))
 		return false
+	if potion.is_sealed():
+		show_notice("[봉인] %s — 100스테이지를 클리어하면 쓸 수 있다" % potion.display_name, potion.get_rarity_color())
+		return false
 	if hp >= max_hp and potion.buff_duration <= 0.0 and not potion.cleanse:
 		show_notice("체력이 가득 차 있습니다", Color(0.8, 0.9, 1.0))
 		return false
@@ -784,6 +787,9 @@ func get_relic_cooldown(relic: RelicData) -> float:
 ## 사용 아이템 쓰기 (효과는 relic_used 를 받은 Player 가 냄). 실제로 썼으면 true
 func use_relic(relic: RelicData) -> bool:
 	if relic == null or is_player_dead or not has_relic(relic.id):
+		return false
+	if relic.is_sealed():
+		show_notice("[봉인] %s — 100스테이지를 클리어하면 쓸 수 있다" % relic.display_name, relic.get_rarity_color())
 		return false
 	if get_relic_cooldown(relic) > 0.0:
 		show_notice("%s — %.0f초 뒤에 다시 쓸 수 있다" % [relic.display_name, ceilf(get_relic_cooldown(relic))], Color(0.8, 0.8, 0.9))

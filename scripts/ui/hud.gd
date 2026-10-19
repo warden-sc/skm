@@ -207,6 +207,8 @@ func _rebuild_hotbar() -> void:
 		_hotbar.add_child(_make_spacer())
 		var blood_slot := _make_slot(ItemDB.get_potion(&"dragon_blood"), WEAPON_SLOT_SIZE, "C", false)
 		blood_slot.name = "DragonBloodSlot"
+		if ItemDB.get_potion(&"dragon_blood").is_sealed():
+			blood_slot.modulate = Color(0.45, 0.45, 0.5)
 		blood_slot.add_child(_corner_label("x%d" % blood_count, Color(1.0, 0.6, 0.6)))
 		_hotbar.add_child(blood_slot)
 	for relic in GameManager.relics:
@@ -237,8 +239,8 @@ func _process(_delta: float) -> void:
 		var label := _relic_labels.get(relic.id) as Label
 		if label != null and is_instance_valid(label):
 			var cd := GameManager.get_relic_cooldown(relic)
-			label.text = "%d" % ceili(cd) if cd > 0.0 else ""
-			(label.get_parent() as CanvasItem).modulate = Color(0.55, 0.55, 0.6) if cd > 0.0 else Color.WHITE
+			label.text = "봉인" if relic.is_sealed() else ("%d" % ceili(cd) if cd > 0.0 else "")
+			(label.get_parent() as CanvasItem).modulate = Color(0.45, 0.45, 0.5) if relic.is_sealed() else (Color(0.55, 0.55, 0.6) if cd > 0.0 else Color.WHITE)
 
 
 ## 포션 칸: [H] 로 마실 포션 아이콘 + 총 개수

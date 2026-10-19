@@ -715,7 +715,7 @@ func _on_hidden_boss_defeated() -> void:
 	var blood := ItemDB.get_potion(&"dragon_blood")
 	if blood != null:
 		var got := GameManager.add_potion(blood, DRAGON_BLOOD_REWARD)
-		_notice_later("[신화] 고대 용의 피 %d병을 받았다 — [C] 체력 전부 회복 · %d초 재생 · 받는 피해 -%d%%" % [got, roundi(blood.buff_duration), roundi(blood.buff_reduction * 100.0)], blood.get_rarity_color(), 2.4)
+		_notice_later("[신화] 고대 용의 피 %d병을 받았다 — 봉인됨 · 100스테이지를 클리어하면 [C] 로 사용" % got, blood.get_rarity_color(), 2.4)
 	_spawn_chest(true)
 	next_stage_portal.set_prompt(_next_portal_prompt())
 	next_stage_portal.enabled = true

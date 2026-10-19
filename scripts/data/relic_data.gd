@@ -1,6 +1,7 @@
 class_name RelicData
 extends ItemData
 ## 신화 사용 아이템 — 장착하지 않고 키를 눌러 사용, 쓰고 나면 cooldown 초 뒤에 다시 쓸 수 있음 (소모되지 않음)
+## 신화 장비처럼 100스테이지를 클리어하기 전에는 봉인 (가지고만 있고 사용 불가)
 ##   원초의 불꽃 [Z]: 49스테이지 프로메테우스의 불씨를 50스테이지 헤파이스토스가 제련 (헤파이스토스 토벌 때)
 ##     duration 초 동안 공격력 +attack_bonus · 이동 속도 +move_bonus · 화상 면역
 ##     내 공격에 맞은 적이 불탐 — 0.5초마다 (그 일격 피해 × burn_ratio), burn_duration 초
