@@ -122,10 +122,10 @@ func _on_data_changed() -> void:
 
 func _refresh() -> void:
 	_gold_label.text = "보유 골드: %d G" % GameManager.gold
-	for child in _buy_list.get_children():
-		child.queue_free()
-	for child in _inventory_list.get_children():
-		child.queue_free()
+	for list in [_buy_list, _inventory_list]:
+		for child in (list as Node).get_children():
+			(list as Node).remove_child(child)  # 바로 빼서 목록 개수가 정확하게
+			child.queue_free()
 
 	for i in _tab_buttons.size():
 		_tab_buttons[i].set_pressed_no_signal(i == category)

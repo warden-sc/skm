@@ -74,6 +74,7 @@ func _refresh() -> void:
 	_gold_label.text = "보유 골드: %d G" % GameManager.gold
 	for container in [_weapon_slots, _armor_slots, _accessory_slots, _bag_list]:
 		for child in (container as Node).get_children():
+			(container as Node).remove_child(child)  # 바로 빼서 개수가 정확하게 (같은 프레임에 여러 번 갱신돼도)
 			child.queue_free()
 
 	for i in GameManager.weapon_slots.size():
@@ -142,10 +143,14 @@ func _stats_text() -> String:
 		lines.append("치명타 확률 %d%% · 치명타 피해 x%.1f" % [roundi(GameManager.get_crit_chance(weapon) * 100.0), weapon.crit_multiplier + GameManager.get_crit_damage_bonus()])
 		lines.append("방어력 관통(방깍) %d · 공격력 +%d%%" % [GameManager.get_armor_pen(weapon), roundi(GameManager.get_attack_bonus() * 100.0)])
 	lines.append("방어력 %d · 최대 HP %d · 이속 +%d%% · 재생 %.1f/s" % [GameManager.get_total_defense(), GameManager.max_hp, roundi(GameManager.get_move_speed_bonus() * 100.0), GameManager.get_hp_regen()])
+	# 세트는 한 줄로 (자세한 효과는 장비에 마우스를 올리면 설명칸에)
 	var counts := GameManager.get_set_counts()
+	var sets := PackedStringArray()
 	for set_id in counts:
 		if int(counts[set_id]) >= 2:
-			lines.append(ItemSets.describe(set_id, int(counts[set_id])))
+			sets.append("%s %d/%d" % [ItemSets.get_set_name(set_id), int(counts[set_id]), ItemSets.get_piece_count(set_id)])
+	if not sets.is_empty():
+		lines.append("세트: " + " · ".join(sets))
 	if not GameManager.key_items.is_empty():
 		var treasures := PackedStringArray()
 		for key in GameManager.key_items:

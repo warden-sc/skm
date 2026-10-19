@@ -4357,7 +4357,7 @@ func _test_gear(main: Node2D) -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	var inv_panel := inv_ui.get_node("Panel") as Control
-	_check(Rect2(Vector2.ZERO, inv_panel.get_viewport_rect().size).encloses(inv_panel.get_global_rect()), "긴 장비 이름 · 세트 설명이 있어도 인벤토리 창이 화면 안에")
+	_check(Rect2(Vector2.ZERO, inv_panel.get_viewport_rect().size).encloses(inv_panel.get_global_rect()), "긴 장비 이름 · 세트 설명이 있어도 인벤토리 창이 화면 안에 (%s)" % inv_panel.get_global_rect())
 	inv_ui.close()
 	# 사용 아이템 · 포션
 	var elixir := ItemDB.get_potion(&"elixir")
