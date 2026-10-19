@@ -156,6 +156,17 @@ func _ready() -> void:
 
 
 ## 타이틀에서 난이도를 고르고 새 게임 시작
+## 플레이어가 지은 용사의 이름 (대본의 「용사」가 이 이름으로 바뀜). 새 게임에서도 그대로 유지
+const DEFAULT_HERO_NAME := "용사"
+const HERO_NAME_MAX := 12
+var hero_name: String = DEFAULT_HERO_NAME
+
+
+func set_hero_name(new_name: String) -> void:
+	new_name = new_name.strip_edges().left(HERO_NAME_MAX)
+	hero_name = new_name if new_name != "" else DEFAULT_HERO_NAME
+
+
 func start_new_game(new_difficulty: Difficulty) -> void:
 	difficulty = new_difficulty
 	reset_game()

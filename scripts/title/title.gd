@@ -19,7 +19,7 @@ const CONTROLS := [
 	["ESC", "창 닫기"],
 	["R / T", "쓰러졌을 때 다시 시작 / 타이틀로"],
 ]
-const FLOW_TEXT := "진행: 야영지 상인에게서 장비 구매·판매 → 텔레포트로 사냥터 → 몬스터를 처치해 보스방 봉인 해제 → 보스 토벌 → 보물상자(다음 등급 장비) → 다음 스테이지 … 10스테이지 보스를 쓰러뜨리면 엔딩"
+const FLOW_TEXT := "진행: 야영지 상인에게서 장비 구매·판매 → 텔레포트로 사냥터 → 몬스터를 처치해 보스방 봉인 해제 → 보스 토벌 → 보물상자(다음 등급 장비) → 다음 스테이지 … 100스테이지 보스 → 최종장까지 쓰러뜨리면 엔딩"
 
 @onready var _title_label: Label = %TitleLabel
 @onready var _difficulty_panel: Control = %DifficultyPanel
@@ -29,6 +29,7 @@ const FLOW_TEXT := "진행: 야영지 상인에게서 장비 구매·판매 → 
 @onready var _key_grid: GridContainer = %KeyGrid
 @onready var _flow_label: Label = %FlowLabel
 @onready var _start_button: Button = %StartButton
+@onready var _hero_name_edit: LineEdit = %HeroNameEdit
 
 var _selected: GameManager.Difficulty = GameManager.Difficulty.NORMAL
 var _time: float = 0.0
@@ -56,6 +57,8 @@ func _ready() -> void:
 	_add_embers()
 	(%NormalButton as Button).grab_focus()
 	_show_description(GameManager.Difficulty.NORMAL)
+	_hero_name_edit.text = GameManager.hero_name if GameManager.hero_name != GameManager.DEFAULT_HERO_NAME else ""
+	_hero_name_edit.text_submitted.connect(func(_t: String) -> void: start_game())
 
 
 func _process(delta: float) -> void:
@@ -76,7 +79,13 @@ func select_difficulty(difficulty: GameManager.Difficulty) -> void:
 
 func start_game() -> void:
 	GameManager.start_new_game(_selected)
+	GameManager.set_hero_name(get_hero_name())
 	get_tree().change_scene_to_file(MAIN_SCENE)
+
+
+## 입력한 용사의 이름 (비워 두면 「용사」)
+func get_hero_name() -> String:
+	return _hero_name_edit.text
 
 
 func get_selected_difficulty() -> GameManager.Difficulty:

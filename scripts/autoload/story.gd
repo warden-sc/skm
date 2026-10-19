@@ -9,6 +9,8 @@ extends Node
 ##   [구간 이름]          ← 예: [1스테이지 도착] [1스테이지 보스 등장] [1스테이지 보스 토벌] [1스테이지 상인] [상인] [최종장 등장] [엔딩]
 ##   이름: 대사            ← 이름 없이 대사만 쓰면 이름 · 초상화 없이 나옴
 ##   @초상화 이름 = res://assets/sprites/characters/그림.png   ← 그 이름의 초상화를 바꿈
+##   보스: 대사            ← 「보스」는 그 구간 스테이지의 보스 이름 · 초상화로 바뀜 (히든 → 고대 드래곤 아르케, 최종장 → 상인 / 멀티버스의 주인)
+##   용사: 대사            ← 「용사」는 이름 · 대사 모두 플레이어가 지은 용사의 이름으로 바뀜 (GameManager.hero_name)
 ##   @장면: 설명            ← 넣고 싶은 게임 장면 요청 (게임에는 나오지 않음, scene_notes 에 구간과 함께 모아 둠)
 ##   그 밖의 @ 로 시작하는 줄도 게임에는 나오지 않음
 
@@ -17,7 +19,9 @@ signal finished(key: String)
 const STORY_PATH := "res://data/story/story.txt"
 const OVERRIDE_FILE := "story.txt"
 const CHARACTERS := "res://assets/sprites/characters/"
-const PLAYER_NAMES := ["성기사", "주인공", "나", "플레이어"]
+const PLAYER_NAMES := ["성기사", "주인공", "나", "플레이어", "용사"]
+const BOSS_WORD := "보스"
+const HERO_WORD := "용사"
 const MERCHANT_NAMES := ["상인", "떠돌이 대장장이", "수상한 상인"]
 
 ## false 면 대사를 건너뜀 (자동 테스트용)
@@ -133,9 +137,44 @@ func play(key: String, mark: String = "") -> bool:
 		_box = DialogueBox.new()
 		_box.done.connect(_on_box_done)
 		get_tree().root.add_child(_box)
-	_box.start(sections[key])
+	_box.start(resolve_lines(key))
 	get_tree().paused = true
 	return true
+
+
+## 「보스」 · 「용사」를 실제 이름으로 바꾼 대사
+func resolve_lines(key: String) -> Array:
+	var out: Array = []
+	var hero := GameManager.hero_name
+	for line in (sections.get(key, []) as Array):
+		var speaker: String = line["name"]
+		if speaker == BOSS_WORD:
+			speaker = boss_name_for(key)
+		elif speaker == HERO_WORD:
+			speaker = hero
+		out.append({"name": speaker, "text": (line["text"] as String).replace(HERO_WORD, hero)})
+	return out
+
+
+## 구간에 맞는 보스 이름 — [N스테이지 …] 는 N스테이지 보스, [히든 …] 은 히든 보스, [최종장 등장] 은 상인, [최종장 …] 은 멀티버스의 주인
+func boss_name_for(key: String) -> String:
+	var manager := get_tree().get_first_node_in_group(&"stage_manager") as StageManager
+	if key.begins_with("최종장"):
+		return "상인" if key == "최종장 등장" else "멀티버스의 주인"
+	var data: StageData = null
+	if manager != null:
+		var at := key.find("스테이지")
+		if key.begins_with("히든"):
+			data = manager.hidden_stage
+		elif at > 0 and key.left(at).is_valid_int():
+			data = manager.get_stage_data(key.left(at).to_int())
+		else:
+			data = manager.get_stage_data()
+	if data != null and data.boss_scene != null:
+		var info := _scene_info(data.boss_scene)
+		if not info.is_empty():
+			return info["name"]
+	return BOSS_WORD
 
 
 ## 지금 대화창을 끝까지 넘김 (테스트용)
@@ -163,7 +202,7 @@ func portrait_for(speaker: String) -> Texture2D:
 	if _cache.has(speaker):
 		return _cache[speaker]
 	var tex: Texture2D = null
-	if speaker in PLAYER_NAMES:
+	if speaker in PLAYER_NAMES or speaker == GameManager.hero_name:
 		tex = load(CHARACTERS + "player.png") as Texture2D
 	elif speaker in MERCHANT_NAMES:
 		tex = load(CHARACTERS + "merchant.png") as Texture2D
