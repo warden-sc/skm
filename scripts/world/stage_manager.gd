@@ -333,6 +333,11 @@ func _set_boss_decor(data: StageData) -> void:
 	_add_entity(_boss_decor, boss_spawn.global_position + data.boss_decor_offset)
 
 
+## 지금 싸우는 보스 (없으면 null)
+func get_boss() -> Enemy:
+	return _boss if is_instance_valid(_boss) else null
+
+
 func get_boss_decor() -> Sprite2D:
 	return _boss_decor if is_instance_valid(_boss_decor) else null
 

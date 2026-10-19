@@ -4028,6 +4028,7 @@ func _test_finale(main: Node2D) -> BossMultiverseMaster:
 	master.take_damage(master.hp - roundi(master.max_hp * 0.6), Vector2.ZERO, false, 999999)
 	await _frames(4)
 	_check(master.get_phase() == 2 and master.living_rifts().size() == 2, "[기믹] 체력 2/3 이하 — 멀티버스의 균열 둘이 열림")
+	_check(master.is_awakened() and master.sprite.modulate == BossMultiverseMaster.AWAKEN_TINT and master.has_node("AwakenAura"), "[각성] 2페이즈 시작 — 각성 연출 (몸이 붉은 보라로 타오르는 오라)")
 	hp = master.hp
 	master.take_damage(1000, Vector2.ZERO, false, 999999)
 	_check(hp - master.hp <= 620, "균열이 열려 있으면 주인에게 피해 60%")
@@ -4160,18 +4161,71 @@ func _test_dialogue(main: Node2D) -> void:
 		await get_tree().process_frame
 	_check(Story.is_playing(), "멈춤이 풀리면 이어서 대화창")
 	Story.skip()
-	Story.load_text("[상인]\n상인: 어서 오게, 손님\n")
+	Story.load_text("[상인]\n상인: 좋은 물건이 많이 있어\n[%d스테이지 상인]\n상인: 이 스테이지 전용\n" % _gm.stage)
 	keeper._interact()
-	_check(Story.is_playing() and Story.get_box().current_line()["name"] == "상인", "상인에게 말을 걸면 상점보다 먼저 대사")
+	_check(Story.is_playing() and Story.get_box().current_line()["text"] == "이 스테이지 전용", "상인에게 처음 말을 걸면 그 스테이지 전용 대사가 상점보다 먼저")
 	Story.skip()
 	for i in 3:
 		await get_tree().process_frame
 	_check(shop_ui.visible and get_tree().paused, "대사가 끝나면 상점이 열림")
 	shop_ui.close()
-	keeper._interact()
-	await get_tree().process_frame
-	_check(not Story.is_playing() and shop_ui.visible, "같은 스테이지에서는 상인 대사가 한 번만 (바로 상점)")
-	shop_ui.close()
+	for n in 2:
+		keeper._interact()
+		_check(Story.is_playing() and Story.get_box().current_line()["text"] == "좋은 물건이 많이 있어", "다시 말을 걸면 [상인] 대사 — 말을 걸 때마다 (%d번째)" % (n + 2))
+		Story.skip()
+		for i in 3:
+			await get_tree().process_frame
+		shop_ui.close()
+	# 표정 · 긴 대사 · @연출
+	Story.load_text("@초상화 상인[미소] = res://assets/sprites/characters/merchant_smirk.png\n[표정]\n상인[미소]: 흐흐\n상인[미소]: 또 흐흐\n상인[없는표정]: 그냥\n[긴 대사]\n보스: %s\n[연출]\n성기사: 시작\n@연출: 장비빛남\n빛이 난다\n[연출만]\n@연출: 장비빛남\n[최종장 정체]\n상인: 자 그럼\n" % "가나다라마 ".repeat(40))
+	lines = Story.resolve_lines("표정")
+	_check(lines[0]["name"] == "상인" and lines[0]["face"] == "상인[미소]" and Story.portrait_for("상인[미소]") == load("res://assets/sprites/characters/merchant_smirk.png") and Story.portrait_for("상인[없는표정]") == Story.portrait_for("상인"), "이름[표정]: 이름은 그대로, 초상화는 표정 그림 (없으면 평소 얼굴)")
+	Story.play("표정")
+	box = Story.get_box()
+	_check(box.current_portrait() == Story.portrait_for("상인"), "표정이 바뀌는 줄은 평소 얼굴이 먼저 보이고")
+	await get_tree().create_timer(DialogueBox.FACE_CHANGE_TIME + 0.2).timeout
+	_check(box.current_portrait() == Story.portrait_for("상인[미소]"), "…잠시 뒤 표정 그림으로 바뀜 (입꼬리가 올라감)")
+	box.advance()
+	box.advance()
+	_check(box.current_portrait() == Story.portrait_for("상인[미소]"), "같은 표정이 이어지면 바로 표정 그림")
+	Story.skip()
+	lines = Story.resolve_lines("긴 대사")
+	var fits := true
+	for l in lines:
+		fits = fits and (l["text"] as String).length() <= Story.PAGE_CHARS
+	_check(lines.size() >= 3 and fits, "긴 대사는 대화창 한 칸씩 나눠서 나옴 (%d칸)" % lines.size())
+	_check(Story.resolve_lines("최종장 정체")[0]["name"] == "상인" and Story.portrait_for(Story.resolve_lines("최종장 정체")[0]["face"]) == Story.portrait_for("멀티버스의 주인"), "변신한 뒤 최종장 구간의 「상인」은 멀티버스의 주인 얼굴")
+	var cue_seen: Array[String] = []
+	var on_cue := func(n: String) -> void: cue_seen.append(n)
+	Story.cue.connect(on_cue)
+	Story.play("연출")
+	box = Story.get_box()
+	box.advance()
+	box.advance()
+	_check(cue_seen == ["장비빛남"] and box.current_line()["text"] == "빛이 난다", "@연출 줄은 장면을 틀고 바로 다음 대사로")
+	var glow := (main.get_node("Entities/Player") as Node).get_children().filter(func(c: Node) -> bool: return c is StoryCues.EquipmentGlow)
+	_check(glow.size() == 1 and (glow[0] as StoryCues.EquipmentGlow).icons.size() >= 2, "[장면] 장비빛남: 용사 둘레에 가진 장비가 떠올라 빛남 (장비 %d개)" % ((glow[0] as StoryCues.EquipmentGlow).icons.size() if glow.size() == 1 else 0))
+	var glow_time: float = (glow[0] as StoryCues.EquipmentGlow)._time if glow.size() == 1 else 0.0
+	await get_tree().create_timer(0.3).timeout
+	_check(glow.size() == 1 and (glow[0] as StoryCues.EquipmentGlow)._time > glow_time and get_tree().paused, "대화창이 떠 있어도 (게임 일시정지) 장면은 움직임")
+	Story.skip()
+	_check(Story.play("연출만") and not Story.is_playing() and not get_tree().paused and cue_seen.size() == 2, "@연출 만 있는 구간도 멈추지 않고 끝남")
+	Story.cue.disconnect(on_cue)
+	await get_tree().create_timer(StoryCues.GLOW_TIME + 0.2).timeout
+	_check((main.get_node("Entities/Player") as Node).get_children().filter(func(c: Node) -> bool: return c is StoryCues.EquipmentGlow).is_empty() and (main.get_node("Entities/Player") as CanvasItem).modulate == Color.WHITE, "장면이 끝나면 사라지고 용사의 빛도 원래대로")
+	# 실제 대본
+	Story.load_file(Story.STORY_PATH)
+	var speakers_ok := true
+	for key in ["5스테이지 보스 등장", "10스테이지 보스 등장", "31스테이지 상인", "50스테이지 보스 토벌", "51스테이지 도착", "100스테이지 보스 토벌", "히든 보스 토벌", "최종장 등장", "최종장 정체", "최종장 2페이즈", "최종장 토벌", "상인"]:
+		_check(Story.has_lines(key), "대본 [%s] 에 대사가 있음" % key)
+		for l in Story.resolve_lines(key):
+			if l.has("cue"):
+				continue
+			if l["name"] != "" and Story.portrait_for(l["face"]) == null:
+				speakers_ok = false
+				print("    초상화 없음: [%s] %s" % [key, l["face"]])
+	_check(speakers_ok, "대본의 모든 이름에 초상화가 있음")
+	_check(Story.resolve_lines("5스테이지 보스 등장")[0]["name"] != Story.BOSS_WORD and Story.resolve_lines("51스테이지 도착")[0]["face"] == "상인[미소]" and Story.resolve_lines("100스테이지 보스 토벌").any(func(l: Dictionary) -> bool: return l.get("cue", "") == "장비빛남"), "대본: 「보스」 이름 · 51스테이지 상인의 미소 · 100스테이지 장비빛남 연출")
 	Story.reset()
 	Story.load_file(Story.STORY_PATH)
 	Story.enabled = false

@@ -8,6 +8,8 @@ signal done
 
 const CHARS_PER_SECOND := 40.0
 const PORTRAIT_SIZE := 56.0
+## 표정이 바뀔 때(이름[표정]) 평소 얼굴을 보여 주는 시간
+const FACE_CHANGE_TIME := 0.45
 
 var _lines: Array = []
 var _index: int = 0
@@ -17,6 +19,9 @@ var _portrait: TextureRect
 var _name: Label
 var _text: Label
 var _hint: Label
+var _face: String = ""
+var _face_left: float = 0.0
+var _face_texture: Texture2D
 
 
 func _ready() -> void:
@@ -88,6 +93,7 @@ func _ready() -> void:
 func start(lines: Array) -> void:
 	_lines = lines
 	_index = 0
+	_face = ""
 	visible = true
 	_show_line()
 
@@ -101,11 +107,28 @@ func current_line() -> Dictionary:
 
 
 func _show_line() -> void:
+	# @연출 줄: 장면을 틀고 바로 다음 대사로
+	while _index < _lines.size() and (_lines[_index] as Dictionary).has("cue"):
+		Story.run_cue(_lines[_index]["cue"])
+		_index += 1
+	if _index >= _lines.size():
+		_finish()
+		return
 	var line: Dictionary = _lines[_index]
 	var speaker: String = line.get("name", "")
+	var face: String = line.get("face", speaker)
 	_name.text = speaker
 	_name.visible = speaker != ""
-	var tex: Texture2D = Story.portrait_for(speaker) if speaker != "" else null
+	var tex: Texture2D = Story.portrait_for(face) if face != "" else null
+	_face_left = 0.0
+	# 표정이 바뀌는 줄: 평소 얼굴을 잠깐 보였다가 표정으로 (예: 상인[미소] — 입꼬리가 올라감)
+	if face != _face and face.ends_with("]") and Story.portraits.has(face):
+		var plain := Story.portrait_for(speaker)
+		if plain != null and plain != tex:
+			_face_texture = tex
+			_face_left = FACE_CHANGE_TIME
+			tex = plain
+	_face = face
 	_portrait.texture = tex
 	_portrait_frame.visible = tex != null
 	_text.text = line.get("text", "")
@@ -117,6 +140,10 @@ func _show_line() -> void:
 func _process(delta: float) -> void:
 	if not visible:
 		return
+	if _face_left > 0.0:
+		_face_left -= delta
+		if _face_left <= 0.0:
+			_portrait.texture = _face_texture
 	if is_typing():
 		_typed += delta * CHARS_PER_SECOND
 		_text.visible_characters = mini(int(_typed), _text.text.length())
@@ -145,7 +172,16 @@ func advance() -> void:
 		return
 	_index += 1
 	if _index >= _lines.size():
-		visible = false
-		done.emit()
+		_finish()
 	else:
 		_show_line()
+
+
+func _finish() -> void:
+	visible = false
+	done.emit()
+
+
+## 지금 초상화 (테스트용)
+func current_portrait() -> Texture2D:
+	return _portrait.texture

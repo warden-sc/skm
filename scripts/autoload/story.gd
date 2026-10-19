@@ -11,10 +11,13 @@ extends Node
 ##   @초상화 이름 = res://assets/sprites/characters/그림.png   ← 그 이름의 초상화를 바꿈
 ##   보스: 대사            ← 「보스」는 그 구간 스테이지의 보스 이름 · 초상화로 바뀜 (히든 → 고대 드래곤 아르케, 최종장 → 상인 / 멀티버스의 주인)
 ##   용사: 대사            ← 「용사」는 이름 · 대사 모두 플레이어가 지은 용사의 이름으로 바뀜 (GameManager.hero_name)
+##   이름[표정]: 대사      ← 이름은 그대로, 초상화만 「이름[표정]」 그림 (@초상화 로 지정 — 평소 얼굴이 잠깐 보였다가 바뀜)
 ##   @장면: 설명            ← 넣고 싶은 게임 장면 요청 (게임에는 나오지 않음, scene_notes 에 구간과 함께 모아 둠)
+##   @연출: 이름            ← 그 자리에서 장면을 보여 주고 다음 대사로 (StoryCues.run)
 ##   그 밖의 @ 로 시작하는 줄도 게임에는 나오지 않음
 
 signal finished(key: String)
+signal cue(cue_name: String)
 
 const STORY_PATH := "res://data/story/story.txt"
 const OVERRIDE_FILE := "story.txt"
@@ -23,6 +26,9 @@ const PLAYER_NAMES := ["성기사", "주인공", "나", "플레이어", "용사"
 const BOSS_WORD := "보스"
 const HERO_WORD := "용사"
 const MERCHANT_NAMES := ["상인", "떠돌이 대장장이", "수상한 상인"]
+const MASTER_NAME := "멀티버스의 주인"
+## 대화창 한 칸에 들어가는 글자 수 — 더 길면 띄어쓰기에서 나눠 여러 칸으로
+const PAGE_CHARS := 90
 
 ## false 면 대사를 건너뜀 (자동 테스트용)
 var enabled: bool = true
@@ -79,7 +85,11 @@ func load_text(text: String) -> void:
 					portraits[who] = load(path) as Texture2D
 			continue
 		if line.begins_with("@"):
-			if line.begins_with("@장면"):
+			if line.begins_with("@연출"):
+				var cue_name := line.substr(3).strip_edges().trim_prefix(":").strip_edges()
+				if key != "" and cue_name != "":
+					(sections[key] as Array).append({"name": "", "text": "", "cue": cue_name})
+			elif line.begins_with("@장면"):
 				var note := line.substr(3).strip_edges().trim_prefix(":").strip_edges()
 				scene_notes.append({"section": key, "index": (sections[key] as Array).size() if sections.has(key) else 0, "text": note})
 			continue
@@ -137,23 +147,57 @@ func play(key: String, mark: String = "") -> bool:
 		_box = DialogueBox.new()
 		_box.done.connect(_on_box_done)
 		get_tree().root.add_child(_box)
+	get_tree().paused = true  # 먼저 멈춤 — @연출 만 있는 구간은 start 안에서 바로 끝남
 	_box.start(resolve_lines(key))
-	get_tree().paused = true
 	return true
 
 
-## 「보스」 · 「용사」를 실제 이름으로 바꾼 대사
+## 「보스」 · 「용사」를 실제 이름으로 바꾼 대사: [{"name": 이름, "face": 초상화 이름, "text": 대사}, …] (@연출 은 {"cue": 이름})
+## 긴 대사는 PAGE_CHARS 씩 나눠 여러 줄로
 func resolve_lines(key: String) -> Array:
 	var out: Array = []
 	var hero := GameManager.hero_name
+	var transformed := key.begins_with("최종장") and key != "최종장 등장"
 	for line in (sections.get(key, []) as Array):
+		if line.has("cue"):
+			out.append({"name": "", "face": "", "text": "", "cue": line["cue"]})
+			continue
 		var speaker: String = line["name"]
+		var face_tag := ""
+		var bracket := speaker.find("[")
+		if bracket > 0 and speaker.ends_with("]"):
+			face_tag = speaker.substr(bracket)
+			speaker = speaker.left(bracket).strip_edges()
 		if speaker == BOSS_WORD:
 			speaker = boss_name_for(key)
 		elif speaker == HERO_WORD:
 			speaker = hero
-		out.append({"name": speaker, "text": (line["text"] as String).replace(HERO_WORD, hero)})
+		var face := speaker + face_tag
+		if transformed and face_tag == "" and speaker in MERCHANT_NAMES:
+			face = MASTER_NAME  # 변신한 뒤의 상인은 멀티버스의 주인 얼굴
+		for page in split_pages((line["text"] as String).replace(HERO_WORD, hero)):
+			out.append({"name": speaker, "face": face, "text": page})
 	return out
+
+
+## 긴 대사를 띄어쓰기에서 끊어 PAGE_CHARS 이하로 나눔
+static func split_pages(text: String) -> Array[String]:
+	var pages: Array[String] = []
+	var rest := text.strip_edges()
+	while rest.length() > PAGE_CHARS:
+		var cut := rest.rfind(" ", PAGE_CHARS)
+		if cut <= PAGE_CHARS / 3.0:
+			cut = PAGE_CHARS
+		pages.append(rest.left(cut).strip_edges())
+		rest = rest.substr(cut).strip_edges()
+	pages.append(rest)
+	return pages
+
+
+## @연출 장면을 보여 줌 (대화창이 넘어가며 호출)
+func run_cue(cue_name: String) -> void:
+	cue.emit(cue_name)
+	StoryCues.run(cue_name, get_tree())
 
 
 ## 구간에 맞는 보스 이름 — [N스테이지 …] 는 N스테이지 보스, [히든 …] 은 히든 보스, [최종장 등장] 은 상인, [최종장 …] 은 멀티버스의 주인
@@ -197,6 +241,8 @@ func _on_box_done() -> void:
 func portrait_for(speaker: String) -> Texture2D:
 	if speaker == "":
 		return null
+	if speaker.ends_with("]") and not portraits.has(speaker) and speaker.find("[") > 0:
+		speaker = speaker.left(speaker.find("[")).strip_edges()  # 표정 그림이 없으면 평소 얼굴
 	if portraits.has(speaker):
 		return portraits[speaker]
 	if _cache.has(speaker):
@@ -206,7 +252,7 @@ func portrait_for(speaker: String) -> Texture2D:
 		tex = load(CHARACTERS + "player.png") as Texture2D
 	elif speaker in MERCHANT_NAMES:
 		tex = load(CHARACTERS + "merchant.png") as Texture2D
-	elif speaker == "멀티버스의 주인":
+	elif speaker == MASTER_NAME:
 		tex = load(CHARACTERS + "multiverse_master.png") as Texture2D
 	else:
 		tex = _find_enemy_texture(speaker)

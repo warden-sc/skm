@@ -158,6 +158,13 @@ MERCHANT = [
     "....kkk..kkk....",
 ]
 
+# 51스테이지 대본: 입꼬리가 올라간 상인 (눈을 가늘게 뜨고 한쪽 입꼬리가 올라감)
+MERCHANT_SMIRK = MERCHANT[:6] + [
+    "...kskksskksk...",
+    "...kssssssskk...",
+    "....kWWkkkWk....",
+] + MERCHANT[9:]
+
 
 def slime_king():
     img = canvas(32)
@@ -8173,6 +8180,7 @@ def main():
     save(from_map(SLIME), "characters", "slime.png")
     save(from_map(GOBLIN), "characters", "goblin.png")
     save(from_map(MERCHANT), "characters", "merchant.png")
+    save(from_map(MERCHANT_SMIRK), "characters", "merchant_smirk.png")
     save(from_map(HELLHOUND), "characters", "hellhound.png")
     save(from_map(ORC), "characters", "orc.png")
     save(hell_gatekeeper(), "characters", "hell_gatekeeper.png")

@@ -12,6 +12,7 @@ extends PatternBoss
 ##   에덴의 동쪽(두루 도는 불칼) · 두라 평지(뜨인 돌 — 주인을 그 길로 끌어들이면 큰 피해) · 홍수(방주의 판자) · 백합의 정원(하늘의 전언)
 ## [기믹 2] 관람석: 체력 75% · 50% · 25% 에서 주인이 관람석에 올라가 무적 — 서로 다른 세계의 투사 셋(체력 champion_hp_mult 배)을 싸움 붙임
 ##   spectate_time 초 안에 투사를 모두 쓰러뜨리면 주인이 관람석에서 떨어져 fall_stun 초 기절 + 피해 fall_ratio 배, 못 하면 주인이 회복
+## [각성] 체력 2/3 에서 빛 기둥 · 충격파와 함께 각성 (몸이 붉은 보라로 타오름) → 대본 [최종장 2페이즈]
 ## [기믹 3] 멀티버스의 균열: 체력 2/3 이하에서 보스방 양쪽에 균열 둘 — 열려 있는 동안 주인은 피해 rift_ratio 만 받고, 균열에서 탄이 쏟아짐
 ##   균열을 부수면 rift_reopen 초 뒤 다시 열림
 ## [기믹 4] 멀티버스 붕괴: 체력 1/3 이하에서 세계가 더 빨리 바뀌고, 앞 세계의 기믹이 남은 채 두 세계가 겹침
@@ -34,6 +35,8 @@ const LINES := [
 	"장비를 싸게 팔아 준 것도 다 네가 조금 더 오래 버텨 주길 바라서였지. 흐흐…",
 	"자, 마지막 무대다. 이번엔 주인이 직접 올라가 주지.",
 ]
+const AWAKEN_LINE := "즐거워~~ 즐겁다고! 더욱더 놀아 보실까!!!"
+const AWAKEN_TINT := Color(1.2, 0.78, 1.15)
 const SWORD_INNER := 30.0
 const SWORD_OUTER := 140.0
 const SPECTATE_THRESHOLDS := [0.75, 0.5, 0.25]
@@ -86,6 +89,7 @@ var _fallen_left: float = 0.0
 var _rift_left: float = 0.0
 var _rift_fire_left: float = 0.0
 var _rifts_opened: bool = false
+var _awakened: bool = false
 var _zones: Array[GroundZone] = []
 var _sword_cd: float = 0.0
 var _stone_left: float = 0.0
@@ -510,6 +514,38 @@ func _spectate_timeout() -> void:
 	_update_status()
 
 
+# ============================================================ 각성 (2페이즈)
+## 각성 연출 + 대본 [최종장 2페이즈] (테스트에서도 직접 호출)
+func awaken() -> void:
+	if _awakened or is_dead():
+		return
+	_awakened = true
+	var at := get_hit_center()
+	StoryCues.awaken_burst(self, Color(1.0, 0.4, 0.85))
+	Fx.pillar(self, global_position, Color(1.0, 0.5, 0.95), 46.0, 220.0, 0.8)
+	Fx.explosion(self, at, Color(0.9, 0.3, 0.8), 110.0, 3)
+	sprite.modulate = AWAKEN_TINT
+	var aura := Fx.make_aura(Color(1.0, 0.35, 0.8), 26, 26.0, Vector2(0, -50), 0.8)
+	aura.name = &"AwakenAura"
+	aura.position = sprite.position
+	add_child(aura)
+	if has_target():
+		_player.shake_camera(10.0)
+	GameManager.show_notice("멀티버스의 주인이 각성한다!", Color(1.0, 0.45, 0.85))
+	get_tree().create_timer(0.9, false).timeout.connect(_awaken_line)
+
+
+func _awaken_line() -> void:
+	if is_dead():
+		return
+	if not Story.play("최종장 2페이즈"):
+		GameManager.show_notice("멀티버스의 주인: 「%s」" % AWAKEN_LINE, Color(1.0, 0.6, 0.9))
+
+
+func is_awakened() -> bool:
+	return _awakened
+
+
 # ============================================================ 기믹 3: 멀티버스의 균열
 ## 균열을 엶 (테스트에서도 직접 호출)
 func open_rifts() -> void:
@@ -555,6 +591,7 @@ func _physics_process(delta: float) -> void:
 				_world_process(delta)
 				if get_phase() >= 2:
 					if not _rifts_opened:
+						awaken()
 						open_rifts()
 					elif living_rifts().is_empty() and _rift_left > 0.0:
 						_rift_left -= delta
