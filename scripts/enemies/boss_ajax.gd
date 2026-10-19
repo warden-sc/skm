@@ -100,7 +100,7 @@ func _update_status() -> void:
 	if layers > 0:
 		set_status("일곱 겹 방패 — 남은 겹 %d/7 · 옆이나 뒤를 노려라" % layers, Color(0.95, 0.85, 0.65))
 	else:
-		set_status("방패 없음 (방어력 -%d)" % bare_defense, Color(1.0, 0.6, 0.5))
+		set_status("방패 없음 (방어력 -%d)" % Balance.scale(bare_defense), Color(1.0, 0.6, 0.5))
 
 
 func _run_pattern(pattern: int) -> float:

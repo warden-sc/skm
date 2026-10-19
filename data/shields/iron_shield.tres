@@ -5,17 +5,18 @@
 
 [resource]
 script = ExtResource("1_script")
-defense = 1
-block_ratio = 0.9
-block_arc_degrees = 120.0
-max_guard = 70.0
-guard_regen = 16.0
+defense = 42
+block_ratio = 0.8
+block_arc_degrees = 120
+max_guard = 1250
+guard_regen = 440
 perfect_guard_window = 0.32
-guard_move_multiplier = 0.5
-guard_break_time = 1.0
+guard_move_multiplier = 0.58
+guard_break_time = 1
 id = &"iron_shield"
 display_name = "강철 방패"
 description = "정면 공격을 거의 완벽하게 막아내는 튼튼한 방패."
 rarity = 1
 icon = ExtResource("2_res")
-price = 160
+price = 2210
+tier = 0

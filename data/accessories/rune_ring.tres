@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="AccessoryData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/accessory_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/accessories/rune_ring.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+slot_type = 1
+crit_chance_bonus = 0.1
+attack_bonus = 0.18
+id = &"rune_ring"
+display_name = "룬 반지"
+description = "룬이 새겨진 반지."
+rarity = 2
+tier = 2
+set_id = &"rune"
+price = 20200

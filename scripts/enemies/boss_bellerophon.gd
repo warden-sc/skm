@@ -103,7 +103,7 @@ func tame() -> void:
 
 func _update_status() -> void:
 	if _fallen:
-		set_status("땅에 떨어짐 (방어력 -%d)" % fall_defense, Color(1.0, 0.6, 0.5))
+		set_status("땅에 떨어짐 (방어력 -%d)" % Balance.scale(fall_defense), Color(1.0, 0.6, 0.5))
 	else:
 		set_status("천마를 탐 — 활만 닿음 · 황금 굴레를 씌워라", Color(0.9, 0.95, 1.0))
 

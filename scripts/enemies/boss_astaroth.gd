@@ -129,7 +129,7 @@ func register_minion(minion: Enemy) -> void:
 func _update_armor() -> void:
 	var count := get_statues().size() + _statue_queue
 	defense = _base_defense + statue_armor * count
-	set_status("신상의 가호 %d — 방어력 +%d" % [count, statue_armor * count] if count > 0 else "", Color(0.9, 0.6, 0.9))
+	set_status("신상의 가호 %d — 방어력 +%d" % [count, statue_armor * count * Balance.K] if count > 0 else "", Color(0.9, 0.6, 0.9))
 
 
 func _on_statue_broken(statue: Enemy) -> void:

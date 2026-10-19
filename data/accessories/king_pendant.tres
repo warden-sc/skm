@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="AccessoryData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/accessory_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/accessories/king_pendant.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+slot_type = 2
+bonus_max_hp = 1280
+hp_regen = 46.05
+id = &"king_pendant"
+display_name = "왕의 펜던트"
+description = "잃어버린 왕이 넘겨준 펜던트. 왕국을 지키던 생명의 힘이 깃들어 있다."
+rarity = 4
+tier = 0
+set_id = &"mythic"
+in_shop = false
+price = 0

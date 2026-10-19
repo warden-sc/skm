@@ -222,7 +222,7 @@ func _check_pincer(at: Vector2) -> void:
 		return
 	if _player.global_position.distance_to(at) <= 26.0 and not _player.is_dashing():
 		_player.apply_armor_break(pincer_armor_break, 5.0)
-		FloatingText.spawn(_player, _player.global_position + Vector2(0, -24), "갑각 분쇄! 방어력 -%d" % pincer_armor_break, Color(1.0, 0.6, 0.4), true)
+		FloatingText.spawn(_player, _player.global_position + Vector2(0, -24), "갑각 분쇄! 방어력 -%d" % Balance.scale(pincer_armor_break), Color(1.0, 0.6, 0.4), true)
 
 
 func _on_phase_two() -> void:

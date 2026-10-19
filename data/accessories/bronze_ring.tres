@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="AccessoryData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/accessory_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/accessories/bronze_ring.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+slot_type = 1
+crit_chance_bonus = 0.04
+attack_bonus = 0.07
+id = &"bronze_ring"
+display_name = "청동 인장 반지"
+description = "청동 인장이 찍힌 반지."
+rarity = 0
+tier = 2
+set_id = &"bronze"
+price = 2350

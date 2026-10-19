@@ -177,7 +177,7 @@ func close_hatch() -> void:
 func _update_status() -> void:
 	var text := "바퀴 %d개" % get_wheels().size()
 	if _stopped:
-		text = "멈춰 섬 (방어력 -%d)" % stop_defense
+		text = "멈춰 섬 (방어력 -%d)" % Balance.scale(stop_defense)
 	if is_hatch_open():
 		text += " · 해치 열림!"
 	set_status(text, Color(1.0, 0.8, 0.5))

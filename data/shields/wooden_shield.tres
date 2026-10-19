@@ -5,11 +5,11 @@
 
 [resource]
 script = ExtResource("1_script")
-defense = 0
+defense = 14
 block_ratio = 0.7
-block_arc_degrees = 110.0
-max_guard = 40.0
-guard_regen = 14.0
+block_arc_degrees = 110
+max_guard = 380
+guard_regen = 130
 perfect_guard_window = 0.3
 guard_move_multiplier = 0.55
 guard_break_time = 1.2
@@ -19,3 +19,4 @@ description = "가볍지만 다 막아주지는 못하는 나무 방패."
 rarity = 0
 icon = ExtResource("2_res")
 price = 30
+tier = 0

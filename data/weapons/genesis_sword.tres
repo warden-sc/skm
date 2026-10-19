@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/genesis_sword.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+weapon_type = 0
+damage = 7390
+crit_chance = 0.2
+crit_multiplier = 2
+attack_cooldown = 0.28
+melee_range = 60
+melee_arc_degrees = 190
+armor_pen = 0
+knockback = 260
+element = 7
+effect_color = Color(1, 0.75, 1, 1)
+id = &"genesis_sword"
+display_name = "창세의 검"
+description = "세상이 처음 갈라질 때의 빛을 담은 검. 별이 흩어지는 참격."
+rarity = 3
+tier = 2
+set_id = &"genesis"
+price = 40300

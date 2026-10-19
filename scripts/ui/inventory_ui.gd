@@ -95,9 +95,10 @@ func _refresh() -> void:
 
 	for item in _sorted_items():
 		var equipped := GameManager.is_equipped(item)
-		var button := ItemRow.make_button("해제" if equipped else "장착", false,
+		var sealed := item.is_sealed()
+		var button := ItemRow.make_button("봉인" if sealed else ("해제" if equipped else "장착"), sealed,
 			_on_unequip_pressed.bind(item) if equipped else _on_equip_pressed.bind(item), 40.0)
-		var subtitle := ("장착중 · " if equipped else "") + item.get_summary()
+		var subtitle := ("장착중 · " if equipped else "") + ("[봉인] " if sealed else "") + item.get_summary()
 		_bag_list.add_child(ItemRow.build(item, [button], _show_detail.bind(item), false, subtitle))
 
 
@@ -137,6 +138,10 @@ func _stats_text() -> String:
 		lines.append("치명타 확률 %d%% · 치명타 피해 x%.1f" % [roundi(GameManager.get_crit_chance(weapon) * 100.0), weapon.crit_multiplier + GameManager.get_crit_damage_bonus()])
 		lines.append("방어력 관통(방깍) %d · 공격력 +%d%%" % [GameManager.get_armor_pen(weapon), roundi(GameManager.get_attack_bonus() * 100.0)])
 	lines.append("방어력 %d · 최대 HP %d · 이속 +%d%% · 재생 %.1f/s" % [GameManager.get_total_defense(), GameManager.max_hp, roundi(GameManager.get_move_speed_bonus() * 100.0), GameManager.get_hp_regen()])
+	var counts := GameManager.get_set_counts()
+	for set_id in counts:
+		if int(counts[set_id]) >= 2:
+			lines.append(ItemSets.describe(set_id, int(counts[set_id])))
 	if not GameManager.key_items.is_empty():
 		var treasures := PackedStringArray()
 		for key in GameManager.key_items:

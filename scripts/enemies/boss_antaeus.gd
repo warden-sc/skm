@@ -84,7 +84,7 @@ func _get_move_velocity(delta: float) -> Vector2:
 		stacks += 1
 		power = _base_power * (1.0 + 0.1 * stacks)
 		FloatingText.spawn(self, global_position + Vector2(0, -60), "대지의 힘 +%d%%" % (stacks * 10), Color(0.9, 0.75, 0.45), true)
-	set_status("대지의 힘: 회복 · 방어력 +%d · 공격력 +%d%%" % [ground_armor, stacks * 10], Color(0.9, 0.75, 0.45))
+	set_status("대지의 힘: 회복 · 방어력 +%d · 공격력 +%d%%" % [Balance.scale(ground_armor), stacks * 10], Color(0.9, 0.75, 0.45))
 	for pad in pads:
 		if is_instance_valid(pad) and pad.is_ready() and pad.contains(global_position):
 			lift(pad)

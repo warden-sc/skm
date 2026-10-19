@@ -1,8 +1,8 @@
 [gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://assets/sprites/weapons/slime_staff.png" id="2_res"]
-[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/orb.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/orb.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/slime_staff.png" id="3_res"]
 
 [resource]
 script = ExtResource("1_script")
@@ -13,14 +13,14 @@ explosion_damage_ratio = 0.8
 weapon_type = 2
 element = 5
 effect_color = Color(0.6, 1, 0.45, 1)
-damage = 8
-crit_chance = 0.05
-crit_multiplier = 1.5
+damage = 180
+crit_chance = 0.07
+crit_multiplier = 1.55
 knockback = 60.0
 attack_cooldown = 0.2
 windup_time = 0.35
 chant_text = "끈적하게, 퍼져라!"
-projectile_texture = ExtResource("3_res")
+projectile_texture = ExtResource("2_res")
 projectile_speed = 220.0
 projectile_range = 150.0
 projectiles_per_shot = 5
@@ -31,8 +31,10 @@ explosion_radius = 26.0
 slow_duration = 0.0
 id = &"slime_staff"
 display_name = "슬라임 지팡이"
-description = "끈적한 점액탄 5발을 흩뿌린다. 터진 자리에 웅덩이가 남아 적을 느리게 한다.
-(슬라임 드랍 전용)"
-rarity = 1
-icon = ExtResource("2_res")
-price = 180
+description = "끈적한 점액탄 5발을 흩뿌린다. 터진 자리에 웅덩이가 남아 적을 느리게 한다."
+rarity = 0
+icon = ExtResource("3_res")
+price = 3520
+armor_pen = 30
+tier = 2
+in_shop = false

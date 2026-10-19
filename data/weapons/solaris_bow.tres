@@ -1,36 +1,38 @@
 [gd_resource type="Resource" script_class="WeaponData" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://assets/sprites/weapons/solaris_bow.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/solaris_bow_held.png" id="2_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/projectiles/arrow.png" id="3_res"]
-[ext_resource type="Texture2D" path="res://assets/sprites/weapons/solaris_bow_held.png" id="4_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/solaris_bow.png" id="4_res"]
 
 [resource]
 script = ExtResource("1_script")
-armor_pen = 10
+armor_pen = 216
 weapon_type = 1
 element = 1
 effect_color = Color(1, 0.7, 0.25, 1)
-held_texture = ExtResource("4_res")
-damage = 18
+held_texture = ExtResource("2_res")
+damage = 3620
 crit_chance = 0.2
-crit_multiplier = 2.0
-knockback = 160.0
-attack_cooldown = 0.1
-windup_time = 0.18
+crit_multiplier = 2
+knockback = 144
+attack_cooldown = 0.093
+windup_time = 0.153
 chant_text = ""
 projectile_texture = ExtResource("3_res")
-projectile_speed = 600.0
-projectile_range = 340.0
+projectile_speed = 558
+projectile_range = 334
 projectiles_per_shot = 1
-spread_degrees = 0.0
+spread_degrees = 0
 pierce = 5
-projectile_scale = 1.4
-explosion_radius = 0.0
+projectile_scale = 1.36
+explosion_radius = 0
 slow_duration = 0.0
 id = &"solaris_bow"
 display_name = "태양궁 솔라리스"
 description = "태양의 불꽃을 담은 전설의 활. 불타는 화살이 적을 줄줄이 꿰뚫고 갑옷마저 녹인다."
 rarity = 3
-icon = ExtResource("2_res")
-price = 1700
+icon = ExtResource("4_res")
+price = 33300
+explosion_damage_ratio = 0.5
+tier = 0

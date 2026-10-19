@@ -1,7 +1,7 @@
 class_name StoryCues
 extends RefCounted
 ## 대본의 @연출 장면들. 대화창이 떠 있는 동안(게임 일시정지) 에도 움직이도록 PROCESS_MODE_ALWAYS 로 만듭니다.
-##   장비빛남 : 용사가 금빛으로 빛나고, 가진 장비들이 용사 둘레에 떠올라 빛나며 돎 (100스테이지 보스 토벌)
+##   장비빛남 : 용사가 금빛으로 빛나고, 보스들에게 받은 신화 장비들이 용사 둘레에 떠올라 빛나며 돎 (100스테이지 보스 토벌)
 ##   각성     : 보스(없으면 용사) 자리에서 빛 기둥 · 충격파 · 번쩍임
 
 const GLOW_TIME := 3.6
@@ -22,9 +22,14 @@ static func run(cue_name: String, tree: SceneTree) -> Node2D:
 	return null
 
 
-## 지금 가진 장비 그림 (손에 든 무기 칸 · 방어구 · 장신구)
+## 빛나는 장비 그림 — 10스테이지마다 보스에게 받은 신화 장비 (없으면 지금 장착한 장비)
 static func equipment_icons() -> Array[Texture2D]:
 	var icons: Array[Texture2D] = []
+	for item in GameManager.get_mythic_items():
+		if item.icon != null:
+			icons.append(item.icon)
+	if not icons.is_empty():
+		return icons
 	var gear: Array = []
 	gear.append_array(GameManager.weapon_slots)
 	gear.append_array([GameManager.equipped_shield, GameManager.equipped_helmet, GameManager.equipped_armor, GameManager.equipped_boots])

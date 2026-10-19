@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/rune_sword.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+weapon_type = 0
+damage = 4700
+crit_chance = 0.16
+crit_multiplier = 1.85
+attack_cooldown = 0.3
+melee_range = 52
+melee_arc_degrees = 170
+armor_pen = 0
+knockback = 230
+element = 7
+effect_color = Color(0.55, 0.85, 1, 1)
+id = &"rune_sword"
+display_name = "룬 대검"
+description = "칼날에 새긴 룬이 푸르게 빛나는 대검. 마력이 실린 참격이 멀리까지 닿는다."
+rarity = 2
+tier = 2
+set_id = &"rune"
+price = 30300

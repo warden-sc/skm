@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/mithril_sword.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+weapon_type = 0
+damage = 2400
+crit_chance = 0.12
+crit_multiplier = 1.7
+attack_cooldown = 0.32
+melee_range = 46
+melee_arc_degrees = 150
+armor_pen = 0
+knockback = 200
+element = 2
+effect_color = Color(0.7, 0.95, 1, 1)
+id = &"mithril_sword"
+display_name = "미스릴 검"
+description = "깃털처럼 가볍지만 무엇이든 베는 미스릴 검. 칼날에 서리가 서린다."
+rarity = 1
+tier = 2
+set_id = &"mithril"
+price = 16400

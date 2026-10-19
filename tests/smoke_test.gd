@@ -4231,6 +4231,131 @@ func _test_dialogue(main: Node2D) -> void:
 	Story.enabled = false
 
 
+func _test_gear(main: Node2D) -> void:
+	print("[장비 · 등급 · 세트 · 신화 · 딜 인플레]")
+	var stage := main.get_node("StageManager") as StageManager
+	var player := main.get_node("Entities/Player") as Player
+	var shop_ui := main.get_node("ShopUI") as ShopUI
+	_check(Balance.K == 10 and _gm.BASE_MAX_HP == 1000, "딜 인플레: 전투 수치 ×%d · 기본 체력 %d" % [Balance.K, _gm.BASE_MAX_HP])
+	_check(ItemData.max_rarity_for_stage(1) == ItemData.Rarity.COMMON and ItemData.max_rarity_for_stage(10) == ItemData.Rarity.COMMON
+		and ItemData.max_rarity_for_stage(11) == ItemData.Rarity.RARE and ItemData.max_rarity_for_stage(40) == ItemData.Rarity.RARE
+		and ItemData.max_rarity_for_stage(41) == ItemData.Rarity.EPIC and ItemData.max_rarity_for_stage(70) == ItemData.Rarity.EPIC
+		and ItemData.max_rarity_for_stage(71) == ItemData.Rarity.LEGENDARY and ItemData.max_rarity_for_stage(100) == ItemData.Rarity.LEGENDARY,
+		"상점 해금: 1~10 일반 · 11~40 희귀 · 41~70 레어 · 71~100 전설")
+	# 종류 × 등급마다 하급 · 중급 · 상급, 상급일수록 강하고 비쌈
+	var shop_items := ItemDB.get_shop_items()
+	var grid_ok := true
+	var order_ok := true
+	for cat in range(ShopUI.Category.SWORD, ShopUI.Category.PENDANT + 1):
+		for r in 4:
+			var tiers: Array[ItemData] = []
+			for item in shop_items:
+				if ShopUI.category_of(item) == cat and item.rarity == r:
+					tiers.append(item)
+			if tiers.size() != 3:
+				grid_ok = false
+				print("    %s %s: %d개" % [ShopUI.CATEGORY_NAMES[cat], ItemData.RARITY_NAMES[r], tiers.size()])
+				continue
+			tiers.sort_custom(func(a: ItemData, b: ItemData) -> bool: return a.tier < b.tier)
+			if not (tiers[0].tier == ItemData.Tier.LOW and tiers[1].tier == ItemData.Tier.MID and tiers[2].tier == ItemData.Tier.HIGH):
+				grid_ok = false
+			if not (tiers[0].price <= tiers[1].price and tiers[1].price <= tiers[2].price):
+				order_ok = false
+				print("    값 순서: %s" % [tiers.map(func(x: ItemData) -> String: return "%s %d" % [x.display_name, x.price])])
+	_check(grid_ok, "장비 10종류 × 4등급마다 하급 · 중급 · 상급 3개씩 (상점 %d개)" % shop_items.size())
+	_check(order_ok, "같은 등급 안에서 상급일수록 비쌈")
+	var swords: Array = shop_items.filter(func(it: ItemData) -> bool: return ShopUI.category_of(it) == ShopUI.Category.SWORD)
+	swords.sort_custom(func(a: ItemData, b: ItemData) -> bool: return a.get_fit_stage() < b.get_fit_stage())
+	var rising := true
+	for i in range(1, swords.size()):
+		rising = rising and (swords[i] as WeaponData).damage > (swords[i - 1] as WeaponData).damage
+	_check(rising and (swords.back() as WeaponData).damage >= 5000, "검 공격력이 단계마다 오름 (%d → %d)" % [(swords[0] as WeaponData).damage, (swords.back() as WeaponData).damage])
+	var mithril := ItemDB.get_item(&"mithril_sword")
+	_check(mithril.get_grade_text() == "희귀 · 상급" and mithril.get_fit_stage() == 31 and ItemDB.get_item(&"rusty_sword").get_grade_text() == "일반 · 하급", "등급 표시: [희귀 · 상급] 미스릴 검")
+	# 상점 탭
+	_gm.request_shop("상점", [])
+	await get_tree().process_frame
+	shop_ui.set_category(ShopUI.Category.BOW)
+	var bows := shop_ui.get_visible_stock()
+	_check(shop_ui.visible and bows.size() == 12 and bows.all(func(it: ItemData) -> bool: return it is WeaponData and (it as WeaponData).is_bow()), "상점 탭: 활 탭에는 활 12개만")
+	shop_ui.set_category(ShopUI.Category.POTION)
+	_check(shop_ui.get_visible_stock().all(func(it: ItemData) -> bool: return it is PotionData) and shop_ui.get_visible_stock().size() == 3, "포션 탭")
+	var tab_names := PackedStringArray()
+	for b in shop_ui.get_node("%CategoryTabs").get_children():
+		tab_names.append((b as Button).text)
+	_check(tab_names.size() == 11 and tab_names[1] == "검" and tab_names[3] == "지팡이", "탭 11개: %s" % " · ".join(tab_names))
+	_gm.gold = 999999
+	_check(not _gm.buy_item(mithril) and not _gm.owns_item(&"mithril_sword"), "1스테이지에서는 희귀 장비를 살 수 없음 (11스테이지부터)")
+	_check(_gm.buy_item(ItemDB.get_item(&"bronze_sword")) and _gm.weapon_slots[0].id == &"bronze_sword", "일반 상급 청동 검 구매 → 바로 장착")
+	shop_ui.close()
+	# 세트 효과
+	var def0: int = _gm.get_total_defense()
+	_gm.add_item(ItemDB.get_item(&"bronze_shield"))
+	_gm.equip_item(ItemDB.get_item(&"bronze_shield"))
+	var bronze := ItemSets.SETS[&"bronze"]
+	_check(int(_gm.get_set_counts().get(&"bronze", 0)) == 2 and _gm.get_total_defense() == ItemDB.get_item(&"bronze_shield").defense + int(bronze["bonuses"][0][1]["defense"]),
+		"세트 효과: 청동 2개 → 방어력 +%d (%d → %d)" % [int(bronze["bonuses"][0][1]["defense"]), def0, _gm.get_total_defense()])
+	var atk0: float = _gm.damage_multiplier
+	for id in [&"bronze_helmet", &"bronze_armor"]:
+		_gm.add_item(ItemDB.get_item(id))
+		_gm.equip_item(ItemDB.get_item(id))
+	_check(is_equal_approx(_gm.damage_multiplier, atk0 + 0.05) and ItemSets.describe(&"bronze").contains("청동 세트 4/10"), "청동 4개 → 공격력 +5%% (%s)" % ItemSets.describe(&"bronze"))
+	# 피해 ×10
+	var hp0: int = _gm.hp
+	player._invincible_left = 0.0
+	player.take_hit(50, player.global_position + Vector2(20, 0))
+	_check(hp0 - _gm.hp == maxi(1, 50 * Balance.K - player.get_effective_defense()), "몬스터 공격 50 → 실제 %d 피해 (×%d − 방어력 %d)" % [hp0 - _gm.hp, Balance.K, player.get_effective_defense()])
+	_gm.heal_full()
+	var slime := (load("res://scenes/enemies/slime.tscn") as PackedScene).instantiate() as Enemy
+	var slime_hp: int = slime.max_hp
+	slime.apply_difficulty(_gm.get_difficulty_info())
+	_check(slime.max_hp == slime_hp * Balance.K and slime.calc_damage(1000) == 1000 - slime.defense * Balance.K, "몬스터 체력 ×%d (%d) · 방어력 ×%d (%d)" % [Balance.K, slime.max_hp, Balance.K, slime.get_defense_value()])
+	slime.free()
+	# 드랍 · 보물상자 단계
+	var pool11 := ItemDB.get_drop_pool(11)
+	var pool35 := ItemDB.get_drop_pool(35)
+	_check(not pool11.is_empty() and pool11.all(func(it: ItemData) -> bool: return it.rarity == ItemData.Rarity.RARE and it.tier == ItemData.Tier.LOW)
+		and pool35.any(func(it: ItemData) -> bool: return it.tier == ItemData.Tier.HIGH) and pool35.all(func(it: ItemData) -> bool: return not it.is_mythic()),
+		"몬스터 드랍: 11스테이지는 희귀 하급만, 35스테이지는 상급까지 (신화 없음)")
+	_check(ItemDB.get_drop_pool(1, [&"goblin_dagger"]).any(func(it: ItemData) -> bool: return it.id == &"goblin_dagger"), "고블린 단검 같은 드랍 전용 장비는 그 몬스터만 떨어뜨림")
+	# 신화
+	var mythics: Array = ItemDB.get_all().filter(func(it: ItemData) -> bool: return it.is_mythic())
+	var stage_ok := true
+	for s in range(10, 101, 10):
+		var m := ItemDB.get_mythic_for_stage(s)
+		stage_ok = stage_ok and m != null and m.is_mythic() and not m.in_shop
+	_check(mythics.size() == 10 and stage_ok and ItemDB.get_mythic_for_stage(10).id == &"king_pendant" and ItemDB.get_mythic_for_stage(100).id == &"gabriel_ring"
+		and ItemDB.get_mythic_for_stage(55) == null and not ItemDB.get_shop_items().any(func(it: ItemData) -> bool: return it.is_mythic()),
+		"신화 장비 10개 — 10스테이지마다 보스가 하나씩 (상점에 없음)")
+	var abaddon := ItemDB.get_item(&"abaddon_sword") as WeaponData
+	_check(abaddon.damage > (ItemDB.get_item(&"genesis_sword") as WeaponData).damage * 1.5 and abaddon.get_grade_text() == "신화", "신화 아바돈의 검 공격력 %d (전설 상급 창세의 검 %d)" % [abaddon.damage, (ItemDB.get_item(&"genesis_sword") as WeaponData).damage])
+	_gm.stage = 10
+	stage._boss_fall_position = player.global_position
+	stage._grant_mythic(10)
+	var pendant := ItemDB.get_item(&"king_pendant")
+	_check(_gm.owns_item(&"king_pendant") and pendant.is_sealed(), "10스테이지 보스 → 왕의 펜던트 (봉인)")
+	_check(not _gm.equip_item(pendant) and not _gm.is_equipped(pendant) and not _gm.can_sell(pendant), "봉인된 신화 장비는 착용 · 판매 불가")
+	_gm.stage = 100
+	stage._grant_mythic(100)
+	_check(_gm.mythic_unlocked and _gm.owns_item(&"gabriel_ring") and not pendant.is_sealed() and _gm.equip_item(pendant) and _gm.is_equipped(pendant),
+		"100스테이지 보스 → 가브리엘의 반지 + 봉인 해제 → 착용 가능")
+	_check(StoryCues.equipment_icons().size() == 2, "100스테이지 「장비빛남」은 받은 신화 장비들이 빛남")
+	for item in mythics:
+		_gm.add_item(item)
+		_gm.equip_item(item)
+	_check(int(_gm.get_set_counts().get(&"mythic", 0)) == 10 and is_equal_approx(_gm.get_master_damage_bonus(), 0.3) and _gm.get_damage_reduction() > 0.0,
+		"신화의 유산 10세트: 「억제의 권능」 멀티버스의 주인에게 주는 피해 +30%% · 받는 피해 -%d%%" % roundi(_gm.get_damage_reduction() * 100.0))
+	_check(_gm.weapon_slots[0].id == &"abaddon_sword" and player.get_dash_cooldown() < player.dash_cooldown, "헤르메스의 신발: 대시 대기시간 %.2f초 → %.2f초" % [player.dash_cooldown, player.get_dash_cooldown()])
+	# 원래대로
+	var location: String = _gm.location_name
+	var stage_title: String = _gm.stage_name
+	_gm.reset_game()
+	_gm.stage = 1
+	_gm.location_name = location
+	_gm.stage_name = stage_title
+	await get_tree().process_frame
+
+
 func _run() -> void:
 	_gm = get_node("/root/GameManager")
 	Story.enabled = false  # 대본에 대사가 채워져 있어도 자동 테스트가 대화창에서 멈추지 않게
@@ -4265,6 +4390,7 @@ func _run() -> void:
 	var entities := main.get_node("Entities") as Node2D
 	var pool := main.get_node("ProjectilePool") as ProjectilePool
 	await _test_dialogue(main)
+	await _test_gear(main)
 	var stage := main.get_node("StageManager") as StageManager
 	var hud := main.get_node("HUD") as HUD
 	var shop := main.get_node("ShopUI") as ShopUI
@@ -4326,7 +4452,7 @@ func _run() -> void:
 	_check(pool.get_available_count() == avail, "검은 투사체를 쓰지 않음")
 	var rusty_damage := hp_front - front.hp
 	var rusty_weapon := ItemDB.get_weapon(&"rusty_sword")
-	_check(rusty_damage >= rusty_weapon.damage - front.defense, "정면 적 타격 (데미지 %d, 슬라임 방어력 %d)" % [rusty_damage, front.defense])
+	_check(rusty_damage >= rusty_weapon.damage - front.get_defense_value(), "정면 적 타격 (데미지 %d, 슬라임 방어력 %d)" % [rusty_damage, front.get_defense_value()])
 	_check(behind.hp == hp_behind, "등 뒤 적은 맞지 않음")
 	behind.despawn()
 	# 슬라임이 뛰어드는 거리보다 검이 멀리 닿아야 함 (예전 리치 26 → 지금 38)
@@ -4344,9 +4470,10 @@ func _run() -> void:
 	print("[몬스터 방어력 / 방어력 관통]")
 	var orc_test := (load("res://scenes/enemies/orc.tscn") as PackedScene).instantiate() as Enemy
 	_check(orc_test.defense > front.defense and front.defense > 0, "잡몹에 방어력 (슬라임 %d · 오크 %d)" % [front.defense, orc_test.defense])
-	_check(orc_test.calc_damage(20) == 20 - orc_test.defense, "방어력만큼 피해 감소 (20 → %d)" % orc_test.calc_damage(20))
-	_check(orc_test.calc_damage(20, 4) == 20 - (orc_test.defense - 4), "방깍 4 → 방어력 무시 (20 → %d)" % orc_test.calc_damage(20, 4))
-	_check(orc_test.calc_damage(20, 99) == 20, "방깍이 방어력보다 크면 피해 그대로")
+	var orc_def := orc_test.get_defense_value()
+	_check(orc_def == orc_test.defense * Balance.K and orc_test.calc_damage(200) == 200 - orc_def, "방어력만큼 피해 감소 (200 → %d, 방어력 %d)" % [orc_test.calc_damage(200), orc_def])
+	_check(orc_test.calc_damage(200, 40) == 200 - (orc_def - 40), "방깍 40 → 방어력 무시 (200 → %d)" % orc_test.calc_damage(200, 40))
+	_check(orc_test.calc_damage(200, 9999) == 200, "방깍이 방어력보다 크면 피해 그대로")
 	_check(orc_test.calc_damage(5) >= 1, "방어력이 높아도 최소 피해는 들어감")
 	orc_test.free()
 	for boss_path in ["res://scenes/enemies/boss_slime_king.tscn", "res://scenes/enemies/boss_hell_gatekeeper.tscn", "res://scenes/enemies/boss_archeon.tscn"]:
@@ -4371,22 +4498,25 @@ func _run() -> void:
 	var specialized := true
 	for b in bows:
 		for sw in swords:
-			if sw.rarity == b.rarity and (b.damage >= sw.damage or b.attack_cooldown + b.windup_time >= sw.attack_cooldown):
+			if sw.rarity == b.rarity and sw.tier == b.tier and (b.damage >= sw.damage or b.attack_cooldown + b.windup_time >= sw.attack_cooldown):
 				specialized = false
+				print("    %s vs %s" % [b.display_name, sw.display_name])
 		if b.armor_pen <= 0:
 			specialized = false
-	_check(specialized, "활: 같은 등급 검보다 공격력 낮고 공속 빠름 + 방깍 보유")
+	_check(specialized, "활: 같은 등급 · 단계 검보다 공격력 낮고 공속 빠름 + 방깍 보유")
 	var all_aoe := true
 	for st in staffs:
 		if st.explosion_radius <= 0.0:
 			all_aoe = false
-	_check(all_aoe and staffs.size() == 6, "지팡이 %d종 모두 범위(폭발) 공격" % staffs.size())
-	var sword_max := 0
-	for item in ItemDB.get_all():
-		var w2 := item as WeaponData
-		if w2 != null and w2.rarity == ItemData.Rarity.LEGENDARY:
-			sword_max = maxi(sword_max, w2.damage)
-	_check(ItemDB.get_weapon(&"holy_sword").damage == sword_max, "검: 같은 등급 최고 공격력")
+	_check(all_aoe and staffs.size() >= 15, "지팡이 %d종 모두 범위(폭발) 공격" % staffs.size())
+	var sword_top := true
+	for sw in swords:
+		for item in ItemDB.get_all():
+			var w2 := item as WeaponData
+			if w2 != null and w2 != sw and w2.rarity == sw.rarity and w2.tier == sw.tier and w2.get_dps() > sw.get_dps():
+				sword_top = false
+				print("    %s(%.0f) > %s(%.0f)" % [w2.display_name, w2.get_dps(), sw.display_name, sw.get_dps()])
+	_check(sword_top, "검: 같은 등급 · 단계에서 단일 대상 초당 피해가 가장 높음")
 
 	print("[무기 칸 3개 - 종류별 1개씩, 중복 장착 없음]")
 	var bow := ItemDB.get_weapon(&"hunter_bow")
@@ -4497,22 +4627,28 @@ func _run() -> void:
 	print("[드랍 - 1스테이지는 일반·희귀까지만]")
 	var gold_before: int = _gm.gold
 	var items_before: int = _gm.items.size()
-	front.take_damage(9999)
+	for p in _item_pickups(entities):
+		p.queue_free()
+	if is_instance_valid(front):
+		front.despawn()
+	await _frames(2)
 	var epic_dropper := slime_scene.instantiate() as Enemy
 	epic_dropper.item_drop_chance = 1.0
 	epic_dropper.item_drop_ids = [&"flame_blade"]
 	stage._add_enemy(epic_dropper, player.global_position + Vector2(-80, 0), camp_arena)
 	await _frames(3)
-	epic_dropper.take_damage(9999)
+	epic_dropper.take_damage(99999999, Vector2.ZERO, false, 999999)
 	await _frames(3)
 	var item_drops := _item_pickups(entities)
-	_check(item_drops.size() == 1 and (item_drops[0] as Pickup).item.id == &"slime_staff", "희귀 장비는 드랍, 레어(화염검)는 1스테이지 잡몹에서 드랍 안 됨")
+	_check(item_drops.size() == 1 and (item_drops[0] as Pickup).item.rarity == ItemData.Rarity.COMMON and (item_drops[0] as Pickup).item.id != &"flame_blade",
+		"1스테이지 잡몹은 일반 등급만 드랍 (레어 화염검은 안 나옴 — 받은 것: %s)" % ((item_drops[0] as Pickup).item.display_name if item_drops.size() == 1 else "없음"))
+	var dropped_item: ItemData = (item_drops[0] as Pickup).item if item_drops.size() == 1 else null
 	for p in entities.get_children():
 		if p is Pickup:
 			(p as Pickup).global_position = player.global_position
 	await _frames(40)
 	_check(_gm.gold > gold_before, "골드 확정 드랍 획득")
-	_check(_gm.items.size() == items_before + 1, "드랍 장비 가방에 추가")
+	_check(_gm.items.size() == items_before + 1 or (dropped_item != null and _gm.owns_item(dropped_item.id)), "드랍 장비 가방에 추가")
 
 	print("[장신구 - 팔찌 · 반지 · 펜던트]")
 	_gm.select_weapon_slot(0)
@@ -4606,7 +4742,10 @@ func _run() -> void:
 	var hp1: int = _gm.hp
 	pool.spawn(ProjectileSpec.enemy_bullet(player.global_position + aim * 24.0, -aim, 200.0, 10, null))
 	await _frames(15)
-	_check(_gm.hp == hp1 - 3, "정면 가드: 나무 방패 70%% 막음 (HP %d → %d)" % [hp1, _gm.hp])
+	var guard_shield: ShieldData = _gm.equipped_shield
+	var raw_hit := 10 * Balance.K
+	var expected_guard_hp := hp1 - maxi(1, raw_hit - roundi(raw_hit * guard_shield.block_ratio) - player.get_effective_defense())
+	_check(_gm.hp == expected_guard_hp, "정면 가드: %s %d%% 막음 (HP %d → %d)" % [guard_shield.display_name, roundi(guard_shield.block_ratio * 100.0), hp1, _gm.hp])
 	Input.action_release(&"guard")
 	await _frames(45)
 	Input.action_press(&"guard")
@@ -4659,20 +4798,27 @@ func _run() -> void:
 	_check(not inventory.is_open() and not get_tree().paused, "다시 I → 닫힘 + 재개")
 
 	print("[상점 - 구매 / 판매 / 스테이지 잠금 / 갑옷]")
-	_gm.add_gold(5000)
-	_gm.request_shop("테스트 상점", [&"rapid_crossbow", &"iron_shield", &"leather_armor", &"royal_aegis", &"solaris_bow", &"small_potion"])
+	_gm.add_gold(20000)
+	_gm.request_shop("테스트 상점", [&"traveler_bow", &"rapid_crossbow", &"royal_aegis", &"solaris_bow", &"leather_armor", &"traveler_shield", &"small_potion"])
 	await get_tree().process_frame
 	_check(shop.is_open() and get_tree().paused, "상점 열림 + 일시정지")
+	shop.set_category(ShopUI.Category.BOW)
+	await get_tree().process_frame
 	var rows := shop.get_node("%BuyList").get_children()
-	_check(_row_bg(rows, 0) == ItemData.RARITY_BG_COLORS[ItemData.Rarity.RARE] and _row_bg(rows, 3) == ItemData.RARITY_BG_COLORS[ItemData.Rarity.EPIC] and _row_bg(rows, 4) == ItemData.RARITY_BG_COLORS[ItemData.Rarity.LEGENDARY], "등급 배경색: 희귀 파랑 / 레어 보라 / 전설 노랑")
-	_check(_row_button(rows, 3).disabled and _row_button(rows, 3).text == "2스테이지", "1스테이지: 레어 잠김")
+	_check(rows.size() == 3 and _row_bg(rows, 0) == ItemData.RARITY_BG_COLORS[ItemData.Rarity.COMMON] and _row_bg(rows, 1) == ItemData.RARITY_BG_COLORS[ItemData.Rarity.RARE] and _row_bg(rows, 2) == ItemData.RARITY_BG_COLORS[ItemData.Rarity.LEGENDARY], "활 탭 · 등급 배경색: 일반 회색 / 희귀 파랑 / 전설 노랑")
+	_check(_row_button(rows, 1).disabled and _row_button(rows, 1).text == "11스테이지" and _row_button(rows, 2).text == "71스테이지", "1스테이지: 희귀는 11스테이지 · 전설은 71스테이지까지 잠김")
 	_check(not _gm.buy_item(ItemDB.get_item(&"royal_aegis")), "잠긴 장비는 구매 불가")
-	_check(_row_button(rows, 5).text == "가득 참" and _row_button(rows, 5).disabled, "상점: 포션이 가득 차면 구매 불가 표시")
+	shop.set_category(ShopUI.Category.POTION)
+	await get_tree().process_frame
+	_check(_row_button(shop.get_node("%BuyList").get_children(), 0).text == "가득 참" and _row_button(shop.get_node("%BuyList").get_children(), 0).disabled, "상점: 포션이 가득 차면 구매 불가 표시")
+	shop.set_category(ShopUI.Category.BOW)
 	# 아래쪽 장비에 마우스를 올려 긴 설명이 나와도 목록·버튼 위치가 바뀌면 안 됨 (설명칸 높이 고정)
 	await get_tree().process_frame
+	await get_tree().process_frame
+	rows = shop.get_node("%BuyList").get_children()
 	var buy_scroll := shop.get_node("%BuyList").get_parent() as Control
 	var list_rect_before := buy_scroll.get_global_rect()
-	var bottom_button := _row_button(rows, 4)
+	var bottom_button := _row_button(rows, 2)
 	var button_rect_before := bottom_button.get_global_rect()
 	bottom_button.mouse_entered.emit()
 	await get_tree().process_frame
@@ -4682,22 +4828,29 @@ func _run() -> void:
 	var shop_panel := shop.get_node("Panel") as Control
 	_check(Rect2(Vector2.ZERO, shop_panel.get_viewport_rect().size).encloses(shop_panel.get_global_rect()), "상점 창이 화면 밖으로 늘어나지 않음")
 	var leather := ItemDB.get_item(&"leather_armor") as ArmorData
+	var round_shield := ItemDB.get_item(&"traveler_shield") as ShieldData
 	var max_hp_before: int = _gm.max_hp
 	var gold_pre: int = _gm.gold
 	shop._on_buy_pressed(leather)
-	shop._on_buy_pressed(ItemDB.get_item(&"iron_shield"))
+	shop._on_buy_pressed(round_shield)
 	await get_tree().process_frame
-	_check(_gm.gold == gold_pre - leather.price - ItemDB.get_item(&"iron_shield").price, "구매 골드 차감")
+	_check(_gm.gold == gold_pre - leather.price - round_shield.price, "구매 골드 차감")
 	_check(_gm.equipped_armor == leather and _gm.max_hp == max_hp_before + leather.bonus_max_hp, "갑옷 구매 → 갑옷 칸 장착, 최대 HP +%d" % leather.bonus_max_hp)
 	_check((player.get_node("BodySprite/ArmorSprite") as Sprite2D).visible, "플레이어 몸에 갑옷 표시")
-	_check(_gm.get_total_defense() == 1 + leather.defense, "방어력 합산 (방패 + 갑옷)")
+	var def_sum := 0
+	for gear in [_gm.equipped_shield, _gm.equipped_helmet, _gm.equipped_armor, _gm.equipped_boots]:
+		if gear != null:
+			def_sum += gear.defense
+	_check(_gm.equipped_shield == round_shield and _gm.get_total_defense() == def_sum + roundi(_gm.get_set_value("defense")), "방어력 합산 (방패 + 갑옷 + …: %d)" % _gm.get_total_defense())
 	var rusty := ItemDB.get_item(&"rusty_sword")
 	var gold_before_sell: int = _gm.gold
 	var sold: int = _gm.sell_item(rusty)
 	_check(sold == rusty.get_sell_value() and _gm.gold == gold_before_sell + sold and not _gm.owns_item(rusty.id), "녹슨 검 판매 +%dG" % sold)
 	_check(_gm.sell_item(_gm.equipped_shield) == 0, "장착 중인 장비는 판매 불가")
 	await get_tree().process_frame
-	_check(shop.get_node("%InventoryList").get_child_count() == _gm.items.size(), "상점 보유 장비 목록 (장착 / 판매 버튼)")
+	shop.set_category(ShopUI.Category.ARMOR)
+	await get_tree().process_frame
+	_check(shop.get_node("%InventoryList").get_child_count() == _gm.items.filter(func(it: ItemData) -> bool: return it is ArmorData).size(), "상점 보유 장비 목록 — 탭에 맞는 종류만 (장착 / 판매 버튼)")
 	shop.close()
 
 	print("[1스테이지 진행: 야영지 → 사냥터 → 보스방 → 상자 → 다음 스테이지]")
@@ -4754,8 +4907,8 @@ func _run() -> void:
 	await _frames(3)
 	var chest_drop := _item_pickups(entities).filter(func(p: Pickup) -> bool: return p.global_position.distance_to(chest.global_position) < 40.0)
 	var chest_item: ItemData = (chest_drop[0] as Pickup).item if chest_drop.size() == 1 else null
-	_check(chest_item != null and chest_item.rarity == ItemData.Rarity.EPIC, "1스테이지 보스 상자 → 레어 등급: %s" % (chest_item.display_name if chest_item else "없음"))
-	_check(chest_item != null and not (chest_item is AccessoryData) and not (chest_item is WeaponData and (chest_item as WeaponData).weapon_type == WeaponData.WeaponType.DAGGER), "상자 장비 종류: 검/활/지팡이/방패/투구/갑옷")
+	_check(chest_item != null and chest_item.rarity == ItemData.Rarity.COMMON and chest_item.get_fit_stage() <= 7, "1스테이지 보스 상자 → 일반 등급 (상급까지): %s" % (chest_item.get_grade_text() + " " + chest_item.display_name if chest_item else "없음"))
+	_check(chest_item != null and chest_item.in_shop and not chest_item.is_mythic(), "상자 장비: 상점 장비 중에서 (신화 · 드랍 전용 제외)")
 	next_portal.interacted.emit()
 	await _frames(3)
 	_check(_gm.stage == 2 and stage.get_state() == StageManager.State.CAMP and _gm.location_name == "야영지", "다음 스테이지 텔레포트 → 2스테이지 야영지")
@@ -4764,11 +4917,14 @@ func _run() -> void:
 
 	print("[2스테이지 - 불타는 지옥문]")
 	_check(_gm.stage_name == "불타는 지옥문", "스테이지 이름")
-	_gm.request_shop("테스트 상점", [&"hellsteel_plate", &"solaris_bow"])
+	_gm.add_gold(10000)
+	_gm.request_shop("테스트 상점", [&"bronze_armor", &"chain_mail"])
+	await get_tree().process_frame
+	shop.set_category(ShopUI.Category.ARMOR)
 	await get_tree().process_frame
 	rows = shop.get_node("%BuyList").get_children()
-	_check(not _row_button(rows, 0).disabled or _gm.owns_item(&"hellsteel_plate"), "2스테이지: 레어 해금")
-	_check(_row_button(rows, 1).disabled, "2스테이지: 전설은 아직 잠김")
+	_check(not _row_button(rows, 0).disabled or _gm.owns_item(&"bronze_armor"), "2스테이지: 일반 상급까지 구매 가능")
+	_check(_row_button(rows, 1).disabled and _row_button(rows, 1).text == "11스테이지", "2스테이지: 희귀는 11스테이지까지 잠김")
 	shop.close()
 	_gm.max_hp = 99999
 	field_portal.interacted.emit()
@@ -4825,8 +4981,8 @@ func _run() -> void:
 	await _frames(4)
 	stage.get_chest()._interact()
 	await _frames(3)
-	var legend_drop := _item_pickups(entities).filter(func(p: Pickup) -> bool: return p.item.rarity == ItemData.Rarity.LEGENDARY)
-	_check(legend_drop.size() >= 1, "2스테이지 보스 상자 → 전설 등급")
+	var chest2 := _item_pickups(entities).filter(func(p: Pickup) -> bool: return p.item.rarity == ItemData.Rarity.COMMON and p.item.in_shop)
+	_check(chest2.size() >= 1, "2스테이지 보스 상자 → 일반 등급 (11스테이지 전까지)")
 	next_portal.interacted.emit()
 	await _frames(3)
 
@@ -5271,7 +5427,7 @@ func _run() -> void:
 	stage._add_enemy(tough, player.global_position + Vector2(0, -80), camp_arena)
 	await _frames(2)
 	var hp_mult: float = _gm.DIFFICULTY_INFO[_gm.Difficulty.VERY_HARD]["enemy_hp"]
-	_check(tough.max_hp == roundi(base_hp * hp_mult), "베리하드: 몬스터 체력 %d → %d" % [base_hp, tough.max_hp])
+	_check(tough.max_hp == roundi(base_hp * hp_mult) * Balance.K, "베리하드: 몬스터 체력 %d → %d (×%.1f · 딜 인플레 ×%d)" % [base_hp, tough.max_hp, hp_mult, Balance.K])
 	tough.despawn()
 	_gm.difficulty = _gm.Difficulty.NORMAL
 

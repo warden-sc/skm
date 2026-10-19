@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/apollo_bow.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/apollo_bow_held.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/arrow.png" id="4_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+held_texture = ExtResource("3_res")
+projectile_texture = ExtResource("4_res")
+weapon_type = 1
+damage = 2810
+crit_chance = 0.28
+crit_multiplier = 2.4
+attack_cooldown = 0.08
+windup_time = 0.12
+armor_pen = 336
+projectiles_per_shot = 3
+spread_degrees = 12
+pierce = 10
+projectile_speed = 662
+projectile_range = 406
+projectile_scale = 1.74
+knockback = 156
+explosion_radius = 26
+explosion_damage_ratio = 0.5
+element = 1
+effect_color = Color(1, 0.8, 0.3, 1)
+id = &"apollo_bow"
+display_name = "아폴론의 활"
+description = "태양신 아폴론이 넘겨준 활. 태양의 화살 세 발이 모든 것을 꿰뚫고 햇빛으로 터진다."
+rarity = 4
+tier = 0
+set_id = &"mythic"
+in_shop = false
+price = 0

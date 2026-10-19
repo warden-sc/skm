@@ -5,17 +5,18 @@
 
 [resource]
 script = ExtResource("1_script")
-defense = 2
-block_ratio = 1.0
-block_arc_degrees = 160.0
-max_guard = 100.0
-guard_regen = 20.0
+defense = 67
+block_ratio = 0.9
+block_arc_degrees = 160
+max_guard = 2270
+guard_regen = 790
 perfect_guard_window = 0.38
 guard_move_multiplier = 0.6
 guard_break_time = 0.8
 id = &"royal_aegis"
-display_name = "왕실 방패"
+display_name = "왕실의 아이기스"
 description = "왕국 기사단의 방패. 넓은 범위의 공격을 전부 막아낸다."
 rarity = 2
 icon = ExtResource("2_res")
-price = 500
+price = 10300
+tier = 0

@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/genesis_staff.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/star.png" id="3_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+projectile_texture = ExtResource("3_res")
+weapon_type = 2
+damage = 1770
+crit_chance = 0.17
+crit_multiplier = 2
+attack_cooldown = 0.4
+windup_time = 0.6
+spell = 5
+armor_pen = 84
+projectiles_per_shot = 1
+spread_degrees = 0
+explosion_radius = 32
+explosion_damage_ratio = 0.8
+projectile_speed = 260
+projectile_range = 253
+projectile_scale = 1.53
+knockback = 146
+chant_text = "태초의 별이여, 다시 빛나라!"
+slow_duration = 0
+zone_duration = 0
+zone_tick_ratio = 0
+pierce = 0
+strike_count = 11
+strike_scatter = 60
+strike_interval = 0.08
+strike_fall_time = 0.4
+element = 7
+effect_color = Color(1, 0.7, 1, 1)
+id = &"genesis_staff"
+display_name = "창세의 지팡이"
+description = "세상을 만든 별의 조각. 조준한 곳에 별 열한 개가 쏟아진다."
+rarity = 3
+tier = 2
+set_id = &"genesis"
+price = 40300

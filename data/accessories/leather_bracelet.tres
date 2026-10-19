@@ -6,11 +6,12 @@
 [resource]
 script = ExtResource("1_script")
 slot_type = 0
-crit_damage_bonus = 0.15
-armor_pen = 1
+crit_damage_bonus = 0.1
+armor_pen = 5
 id = &"leather_bracelet"
 display_name = "가죽 팔찌"
 description = "질긴 가죽을 엮은 팔찌. 급소를 노리는 감각이 생긴다."
 rarity = 0
 icon = ExtResource("2_res")
 price = 55
+tier = 0

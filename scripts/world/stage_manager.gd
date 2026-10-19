@@ -21,8 +21,9 @@ extends Node
 ##   최종 보스 토벌 → 「모든 스테이지 클리어」 → 엔딩
 ##
 ## 드랍 등급
-##   일반 몬스터: 스테이지 등급까지만 (1스테이지 일반·희귀 / 2스테이지 레어까지 / 3스테이지 전설까지)
-##   보물상자   : 다음 스테이지 등급 (1스테이지 보스 → 레어, 2스테이지 이후 → 전설) 검/활/지팡이/방패/투구/갑옷 중 하나
+##   일반 몬스터: 그 스테이지 등급(1~10 일반 · 11~40 희귀 · 41~70 레어 · 71~100 전설)에서 이미 풀린 단계(하급 · 중급 · 상급)만 (ItemDB.get_drop_pool)
+##   보물상자   : 다음 스테이지 등급에서 조금 앞선 단계까지 (상점 장비 중 하나, 아직 없는 것 우선)
+##   신화       : 10스테이지마다 보스가 하나씩 바로 가방으로 (_grant_mythic) — 100스테이지 보스를 쓰러뜨리면 봉인 해제
 ##
 ## Node 상속이므로 자신의 위치 함수는 쓰지 않고, 타입이 지정된 Node2D 참조(방, 마커, 플레이어)만 사용합니다.
 
@@ -85,6 +86,8 @@ var _spawn_timer: float = 0.0
 var _kills: int = 0
 var _kill_target: int = 0
 var _boss: Enemy
+## 마지막으로 쓰러진 보스의 자리 (신화 장비가 여기서 날아옴)
+var _boss_fall_position: Vector2 = Vector2.ZERO
 var _chest: Chest
 var _ending_timer: Timer
 ## 스테이지 분위기 (어두운 스테이지는 화면을 어둡게)
@@ -354,7 +357,7 @@ func _spawn_boss() -> void:
 	var at := boss_spawn.global_position + data.boss_spawn_offset
 	_add_enemy(boss, at, boss_room.get_arena_rect())
 	Fx.explosion(player, at, Color(1.0, 0.4, 0.4), 50.0, 3)
-	GameManager.report_boss_spawned("%s  · 방어력 %d" % [boss.display_name, boss.defense], boss.max_hp)
+	GameManager.report_boss_spawned("%s  · 방어력 %d" % [boss.display_name, boss.get_defense_value()], boss.max_hp)
 	GameManager.show_notice(data.boss_intro_text if data.boss_intro_text != "" else "보스 등장: %s" % boss.display_name, Color(1.0, 0.4, 0.5))
 	if _hidden_active:
 		Story.queue("히든 보스 등장")
@@ -378,6 +381,7 @@ func _on_boss_defeated() -> void:
 		_finale_done = true
 		_on_final_boss_defeated()
 		return
+	_grant_mythic(GameManager.stage)
 	_hidden_pending = is_hidden_gate_ready()
 	if is_final_stage() and not _hidden_pending:
 		if finale_stage != null and not _finale_done:
@@ -404,6 +408,36 @@ func _spawn_chest(hidden_reward: bool) -> void:
 
 func _next_portal_prompt() -> String:
 	return "[E] 여정을 마치기 (엔딩)" if is_final_stage() else "[E] STAGE %d 로 이동" % (GameManager.stage + 1)
+
+
+# ============================================================ 신화 장비
+## 10스테이지마다 보스가 신화 장비를 넘겨줌 (가방으로 바로). 100스테이지 보스를 쓰러뜨리면 봉인이 모두 풀림
+func _grant_mythic(stage: int) -> void:
+	var mythic := ItemDB.get_mythic_for_stage(stage)
+	if mythic != null and not GameManager.owns_item(mythic.id):
+		GameManager.add_item(mythic)
+		if mythic.icon != null:
+			_fly_icon(mythic.icon, _boss_fall_position if _boss_fall_position != Vector2.ZERO else player.global_position)
+		Fx.explosion(player, player.global_position + Vector2(0, -8), mythic.get_rarity_color(), 40.0, 3)
+		_notice_later("[신화] %s 을(를) 받았다 — %s" % [mythic.display_name, "봉인됨 · 100스테이지를 클리어하면 착용 가능" if not GameManager.mythic_unlocked and stage < 100 else "가방에 들어감"],
+			mythic.get_rarity_color(), 1.2)
+	if is_final_stage(stage) and not GameManager.mythic_unlocked:
+		GameManager.unlock_mythic()
+		_notice_later("신화 장비 %d개의 봉인이 풀렸다! [I] 인벤토리에서 장착하세요" % GameManager.get_mythic_items().size(), ItemData.RARITY_COLORS[ItemData.Rarity.MYTHIC], 2.6)
+
+
+## 보스가 쓰러진 자리에서 장비 그림이 떠올라 용사에게 날아감
+func _fly_icon(texture: Texture2D, from: Vector2) -> void:
+	var s := Sprite2D.new()
+	s.texture = texture
+	s.z_index = 60
+	s.scale = Vector2.ONE * 1.5
+	entities_root.add_child(s)
+	s.global_position = from
+	var tween := s.create_tween()
+	tween.tween_property(s, "global_position", from + Vector2(0, -24), 0.5).set_ease(Tween.EASE_OUT)
+	tween.tween_property(s, "global_position", player.global_position + Vector2(0, -8), 0.5).set_ease(Tween.EASE_IN)
+	tween.tween_callback(s.queue_free)
 
 
 # ============================================================ 최종장
@@ -447,8 +481,9 @@ func _on_final_boss_defeated() -> void:
 
 
 func _on_chest_opened(chest: Chest, hidden_reward: bool = false) -> void:
+	# 다음 스테이지 등급에서, 조금 앞선 단계(5스테이지 뒤에 풀릴 단계)까지
 	var rarity := ItemData.max_rarity_for_stage(GameManager.stage + 1)
-	var candidates := ItemDB.get_chest_candidates(rarity)
+	var candidates := ItemDB.get_chest_candidates(rarity, GameManager.stage + 6 + (10 if hidden_reward else 0))
 	var not_owned := candidates.filter(func(it: ItemData) -> bool: return not GameManager.owns_item(it.id))
 	var pool: Array = not_owned if not not_owned.is_empty() else candidates
 	pool = pool.duplicate()
@@ -459,7 +494,7 @@ func _on_chest_opened(chest: Chest, hidden_reward: bool = false) -> void:
 		var drop := pickup_scene.instantiate() as Pickup
 		drop.setup_item(item)
 		_add_entity(drop, chest.global_position + Vector2(-12.0 * i if hidden_reward else 0.0, 14))
-		names.append("[%s] %s" % [item.get_rarity_name(), item.display_name])
+		names.append("[%s] %s" % [item.get_grade_text(), item.display_name])
 	if not names.is_empty():
 		GameManager.show_notice(("고대 용의 보물: " if hidden_reward else "보물상자: ") + ", ".join(names), Color(1.0, 0.9, 0.55) if hidden_reward else (pool[0] as ItemData).get_rarity_color())
 	var gold := roundi(60.0 * GameManager.stage * float(GameManager.get_difficulty_info()["gold"]) * (3.0 if hidden_reward else 1.0))
@@ -558,6 +593,7 @@ func _on_enemy_died(enemy: Enemy) -> void:
 	_spawn_drops(enemy.global_position, enemy)
 	GameManager.report_kill()
 	if enemy == _boss:
+		_boss_fall_position = enemy.get_hit_center()
 		_on_boss_defeated()
 		return
 	if _state == State.FIELD and not boss_gate.is_open():
@@ -584,14 +620,10 @@ func _spawn_drops(at_global: Vector2, enemy: Enemy) -> void:
 			_add_entity(coin, at_global)
 
 	# 2) 장비: 일반 몬스터만 확률 드랍 (보스는 보물상자로 대신 보상)
+	#    그 스테이지 등급에서 이미 풀린 단계의 장비 + 그 몬스터만 떨어뜨리는 드랍 전용 장비(고블린 단검 등)
 	if enemy.is_boss or enemy.item_drop_ids.is_empty() or randf() >= enemy.item_drop_chance:
 		return
-	var max_rarity := ItemData.max_rarity_for_stage(GameManager.stage)
-	var allowed: Array[ItemData] = []
-	for item_id in enemy.item_drop_ids:
-		var candidate := ItemDB.get_item(item_id)
-		if candidate != null and candidate.rarity <= max_rarity:
-			allowed.append(candidate)
+	var allowed := ItemDB.get_drop_pool(GameManager.stage, enemy.item_drop_ids)
 	if allowed.is_empty():
 		return
 	var drop := pickup_scene.instantiate() as Pickup

@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/abaddon_sword.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+weapon_type = 0
+damage = 12560
+crit_chance = 0.25
+crit_multiplier = 2.4
+attack_cooldown = 0.26
+melee_range = 72
+melee_arc_degrees = 220
+armor_pen = 0
+knockback = 320
+element = 8
+effect_color = Color(0.85, 0.3, 0.5, 1)
+id = &"abaddon_sword"
+display_name = "아바돈의 검"
+description = "무저갱의 왕 아바돈이 넘겨준 검. 휘두를 때마다 심연이 넓게 갈라진다."
+rarity = 4
+tier = 0
+set_id = &"mythic"
+in_shop = false
+price = 0

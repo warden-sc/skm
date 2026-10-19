@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="BootsData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/boots_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/boots/dragonscale_boots.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/boots/dragonscale_boots_worn.png" id="3_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+worn_texture = ExtResource("3_res")
+defense = 75
+move_bonus = 0.11
+id = &"dragonscale_boots"
+display_name = "용비늘 장화"
+description = "용의 비늘을 덧댄 장화."
+rarity = 2
+tier = 1
+set_id = &"dragonscale"
+price = 13300

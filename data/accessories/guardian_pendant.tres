@@ -6,11 +6,12 @@
 [resource]
 script = ExtResource("1_script")
 slot_type = 2
-bonus_max_hp = 50
-hp_regen = 1.5
+bonus_max_hp = 570
+hp_regen = 16.4
 id = &"guardian_pendant"
 display_name = "수호자의 펜던트"
 description = "옛 수호기사의 펜던트. 꺼지지 않는 치유의 가호가 깃들어 있다."
 rarity = 2
 icon = ExtResource("2_res")
-price = 460
+price = 10300
+tier = 0

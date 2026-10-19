@@ -1,8 +1,8 @@
 [gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://assets/sprites/weapons/arcana_staff.png" id="2_res"]
-[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/orb.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/orb.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/arcana_staff.png" id="3_res"]
 
 [resource]
 script = ExtResource("1_script")
@@ -15,14 +15,14 @@ explosion_damage_ratio = 0.8
 weapon_type = 2
 element = 7
 effect_color = Color(0.8, 0.55, 1, 1)
-damage = 20
+damage = 1590
 crit_chance = 0.15
-crit_multiplier = 2.0
+crit_multiplier = 2
 knockback = 100.0
 attack_cooldown = 0.4
 windup_time = 0.7
 chant_text = "별의 근원이여, 나의 부름에 응하라!"
-projectile_texture = ExtResource("3_res")
+projectile_texture = ExtResource("2_res")
 projectile_speed = 300.0
 projectile_range = 260.0
 projectiles_per_shot = 1
@@ -32,8 +32,10 @@ projectile_scale = 1.4
 explosion_radius = 30.0
 slow_duration = 0.0
 id = &"arcana_staff"
-display_name = "대마법사의 지팡이 아르카나"
+display_name = "별의 지팡이 아르카나"
 description = "별의 힘을 끌어내는 전설의 지팡이. 조준한 곳 주변에 별똥별이 무작위로 쏟아진다."
 rarity = 3
-icon = ExtResource("2_res")
-price = 1800
+icon = ExtResource("3_res")
+price = 33300
+armor_pen = 72
+tier = 0

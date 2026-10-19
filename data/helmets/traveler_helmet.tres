@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="HelmetData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/helmet_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/helmets/traveler_helmet.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/helmets/traveler_helmet_worn.png" id="3_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+worn_texture = ExtResource("3_res")
+defense = 36
+bonus_max_hp = 120
+id = &"traveler_helmet"
+display_name = "여행자의 두건"
+description = "먼지를 막아 주는 두건. 가벼운 가죽을 덧댔다."
+rarity = 0
+tier = 1
+price = 1230

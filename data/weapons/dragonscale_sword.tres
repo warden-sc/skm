@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/dragonscale_sword.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+weapon_type = 0
+damage = 3750
+crit_chance = 0.15
+crit_multiplier = 1.8
+attack_cooldown = 0.31
+melee_range = 50
+melee_arc_degrees = 165
+armor_pen = 0
+knockback = 220
+element = 1
+effect_color = Color(1, 0.65, 0.3, 1)
+id = &"dragonscale_sword"
+display_name = "용아검"
+description = "용의 송곳니를 갈아 만든 검. 베인 자리에 용의 불길이 남는다."
+rarity = 2
+tier = 1
+set_id = &"dragonscale"
+price = 23200

@@ -5,7 +5,7 @@
 
 [resource]
 script = ExtResource("1_script")
-heal_amount = 30
+heal_amount = 300
 heal_percent = 0.0
 id = &"small_potion"
 display_name = "작은 회복 포션"

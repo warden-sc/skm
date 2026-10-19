@@ -96,7 +96,7 @@ func _physics_process(delta: float) -> void:
 		if is_wounded():
 			set_status("상처 입음 — 형제의 힘 없음 %.0f초" % _wound_left, Color(1.0, 0.6, 0.5))
 		elif has_partner():
-			set_status("형제의 힘 (방어력 +%d)" % brother_defense, Color(0.8, 0.85, 1.0))
+			set_status("형제의 힘 (방어력 +%d)" % Balance.scale(brother_defense), Color(0.8, 0.85, 1.0))
 		elif _enraged:
 			set_status("형제를 잃은 분노!", Color(1.0, 0.4, 0.3))
 	super._physics_process(delta)

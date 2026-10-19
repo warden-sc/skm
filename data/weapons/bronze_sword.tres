@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/bronze_sword.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+weapon_type = 0
+damage = 760
+crit_chance = 0.08
+crit_multiplier = 1.55
+attack_cooldown = 0.34
+melee_range = 40
+melee_arc_degrees = 135
+armor_pen = 0
+knockback = 170
+element = 0
+effect_color = Color(1, 0.8, 0.5, 1)
+id = &"bronze_sword"
+display_name = "청동 검"
+description = "청동을 두드려 만든 넓은 칼날의 검. 무게가 실린 한 방이 묵직하다."
+rarity = 0
+tier = 2
+set_id = &"bronze"
+price = 3520

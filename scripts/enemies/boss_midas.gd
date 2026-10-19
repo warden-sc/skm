@@ -121,12 +121,12 @@ func confuse() -> void:
 		field.reeds_cooldown = reeds_rest
 	super.stun(6.0)
 	FloatingText.spawn(self, global_position + Vector2(0, -56), "「임금님 귀는 당나귀 귀…」", Color(0.8, 1.0, 0.6), true)
-	GameManager.show_notice("갈대밭의 속삭임에 미다스가 혼란에 빠졌다! (방어력 -%d)" % confuse_defense, Color(0.8, 1.0, 0.6))
+	GameManager.show_notice("갈대밭의 속삭임에 미다스가 혼란에 빠졌다! (방어력 -%d)" % Balance.scale(confuse_defense), Color(0.8, 1.0, 0.6))
 
 
 func _update_status() -> void:
 	if is_confused():
-		set_status("혼란 — 방어력 -%d" % confuse_defense, Color(0.8, 1.0, 0.6))
+		set_status("혼란 — 방어력 -%d" % Balance.scale(confuse_defense), Color(0.8, 1.0, 0.6))
 	else:
 		set_status("황금 손 — 갈대밭으로 끌어들여라", Color(1.0, 0.85, 0.35))
 

@@ -7,10 +7,11 @@
 script = ExtResource("1_script")
 slot_type = 0
 crit_damage_bonus = 0.4
-armor_pen = 4
+armor_pen = 43
 id = &"obsidian_bracelet"
 display_name = "흑요석 팔찌"
 description = "화산 유리로 만든 팔찌. 단단한 껍질도 쪼갠다."
 rarity = 2
 icon = ExtResource("2_res")
-price = 480
+price = 11100
+tier = 0

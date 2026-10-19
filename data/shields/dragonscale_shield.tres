@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ShieldData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/shield_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/shields/dragonscale_shield.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+defense = 75
+block_ratio = 0.92
+block_arc_degrees = 165
+max_guard = 2590
+guard_regen = 910
+perfect_guard_window = 0.39
+guard_move_multiplier = 0.62
+guard_break_time = 0.75
+id = &"dragonscale_shield"
+display_name = "용비늘 방패"
+description = "용의 비늘을 겹겹이 이은 큰 방패."
+rarity = 2
+tier = 1
+set_id = &"dragonscale"
+price = 13300

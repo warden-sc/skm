@@ -4,8 +4,14 @@ extends ItemData
 ## 사용하면 사라집니다. 회복량 = heal_amount + 최대 체력 x heal_percent
 
 @export_group("Heal")
-@export var heal_amount: int = 30
+@export var heal_amount: int = 300
 @export_range(0.0, 1.0) var heal_percent: float = 0.0
+## 상점에서 살 수 있게 되는 스테이지 (포션은 등급 구간과 따로)
+@export var unlock_stage: int = 1
+
+
+func get_unlock_stage() -> int:
+	return unlock_stage
 
 
 func get_heal(max_hp: int) -> int:

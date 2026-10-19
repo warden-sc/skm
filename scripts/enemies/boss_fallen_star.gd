@@ -145,7 +145,7 @@ func _update_status() -> void:
 	if _gate_open:
 		set_status("무저갱의 문이 열려 있음 — 열쇠를 빼앗아 닫아라", Color(1.0, 0.6, 0.4))
 	else:
-		set_status("문이 닫힘 (방어력 -%d)" % close_defense, Color(0.8, 0.85, 1.0))
+		set_status("문이 닫힘 (방어력 -%d)" % Balance.scale(close_defense), Color(0.8, 0.85, 1.0))
 
 
 func _run_pattern(pattern: int) -> float:

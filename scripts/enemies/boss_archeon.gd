@@ -136,7 +136,7 @@ func apply_element_buff(element: Elements.Type) -> void:
 			_blink_near_player()
 		Elements.Type.EARTH:
 			defense = _base_defense + earth_defense_bonus
-			text = "대지의 갑주: 방어력 +%d" % earth_defense_bonus
+			text = "대지의 갑주: 방어력 +%d" % Balance.scale(earth_defense_bonus)
 	_buff_label.text = text
 	_buff_label.add_theme_color_override(&"font_color", Elements.color_of(element).lightened(0.2))
 	_shield_ring.visible = ice_shield > 0

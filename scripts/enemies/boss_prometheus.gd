@@ -100,7 +100,7 @@ func _update_freedom() -> void:
 	defense = _base_defense + chain_armor * left
 	power = _base_power * (1.0 + 0.12 * freed)
 	move_speed = _base_speed * (1.0 + 0.2 * freed)
-	set_status("사슬 %d개 — 방어력 +%d · 해방 %d" % [left, chain_armor * left, freed] if left > 0 else "완전 해방!", Color(1.0, 0.7, 0.4))
+	set_status("사슬 %d개 — 방어력 +%d · 해방 %d" % [left, chain_armor * left * Balance.K, freed] if left > 0 else "완전 해방!", Color(1.0, 0.7, 0.4))
 
 
 func _on_chain_broken(_enemy: Enemy) -> void:

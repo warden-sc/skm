@@ -46,7 +46,7 @@ func _physics_process(delta: float) -> void:
 		# 이미 휘말려 있으면 다른 회오리가 겹쳐 때리지 않음 (두 개가 한꺼번에 들어오는 즉사 방지)
 		if _hit_cooldown <= 0.0 and not player.is_dashing() and not player.is_charmed() and player.global_position.distance_to(global_position) <= RADIUS:
 			_hit_cooldown = 1.2
-			if player.take_unblockable_hit(damage, global_position) == Player.HitResult.DAMAGED:
+			if player.take_unblockable_hit(Balance.scale(damage), global_position) == Player.HitResult.DAMAGED:
 				player.apply_charm(0.7, null, "휘말림")
 				player.velocity = global_position.direction_to(player.global_position).rotated(0.6) * 320.0
 	global_position += drift * delta

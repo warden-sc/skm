@@ -2,9 +2,11 @@ class_name ShopUI
 extends CanvasLayer
 ## 상점 UI. 열려 있는 동안 게임을 일시정지하고(get_tree().paused), 이 노드만 PROCESS_MODE_ALWAYS 로 동작합니다.
 ##
+## - 위쪽 탭: 포션 · 검 · 활 · 지팡이 · 방패 · 투구 · 갑옷 · 신발 · 팔찌 · 반지 · 펜던트 — 고른 종류만 보여 줌 (구매 · 보유 목록 모두)
 ## - 왼쪽 「구매」: 회복 포션(여러 개 구매, 종류별 최대 5개) / 골드로 장비 구매 → 가방 추가 + 자동 장착
-##   · 스테이지별 입고: 1스테이지 일반·희귀 / 2스테이지 레어 / 3스테이지 전설 (그 전에는 잠김 표시)
-##   · 등급별 배경색: 일반 회색 / 희귀 파랑 / 레어 보라 / 전설 노랑
+##   · 스테이지별 입고: 1~10 일반 / 11~40 희귀 / 41~70 레어 / 71~100 전설 (그 전에는 잠김 표시)
+##   · 같은 등급 안에서도 하급 · 중급 · 상급 (상급일수록 강하고 비쌈)
+##   · 등급별 배경색: 일반 회색 / 희귀 파랑 / 레어 보라 / 전설 노랑 / 신화 진홍
 ## - 오른쪽 「보유 장비 · 판매」: 장착 / 판매 (장착 중인 장비는 팔 수 없음 — 인벤토리에서 해제 후 판매)
 ## - 행에 마우스를 올리면 아래 상세 정보에 스탯 표시
 
@@ -14,8 +16,14 @@ extends CanvasLayer
 @onready var _inventory_list: VBoxContainer = %InventoryList
 @onready var _detail: Label = %Detail
 @onready var _close_button: Button = %CloseButton
+@onready var _tabs: HFlowContainer = %CategoryTabs
+
+enum Category { POTION, SWORD, BOW, STAFF, SHIELD, HELMET, ARMOR, BOOTS, BRACELET, RING, PENDANT }
+const CATEGORY_NAMES := ["포션", "검", "활", "지팡이", "방패", "투구", "갑옷", "신발", "팔찌", "반지", "펜던트"]
 
 var _stock: Array[ItemData] = []
+var category: Category = Category.SWORD
+var _tab_buttons: Array[Button] = []
 
 
 func _ready() -> void:
@@ -27,10 +35,56 @@ func _ready() -> void:
 	GameManager.equipment_changed.connect(_on_data_changed)
 	GameManager.potions_changed.connect(_on_data_changed)
 	_close_button.pressed.connect(close)
+	for i in CATEGORY_NAMES.size():
+		var button := Button.new()
+		button.text = CATEGORY_NAMES[i]
+		button.toggle_mode = true
+		button.focus_mode = Control.FOCUS_NONE
+		button.add_theme_font_size_override(&"font_size", 9)
+		button.custom_minimum_size = Vector2(34, 0)
+		button.pressed.connect(set_category.bind(i))
+		_tabs.add_child(button)
+		_tab_buttons.append(button)
+
+
+## 장비 종류 → 상점 탭
+static func category_of(item: ItemData) -> Category:
+	if item is PotionData:
+		return Category.POTION
+	if item is WeaponData:
+		match (item as WeaponData).weapon_type:
+			WeaponData.WeaponType.BOW:
+				return Category.BOW
+			WeaponData.WeaponType.STAFF:
+				return Category.STAFF
+		return Category.SWORD
+	if item is ShieldData:
+		return Category.SHIELD
+	if item is HelmetData:
+		return Category.HELMET
+	if item is ArmorData:
+		return Category.ARMOR
+	if item is BootsData:
+		return Category.BOOTS
+	if item is AccessoryData:
+		return [Category.BRACELET, Category.RING, Category.PENDANT][(item as AccessoryData).slot_type]
+	return Category.POTION
+
+
+func set_category(value: int) -> void:
+	category = value as Category
+	_refresh()
+
+
+## 지금 탭에 보이는 판매 장비 (테스트용)
+func get_visible_stock() -> Array[ItemData]:
+	return _stock.filter(func(it: ItemData) -> bool: return category_of(it) == category)
 
 
 func open(shop_name: String, stock_ids: Array) -> void:
 	_stock.clear()
+	if stock_ids.is_empty():
+		stock_ids = ItemDB.get_shop_items().map(func(it: ItemData) -> StringName: return it.id)
 	for item_id in stock_ids:
 		var item := ItemDB.get_item(StringName(item_id))
 		if item != null:
@@ -73,7 +127,9 @@ func _refresh() -> void:
 	for child in _inventory_list.get_children():
 		child.queue_free()
 
-	for item in _stock:
+	for i in _tab_buttons.size():
+		_tab_buttons[i].set_pressed_no_signal(i == category)
+	for item in get_visible_stock():
 		var locked := GameManager.stage < item.get_unlock_stage()
 		if item is PotionData:
 			_buy_list.add_child(_make_potion_row(item as PotionData, locked))
@@ -88,9 +144,13 @@ func _refresh() -> void:
 		_buy_list.add_child(ItemRow.build(item, [button], _show_detail.bind(item, locked), locked))
 
 	for item in GameManager.items:
+		if category_of(item) != category:
+			continue
 		var equipped := GameManager.is_equipped(item)
-		var equip_button := ItemRow.make_button("장착중" if equipped else "장착", equipped, _on_equip_pressed.bind(item), 40.0)
-		var sell_button := ItemRow.make_button("판매불가" if equipped else "판매 %dG" % item.get_sell_value(), equipped, _on_sell_pressed.bind(item), 58.0)
+		var sealed := item.is_sealed()
+		var equip_button := ItemRow.make_button("봉인" if sealed else ("장착중" if equipped else "장착"), equipped or sealed, _on_equip_pressed.bind(item), 40.0)
+		var sellable := GameManager.can_sell(item)
+		var sell_button := ItemRow.make_button("판매 %dG" % item.get_sell_value() if sellable else "판매불가", not sellable, _on_sell_pressed.bind(item), 58.0)
 		_inventory_list.add_child(ItemRow.build(item, [equip_button, sell_button], _show_detail.bind(item, false)))
 
 
@@ -110,7 +170,7 @@ func _make_potion_row(potion: PotionData, locked: bool) -> Control:
 
 func _show_detail(item: ItemData, locked: bool) -> void:
 	var lock_text := "※ %d스테이지부터 구매 가능" % item.get_unlock_stage() if locked else ""
-	_detail.text = ItemRow.detail_text(item, "  (판매가 %dG)" % item.get_sell_value(), lock_text)
+	_detail.text = ItemRow.detail_text(item, "" if item.is_mythic() else "  (판매가 %dG)" % item.get_sell_value(), lock_text)
 	(_detail.get_parent() as ScrollContainer).scroll_vertical = 0
 
 

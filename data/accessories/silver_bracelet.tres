@@ -7,10 +7,11 @@
 script = ExtResource("1_script")
 slot_type = 0
 crit_damage_bonus = 0.25
-armor_pen = 2
+armor_pen = 29
 id = &"silver_bracelet"
 display_name = "은 팔찌"
 description = "날카롭게 세공된 은 팔찌. 갑옷의 틈을 꿰뚫는다."
 rarity = 1
 icon = ExtResource("2_res")
-price = 170
+price = 2400
+tier = 0

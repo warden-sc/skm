@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ShieldData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/shield_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/shields/mithril_shield.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+defense = 64
+block_ratio = 0.88
+block_arc_degrees = 136
+max_guard = 2110
+guard_regen = 740
+perfect_guard_window = 0.35
+guard_move_multiplier = 0.6
+guard_break_time = 0.9
+id = &"mithril_shield"
+display_name = "미스릴 방패"
+description = "가볍고 단단한 미스릴 방패. 가드를 올린 채로도 빠르게 움직인다."
+rarity = 1
+tier = 2
+set_id = &"mithril"
+price = 9340

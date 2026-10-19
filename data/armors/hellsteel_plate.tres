@@ -1,17 +1,18 @@
 [gd_resource type="Resource" script_class="ArmorData" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/armor_data.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://assets/sprites/armors/hellsteel_plate.png" id="2_res"]
-[ext_resource type="Texture2D" path="res://assets/sprites/armors/hellsteel_plate_worn.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/armors/hellsteel_plate_worn.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/armors/hellsteel_plate.png" id="3_res"]
 
 [resource]
 script = ExtResource("1_script")
-defense = 4
-bonus_max_hp = 40
-worn_texture = ExtResource("3_res")
+defense = 120
+bonus_max_hp = 1020
+worn_texture = ExtResource("2_res")
 id = &"hellsteel_plate"
-display_name = "지옥강철 갑옷"
+display_name = "지옥강 판금"
 description = "지옥의 불길로 단련한 검은 판금 갑옷."
 rarity = 2
-icon = ExtResource("2_res")
-price = 520
+icon = ExtResource("3_res")
+price = 11100
+tier = 0

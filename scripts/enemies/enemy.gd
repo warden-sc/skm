@@ -119,9 +119,9 @@ func _ready() -> void:
 	create_tween().tween_property(sprite, "modulate:a", 1.0, 0.25)
 
 
-## 난이도 배율 적용 (StageManager 가 add_child 전에 호출)
+## 난이도 배율 적용 (StageManager 가 add_child 전에 호출). 체력은 여기서 딜 인플레 배율(Balance.K)도 곱함
 func apply_difficulty(info: Dictionary) -> void:
-	max_hp = roundi(max_hp * float(info["enemy_hp"]))
+	max_hp = roundi(max_hp * float(info["enemy_hp"])) * Balance.K
 	defense += int(info.get("enemy_defense", 0))
 	contact_damage = roundi(contact_damage * float(info["enemy_damage"]))
 	power *= float(info["enemy_damage"])
@@ -344,11 +344,16 @@ func _get_command_velocity(delta: float) -> Vector2:
 	return Vector2.ZERO
 
 
+## 실제 방어력 (defense 는 예전 단위 — 기믹의 방어력 ± 도 그대로 Balance.K 배)
+func get_defense_value() -> int:
+	return maxi(defense, 0) * Balance.K
+
+
 ## 방어력 관통을 반영해 실제로 들어갈 피해 계산
 func calc_damage(amount: int, armor_pen: int = 0) -> int:
 	if amount <= 0:
 		return 0
-	var effective_defense := maxi(defense - maxi(armor_pen, 0), 0)
+	var effective_defense := maxi(get_defense_value() - maxi(armor_pen, 0), 0)
 	return maxi(amount - effective_defense, maxi(ceili(amount * MIN_DAMAGE_RATIO), 1))
 
 

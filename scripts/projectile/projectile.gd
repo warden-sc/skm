@@ -169,7 +169,7 @@ func _on_body_entered(body: Node2D) -> void:
 ## 퍼펙트 가드: 진행 방향을 뒤집고 플레이어 편 탄으로 전환
 func _reflect() -> void:
 	_spec.team = ProjectileSpec.Team.PLAYER
-	_spec.damage = roundi(_spec.damage * REFLECT_DAMAGE_MULTIPLIER)
+	_spec.damage = roundi(Balance.scale(_spec.damage) * REFLECT_DAMAGE_MULTIPLIER)  # 적 탄 피해는 예전 단위
 	_spec.knockback = maxf(_spec.knockback, 120.0)
 	_spec.pierce = 1
 	_pierce_left = _spec.pierce

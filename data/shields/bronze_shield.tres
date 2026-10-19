@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ShieldData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/shield_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/shields/bronze_shield.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+defense = 38
+block_ratio = 0.78
+block_arc_degrees = 116
+max_guard = 1120
+guard_regen = 390
+perfect_guard_window = 0.31
+guard_move_multiplier = 0.56
+guard_break_time = 1.1
+id = &"bronze_shield"
+display_name = "청동 방패"
+description = "청동판을 두른 둥근 방패. 두드리면 맑은 소리가 난다."
+rarity = 0
+tier = 2
+set_id = &"bronze"
+price = 2010

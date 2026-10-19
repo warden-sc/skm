@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/genesis_bow.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/genesis_bow_held.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/arrow.png" id="4_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+held_texture = ExtResource("3_res")
+projectile_texture = ExtResource("4_res")
+weapon_type = 1
+damage = 1690
+crit_chance = 0.22
+crit_multiplier = 2.1
+attack_cooldown = 0.087
+windup_time = 0.147
+armor_pen = 252
+projectiles_per_shot = 3
+spread_degrees = 12
+pierce = 4
+projectile_speed = 582
+projectile_range = 346
+projectile_scale = 1.44
+knockback = 156
+explosion_radius = 20
+explosion_damage_ratio = 0.5
+element = 7
+effect_color = Color(1, 0.75, 1, 1)
+id = &"genesis_bow"
+display_name = "창세의 활"
+description = "별의 궤적을 쏘는 활. 화살 세 발이 별빛으로 터진다."
+rarity = 3
+tier = 2
+set_id = &"genesis"
+price = 40300

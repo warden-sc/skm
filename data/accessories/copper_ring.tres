@@ -6,11 +6,12 @@
 [resource]
 script = ExtResource("1_script")
 slot_type = 1
-crit_chance_bonus = 0.03
-attack_bonus = 0.05
+crit_chance_bonus = 0.02
+attack_bonus = 0.03
 id = &"copper_ring"
 display_name = "구리 반지"
 description = "소박한 구리 반지. 손끝이 조금 더 예리해진다."
 rarity = 0
 icon = ExtResource("2_res")
 price = 60
+tier = 0

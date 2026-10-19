@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ShieldData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/shield_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/shields/mars_shield.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+defense = 130
+block_ratio = 1
+block_arc_degrees = 220
+max_guard = 4540
+guard_regen = 1590
+perfect_guard_window = 0.5
+guard_move_multiplier = 0.85
+guard_break_time = 0.4
+id = &"mars_shield"
+display_name = "마르스의 방패"
+description = "군신 마르스가 넘겨준 신성한 방패 안킬레. 어느 방향의 공격이든 막아낸다."
+rarity = 4
+tier = 0
+set_id = &"mythic"
+in_shop = false
+price = 0

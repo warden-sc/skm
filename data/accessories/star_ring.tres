@@ -6,11 +6,12 @@
 [resource]
 script = ExtResource("1_script")
 slot_type = 1
-crit_chance_bonus = 0.15
+crit_chance_bonus = 0.11
 attack_bonus = 0.2
 id = &"star_ring"
 display_name = "별의 반지"
 description = "별빛을 가둔 전설의 반지. 모든 일격이 치명적이다."
 rarity = 3
 icon = ExtResource("2_res")
-price = 1450
+price = 22200
+tier = 0

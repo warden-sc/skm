@@ -5,17 +5,18 @@
 
 [resource]
 script = ExtResource("1_script")
-defense = 3
-block_ratio = 1.0
-block_arc_degrees = 180.0
-max_guard = 150.0
-guard_regen = 28.0
+defense = 80
+block_ratio = 0.95
+block_arc_degrees = 180
+max_guard = 2850
+guard_regen = 1000
 perfect_guard_window = 0.42
 guard_move_multiplier = 0.65
 guard_break_time = 0.6
 id = &"colossus_bulwark"
-display_name = "거신의 방벽"
+display_name = "거신의 성벽"
 description = "원소의 거신 아르케온의 핵으로 만든 전설의 방패. 어떤 공격도 꿰뚫지 못한다."
 rarity = 3
 icon = ExtResource("2_res")
-price = 1500
+price = 19000
+tier = 0

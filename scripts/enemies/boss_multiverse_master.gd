@@ -15,6 +15,8 @@ extends PatternBoss
 ## [각성] 체력 2/3 에서 빛 기둥 · 충격파와 함께 각성 (몸이 붉은 보라로 타오름) → 대본 [최종장 2페이즈]
 ## [기믹 3] 멀티버스의 균열: 체력 2/3 이하에서 보스방 양쪽에 균열 둘 — 열려 있는 동안 주인은 피해 rift_ratio 만 받고, 균열에서 탄이 쏟아짐
 ##   균열을 부수면 rift_reopen 초 뒤 다시 열림
+## [신화] 체력 · 공격력이 다른 보스보다 훨씬 높음 — 10스테이지마다 받은 신화 장비(100스테이지 클리어 후 봉인 해제)를 갖춰야 할 만한 상대
+##   신화의 유산 10세트 「억제의 권능」: 주인에게 주는 피해 +30%
 ## [기믹 4] 멀티버스 붕괴: 체력 1/3 이하에서 세계가 더 빨리 바뀌고, 앞 세계의 기믹이 남은 채 두 세계가 겹침
 
 enum Pattern { COIN_STORM, PRICE_TAG, ECHO, SUMMON }
@@ -57,10 +59,14 @@ const SPECTATE_THRESHOLDS := [0.75, 0.5, 0.25]
 @export var transform_time: float = 3.0
 @export var shift_time: float = 18.0
 @export var spectate_time: float = 25.0
-@export var champion_hp_mult: float = 3.0
+@export var champion_hp_mult: float = 12.0
+## 투사의 공격력 배율
+@export var champion_power: float = 2.0
+## 최종장 보정: 신화 장비를 갖춰도 맞으면 아프도록 모든 공격 × finale_power
+@export var finale_power: float = 1.7
 @export var fall_stun: float = 10.0
 @export var fall_ratio: float = 1.5
-@export var rift_hp_ratio: float = 0.015
+@export var rift_hp_ratio: float = 0.03
 @export var rift_ratio: float = 0.6
 @export var rift_reopen: float = 30.0
 @export var rift_fire: float = 3.0
@@ -105,6 +111,12 @@ func _ready() -> void:
 	immune_text = "「나는 그저 상인일 뿐인데, 손님?」"
 	if merchant_texture != null:
 		sprite.texture = merchant_texture
+
+
+func apply_difficulty(info: Dictionary) -> void:
+	super.apply_difficulty(info)
+	power *= finale_power
+	contact_damage = roundi(contact_damage * finale_power)
 
 
 func get_phase() -> int:
@@ -180,7 +192,7 @@ func reveal() -> void:
 	if true_texture != null:
 		sprite.texture = true_texture
 	sprite.modulate = Color.WHITE
-	GameManager.report_boss_spawned("%s  · 방어력 %d" % [display_name, defense], max_hp)
+	GameManager.report_boss_spawned("%s  · 방어력 %d" % [display_name, get_defense_value()], max_hp)
 	GameManager.report_boss_hp(hp, max_hp)
 	Fx.shockwave(self, get_hit_center(), Color(1.0, 0.5, 1.0), 220.0, 0.9)
 	Fx.explosion(self, get_hit_center(), Color(0.7, 0.4, 1.0), 90.0, 3)
@@ -232,6 +244,7 @@ func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool =
 		show_immune()
 		return
 	if amount > 0:
+		amount = roundi(amount * (1.0 + GameManager.get_master_damage_bonus()))  # 신화의 유산 10세트 「억제의 권능」
 		if _fallen_left > 0.0:
 			amount = roundi(amount * fall_ratio)
 		elif not living_rifts().is_empty():
@@ -484,7 +497,8 @@ func register_minion(minion: Enemy) -> void:
 		_pending_champions -= 1
 		minion.max_hp = roundi(minion.max_hp * champion_hp_mult)
 		minion.hp = minion.max_hp
-		minion.power *= 1.2
+		minion.power *= champion_power
+		minion.contact_damage = roundi(minion.contact_damage * champion_power)
 		minion.base_tint = Color(1.0, 0.85, 0.5)
 		champions.append(minion)
 

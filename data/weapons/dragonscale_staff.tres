@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/dragonscale_staff.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/fireball.png" id="3_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+projectile_texture = ExtResource("3_res")
+weapon_type = 2
+damage = 6490
+crit_chance = 0.11
+crit_multiplier = 1.75
+attack_cooldown = 0.22
+windup_time = 0.5
+spell = 3
+armor_pen = 60
+projectiles_per_shot = 1
+spread_degrees = 0
+explosion_radius = 58
+explosion_damage_ratio = 0.8
+projectile_speed = 260
+projectile_range = 241
+projectile_scale = 1.41
+knockback = 122
+chant_text = "용이여, 숨을 내쉬어라!"
+slow_duration = 0
+zone_duration = 3
+zone_tick_ratio = 0.22
+pierce = 0
+element = 1
+effect_color = Color(1, 0.6, 0.25, 1)
+id = &"dragonscale_staff"
+display_name = "용의 숨결 지팡이"
+description = "용의 숨결을 가둔 지팡이. 화염구가 크게 터지고 땅이 오래 불탄다."
+rarity = 2
+tier = 1
+set_id = &"dragonscale"
+price = 23200

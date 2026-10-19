@@ -649,6 +649,7 @@ func apply_slow(multiplier: float, duration: float) -> void:
 func apply_armor_break(amount: int, duration: float) -> void:
 	if _is_dead or amount <= 0:
 		return
+	amount = Balance.scale(amount)  # 몬스터 쪽 예전 단위
 	_armor_break_amount = maxi(_armor_break_amount if _armor_break_left > 0.0 else 0, amount)
 	_armor_break_left = maxf(_armor_break_left, duration)
 
@@ -675,6 +676,7 @@ const BURN_TICK_TIME := 0.5
 func apply_burn(tick_damage: int, duration: float, poison: bool = false) -> void:
 	if _is_dead or tick_damage <= 0:
 		return
+	tick_damage = Balance.scale(tick_damage)  # 화상 수치는 몬스터 쪽 예전 단위
 	_burn_is_poison = poison
 	if _burn_left <= 0.0:
 		_burn_tick_timer = BURN_TICK_TIME
@@ -779,9 +781,11 @@ func shake_camera(strength: float) -> void:
 ## 적/적 탄환에게 맞았을 때 호출.
 ## from_position: 공격이 날아온 지점 (가드 방향 판정에 사용)
 ## attacker: 근접 공격한 적 (막으면 밀려나고, 퍼펙트 가드면 기절)
+## amount 는 몬스터 쪽 예전 단위 — 여기서 Balance.K 배가 됨
 func take_hit(amount: int, from_position: Vector2, attacker: Enemy = null) -> HitResult:
 	if _is_dead or is_dashing():
 		return HitResult.IGNORED  # 대시 중에는 공격이 통과
+	amount = Balance.scale(amount)
 
 	var hit_dir := global_position.direction_to(from_position)
 	if hit_dir == Vector2.ZERO:
@@ -805,6 +809,7 @@ func take_hit(amount: int, from_position: Vector2, attacker: Enemy = null) -> Hi
 
 
 ## 방패로 막을 수 없는 큰 공격 (티탄이 던진 바위 등): 가드·방어력 무시, 대시 중에만 피함.
+## amount 는 실제 피해 (대부분 최대 체력 비율). 예전 단위 수치를 넘길 때는 Balance.scale() 로 키워서
 ## dodgeable 이 false 면 대시로도 못 피함 (대마법사 아르카나의 메테오 — 안전지대로만 피함)
 func take_unblockable_hit(amount: int, from_position: Vector2, dodgeable: bool = true) -> HitResult:
 	if _is_dead or (dodgeable and is_dashing()):
@@ -873,16 +878,21 @@ func _update_timers(delta: float) -> void:
 	_dash_time_left = maxf(_dash_time_left - delta, 0.0)
 	if _dash_cooldown_left > 0.0:
 		_dash_cooldown_left = maxf(_dash_cooldown_left - delta, 0.0)
-		GameManager.set_dash_cooldown(_dash_cooldown_left, dash_cooldown)
+		GameManager.set_dash_cooldown(_dash_cooldown_left, get_dash_cooldown())
+
+
+## 신발(헤르메스의 신발)로 줄어든 대시 대기시간
+func get_dash_cooldown() -> float:
+	return dash_cooldown * (1.0 - GameManager.get_dash_cooldown_reduction())
 
 
 func _start_dash(input_dir: Vector2) -> void:
 	_since_dash = 0.0
 	_dash_direction = input_dir.normalized() if input_dir != Vector2.ZERO else _aim_direction
 	_dash_time_left = dash_duration
-	_dash_cooldown_left = dash_cooldown
+	_dash_cooldown_left = get_dash_cooldown()
 	_ghost_timer = 0.0
-	GameManager.set_dash_cooldown(_dash_cooldown_left, dash_cooldown)
+	GameManager.set_dash_cooldown(_dash_cooldown_left, get_dash_cooldown())
 
 
 func _spawn_dash_ghost() -> void:

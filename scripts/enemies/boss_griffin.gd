@@ -252,7 +252,7 @@ func roar() -> float:
 	if has_target():
 		_player.apply_armor_break(roar_armor_break, roar_break_time)
 		_player.shake_camera(3.0)
-		FloatingText.spawn(_player, _player.global_position + Vector2(0, -24), "방어력 -%d" % roar_armor_break, Color(1.0, 0.55, 0.45), true)
+		FloatingText.spawn(_player, _player.global_position + Vector2(0, -24), "방어력 -%d" % Balance.scale(roar_armor_break), Color(1.0, 0.55, 0.45), true)
 	_after(0.45, _claw)
 	return 1.6
 

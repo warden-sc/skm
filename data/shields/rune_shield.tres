@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ShieldData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/shield_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/shields/rune_shield.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+defense = 80
+block_ratio = 0.94
+block_arc_degrees = 170
+max_guard = 2820
+guard_regen = 990
+perfect_guard_window = 0.4
+guard_move_multiplier = 0.63
+guard_break_time = 0.7
+id = &"rune_shield"
+display_name = "룬 방패"
+description = "룬이 새겨진 탑 방패. 막을 때마다 룬이 빛난다."
+rarity = 2
+tier = 2
+set_id = &"rune"
+price = 17300

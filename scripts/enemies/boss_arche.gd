@@ -127,7 +127,7 @@ func set_aspect(next: Aspect) -> void:
 		Aspect.WIND:
 			extra = "바람이 분다 %s — 투사체가 휜다" % (wind.get_arrow() if get_wind() != null else "")
 		Aspect.EARTH:
-			extra = "대지의 비늘 — 방어력 +%d" % earth_armor
+			extra = "대지의 비늘 — 방어력 +%d" % Balance.scale(earth_armor)
 		Aspect.ICE:
 			extra = "발밑이 얼어붙는다 — 빙판에서 미끄러진다"
 		Aspect.FIRE:

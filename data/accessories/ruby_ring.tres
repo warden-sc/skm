@@ -6,11 +6,12 @@
 [resource]
 script = ExtResource("1_script")
 slot_type = 1
-crit_chance_bonus = 0.06
+crit_chance_bonus = 0.05
 attack_bonus = 0.08
 id = &"ruby_ring"
 display_name = "루비 반지"
 description = "붉게 빛나는 루비 반지. 치명타와 공격력이 오른다."
 rarity = 1
 icon = ExtResource("2_res")
-price = 180
+price = 2580
+tier = 0

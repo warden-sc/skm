@@ -85,7 +85,7 @@ const STARTING_ITEM_IDS: Array[StringName] = [&"rusty_sword", &"wooden_shield"]
 const STARTING_POTIONS := {&"small_potion": 2}
 ## 포션 종류별 최대 보유 개수
 const POTION_MAX_STACK := 5
-const BASE_MAX_HP := 100
+const BASE_MAX_HP := 1000
 const STARTING_GOLD := 100
 
 var difficulty: Difficulty = Difficulty.NORMAL
@@ -139,6 +139,10 @@ const DRAGON_SCALE_STAGES: Array[int] = [30, 31, 32, 33, 34, 35]
 var dragon_scales: Array[int] = []
 ## 히든 보스(고대 드래곤 아르케)를 쓰러뜨렸는지
 var hidden_cleared: bool = false
+## 100스테이지 보스를 쓰러뜨리면 true — 신화 장비의 봉인이 풀려 착용 가능
+var mythic_unlocked: bool = false
+## 켜진 세트 효과 합계 (ItemSets.total_bonus, 장비가 바뀔 때마다 다시 계산)
+var _set_bonus: Dictionary = {}
 ## 장비가 아닌 보물 (예: 49스테이지 프로메테우스의 「프로메테우스의 불씨」). 장비 조정 때 쓰임을 정할 예정
 const KEY_ITEM_NAMES := {&"prometheus_ember": "프로메테우스의 불씨"}
 var key_items: Array[StringName] = []
@@ -192,6 +196,8 @@ func reset_game() -> void:
 	is_game_cleared = false
 	dragon_scales.clear()
 	hidden_cleared = false
+	mythic_unlocked = false
+	_set_bonus = {}
 	stolen_weapon = null
 	key_items.clear()
 	total_kills = 0
@@ -247,6 +253,9 @@ func get_difficulty_name() -> String:
 func damage_player(amount: int) -> void:
 	if is_player_dead or amount <= 0:
 		return
+	var reduction := get_damage_reduction()
+	if reduction > 0.0:
+		amount = maxi(1, roundi(amount * (1.0 - reduction)))
 	hp = maxi(hp - amount, 0)
 	player_damaged.emit(amount)
 	player_hp_changed.emit(hp, max_hp)
@@ -316,17 +325,57 @@ func get_total_defense() -> int:
 		total += equipped_armor.defense
 	if equipped_boots != null:
 		total += equipped_boots.defense
-	return total
+	return total + roundi(get_set_value("defense"))
 
 
 ## 신발로 더해지는 이동 속도 (0.1 = +10%)
 func get_move_speed_bonus() -> float:
-	return equipped_boots.move_bonus if equipped_boots != null else 0.0
+	return (equipped_boots.move_bonus if equipped_boots != null else 0.0) + get_set_value("move")
+
+
+## 신발로 줄어드는 대시 대기시간 비율
+func get_dash_cooldown_reduction() -> float:
+	return clampf(equipped_boots.dash_cooldown_reduction if equipped_boots != null else 0.0, 0.0, 0.8)
+
+
+## 세트 효과로 줄어드는 받는 피해 비율
+func get_damage_reduction() -> float:
+	return clampf(get_set_value("reduction"), 0.0, 0.6)
+
+
+## 멀티버스의 주인에게 주는 피해 보너스 (신화의 유산 10세트 「억제의 권능」)
+func get_master_damage_bonus() -> float:
+	return get_set_value("master_damage")
+
+
+# ============================================================ 세트
+## 지금 장착한 모든 장비 (무기 칸 3 + 방패 · 투구 · 갑옷 · 신발 + 장신구 3)
+func get_equipped_items() -> Array[ItemData]:
+	var list: Array[ItemData] = []
+	for item in weapon_slots:
+		if item != null:
+			list.append(item)
+	for item in [equipped_shield, equipped_helmet, equipped_armor, equipped_boots]:
+		if item != null:
+			list.append(item as ItemData)
+	for item in accessory_slots:
+		if item != null:
+			list.append(item)
+	return list
+
+
+## { set_id: 장착 개수 }
+func get_set_counts() -> Dictionary:
+	return ItemSets.count_equipped(get_equipped_items())
+
+
+func get_set_value(key: String) -> float:
+	return float(_set_bonus.get(key, 0.0))
 
 
 ## 펜던트로 얻는 초당 체력 재생
 func get_hp_regen() -> float:
-	var total := 0.0
+	var total := get_set_value("regen")
 	for accessory in accessory_slots:
 		if accessory != null:
 			total += accessory.hp_regen
@@ -346,8 +395,8 @@ func tick_regen(delta: float) -> void:
 		heal_player(amount)
 
 
-## 지속 피해(화상 등) 배율: 방어력 15 에서 절반, 높을수록 덜 들어옴
-const DOT_DEFENSE_HALF := 15.0
+## 지속 피해(화상 등) 배율: 방어력 150 에서 절반, 높을수록 덜 들어옴
+const DOT_DEFENSE_HALF := 150.0
 ## 포션 회복량 배율 (독 0.5 — 바실리스크 / 부패 0 — 헬리시온 / 성흔 -1 = 회복이 피해로 — 세라핀)
 var potion_heal_multiplier: float = 1.0
 
@@ -358,7 +407,7 @@ func get_dot_multiplier() -> float:
 
 
 func get_bonus_max_hp() -> int:
-	var total := 0
+	var total := roundi(get_set_value("max_hp"))
 	if equipped_helmet != null:
 		total += equipped_helmet.bonus_max_hp
 	if equipped_armor != null:
@@ -371,7 +420,7 @@ func get_bonus_max_hp() -> int:
 
 ## 반지로 더해지는 치명타 확률 (0.1 = +10%)
 func get_crit_chance_bonus() -> float:
-	var total := 0.0
+	var total := get_set_value("crit_chance")
 	for accessory in accessory_slots:
 		if accessory != null:
 			total += accessory.crit_chance_bonus
@@ -380,7 +429,7 @@ func get_crit_chance_bonus() -> float:
 
 ## 팔찌로 더해지는 치명타 피해 배율
 func get_crit_damage_bonus() -> float:
-	var total := 0.0
+	var total := get_set_value("crit_damage")
 	for accessory in accessory_slots:
 		if accessory != null:
 			total += accessory.crit_damage_bonus
@@ -389,7 +438,7 @@ func get_crit_damage_bonus() -> float:
 
 ## 반지로 더해지는 공격력 (0.1 = +10%)
 func get_attack_bonus() -> float:
-	var total := 0.0
+	var total := get_set_value("attack")
 	for accessory in accessory_slots:
 		if accessory != null:
 			total += accessory.attack_bonus
@@ -398,7 +447,7 @@ func get_attack_bonus() -> float:
 
 ## 팔찌로 더해지는 방어력 관통(방깍)
 func get_armor_pen_bonus() -> int:
-	var total := 0
+	var total := roundi(get_set_value("armor_pen"))
 	for accessory in accessory_slots:
 		if accessory != null:
 			total += accessory.armor_pen
@@ -429,8 +478,9 @@ func roll_weapon_damage(weapon: WeaponData) -> Dictionary:
 
 
 func _recalculate_stats() -> void:
+	_set_bonus = ItemSets.total_bonus(get_equipped_items())
 	damage_multiplier = 1.0 + get_attack_bonus()
-	var new_max := BASE_MAX_HP + get_bonus_max_hp()
+	var new_max := roundi((BASE_MAX_HP + get_bonus_max_hp()) * (1.0 + get_set_value("max_hp_pct")))
 	if new_max != max_hp:
 		var diff := new_max - max_hp
 		max_hp = new_max
@@ -541,9 +591,9 @@ func buy_item(item: ItemData) -> bool:
 	return true
 
 
-## 장착 중이 아닌 장비만 팔 수 있습니다.
+## 장착 중이 아닌 장비만 팔 수 있습니다. 신화 장비는 팔 수 없음
 func can_sell(item: ItemData) -> bool:
-	return item != null and items.has(item) and not is_equipped(item)
+	return item != null and items.has(item) and not is_equipped(item) and not item.is_mythic()
 
 
 ## 상인에게 판매. 받은 골드를 반환 (실패하면 0)
@@ -668,6 +718,9 @@ func is_equipped(item: ItemData) -> bool:
 ## 무기는 장착하면서 바로 손에 듭니다. 장신구는 종류(팔찌/반지/펜던트)에 맞는 칸에 들어갑니다.
 func equip_item(item: ItemData) -> bool:
 	if item == null or not owns_item(item.id):
+		return false
+	if item.is_sealed():
+		show_notice("[봉인] %s — 100스테이지를 클리어하면 착용할 수 있다" % item.display_name, item.get_rarity_color())
 		return false
 	if item is WeaponData:
 		var weapon := item as WeaponData
@@ -872,6 +925,24 @@ func get_play_time_text() -> String:
 func report_boss_defeated() -> void:
 	is_boss_active = false
 	boss_defeated.emit()
+
+
+## 100스테이지 보스 토벌: 신화 장비의 봉인이 풀림
+func unlock_mythic() -> void:
+	if mythic_unlocked:
+		return
+	mythic_unlocked = true
+	inventory_changed.emit()
+	equipment_changed.emit()
+
+
+## 가지고 있는 신화 장비
+func get_mythic_items() -> Array[ItemData]:
+	var list: Array[ItemData] = []
+	for item in items:
+		if item.is_mythic():
+			list.append(item)
+	return list
 
 
 # ============================================================ UI 요청

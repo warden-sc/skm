@@ -153,7 +153,7 @@ func get_summary() -> String:
 func get_stat_text() -> String:
 	var lines := PackedStringArray()
 	var element_text := "" if element == Elements.Type.NONE else " · %s 속성" % Elements.name_of(element)
-	lines.append("[%s] %s (%s)%s" % [get_rarity_name(), TYPE_NAMES.get(weapon_type, "?"), "근접" if is_melee() else "원거리", element_text])
+	lines.append("[%s] %s (%s)%s" % [get_grade_text(), TYPE_NAMES.get(weapon_type, "?"), "근접" if is_melee() else "원거리", element_text])
 	lines.append(SPECIALTY_TEXT.get(weapon_type, ""))
 	lines.append("공격력 %d  쿨타임 %.2fs  치명타 %d%% (x%.1f)" % [damage, attack_cooldown, roundi(crit_chance * 100.0), crit_multiplier])
 	if armor_pen > 0:

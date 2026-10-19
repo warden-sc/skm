@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="HelmetData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/helmet_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/helmets/mithril_helmet.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/helmets/mithril_helmet_worn.png" id="3_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+worn_texture = ExtResource("3_res")
+defense = 80
+bonus_max_hp = 640
+id = &"mithril_helmet"
+display_name = "미스릴 투구"
+description = "가볍게 빛나는 미스릴 투구."
+rarity = 1
+tier = 2
+set_id = &"mithril"
+price = 9340

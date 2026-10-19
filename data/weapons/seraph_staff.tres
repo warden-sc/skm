@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/seraph_staff.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/holy_orb.png" id="3_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+projectile_texture = ExtResource("3_res")
+weapon_type = 2
+damage = 1880
+crit_chance = 0.16
+crit_multiplier = 2
+attack_cooldown = 0.22
+windup_time = 0.4
+spell = 0
+armor_pen = 78
+projectiles_per_shot = 5
+spread_degrees = 34
+explosion_radius = 36
+explosion_damage_ratio = 0.8
+projectile_speed = 260
+projectile_range = 250
+projectile_scale = 1.5
+knockback = 140
+chant_text = "빛이여, 심판하라!"
+slow_duration = 0
+zone_duration = 0
+zone_tick_ratio = 0
+pierce = 0
+element = 6
+effect_color = Color(1, 0.95, 0.7, 1)
+id = &"seraph_staff"
+display_name = "세라핌의 홀"
+description = "천사의 빛을 부르는 홀. 신성한 빛 구슬 5발이 부채꼴로 터진다."
+rarity = 3
+tier = 1
+set_id = &"celestial"
+price = 36600

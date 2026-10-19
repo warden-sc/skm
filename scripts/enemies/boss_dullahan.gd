@@ -189,7 +189,7 @@ func register_minion(minion: Enemy) -> void:
 		_head_left = head_time
 		defense = _base_defense + HEADLESS_DEFENSE_BONUS
 		sprite.texture = headless_texture
-		_label.text = "머리 없는 분노: 방어력 +%d" % HEADLESS_DEFENSE_BONUS
+		_label.text = "머리 없는 분노: 방어력 +%d" % Balance.scale(HEADLESS_DEFENSE_BONUS)
 		_label.add_theme_color_override(&"font_color", Color(0.85, 0.55, 1.0))
 
 

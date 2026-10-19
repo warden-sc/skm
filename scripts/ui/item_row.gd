@@ -26,7 +26,9 @@ static func build(item: ItemData, buttons: Array[Button], on_hover: Callable, lo
 
 	var name_label := Label.new()
 	var second_line := subtitle if subtitle != "" else item.get_summary()
-	name_label.text = "[%s] %s\n%s" % [item.get_rarity_name(), item.display_name, second_line]
+	if item.set_id != &"" and subtitle == "":
+		second_line += " · " + ItemSets.get_set_name(item.set_id)
+	name_label.text = "[%s] %s\n%s" % [item.get_grade_text(), item.display_name, second_line]
 	name_label.add_theme_color_override(&"font_color", item.get_rarity_color().lightened(0.35))
 	name_label.add_theme_color_override(&"font_outline_color", Color(0.08, 0.08, 0.12))
 	name_label.add_theme_constant_override(&"outline_size", 3)
@@ -47,6 +49,9 @@ static func build(item: ItemData, buttons: Array[Button], on_hover: Callable, lo
 static func detail_text(item: ItemData, title_suffix: String = "", footer: String = "") -> String:
 	var stats := item.get_stat_text().split("\n", false)
 	var text := "%s%s\n%s\n%s" % [item.display_name, title_suffix, "  ·  ".join(stats), item.description.replace("\n", " ")]
+	var extra := item.get_extra_text()
+	if extra != "":
+		text += "\n" + extra
 	if footer != "":
 		text += "\n" + footer
 	return text
@@ -63,7 +68,7 @@ static func make_button(text: String, disabled: bool, on_pressed: Callable = Cal
 	return button
 
 
-## 등급색 배경 (일반 회색 / 희귀 파랑 / 레어 보라 / 전설 노랑)
+## 등급색 배경 (일반 회색 / 희귀 파랑 / 레어 보라 / 전설 노랑 / 신화 진홍)
 static func rarity_style(item: ItemData, highlight: bool = false) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = item.get_rarity_bg_color() if item != null else Color(0.12, 0.13, 0.18, 0.9)

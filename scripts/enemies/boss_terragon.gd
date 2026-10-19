@@ -162,7 +162,7 @@ func _crash(pillar: StonePillar) -> void:
 	_break_left = break_time
 	defense = _base_defense
 	_btimer = 0.2
-	set_status("비늘이 깨졌다! 방어력 -%d" % scale_armor, Color(1.0, 0.85, 0.5))
+	set_status("비늘이 깨졌다! 방어력 -%d" % Balance.scale(scale_armor), Color(1.0, 0.85, 0.5))
 	GameManager.show_notice("테라곤이 돌기둥에 처박혔다! 바위 비늘이 깨졌다 — 지금 몰아쳐라", Color(1.0, 0.85, 0.5))
 	Fx.explosion(self, global_position, Color(0.7, 0.6, 0.45), 50.0, 2, Vector2(0, 100))
 	if _player != null:

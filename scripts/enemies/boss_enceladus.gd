@@ -151,7 +151,7 @@ func _land_rock(target: Vector2) -> void:
 		defense = maxi(_base_defense - bury_defense, 0)
 		take_damage(roundi(max_hp * bury_ratio), Vector2.ZERO, false, 999999)
 		super.stun(bury_time)
-		set_status("시칠리아 섬에 묻힘! 방어력 -%d" % bury_defense, Color(1.0, 0.85, 0.5))
+		set_status("시칠리아 섬에 묻힘! 방어력 -%d" % Balance.scale(bury_defense), Color(1.0, 0.85, 0.5))
 		GameManager.show_notice("떨어진 바위산이 엔켈라도스를 짓눌렀다!", Color(1.0, 0.85, 0.5))
 	else:
 		_misses += 1

@@ -8,6 +8,8 @@ extends ItemData
 @export_group("Boots")
 @export var defense: int = 1
 @export var move_bonus: float = 0.05
+## 대시 재사용 대기시간 감소 (0.3 = -30%, 헤르메스의 신발)
+@export var dash_cooldown_reduction: float = 0.0
 @export var worn_texture: Texture2D
 
 
@@ -16,4 +18,7 @@ func get_summary() -> String:
 
 
 func get_stat_text() -> String:
-	return "[%s] 신발\n방어력 %d  (모든 피해 감소)\n이동 속도 +%d%%" % [get_rarity_name(), defense, roundi(move_bonus * 100.0)]
+	var text := "[%s] 신발\n방어력 %d  (모든 피해 감소)\n이동 속도 +%d%%" % [get_grade_text(), defense, roundi(move_bonus * 100.0)]
+	if dash_cooldown_reduction > 0.0:
+		text += "\n대시 대기시간 -%d%%" % roundi(dash_cooldown_reduction * 100.0)
+	return text

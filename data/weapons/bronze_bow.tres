@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/bronze_bow.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/bronze_bow_held.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/arrow.png" id="4_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+held_texture = ExtResource("3_res")
+projectile_texture = ExtResource("4_res")
+weapon_type = 1
+damage = 510
+crit_chance = 0.16
+crit_multiplier = 1.8
+attack_cooldown = 0.114
+windup_time = 0.174
+armor_pen = 90
+projectiles_per_shot = 1
+spread_degrees = 0
+pierce = 2
+projectile_speed = 474
+projectile_range = 292
+projectile_scale = 1.08
+knockback = 102
+explosion_radius = 0
+explosion_damage_ratio = 0.5
+element = 0
+effect_color = Color(1, 0.85, 0.6, 1)
+id = &"bronze_bow"
+display_name = "청동 장궁"
+description = "청동 고리로 묶은 장궁. 화살이 두 마리를 꿰뚫는다."
+rarity = 0
+tier = 2
+set_id = &"bronze"
+price = 3520

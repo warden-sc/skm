@@ -134,7 +134,7 @@ func _judge() -> void:
 		_lose_left = lose_time
 		defense = maxi(_base_defense - lose_defense, 0)
 		super.stun(5.0)
-		GameManager.show_notice("궁술 경연에서 이겼다! 에우리토스가 분해서 휘청인다 (방어력 -%d)" % lose_defense, Color(0.7, 0.9, 1.0))
+		GameManager.show_notice("궁술 경연에서 이겼다! 에우리토스가 분해서 휘청인다 (방어력 -%d)" % Balance.scale(lose_defense), Color(0.7, 0.9, 1.0))
 	else:
 		_boss_wins += 1
 		_win_left = win_time

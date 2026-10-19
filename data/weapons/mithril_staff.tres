@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/mithril_staff.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/ice_shard.png" id="3_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+projectile_texture = ExtResource("3_res")
+weapon_type = 2
+damage = 1230
+crit_chance = 0.1
+crit_multiplier = 1.65
+attack_cooldown = 0.22
+windup_time = 0.45
+spell = 1
+armor_pen = 54
+projectiles_per_shot = 3
+spread_degrees = 16
+explosion_radius = 38
+explosion_damage_ratio = 0.8
+projectile_speed = 260
+projectile_range = 235
+projectile_scale = 1.35
+knockback = 110
+chant_text = "얼어붙어라, 미스릴의 서리여!"
+slow_duration = 1.8
+zone_duration = 0
+zone_tick_ratio = 0
+pierce = 0
+element = 2
+effect_color = Color(0.65, 0.95, 1, 1)
+id = &"mithril_staff"
+display_name = "미스릴 지팡이"
+description = "미스릴 수정이 박힌 지팡이. 서리 폭발이 넓게 퍼져 적을 얼린다."
+rarity = 1
+tier = 2
+set_id = &"mithril"
+price = 16400

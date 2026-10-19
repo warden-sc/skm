@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/archmage_staff.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/star.png" id="3_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+projectile_texture = ExtResource("3_res")
+weapon_type = 2
+damage = 2540
+crit_chance = 0.22
+crit_multiplier = 2.3
+attack_cooldown = 0.4
+windup_time = 0.6
+spell = 5
+armor_pen = 84
+projectiles_per_shot = 1
+spread_degrees = 0
+explosion_radius = 36
+explosion_damage_ratio = 0.8
+projectile_speed = 260
+projectile_range = 293
+projectile_scale = 1.53
+knockback = 146
+chant_text = "별의 근원이여, 나의 부름에 응하라!"
+slow_duration = 0
+zone_duration = 0
+zone_tick_ratio = 0
+pierce = 0
+strike_count = 16
+strike_scatter = 72
+strike_interval = 0.08
+strike_fall_time = 0.4
+element = 7
+effect_color = Color(0.85, 0.55, 1, 1)
+id = &"archmage_staff"
+display_name = "대마법사의 지팡이"
+description = "탑의 대마법사가 넘겨준 지팡이. 하늘을 찢고 별 열여섯 개를 쏟아붓는다."
+rarity = 4
+tier = 0
+set_id = &"mythic"
+in_shop = false
+price = 0

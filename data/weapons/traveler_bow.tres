@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/traveler_bow.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/traveler_bow_held.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/arrow.png" id="4_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+held_texture = ExtResource("3_res")
+projectile_texture = ExtResource("4_res")
+weapon_type = 1
+damage = 420
+crit_chance = 0.15
+crit_multiplier = 1.8
+attack_cooldown = 0.117
+windup_time = 0.177
+armor_pen = 72
+projectiles_per_shot = 1
+spread_degrees = 0
+pierce = 1
+projectile_speed = 462
+projectile_range = 286
+projectile_scale = 1.04
+knockback = 96
+explosion_radius = 0
+explosion_damage_ratio = 0.5
+element = 0
+effect_color = Color(1, 0.95, 0.85, 1)
+id = &"traveler_bow"
+display_name = "여행자의 단궁"
+description = "짧고 가벼운 활. 빠르게 쏘고 빠르게 달린다."
+rarity = 0
+tier = 1
+price = 2160

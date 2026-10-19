@@ -129,7 +129,7 @@ func fall() -> void:
 
 func _update_status() -> void:
 	if _fallen:
-		set_status("전차에서 떨어짐 (방어력 -%d)" % fall_defense, Color(1.0, 0.6, 0.5))
+		set_status("전차에서 떨어짐 (방어력 -%d)" % Balance.scale(fall_defense), Color(1.0, 0.6, 0.5))
 	else:
 		set_status("폭주하는 태양 전차 — 고삐 %d개" % get_pillars().size(), Color(1.0, 0.8, 0.4))
 

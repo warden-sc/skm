@@ -16,4 +16,4 @@ func get_summary() -> String:
 
 
 func get_stat_text() -> String:
-	return "[%s] 투구\n방어력 %d  (모든 피해 감소)\n최대 체력 +%d" % [get_rarity_name(), defense, bonus_max_hp]
+	return "[%s] 투구\n방어력 %d  (모든 피해 감소)\n최대 체력 +%d" % [get_grade_text(), defense, bonus_max_hp]

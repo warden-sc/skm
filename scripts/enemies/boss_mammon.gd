@@ -95,7 +95,7 @@ func set_greed(value: int) -> void:
 	defense = _base_defense + greed_defense * greed
 	power = _base_power * (1.0 + greed_power * greed)
 	sprite.scale = _base_scale * (1.0 + 0.06 * greed)
-	set_status("탐욕 %d — 방어력 +%d" % [greed, greed_defense * greed], Color(1.0, 0.85, 0.35))
+	set_status("탐욕 %d — 방어력 +%d" % [greed, greed_defense * greed * Balance.K], Color(1.0, 0.85, 0.35))
 
 
 func _get_move_velocity(delta: float) -> Vector2:

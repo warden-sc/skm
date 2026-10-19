@@ -57,6 +57,6 @@ func get_summary() -> String:
 
 
 func get_stat_text() -> String:
-	var lines := PackedStringArray(["[%s] %s  (장신구 칸에 장착, 모든 무기에 적용)" % [get_rarity_name(), get_slot_name()]])
+	var lines := PackedStringArray(["[%s] %s  (장신구 칸에 장착, 모든 무기에 적용)" % [get_grade_text(), get_slot_name()]])
 	lines.append_array(_stat_parts(true))
 	return "\n".join(lines)

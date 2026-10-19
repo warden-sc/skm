@@ -101,7 +101,7 @@ func _physics_process(delta: float) -> void:
 				for w in get_pack():
 					w.give_command(Enemy.Command.CHARGE)
 		if n > 0:
-			set_status("무리의 힘 ×%d (방어력 +%d)" % [n, pack_defense * n], Color(0.9, 0.75, 0.7))
+			set_status("무리의 힘 ×%d (방어력 +%d)" % [n, pack_defense * n * Balance.K], Color(0.9, 0.75, 0.7))
 		else:
 			set_status("무리가 흩어짐 — 힘이 빠짐", Color(0.7, 0.85, 1.0))
 	super._physics_process(delta)

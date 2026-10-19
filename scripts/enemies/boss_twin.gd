@@ -162,7 +162,7 @@ func _update_resonance() -> void:
 	_resonating = now
 	defense = _base_defense + (resonance_defense if now else 0)
 	if now and role == Role.SOL:
-		FloatingText.spawn(self, global_position + Vector2(0, -50), "공명! 방어력 +%d" % resonance_defense, Color(1.0, 0.95, 0.7), true)
+		FloatingText.spawn(self, global_position + Vector2(0, -50), "공명! 방어력 +%d" % Balance.scale(resonance_defense), Color(1.0, 0.95, 0.7), true)
 
 
 func _draw() -> void:

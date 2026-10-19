@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ShieldData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/shield_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/shields/seraph_shield.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+defense = 83
+block_ratio = 0.97
+block_arc_degrees = 185
+max_guard = 3030
+guard_regen = 1060
+perfect_guard_window = 0.43
+guard_move_multiplier = 0.67
+guard_break_time = 0.55
+id = &"seraph_shield"
+display_name = "세라핌의 방패"
+description = "태양 문장이 새겨진 천상의 방패."
+rarity = 3
+tier = 1
+set_id = &"celestial"
+price = 20900

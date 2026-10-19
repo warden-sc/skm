@@ -6,11 +6,12 @@
 [resource]
 script = ExtResource("1_script")
 slot_type = 0
-crit_damage_bonus = 0.6
-armor_pen = 7
+crit_damage_bonus = 0.55
+armor_pen = 58
 id = &"dragonscale_bracelet"
 display_name = "용린 팔찌"
 description = "용의 비늘로 엮은 전설의 팔찌. 어떤 갑주도 무의미하다."
 rarity = 3
 icon = ExtResource("2_res")
-price = 1400
+price = 20700
+tier = 0

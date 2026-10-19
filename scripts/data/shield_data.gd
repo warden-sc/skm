@@ -28,7 +28,7 @@ func get_summary() -> String:
 
 func get_stat_text() -> String:
 	var lines := PackedStringArray()
-	lines.append("[%s] 방패  (우클릭: 가드)" % get_rarity_name())
+	lines.append("[%s] 방패  (우클릭: 가드)" % get_grade_text())
 	lines.append("막기 %d%%  방어 %d  가드 범위 %d°" % [roundi(block_ratio * 100.0), defense, roundi(block_arc_degrees)])
 	lines.append("가드 게이지 %d (초당 +%d)  가드 중 이동 x%.2f" % [roundi(max_guard), roundi(guard_regen), guard_move_multiplier])
 	lines.append("퍼펙트 가드 %.2f초 (탄 반사 + 적 기절)" % perfect_guard_window)

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ShieldData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/shield_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/shields/genesis_shield.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+defense = 86
+block_ratio = 1
+block_arc_degrees = 190
+max_guard = 3240
+guard_regen = 1130
+perfect_guard_window = 0.44
+guard_move_multiplier = 0.7
+guard_break_time = 0.5
+id = &"genesis_shield"
+display_name = "창세의 방패"
+description = "별의 문장이 빛나는 거대한 방패."
+rarity = 3
+tier = 2
+set_id = &"genesis"
+price = 23000
