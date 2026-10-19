@@ -431,7 +431,7 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 				var def_before := player.get_effective_defense()
 				griffin.roar()
 				await _frames(2)
-				_check(player.is_armor_broken() and player.get_effective_defense() == maxi(def_before - griffin.roar_armor_break, 0) and _gm.player_status.contains("방어력 감소"), "[기믹] 포효: 플레이어 방어력 감소 (%d → %d · %s)" % [def_before, player.get_effective_defense(), _gm.player_status])
+				_check(player.is_armor_broken() and player.get_effective_defense() == maxi(def_before - Balance.scale(griffin.roar_armor_break), 0) and _gm.player_status.contains("방어력 감소"), "[기믹] 포효: 플레이어 방어력 감소 (%d → %d · %s)" % [def_before, player.get_effective_defense(), _gm.player_status])
 				var claw_before := _count_nodes_of("AoeStrike")
 				await _survive(40)
 				_check(_count_nodes_of("AoeStrike") > claw_before, "포효 뒤 강한 앞발톱 할퀴기")
