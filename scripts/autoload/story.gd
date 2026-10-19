@@ -9,6 +9,8 @@ extends Node
 ##   [구간 이름]          ← 예: [1스테이지 도착] [1스테이지 보스 등장] [1스테이지 보스 토벌] [1스테이지 상인] [상인] [최종장 등장] [엔딩]
 ##   이름: 대사            ← 이름 없이 대사만 쓰면 이름 · 초상화 없이 나옴
 ##   @초상화 이름 = res://assets/sprites/characters/그림.png   ← 그 이름의 초상화를 바꿈
+##   @장면: 설명            ← 넣고 싶은 게임 장면 요청 (게임에는 나오지 않음, scene_notes 에 구간과 함께 모아 둠)
+##   그 밖의 @ 로 시작하는 줄도 게임에는 나오지 않음
 
 signal finished(key: String)
 
@@ -22,6 +24,8 @@ const MERCHANT_NAMES := ["상인", "떠돌이 대장장이", "수상한 상인"]
 var enabled: bool = true
 var sections: Dictionary = {}
 var portraits: Dictionary = {}
+## @장면 메모: [{"section": 구간, "text": 설명}, …] — 대사 순서 사이 어디에 적혔는지도 index 로 남김
+var scene_notes: Array[Dictionary] = []
 var source_path: String = ""
 var _played: Dictionary = {}
 var _cache: Dictionary = {}
@@ -50,6 +54,7 @@ func load_file(path: String) -> void:
 func load_text(text: String) -> void:
 	sections.clear()
 	portraits.clear()
+	scene_notes.clear()
 	_cache.clear()
 	var key := ""
 	for raw in text.split("\n"):
@@ -68,6 +73,11 @@ func load_text(text: String) -> void:
 				var path := line.substr(eq + 1).strip_edges()
 				if ResourceLoader.exists(path):
 					portraits[who] = load(path) as Texture2D
+			continue
+		if line.begins_with("@"):
+			if line.begins_with("@장면"):
+				var note := line.substr(3).strip_edges().trim_prefix(":").strip_edges()
+				scene_notes.append({"section": key, "index": (sections[key] as Array).size() if sections.has(key) else 0, "text": note})
 			continue
 		if key == "":
 			continue

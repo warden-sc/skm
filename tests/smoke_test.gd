@@ -4122,9 +4122,10 @@ func _test_dialogue(main: Node2D) -> void:
 	var keeper := main.get_node("Entities/ShopKeeper") as ShopKeeper
 	_check(FileAccess.file_exists(Story.STORY_PATH) and Story.sections.has("1스테이지 도착") and Story.sections.has("100스테이지 보스 토벌") and Story.sections.has("50스테이지 상인") and Story.sections.has("히든 보스 등장") and Story.sections.has("최종장 등장") and Story.sections.has("엔딩"), "대본 파일: 1~100스테이지 · 히든 · 최종장 · 엔딩 구간이 모두 있음")
 	Story.enabled = true
-	Story.load_text("@초상화 해설 = res://assets/sprites/characters/merchant_boss.png\n[테스트]\n성기사: 첫 줄입니다. 이 줄은 글자가 한 자씩 나오는지 보려고 일부러 아주 길게 써 둔 대사입니다. 끝까지 나오려면 시간이 꽤 걸립니다.\n슬라임 킹: 꾸르르\n해설: 세 번째\n그냥 해설 줄\n# 메모\n[빈 구간]\n")
+	Story.load_text("@초상화 해설 = res://assets/sprites/characters/merchant_boss.png\n[테스트]\n성기사: 첫 줄입니다. 이 줄은 글자가 한 자씩 나오는지 보려고 일부러 아주 길게 써 둔 대사입니다. 끝까지 나오려면 시간이 꽤 걸립니다.\n슬라임 킹: 꾸르르\n해설: 세 번째\n그냥 해설 줄\n@장면: 화면이 하얗게 번쩍인다\n# 메모\n[빈 구간]\n@장면 보스가 내려온다\n")
 	_check(Story.has_lines("테스트") and (Story.sections["테스트"] as Array).size() == 4 and not Story.has_lines("빈 구간"), "대본 읽기: 「이름: 대사」 · 이름 없는 줄 · 메모 · 빈 구간")
 	_check(not Story.play("빈 구간"), "빈 구간은 아무것도 나오지 않음")
+	_check(Story.scene_notes.size() == 2 and Story.scene_notes[0]["section"] == "테스트" and Story.scene_notes[0]["index"] == 4 and Story.scene_notes[0]["text"] == "화면이 하얗게 번쩍인다" and Story.scene_notes[1]["text"] == "보스가 내려온다", "@장면 줄은 대사로 나오지 않고 장면 메모로 모임 (구간 · 순서 함께)")
 	_check(Story.play("테스트") and get_tree().paused and Story.is_playing(), "대화창이 뜨면 게임이 멈춤")
 	var box := Story.get_box()
 	_check(Story.portrait_for("성기사") != null and Story.portrait_for("슬라임 킹") != null and Story.portrait_for("해설") == Story.portraits["해설"] and Story.portrait_for("아무도아닌이름") == null, "초상화: 주인공 · 보스 이름으로 자동 · @초상화로 지정")
