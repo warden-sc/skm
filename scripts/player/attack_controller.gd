@@ -150,6 +150,7 @@ func _melee_attack(weapon: WeaponData) -> bool:
 		var roll := GameManager.roll_weapon_damage(weapon)
 		var push := to_enemy.normalized() if to_enemy != Vector2.ZERO else aim
 		enemy.take_damage(roll["amount"], push * weapon.knockback, roll["crit"], roll["armor_pen"])
+		Enemy.on_player_hit(enemy, roll["amount"])
 		var level := weapon.get_fx_level()
 		Fx.burst(player, enemy.get_hit_center(), weapon.effect_color, HIT_SPARKS[clampi(level, 0, 3)], 60.0 + 20.0 * level, 0.35, Elements.gravity_of(weapon.element))
 		hit_count += 1

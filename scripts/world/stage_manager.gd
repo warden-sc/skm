@@ -86,6 +86,8 @@ var _spawn_timer: float = 0.0
 var _kills: int = 0
 var _kill_target: int = 0
 var _boss: Enemy
+## 히든 보스(고대 드래곤 아르케)가 주는 고대 용의 피 개수
+const DRAGON_BLOOD_REWARD := 5
 ## 마지막으로 쓰러진 보스의 자리 (신화 장비가 여기서 날아옴)
 var _boss_fall_position: Vector2 = Vector2.ZERO
 var _chest: Chest
@@ -421,6 +423,8 @@ func _grant_mythic(stage: int) -> void:
 		Fx.explosion(player, player.global_position + Vector2(0, -8), mythic.get_rarity_color(), 40.0, 3)
 		_notice_later("[신화] %s 을(를) 받았다 — %s" % [mythic.display_name, "봉인됨 · 100스테이지를 클리어하면 착용 가능" if not GameManager.mythic_unlocked and stage < 100 else "가방에 들어감"],
 			mythic.get_rarity_color(), 1.2)
+	if is_final_stage(stage) and GameManager.add_relic(ItemDB.get_relic(&"last_trumpet")):
+		_notice_later("[신화] 최후의 나팔을 받았다 — [X] 하늘의 심판", ItemData.RARITY_COLORS[ItemData.Rarity.MYTHIC], 1.9)
 	if is_final_stage(stage) and not GameManager.mythic_unlocked:
 		GameManager.unlock_mythic()
 		_notice_later("신화 장비 %d개의 봉인이 풀렸다! [I] 인벤토리에서 장착하세요" % GameManager.get_mythic_items().size(), ItemData.RARITY_COLORS[ItemData.Rarity.MYTHIC], 2.6)
@@ -577,6 +581,11 @@ func _clear_enemies() -> void:
 			node.queue_free()
 
 
+## 최후의 나팔: 적의 탄 · 예고 장판 · 해로운 장판을 모두 지움
+func clear_hostile_attacks() -> void:
+	_release_projectiles()
+
+
 func _release_projectiles() -> void:
 	var pool := ProjectilePool.find(get_tree())
 	if pool != null:
@@ -703,6 +712,10 @@ func _on_hidden_boss_defeated() -> void:
 	_hidden_active = false
 	_hidden_done = true
 	GameManager.hidden_cleared = true
+	var blood := ItemDB.get_potion(&"dragon_blood")
+	if blood != null:
+		var got := GameManager.add_potion(blood, DRAGON_BLOOD_REWARD)
+		_notice_later("[신화] 고대 용의 피 %d병을 받았다 — [C] 체력 전부 회복 · %d초 재생 · 받는 피해 -%d%%" % [got, roundi(blood.buff_duration), roundi(blood.buff_reduction * 100.0)], blood.get_rarity_color(), 2.4)
 	_spawn_chest(true)
 	next_stage_portal.set_prompt(_next_portal_prompt())
 	next_stage_portal.enabled = true

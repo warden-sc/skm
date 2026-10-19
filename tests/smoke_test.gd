@@ -3805,9 +3805,13 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 		if n == 35:
 			await _test_hidden_dungeon(main, boss as BossHelicion)
 		elif n < 100:
+			if n == 50:
+				_check(_gm.key_items.has(&"prometheus_ember") and not _gm.has_relic(&"primal_flame"), "프로메테우스를 쓰러뜨리면 보물 「프로메테우스의 불씨」")
 			boss.take_damage(999999999, Vector2.ZERO, false, 9999999)
 			await _frames(4)
 			_check(not _gm.is_game_cleared and next_portal.enabled, "%d스테이지 보스 토벌 → 다음 스테이지 텔레포트" % n)
+			if n == 50:
+				_check(not _gm.key_items.has(&"prometheus_ember") and _gm.has_relic(&"primal_flame"), "헤파이스토스가 불씨를 제련 → 「원초의 불꽃」 (신화 사용 아이템)")
 	return final_boss
 
 
@@ -3889,6 +3893,7 @@ func _test_hidden_dungeon(main: Node2D, heli_end: BossHelicion) -> void:
 		arche.take_damage(999999999, Vector2.ZERO, false, 999999)
 		await _frames(4)
 	_check(_gm.hidden_cleared and not stage.is_in_hidden_dungeon() and stage.get_chest() != null and next_portal_end.enabled and next_portal_end.prompt_text.contains("36") and not _gm.is_game_cleared, "아르케 토벌 → 고대 용의 보물상자 + 36스테이지 텔레포트")
+	_check(_gm.get_potion_count(&"dragon_blood") == StageManager.DRAGON_BLOOD_REWARD, "[히든] 아르케 토벌 → 신화 포션 「고대 용의 피」 %d병" % _gm.get_potion_count(&"dragon_blood"))
 	_check(WindField.active == null and get_tree().get_nodes_in_group(&"storm_fields").is_empty(), "아르케가 쓰러지면 바람·룬·빙판이 정리됨")
 	var items_before := _item_pickups(main.get_node("Entities")).size()
 	stage.get_chest()._interact()
@@ -4089,7 +4094,8 @@ func _test_final_and_no_hidden(main: Node2D, final_boss: Enemy) -> void:
 	_check(_gm.faith_damage_bonus == 0.0 and get_tree().get_nodes_in_group(&"hostile_zones").is_empty() and _gm.stolen_weapon == null, "보스가 쓰러지면 신앙·장판·빼앗긴 무기 정리")
 	stage.go_to_next_stage()
 	await _frames(3)
-	_check(_gm.key_items.has(&"prometheus_ember"), "프로메테우스를 쓰러뜨리면 보물 「프로메테우스의 불씨」")
+	_check(not _gm.key_items.has(&"prometheus_ember") and _gm.has_relic(&"primal_flame"), "49스테이지 프로메테우스의 불씨 → 50스테이지 헤파이스토스가 쓰러지며 「원초의 불꽃」으로 제련")
+	_check(_gm.has_relic(&"last_trumpet"), "100스테이지 가브리엘 → 최후의 나팔")
 	_check(_gm.stage == 100 and get_tree().current_scene == main, "100스테이지 이후 반복 스테이지 없음")
 	_check(get_tree().get_nodes_in_group(&"storm_fields").is_empty() and not player.is_rooted() and not player.is_charmed() and not player.is_plagued(), "마지막 보스가 쓰러지면 보스방 장치 정리 · 공포 풀림 (fields %d · 묶임 %s %s)" % [get_tree().get_nodes_in_group(&"storm_fields").size(), player.is_rooted(), player._root_label])
 
@@ -4279,7 +4285,7 @@ func _test_gear(main: Node2D) -> void:
 	var bows := shop_ui.get_visible_stock()
 	_check(shop_ui.visible and bows.size() == 12 and bows.all(func(it: ItemData) -> bool: return it is WeaponData and (it as WeaponData).is_bow()), "상점 탭: 활 탭에는 활 12개만")
 	shop_ui.set_category(ShopUI.Category.POTION)
-	_check(shop_ui.get_visible_stock().all(func(it: ItemData) -> bool: return it is PotionData) and shop_ui.get_visible_stock().size() == 3, "포션 탭")
+	_check(shop_ui.get_visible_stock().all(func(it: ItemData) -> bool: return it is PotionData) and shop_ui.get_visible_stock().size() == 4, "포션 탭 (작은 · 보통 · 고급 · 전설의 엘릭서)")
 	var tab_names := PackedStringArray()
 	for b in shop_ui.get_node("%CategoryTabs").get_children():
 		tab_names.append((b as Button).text)
@@ -4319,7 +4325,7 @@ func _test_gear(main: Node2D) -> void:
 		"몬스터 드랍: 11스테이지는 희귀 하급만, 35스테이지는 상급까지 (신화 없음)")
 	_check(ItemDB.get_drop_pool(1, [&"goblin_dagger"]).any(func(it: ItemData) -> bool: return it.id == &"goblin_dagger"), "고블린 단검 같은 드랍 전용 장비는 그 몬스터만 떨어뜨림")
 	# 신화
-	var mythics: Array = ItemDB.get_all().filter(func(it: ItemData) -> bool: return it.is_mythic())
+	var mythics: Array = ItemDB.get_all().filter(func(it: ItemData) -> bool: return it.is_mythic() and not (it is PotionData) and not (it is RelicData))
 	var stage_ok := true
 	for s in range(10, 101, 10):
 		var m := ItemDB.get_mythic_for_stage(s)
@@ -4346,6 +4352,40 @@ func _test_gear(main: Node2D) -> void:
 	_check(int(_gm.get_set_counts().get(&"mythic", 0)) == 10 and is_equal_approx(_gm.get_master_damage_bonus(), 0.3) and _gm.get_damage_reduction() > 0.0,
 		"신화의 유산 10세트: 「억제의 권능」 멀티버스의 주인에게 주는 피해 +30%% · 받는 피해 -%d%%" % roundi(_gm.get_damage_reduction() * 100.0))
 	_check(_gm.weapon_slots[0].id == &"abaddon_sword" and player.get_dash_cooldown() < player.dash_cooldown, "헤르메스의 신발: 대시 대기시간 %.2f초 → %.2f초" % [player.dash_cooldown, player.get_dash_cooldown()])
+	# 사용 아이템 · 포션
+	var elixir := ItemDB.get_potion(&"elixir")
+	_check(elixir.rarity == ItemData.Rarity.LEGENDARY and elixir.get_unlock_stage() == 71 and ItemDB.get_shop_items().has(elixir) and elixir.get_heal(_gm.max_hp) >= _gm.max_hp, "전설 포션 「전설의 엘릭서」: 71스테이지부터 상점 · 체력 전부 + 재생")
+	var blood := ItemDB.get_potion(&"dragon_blood")
+	_gm.add_potion(blood, 5)
+	_check(blood.is_mythic() and not ItemDB.get_shop_items().has(blood) and _gm.choose_potion() != blood and _gm.get_potion_count(&"dragon_blood") == 5, "고대 용의 피: 신화 · 상점에 없음 · [H] 자동 선택에서 빠짐 (5병)")
+	player.apply_burn(10, 5.0)
+	_gm.damage_player(roundi(_gm.max_hp * 0.8))
+	_check(_gm.use_potion(blood) and _gm.hp == _gm.max_hp and not player.is_burning() and _gm.has_buff(blood.display_name) and _gm.get_damage_reduction() >= 0.3,
+		"고대 용의 피: 체력 전부 · 상태 이상 해제 · %d초 재생 + 받는 피해 -%d%% + 공격력 +%d%%" % [roundi(blood.buff_duration), roundi(blood.buff_reduction * 100.0), roundi(blood.buff_attack * 100.0)])
+	_gm.damage_player(500)
+	var hp_regen0: int = _gm.hp
+	await _frames(40)
+	_check(_gm.hp > hp_regen0, "용의 피 재생: 초당 최대 체력의 %d%%" % roundi(blood.regen_percent * 100.0))
+	var flame := ItemDB.get_relic(&"primal_flame")
+	var trumpet := ItemDB.get_relic(&"last_trumpet")
+	_check(flame.is_mythic() and trumpet.is_mythic() and _gm.has_relic(&"last_trumpet") and not flame.is_sealed(), "신화 사용 아이템: 원초의 불꽃 · 최후의 나팔 (100스테이지 보스가 나팔도 줌)")
+	_gm.add_relic(flame)
+	var dummy := (load("res://scenes/enemies/slime.tscn") as PackedScene).instantiate() as Enemy
+	dummy.max_hp = 99999
+	dummy.move_speed = 0.0
+	stage._add_enemy(dummy, player.global_position + Vector2(40, 0), stage.camp_room.get_arena_rect())
+	await _frames(2)
+	var atk_mult: float = 1.0 + _gm.faith_damage_bonus + _gm.get_buff_value("attack")
+	_check(_gm.use_relic(flame) and _gm.get_buff_value("attack") > atk_mult - 1.0 and _gm.get_buff_value("burn_immune") > 0.0 and not _gm.use_relic(flame), "원초의 불꽃 [Z]: 공격력 +%d%% · 화상 면역 · 다시 쓰려면 %d초" % [roundi(flame.attack_bonus * 100.0), roundi(flame.cooldown)])
+	player.apply_burn(10, 3.0)
+	_check(not player.is_burning(), "원초의 불꽃: 화상에 걸리지 않음")
+	var dummy_hp := dummy.hp
+	Enemy.on_player_hit(dummy, 1000)
+	await _frames(40)
+	_check(dummy.is_ignited() and dummy.hp < dummy_hp, "원초의 불꽃: 맞힌 적이 불탐 (0.5초마다 일격의 %d%%)" % roundi(flame.burn_ratio * 100.0))
+	var mob_hp := dummy.hp
+	_check(_gm.use_relic(trumpet) and dummy.is_stunned() and mob_hp - dummy.hp >= roundi(dummy.max_hp * trumpet.normal_damage_ratio) and player._invincible_left > 2.0, "최후의 나팔 [X]: 모든 적 기절 · 일반 몬스터 최대 체력의 %d%% · 용사 무적" % roundi(trumpet.normal_damage_ratio * 100.0))
+	dummy.despawn()
 	# 원래대로
 	var location: String = _gm.location_name
 	var stage_title: String = _gm.stage_name

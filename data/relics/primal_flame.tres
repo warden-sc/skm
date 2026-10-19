@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/relic_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/items/primal_flame.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+effect = 0
+cooldown = 60.0
+input_action = &"use_relic_flame"
+key_label = "Z"
+duration = 15.0
+attack_bonus = 0.3
+move_bonus = 0.1
+burn_ratio = 0.15
+burn_duration = 4.0
+id = &"primal_flame"
+display_name = "원초의 불꽃"
+description = "프로메테우스가 인간에게 건넨 불씨를 헤파이스토스가 용광로에서 다시 벼려 낸 태초의 불. 손에 쥐면 온몸에 불길이 일고, 베는 것마다 불타오른다."
+rarity = 4
+in_shop = false
+icon = ExtResource("2_res")
+price = 0

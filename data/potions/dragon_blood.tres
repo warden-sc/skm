@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="PotionData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/potion_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/items/dragon_blood.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+heal_amount = 0
+heal_percent = 1.0
+unlock_stage = 999
+auto_use = false
+buff_duration = 15.0
+regen_percent = 0.03
+buff_attack = 0.2
+buff_reduction = 0.3
+cleanse = true
+input_action = &"use_dragon_blood"
+id = &"dragon_blood"
+display_name = "고대 용의 피"
+description = "고대 드래곤 아르케가 경의의 표시로 남긴 피. 마시면 체력이 모두 차오르고, 용의 생명력이 몸을 감싸 상처를 막고 스스로 아문다."
+rarity = 4
+in_shop = false
+icon = ExtResource("2_res")
+price = 0

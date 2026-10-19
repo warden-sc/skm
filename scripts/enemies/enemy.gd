@@ -133,6 +133,9 @@ func apply_difficulty(info: Dictionary) -> void:
 func _physics_process(delta: float) -> void:
 	if _dead:
 		return
+	_tick_ignite(delta)
+	if _dead:
+		return
 	_anim_time += delta
 	if _player == null or not is_instance_valid(_player):
 		_player = get_tree().get_first_node_in_group(&"player") as Player
@@ -261,6 +264,50 @@ func apply_knockback(force: Vector2) -> void:
 	if _dead:
 		return
 	_knockback += force * (1.0 - knockback_resistance)
+
+
+# ============================================================ 원초의 불꽃: 용사의 공격에 맞으면 불탐
+const IGNITE_TICK := 0.5
+var _ignite_left: float = 0.0
+var _ignite_damage: int = 0
+var _ignite_timer: float = 0.0
+
+
+## 용사의 공격이 맞은 뒤 호출 (근접 · 화살 · 마법 폭발). 원초의 불꽃이 켜져 있으면 그 일격 피해의 일정 비율로 불붙임
+static func on_player_hit(enemy: Enemy, hit_damage: int) -> void:
+	if enemy == null or enemy.is_dead() or hit_damage <= 0:
+		return
+	var ratio := GameManager.get_buff_value("burn_on_hit")
+	if ratio > 0.0:
+		enemy.ignite(maxi(1, roundi(hit_damage * ratio)), 4.0)
+
+
+## duration 초 동안 0.5초마다 tick 피해 (방어력 무시) — 더 센 불이 붙으면 그쪽으로
+func ignite(tick: int, duration: float) -> void:
+	if _dead or tick <= 0:
+		return
+	if _ignite_left <= 0.0:
+		_ignite_timer = IGNITE_TICK
+	_ignite_damage = maxi(_ignite_damage if _ignite_left > 0.0 else 0, tick)
+	_ignite_left = maxf(_ignite_left, duration)
+
+
+func is_ignited() -> bool:
+	return _ignite_left > 0.0
+
+
+func _tick_ignite(delta: float) -> void:
+	if _ignite_left <= 0.0:
+		return
+	_ignite_left -= delta
+	_ignite_timer -= delta
+	if _ignite_timer <= 0.0:
+		_ignite_timer += IGNITE_TICK
+		if Engine.get_physics_frames() % 2 == 0:
+			Fx.burst(self, get_hit_center(), Color(1.0, 0.5, 0.15), 4, 40.0, 0.4, Vector2(0, -60))
+		take_damage(_ignite_damage, Vector2.ZERO, false, 99999999)
+	if _ignite_left <= 0.0:
+		_ignite_damage = 0
 
 
 ## 퍼펙트 가드 등으로 기절. 보스는 넉백 저항만큼 기절 시간이 줄어듭니다.

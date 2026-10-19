@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="PotionData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/potion_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/items/elixir.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+heal_amount = 0
+heal_percent = 1.0
+unlock_stage = 71
+buff_duration = 10.0
+regen_percent = 0.01
+id = &"elixir"
+display_name = "전설의 엘릭서"
+description = "현자들이 대대로 전해 온 금빛 물약. 마시면 상처가 모두 아물고, 잠시 동안 몸이 스스로 회복된다."
+rarity = 3
+icon = ExtResource("2_res")
+price = 3000

@@ -87,10 +87,14 @@ func _refresh() -> void:
 
 	_stats.text = _stats_text()
 
+	for relic in GameManager.relics:
+		var cd := GameManager.get_relic_cooldown(relic)
+		var relic_button := ItemRow.make_button("%d초" % ceili(cd) if cd > 0.0 else "사용", cd > 0.0, _on_use_relic_pressed.bind(relic), 40.0)
+		_bag_list.add_child(ItemRow.build(relic, [relic_button], _show_detail.bind(relic), false, relic.get_summary()))
 	for potion in GameManager.get_owned_potions():
 		var count := GameManager.get_potion_count(potion.id)
-		var use_button := ItemRow.make_button("사용", GameManager.hp >= GameManager.max_hp, _on_use_potion_pressed.bind(potion), 40.0)
-		var potion_line := "보유 %d개 · 체력 +%d  ([H] 자동 사용)" % [count, potion.get_heal(GameManager.max_hp)]
+		var use_button := ItemRow.make_button("사용", GameManager.hp >= GameManager.max_hp and potion.buff_duration <= 0.0, _on_use_potion_pressed.bind(potion), 40.0)
+		var potion_line := "보유 %d개 · 체력 +%d  (%s)" % [count, potion.get_heal(GameManager.max_hp), "[H] 자동 사용" if potion.auto_use else "[C] 사용"]
 		_bag_list.add_child(ItemRow.build(potion, [use_button], _show_detail.bind(potion), false, potion_line))
 
 	for item in _sorted_items():
@@ -187,6 +191,11 @@ func _on_equip_pressed(item: ItemData) -> void:
 
 func _on_use_potion_pressed(potion: PotionData) -> void:
 	GameManager.use_potion(potion)
+
+
+func _on_use_relic_pressed(relic: RelicData) -> void:
+	close()
+	GameManager.use_relic(relic)
 
 
 func _on_unequip_pressed(item: ItemData) -> void:

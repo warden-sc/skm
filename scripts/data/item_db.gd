@@ -145,10 +145,15 @@ const ITEM_PATHS: Array[String] = [
 	"res://data/accessories/spirit_bracelet.tres",
 	"res://data/accessories/gabriel_ring.tres",
 	"res://data/accessories/king_pendant.tres",
-	# 회복 포션 (소모품)
+	# 회복 포션 (소모품) — 고대 용의 피는 히든 보스 보상
 	"res://data/potions/small_potion.tres",
 	"res://data/potions/potion.tres",
 	"res://data/potions/greater_potion.tres",
+	"res://data/potions/elixir.tres",
+	"res://data/potions/dragon_blood.tres",
+	# 신화 사용 아이템 (원초의 불꽃 · 최후의 나팔)
+	"res://data/relics/primal_flame.tres",
+	"res://data/relics/last_trumpet.tres",
 ]
 
 ## 10스테이지마다 보스가 넘겨주는 신화 장비
@@ -230,6 +235,10 @@ static func get_mythic_for_stage(stage: int) -> ItemData:
 
 static func get_accessory(item_id: StringName) -> AccessoryData:
 	return get_item(item_id) as AccessoryData
+
+
+static func get_relic(item_id: StringName) -> RelicData:
+	return get_item(item_id) as RelicData
 
 
 static func get_potion(item_id: StringName) -> PotionData:

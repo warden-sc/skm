@@ -275,7 +275,10 @@ func _die() -> void:
 	if channels != null and is_instance_valid(channels):
 		channels.queue_free()
 	if GameManager.key_items.has(&"prometheus_ember"):
-		GameManager.show_notice("프로메테우스의 불씨가 식어 가는 용광로 속에서 다시 타오른다…", Color(1.0, 0.7, 0.3))
+		# 프로메테우스의 불씨 → 헤파이스토스가 쓰러지며 용광로에서 「원초의 불꽃」으로 제련
+		GameManager.key_items.erase(&"prometheus_ember")
+		GameManager.add_relic(ItemDB.get_relic(&"primal_flame"))
+		GameManager.show_notice("프로메테우스의 불씨가 용광로 속에서 다시 타올라 「원초의 불꽃」이 되었다! — [Z] 사용", Color(1.0, 0.6, 0.25))
 	super._die()
 
 

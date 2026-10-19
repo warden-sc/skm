@@ -33,6 +33,8 @@ const SMALL_SLOT_SIZE := Vector2(20, 20)
 var _hp_tween: Tween
 var _notice_tween: Tween
 var _shown_potion: PotionData
+## 신화 사용 아이템 칸의 대기시간 글자 { id: Label }
+var _relic_labels: Dictionary = {}
 var _status_label: Label
 
 
@@ -45,6 +47,7 @@ func _ready() -> void:
 	GameManager.gold_changed.connect(_on_gold_changed)
 	GameManager.equipment_changed.connect(_rebuild_hotbar)
 	GameManager.potions_changed.connect(_rebuild_hotbar)
+	GameManager.inventory_changed.connect(_rebuild_hotbar)
 	GameManager.player_hp_changed.connect(_on_hp_changed_for_potion.unbind(2))
 	GameManager.stage_changed.connect(_on_stage_changed)
 	GameManager.location_changed.connect(_on_location_changed)
@@ -197,6 +200,45 @@ func _rebuild_hotbar() -> void:
 		_hotbar.add_child(_make_slot(accessory, SMALL_SLOT_SIZE, "", false))
 	_hotbar.add_child(_make_spacer())
 	_hotbar.add_child(_make_potion_slot())
+	# 고대 용의 피 [C] · 원초의 불꽃 [Z] · 최후의 나팔 [X] (가지고 있을 때만)
+	_relic_labels.clear()
+	var blood_count := GameManager.get_potion_count(&"dragon_blood")
+	if blood_count > 0:
+		_hotbar.add_child(_make_spacer())
+		var blood_slot := _make_slot(ItemDB.get_potion(&"dragon_blood"), WEAPON_SLOT_SIZE, "C", false)
+		blood_slot.name = "DragonBloodSlot"
+		blood_slot.add_child(_corner_label("x%d" % blood_count, Color(1.0, 0.6, 0.6)))
+		_hotbar.add_child(blood_slot)
+	for relic in GameManager.relics:
+		_hotbar.add_child(_make_spacer())
+		var slot := _make_slot(relic, WEAPON_SLOT_SIZE, relic.key_label, false)
+		slot.name = "Relic_%s" % relic.id
+		var cd := _corner_label("", Color(0.75, 0.85, 1.0))
+		slot.add_child(cd)
+		_relic_labels[relic.id] = cd
+		_hotbar.add_child(slot)
+
+
+func _corner_label(text: String, color: Color) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_size_override(&"font_size", 9)
+	label.add_theme_constant_override(&"outline_size", 3)
+	label.add_theme_color_override(&"font_outline_color", Color(0.05, 0.05, 0.1))
+	label.add_theme_color_override(&"font_color", color)
+	label.size_flags_horizontal = Control.SIZE_SHRINK_END
+	label.size_flags_vertical = Control.SIZE_SHRINK_END
+	return label
+
+
+## 사용 아이템 대기시간 (매 프레임)
+func _process(_delta: float) -> void:
+	for relic in GameManager.relics:
+		var label := _relic_labels.get(relic.id) as Label
+		if label != null and is_instance_valid(label):
+			var cd := GameManager.get_relic_cooldown(relic)
+			label.text = "%d" % ceili(cd) if cd > 0.0 else ""
+			(label.get_parent() as CanvasItem).modulate = Color(0.55, 0.55, 0.6) if cd > 0.0 else Color.WHITE
 
 
 ## 포션 칸: [H] 로 마실 포션 아이콘 + 총 개수

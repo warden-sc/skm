@@ -55,6 +55,8 @@ signal game_cleared
 # --- UI ---
 signal notice_requested(text: String, color: Color)
 signal shop_open_requested(shop_name: String, stock_ids: Array)
+## 신화 사용 아이템을 썼을 때 (Player 가 효과를 냄)
+signal relic_used(relic: RelicData)
 
 enum Difficulty { NORMAL, HARD, VERY_HARD }
 enum WeaponSlot { MELEE, BOW, STAFF }
@@ -143,6 +145,13 @@ var hidden_cleared: bool = false
 var mythic_unlocked: bool = false
 ## 켜진 세트 효과 합계 (ItemSets.total_bonus, 장비가 바뀔 때마다 다시 계산)
 var _set_bonus: Dictionary = {}
+## 신화 사용 아이템 (원초의 불꽃 · 최후의 나팔)과 남은 대기시간 { id: 초 }
+var relics: Array[RelicData] = []
+var relic_cooldowns: Dictionary = {}
+## 잠시 붙는 효과 (포션 · 원초의 불꽃) { 이름: {"effects": {...}, "left": 초, "total": 초} }
+##   effects: attack(공격력 +%) · reduction(받는 피해 -%) · regen_pct(초당 최대 체력 %) · move(이속 +%) · burn_on_hit(맞힌 적 화상 비율) · burn_immune
+var _buffs: Dictionary = {}
+var _buff_regen_carry: float = 0.0
 ## 장비가 아닌 보물 (예: 49스테이지 프로메테우스의 「프로메테우스의 불씨」). 장비 조정 때 쓰임을 정할 예정
 const KEY_ITEM_NAMES := {&"prometheus_ember": "프로메테우스의 불씨"}
 var key_items: Array[StringName] = []
@@ -198,6 +207,10 @@ func reset_game() -> void:
 	hidden_cleared = false
 	mythic_unlocked = false
 	_set_bonus = {}
+	relics.clear()
+	relic_cooldowns.clear()
+	_buffs.clear()
+	_buff_regen_carry = 0.0
 	stolen_weapon = null
 	key_items.clear()
 	total_kills = 0
@@ -330,7 +343,7 @@ func get_total_defense() -> int:
 
 ## 신발로 더해지는 이동 속도 (0.1 = +10%)
 func get_move_speed_bonus() -> float:
-	return (equipped_boots.move_bonus if equipped_boots != null else 0.0) + get_set_value("move")
+	return (equipped_boots.move_bonus if equipped_boots != null else 0.0) + get_set_value("move") + get_buff_value("move")
 
 
 ## 신발로 줄어드는 대시 대기시간 비율
@@ -338,9 +351,9 @@ func get_dash_cooldown_reduction() -> float:
 	return clampf(equipped_boots.dash_cooldown_reduction if equipped_boots != null else 0.0, 0.0, 0.8)
 
 
-## 세트 효과로 줄어드는 받는 피해 비율
+## 세트 효과 · 잠깐 붙는 효과로 줄어드는 받는 피해 비율
 func get_damage_reduction() -> float:
-	return clampf(get_set_value("reduction"), 0.0, 0.6)
+	return clampf(get_set_value("reduction") + get_buff_value("reduction"), 0.0, 0.7)
 
 
 ## 멀티버스의 주인에게 주는 피해 보너스 (신화의 유산 10세트 「억제의 권능」)
@@ -472,7 +485,7 @@ func get_crit_chance(weapon: WeaponData = null) -> float:
 
 ## 장착 무기로 1타 데미지 굴리기 (반지·팔찌 반영). 결과에 방어력 관통("armor_pen")도 담아 줍니다.
 func roll_weapon_damage(weapon: WeaponData) -> Dictionary:
-	var roll := weapon.roll_damage(damage_multiplier * (1.0 + faith_damage_bonus), get_crit_chance_bonus(), get_crit_damage_bonus())
+	var roll := weapon.roll_damage(damage_multiplier * (1.0 + faith_damage_bonus + get_buff_value("attack")), get_crit_chance_bonus(), get_crit_damage_bonus())
 	roll["armor_pen"] = get_armor_pen(weapon)
 	return roll
 
@@ -612,10 +625,13 @@ func get_potion_count(potion_id: StringName) -> int:
 	return int(potions.get(potion_id, 0))
 
 
+## [H] 로 마시는 포션 개수 (고대 용의 피 제외)
 func get_total_potions() -> int:
 	var total := 0
-	for count in potions.values():
-		total += int(count)
+	for potion_id in potions:
+		var potion := ItemDB.get_potion(potion_id)
+		if potion != null and potion.auto_use:
+			total += int(potions[potion_id])
 	return total
 
 
@@ -633,7 +649,7 @@ func get_owned_potions() -> Array[PotionData]:
 
 ## [H] 로 마실 포션 고르기: 잃은 체력을 다 채우는 것 중 가장 작은 것, 없으면 가장 큰 것
 func choose_potion() -> PotionData:
-	var owned := get_owned_potions()
+	var owned := get_owned_potions().filter(func(p: PotionData) -> bool: return p.auto_use)
 	if owned.is_empty():
 		return null
 	var missing := max_hp - hp
@@ -673,7 +689,7 @@ func use_potion(potion: PotionData = null) -> bool:
 	if potion == null or get_potion_count(potion.id) <= 0:
 		show_notice("회복 포션이 없습니다! 야영지 상인에게서 구매하세요", Color(1.0, 0.6, 0.5))
 		return false
-	if hp >= max_hp:
+	if hp >= max_hp and potion.buff_duration <= 0.0 and not potion.cleanse:
 		show_notice("체력이 가득 차 있습니다", Color(0.8, 0.9, 1.0))
 		return false
 	if potion_heal_multiplier < 0.0:
@@ -689,8 +705,94 @@ func use_potion(potion: PotionData = null) -> bool:
 	var before := hp
 	heal_player(maxi(1, roundi(potion.get_heal(max_hp) * potion_heal_multiplier)))
 	potions[potion.id] = get_potion_count(potion.id) - 1
+	if potion.buff_duration > 0.0:
+		add_buff(potion.display_name, {"attack": potion.buff_attack, "reduction": potion.buff_reduction, "regen_pct": potion.regen_percent}, potion.buff_duration)
 	potions_changed.emit()
 	potion_used.emit(potion, hp - before)
+	return true
+
+
+# ============================================================ 잠깐 붙는 효과
+func add_buff(buff_name: String, effects: Dictionary, duration: float) -> void:
+	_buffs[buff_name] = {"effects": effects, "left": duration, "total": duration}
+	_recalculate_stats()
+
+
+func has_buff(buff_name: String) -> bool:
+	return _buffs.has(buff_name)
+
+
+func get_buff_left(buff_name: String) -> float:
+	return float((_buffs.get(buff_name, {}) as Dictionary).get("left", 0.0))
+
+
+func get_buff_value(key: String) -> float:
+	var total := 0.0
+	for buff in _buffs.values():
+		total += float((buff["effects"] as Dictionary).get(key, 0.0))
+	return total
+
+
+## 「원초의 불꽃 12초 · 고대 용의 피 8초」 (HUD 상태 줄)
+func get_buff_text() -> String:
+	var parts := PackedStringArray()
+	for buff_name in _buffs:
+		parts.append("%s %.0f초" % [buff_name, ceilf(float(_buffs[buff_name]["left"]))])
+	return " · ".join(parts)
+
+
+## Player 가 매 프레임 호출: 효과 시간 줄이기 + 재생
+func tick_buffs(delta: float) -> void:
+	for id in relic_cooldowns.keys():
+		relic_cooldowns[id] = maxf(float(relic_cooldowns[id]) - delta, 0.0)
+	if _buffs.is_empty():
+		return
+	var regen := get_buff_value("regen_pct")
+	if regen > 0.0 and not is_player_dead and hp < max_hp:
+		_buff_regen_carry += max_hp * regen * delta
+		if _buff_regen_carry >= 1.0:
+			var amount := int(_buff_regen_carry)
+			_buff_regen_carry -= amount
+			heal_player(amount)
+	var ended := false
+	for buff_name in _buffs.keys():
+		_buffs[buff_name]["left"] = float(_buffs[buff_name]["left"]) - delta
+		if float(_buffs[buff_name]["left"]) <= 0.0:
+			_buffs.erase(buff_name)
+			ended = true
+	if ended:
+		_recalculate_stats()
+
+
+# ============================================================ 신화 사용 아이템
+func add_relic(relic: RelicData) -> bool:
+	if relic == null or has_relic(relic.id):
+		return false
+	relics.append(relic)
+	inventory_changed.emit()
+	return true
+
+
+func has_relic(relic_id: StringName) -> bool:
+	return relics.any(func(r: RelicData) -> bool: return r.id == relic_id)
+
+
+func get_relic_cooldown(relic: RelicData) -> float:
+	return float(relic_cooldowns.get(relic.id, 0.0))
+
+
+## 사용 아이템 쓰기 (효과는 relic_used 를 받은 Player 가 냄). 실제로 썼으면 true
+func use_relic(relic: RelicData) -> bool:
+	if relic == null or is_player_dead or not has_relic(relic.id):
+		return false
+	if get_relic_cooldown(relic) > 0.0:
+		show_notice("%s — %.0f초 뒤에 다시 쓸 수 있다" % [relic.display_name, ceilf(get_relic_cooldown(relic))], Color(0.8, 0.8, 0.9))
+		return false
+	relic_cooldowns[relic.id] = relic.cooldown
+	if relic.effect == RelicData.Effect.PRIMAL_FLAME:
+		add_buff(relic.display_name, {"attack": relic.attack_bonus, "move": relic.move_bonus, "burn_on_hit": relic.burn_ratio, "burn_immune": 1.0}, relic.duration)
+	relic_used.emit(relic)
+	inventory_changed.emit()
 	return true
 
 

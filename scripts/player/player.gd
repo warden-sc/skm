@@ -174,6 +174,7 @@ func _ready() -> void:
 	GameManager.player_damaged.connect(_on_player_damaged)
 	GameManager.player_died.connect(_on_player_died)
 	GameManager.guard_broken.connect(_on_guard_broken)
+	GameManager.relic_used.connect(_on_relic_used)
 	GameManager.potion_used.connect(_on_potion_used)
 	_on_weapon_equipped(GameManager.equipped_weapon)
 	_on_shield_equipped(GameManager.equipped_shield)
@@ -193,6 +194,7 @@ func _physics_process(delta: float) -> void:
 	_update_timers(delta)
 	_update_status(delta)
 	GameManager.tick_regen(delta)
+	GameManager.tick_buffs(delta)
 
 	if _dash_time_left > 0.0:
 		velocity = _dash_direction * dash_speed
@@ -241,6 +243,16 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"use_potion"):
 		if _potion_cooldown_left <= 0.0 and GameManager.use_potion():
 			_potion_cooldown_left = potion_cooldown
+	elif event.is_action_pressed(&"use_relic_flame") or event.is_action_pressed(&"use_relic_trumpet"):
+		for relic in GameManager.relics:
+			if event.is_action_pressed(relic.input_action):
+				GameManager.use_relic(relic)
+	elif event.is_action_pressed(&"use_dragon_blood"):
+		var blood := ItemDB.get_potion(&"dragon_blood")
+		if GameManager.get_potion_count(&"dragon_blood") <= 0:
+			GameManager.show_notice("고대 용의 피가 없습니다", Color(1.0, 0.6, 0.5))
+		else:
+			GameManager.use_potion(blood)
 	elif event.is_action_pressed(&"weapon_next"):
 		GameManager.cycle_weapon(1)
 	elif event.is_action_pressed(&"weapon_prev"):
@@ -377,6 +389,66 @@ func apply_plague(duration: float) -> void:
 		_plague_tick = 2.0
 		FloatingText.spawn(self, global_position + Vector2(0, -20), "역병!", Color(0.6, 0.8, 0.3), true)
 	_plague_left = maxf(_plague_left, duration)
+
+
+## 상태 이상을 모두 씻어 냄 (고대 용의 피)
+func cleanse() -> void:
+	_burn_left = 0.0
+	_slow_left = 0.0
+	_armor_break_left = 0.0
+	_chill = 0.0
+	_root_left = 0.0
+	_slip_left = 0.0
+	_decay_left = 0.0
+	_stigma_left = 0.0
+	_plague_left = 0.0
+	_smoke_left = 0.0
+	_charm_left = 0.0
+
+
+func _apply_potion_extras(potion: PotionData) -> void:
+	if potion.cleanse:
+		cleanse()
+	if potion.buff_duration > 0.0:
+		Fx.shockwave(self, global_position + Vector2(0, -8), potion.get_rarity_color(), 40.0, 0.5)
+		FloatingText.spawn(self, global_position + Vector2(0, -26), potion.display_name + "!", potion.get_rarity_color(), true)
+
+
+# ============================================================ 신화 사용 아이템
+func _on_relic_used(relic: RelicData) -> void:
+	match relic.effect:
+		RelicData.Effect.PRIMAL_FLAME:
+			Fx.fire_blast(self, global_position + Vector2(0, -8), 50.0, 3)
+			var aura := Fx.make_aura(Color(1.0, 0.45, 0.1), 24, 12.0, Vector2(0, -70), 0.6)
+			aura.position = Vector2(0, -8)
+			add_child(aura)
+			get_tree().create_timer(relic.duration, false).timeout.connect(aura.queue_free)
+			FloatingText.spawn(self, global_position + Vector2(0, -26), "원초의 불꽃!", Color(1.0, 0.55, 0.2), true)
+			GameManager.show_notice("원초의 불꽃 — %d초 동안 공격력 +%d%% · 맞힌 적이 불탐" % [roundi(relic.duration), roundi(relic.attack_bonus * 100.0)], Color(1.0, 0.6, 0.25))
+		RelicData.Effect.LAST_TRUMPET:
+			sound_last_trumpet(relic)
+
+
+## 최후의 나팔: 하늘의 심판
+func sound_last_trumpet(relic: RelicData) -> void:
+	var manager := get_tree().get_first_node_in_group(&"stage_manager") as StageManager
+	if manager != null:
+		manager.clear_hostile_attacks()
+	for node in get_tree().get_nodes_in_group(&"enemies"):
+		var enemy := node as Enemy
+		if enemy == null or enemy.is_dead():
+			continue
+		var ratio := relic.boss_damage_ratio if enemy.is_boss else relic.normal_damage_ratio
+		Fx.pillar(enemy, enemy.global_position, Color(1.0, 0.95, 0.6), 18.0, 160.0, 0.6)
+		enemy.stun(relic.stun_time)
+		enemy.take_damage(maxi(1, roundi(enemy.max_hp * ratio)), Vector2.ZERO, true, 99999999)
+	_invincible_left = maxf(_invincible_left, relic.invincible_time)
+	GameManager.heal_player(roundi(GameManager.max_hp * relic.heal_ratio))
+	Fx.flash(self, global_position, Color(1.0, 0.95, 0.7), 260.0, 0.8)
+	Fx.shockwave(self, global_position, Color(1.0, 0.9, 0.5), 320.0, 0.9)
+	shake_camera(10.0)
+	FloatingText.spawn(self, global_position + Vector2(0, -26), "최후의 나팔!", Color(1.0, 0.95, 0.6), true)
+	GameManager.show_notice("최후의 나팔이 울린다 — 하늘의 심판!", Color(1.0, 0.95, 0.6))
 
 
 func cure_plague() -> void:
@@ -674,8 +746,8 @@ const BURN_TICK_TIME := 0.5
 ## 실제 피해 = tick_damage × GameManager.get_dot_multiplier() (방어력이 높을수록 덜 들어옴, 최소 1).
 ## 가드·대시 무적으로 막을 수 없고, 펜던트의 체력 재생으로 버팁니다.
 func apply_burn(tick_damage: int, duration: float, poison: bool = false) -> void:
-	if _is_dead or tick_damage <= 0:
-		return
+	if _is_dead or tick_damage <= 0 or GameManager.get_buff_value("burn_immune") > 0.0:
+		return  # 원초의 불꽃: 화상 면역
 	tick_damage = Balance.scale(tick_damage)  # 화상 수치는 몬스터 쪽 예전 단위
 	_burn_is_poison = poison
 	if _burn_left <= 0.0:
@@ -734,6 +806,8 @@ func _update_status(delta: float) -> void:
 	else:
 		GameManager.potion_heal_multiplier = 0.0 if _decay_left > 0.0 else (0.5 if (_burn_left > 0.0 and _burn_is_poison) or _plague_left > 0.0 else 1.0)
 	var parts := PackedStringArray()
+	if GameManager.get_buff_text() != "":
+		parts.append(GameManager.get_buff_text())
 	if _execution_left >= 0.0:
 		parts.append("사형 선고 %.1f초! (대시로 회피)" % _execution_left)
 	elif death_marks > 0:
@@ -1068,7 +1142,8 @@ func _on_player_damaged(_amount: int) -> void:
 	shake_camera(4.0)
 
 
-func _on_potion_used(_potion: PotionData, healed: int) -> void:
+func _on_potion_used(potion: PotionData, healed: int) -> void:
+	_apply_potion_extras(potion)
 	var heal_color := Color(0.45, 1.0, 0.5)
 	FloatingText.spawn(self, global_position + Vector2(0, -18), "+%d HP" % healed, heal_color, true)
 	Fx.burst(self, global_position + Vector2(0, -8), heal_color, 16, 40.0, 0.6, Vector2(0, -60))

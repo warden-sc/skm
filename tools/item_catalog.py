@@ -856,9 +856,12 @@ def write_item_db(paths):
         for item in ITEMS:
             if item["cat"] in cats:
                 lines.append('\t"res://%s",' % os.path.relpath(paths[item["id"]], REPO).replace(os.sep, "/"))
-    lines.append("\t# 회복 포션 (소모품)")
-    for p in ("small_potion", "potion", "greater_potion"):
+    lines.append("\t# 회복 포션 (소모품) — 고대 용의 피는 히든 보스 보상")
+    for p in ("small_potion", "potion", "greater_potion", "elixir", "dragon_blood"):
         lines.append(f'\t"res://data/potions/{p}.tres",')
+    lines.append("\t# 신화 사용 아이템 (원초의 불꽃 · 최후의 나팔)")
+    for r in ("primal_flame", "last_trumpet"):
+        lines.append(f'\t"res://data/relics/{r}.tres",')
     lines.append("]\n")
     text = text[:start] + "\n".join(lines) + text[end:]
     open(db, "w", encoding="utf-8").write(text)
@@ -883,9 +886,41 @@ def balance_sheet():
     return rows
 
 
+def flame_icon():
+    img = gs.canvas(16)
+    gs.rect(img, 4, 11, 11, 13, (90, 60, 50, 255))          # 화로
+    gs.rect(img, 3, 10, 12, 10, (150, 110, 70, 255))
+    gs.rect(img, 6, 14, 9, 15, (70, 45, 40, 255))
+    gs._poly(img, [(8, 1), (12, 9), (8, 10), (4, 9)], (255, 110, 40, 255))   # 불꽃
+    gs._poly(img, [(8, 4), (10, 9), (8, 10), (6, 9)], (255, 210, 90, 255))
+    gs.put(img, [(8, 7), (8, 8)], (255, 255, 230, 255))
+    gs.put(img, [(5, 4), (11, 5)], (255, 160, 60, 255))
+    return mythic_frame(gs.outline(img))
+
+
+def trumpet_icon():
+    img = gs.canvas(16)
+    for i in range(9):                                        # 관
+        gs.put(img, [(2 + i, 12 - i)], (240, 200, 90, 255))
+        gs.put(img, [(3 + i, 12 - i)], (200, 150, 50, 255))
+    gs._poly(img, [(10, 1), (15, 1), (15, 6), (12, 6), (10, 4)], (255, 220, 110, 255))  # 나팔 끝
+    gs.put(img, [(13, 2), (14, 3)], (255, 255, 230, 255))
+    gs.put(img, [(5, 10), (6, 9), (7, 8)], (255, 245, 200, 255))
+    gs.rect(img, 1, 13, 2, 14, (200, 150, 50, 255))
+    return mythic_frame(gs.outline(img))
+
+
+def paint_consumables():
+    gs.save(gs.potion_icon((255, 196, 70), (255, 240, 170), 1.15), "items", "elixir.png")
+    gs.save(mythic_frame(gs.potion_icon((150, 18, 32), (255, 95, 95), 1.2)), "items", "dragon_blood.png")
+    gs.save(flame_icon(), "items", "primal_flame.png")
+    gs.save(trumpet_icon(), "items", "last_trumpet.png")
+
+
 def main():
     if "--readme" in sys.argv:
         return
+    paint_consumables()
     if "--sheet" in sys.argv:
         print(json.dumps(balance_sheet(), ensure_ascii=False, indent=1))
         return

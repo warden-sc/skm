@@ -118,6 +118,7 @@ func _on_area_entered(area: Area2D) -> void:
 	_hit_ids[id] = true
 
 	enemy.take_damage(_spec.damage, _velocity.normalized() * _spec.knockback, _spec.is_crit, _spec.armor_pen)
+	Enemy.on_player_hit(enemy, _spec.damage)
 	if _spec.slow_duration > 0.0:
 		enemy.apply_slow(0.45, _spec.slow_duration)
 	_impact(enemy.get_hit_center(), enemy)
@@ -202,6 +203,7 @@ func _impact(at_global: Vector2, direct_target: Enemy) -> void:
 		var offset := enemy.get_hit_center() - at_global
 		if offset.length() <= _spec.explosion_radius and enemy.can_be_hit_by(_spec.hit_kind):
 			enemy.take_damage(_spec.explosion_damage, offset.normalized() * _spec.knockback * 0.5, false, _spec.armor_pen)
+			Enemy.on_player_hit(enemy, _spec.explosion_damage)
 
 
 func _create_fx_nodes() -> void:
