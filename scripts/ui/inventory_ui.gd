@@ -139,10 +139,12 @@ func _stats_text() -> String:
 	var weapon := GameManager.equipped_weapon
 	var lines := PackedStringArray()
 	if weapon != null:
-		lines.append("손에 든 무기: %s (ATK %d)" % [weapon.display_name, roundi(weapon.damage * GameManager.damage_multiplier)])
-		lines.append("치명타 확률 %d%% · 치명타 피해 x%.1f" % [roundi(GameManager.get_crit_chance(weapon) * 100.0), weapon.crit_multiplier + GameManager.get_crit_damage_bonus()])
-		lines.append("방어력 관통(방깍) %d · 공격력 +%d%%" % [GameManager.get_armor_pen(weapon), roundi(GameManager.get_attack_bonus() * 100.0)])
-	lines.append("방어력 %d · 최대 HP %d · 이속 +%d%% · 재생 %.1f/s" % [GameManager.get_total_defense(), GameManager.max_hp, roundi(GameManager.get_move_speed_bonus() * 100.0), GameManager.get_hp_regen()])
+		lines.append("손에 든 무기: %s (ATK %d) · 치명 %d%% x%.1f" % [weapon.display_name, roundi(weapon.damage * GameManager.damage_multiplier), roundi(GameManager.get_crit_chance(weapon) * 100.0), weapon.crit_multiplier + GameManager.get_crit_damage_bonus()])
+		lines.append("방깍 %d · 공격력 +%d%% · 방어력 %d · 최대 HP %d" % [GameManager.get_armor_pen(weapon), roundi(GameManager.get_attack_bonus() * 100.0), GameManager.get_total_defense(), GameManager.max_hp])
+	else:
+		lines.append("방어력 %d · 최대 HP %d" % [GameManager.get_total_defense(), GameManager.max_hp])
+	var reduction := GameManager.get_damage_reduction()
+	lines.append("이속 +%d%% · 재생 %.1f/s%s" % [roundi(GameManager.get_move_speed_bonus() * 100.0), GameManager.get_hp_regen(), " · 받는 피해 -%d%%" % roundi(reduction * 100.0) if reduction > 0.0 else ""])
 	# 세트는 한 줄로 (자세한 효과는 장비에 마우스를 올리면 설명칸에)
 	var counts := GameManager.get_set_counts()
 	var sets := PackedStringArray()

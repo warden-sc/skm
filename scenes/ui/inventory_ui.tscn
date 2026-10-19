@@ -94,19 +94,21 @@ theme_override_constants/separation = 6
 [node name="ArmorHeader" type="Label" parent="Panel/Margin/VBox/Columns/EquipColumn"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.9, 1, 1)
-text = "방어구 칸"
+text = "방어구 칸                        장신구 칸"
 
-[node name="ArmorSlots" type="HBoxContainer" parent="Panel/Margin/VBox/Columns/EquipColumn"]
+[node name="GearRow" type="HBoxContainer" parent="Panel/Margin/VBox/Columns/EquipColumn"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ArmorSlots" type="HBoxContainer" parent="Panel/Margin/VBox/Columns/EquipColumn/GearRow"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="AccessoryHeader" type="Label" parent="Panel/Margin/VBox/Columns/EquipColumn"]
+[node name="GearSeparator" type="VSeparator" parent="Panel/Margin/VBox/Columns/EquipColumn/GearRow"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.6, 0.7, 1)
-text = "장신구 칸  (팔찌 · 반지 · 펜던트)"
 
-[node name="AccessorySlots" type="HBoxContainer" parent="Panel/Margin/VBox/Columns/EquipColumn"]
+[node name="AccessorySlots" type="HBoxContainer" parent="Panel/Margin/VBox/Columns/EquipColumn/GearRow"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 6
@@ -115,7 +117,6 @@ theme_override_constants/separation = 6
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 8
-autowrap_mode = 3
 
 [node name="VSeparator" type="VSeparator" parent="Panel/Margin/VBox/Columns"]
 layout_mode = 2
