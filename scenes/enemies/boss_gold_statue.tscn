@@ -1,0 +1,50 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/boss_gold_statue.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/gold_statue.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/shadow.png" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/statue_section.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/clay_foot.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/babylon_spearman.tscn" id="6_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/chaldean_astrologer.tscn" id="7_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/furnace_spirit.tscn" id="8_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/cut_stone.png" id="9_res"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 16.0
+
+[node name="BossGoldStatue" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_res")
+display_name = "느부갓네살의 금 신상"
+max_hp = 278000
+defense = 56
+move_speed = 40.0
+contact_damage = 104
+knockback_resistance = 1.0
+is_boss = true
+aura_element = 4
+aura_amount = 8
+gold_min = 13000
+gold_max = 13500
+item_drop_chance = 1.0
+section_scene = ExtResource("4_res")
+foot_scene = ExtResource("5_res")
+minion_scenes = Array[PackedScene]([ExtResource("6_res"), ExtResource("7_res"), ExtResource("8_res")])
+stone_texture = ExtResource("9_res")
+item_drop_ids = Array[StringName]([&"colossus_bulwark"])
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(3.2, 3.2)
+texture = ExtResource("3_res")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -30)
+scale = Vector2(1.3, 1.3)
+texture = ExtResource("2_res")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -22)
+shape = SubResource("CircleShape2D_hit")

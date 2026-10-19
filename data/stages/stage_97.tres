@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/stage_data.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/tiles/floor_carmel.png" id="2_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/boss_baal_prophet.tscn" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/baal_priest.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/baal_dancer.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/asherah_pole.tscn" id="6_res"]
+
+[resource]
+script = ExtResource("1_res")
+stage_name = "갈멜산"
+floor_texture = ExtResource("2_res")
+wall_tint = Color(0.66, 0.54, 0.44, 1)
+ambient_color = Color(0.96, 0.86, 0.76, 1)
+boss_intro_text = "갈멜산 꼭대기의 두 제단 — 바알의 대예언자가 칼로 제 몸을 그으며 바알을 부른다…"
+enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
+enemy_weights = Array[float]([1.0, 1.0, 0.8])
+boss_scene = ExtResource("3_res")
+kill_target = 44
+spawn_interval = 1.6
+max_alive = 8

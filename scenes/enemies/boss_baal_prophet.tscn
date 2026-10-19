@@ -1,0 +1,53 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/boss_baal_prophet.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/baal_prophet.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/shadow.png" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/baal_dancer.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/baal_priest.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/asherah_pole.tscn" id="6_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/baal_altar.png" id="7_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/elijah_altar.png" id="8_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/water_jar.png" id="9_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/slash.png" id="10_res"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 16.0
+
+[node name="BossBaalProphet" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_res")
+display_name = "갈멜산의 바알 대예언자"
+max_hp = 294000
+defense = 56
+move_speed = 40.0
+contact_damage = 104
+knockback_resistance = 1.0
+is_boss = true
+aura_element = 1
+aura_amount = 10
+gold_min = 13000
+gold_max = 13500
+item_drop_chance = 1.0
+dancer_scene = ExtResource("4_res")
+minion_scenes = Array[PackedScene]([ExtResource("5_res"), ExtResource("6_res")])
+baal_altar_texture = ExtResource("7_res")
+elijah_altar_texture = ExtResource("8_res")
+jar_texture = ExtResource("9_res")
+knife_texture = ExtResource("10_res")
+item_drop_ids = Array[StringName]([&"arcana_staff"])
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(3.2, 3.2)
+texture = ExtResource("3_res")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -30)
+scale = Vector2(1.3, 1.3)
+texture = ExtResource("2_res")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -22)
+shape = SubResource("CircleShape2D_hit")

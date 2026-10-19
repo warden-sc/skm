@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/stage_data.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/tiles/floor_elah_valley.png" id="2_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/boss_goliath.tscn" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/philistine_spearman.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/philistine_slinger.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/gath_giant.tscn" id="6_res"]
+
+[resource]
+script = ExtResource("1_res")
+stage_name = "엘라 골짜기"
+floor_texture = ExtResource("2_res")
+wall_tint = Color(0.6, 0.62, 0.44, 1)
+ambient_color = Color(0.92, 0.94, 0.78, 1)
+boss_intro_text = "골짜기 건너편에서 놋 투구를 쓴 거인이 소리친다 — 「너희 중에서 한 사람을 택하여 내게로 내려보내라!」"
+enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
+enemy_weights = Array[float]([1.0, 1.0, 0.8])
+boss_scene = ExtResource("3_res")
+kill_target = 44
+spawn_interval = 1.6
+max_alive = 8

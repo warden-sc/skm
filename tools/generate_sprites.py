@@ -7596,6 +7596,507 @@ def save_late20_sprites():
         save(painter(), "tiles", f"{name}.png")
 
 
+# ---------------------------------------------------------------- 91~100스테이지 (하늘로 오르는 길 → 대천사 가브리엘)
+def _angel(w, h, skin, robe, robe_d, hair, wing, wings=2, halo=(255, 230, 120), weapon=None, shield=None):
+    """천사 공용 몸통 (날개 · 후광)"""
+    img = canvas(w, h)
+    cx = w // 2
+    for k in range(wings // 2):
+        top = 6 + k * 10
+        _poly(img, [(cx - 6, top + 10), (0, top - 4 if top > 4 else 0), (3, top + 18), (cx - 6, top + 22)], _c(*wing))
+        _poly(img, [(cx + 5, top + 10), (w - 1, top - 4 if top > 4 else 0), (w - 4, top + 18), (cx + 5, top + 22)], _c(*wing))
+    body = _hero(30, 40, _c(*skin), _c(*robe), _c(*robe_d), _c(*hair), weapon=weapon, shield=shield)
+    img.alpha_composite(body, (cx - 15, h - 41))
+    top_y = h - 41
+    for x in range(cx - 5, cx + 5):
+        put(img, [(x, top_y)], _c(*halo))
+    put(img, [(cx - 6, top_y + 1), (cx + 5, top_y + 1)], _c(*halo))
+    return img
+
+
+# ---- 91 에덴의 문지기 케루빔
+def cherubim():
+    """케루빔 (46x52): 네 얼굴(사람 · 사자 · 소 · 독수리)과 네 날개"""
+    img = _angel(46, 52, (230, 200, 170), (200, 170, 90), (150, 120, 60), (240, 210, 120), (230, 220, 160), wings=4)
+    ellipse(img, 9, 30, 4, 4, _c(220, 160, 60))      # 사자
+    put(img, [(8, 29), (10, 29)], _c(60, 30, 10))
+    ellipse(img, 37, 30, 4, 4, _c(150, 110, 80))     # 소
+    put(img, [(34, 26), (40, 26)], _c(240, 230, 210))
+    ellipse(img, 23, 6, 4, 3, _c(200, 190, 180))     # 독수리
+    put(img, [(23, 8)], _c(240, 200, 60))
+    return outline(img, (60, 45, 15, 255))
+
+
+def eden_guard():
+    return _warrior(16, 22, _c(220, 190, 160), _c(220, 180, 90), _c(160, 120, 50), _c(240, 210, 120), crest=(255, 120, 40), weapon=(255, 140, 50))
+
+
+def tree_spirit():
+    return _wisp(14, 14, (190, 255, 160), (60, 140, 60))
+
+
+def eden_serpent():
+    """에덴의 뱀 (18x12)"""
+    img = canvas(18, 12)
+    for i in range(14):
+        ellipse(img, 2 + i, 7 + 2 * math.sin(i * 0.8), 1.8, 1.8, _c(90, 150, 60))
+    ellipse(img, 15, 5, 2.5, 2, _c(110, 170, 70))
+    put(img, [(16, 4)], _c(255, 220, 60))
+    put(img, [(17, 6)], _c(220, 40, 40))
+    return outline(img)
+
+
+def floor_eden_gate():
+    return _floor(911, (96, 120, 70), 5, [(6, (80, 104, 58, 255), 4), (5, (130, 160, 90, 255), 2), (4, (255, 150, 60, 255), 1)])
+
+
+# ---- 92 바퀴 천사 오파님
+def _wheel(size, rim, spoke, eyes):
+    img = canvas(size, size)
+    c = size / 2 - 0.5
+    ellipse(img, c, c, size * 0.48, size * 0.48, _c(*rim))
+    ellipse(img, c, c, size * 0.36, size * 0.36, (0, 0, 0, 0))
+    for k in range(8):
+        a = k * math.pi / 4
+        _line(img, (int(c), int(c)), (int(c + math.cos(a) * size * 0.4), int(c + math.sin(a) * size * 0.4)), _c(*spoke))
+    for k in range(eyes):
+        a = k * 2 * math.pi / eyes
+        ex, ey = c + math.cos(a) * size * 0.42, c + math.sin(a) * size * 0.42
+        ellipse(img, ex, ey, 1.6, 1.2, _c(250, 250, 240))
+        put(img, [(int(round(ex)), int(round(ey)))], _c(40, 90, 200))
+    ellipse(img, c, c, size * 0.1, size * 0.1, _c(255, 230, 140))
+    return img
+
+
+def ophanim_throne():
+    """오파님 (40x40): 눈이 가득한 금빛 바퀴"""
+    return outline(_wheel(40, (220, 180, 80), (250, 220, 130), 10), (70, 50, 10, 255))
+
+
+def ophanim_wheel():
+    """오파님의 둘째 바퀴 (32x32)"""
+    return outline(_wheel(32, (200, 200, 220), (240, 240, 255), 8), (40, 40, 70, 255))
+
+
+def eye_spirit():
+    return _wisp(14, 14, (250, 250, 240), (90, 140, 230))
+
+
+def fire_wheel():
+    return outline(_wheel(14, (240, 110, 40), (255, 200, 80), 0))
+
+
+def throne_guard():
+    return _warrior(16, 22, _c(230, 210, 190), _c(230, 230, 240), _c(170, 170, 190), _c(250, 230, 150), crest=(120, 160, 255), weapon=(230, 230, 250))
+
+
+def floor_wheel_sky():
+    return _floor(922, (150, 150, 176), 5, [(6, (130, 130, 156, 255), 4), (5, (190, 190, 214, 255), 2), (3, (255, 230, 140, 255), 1)])
+
+
+# ---- 93 느부갓네살의 금 신상
+def gold_statue():
+    """느부갓네살의 금 신상 (36x72): 머리 금 · 가슴 은 · 배 놋 · 다리 철 · 발 진흙"""
+    img = canvas(36, 72)
+    ellipse(img, 17.5, 9, 7, 7, _c(240, 200, 60))                  # 금 머리
+    put(img, [(15, 9), (20, 9)], _c(120, 80, 10))
+    rect(img, 12, 1, 23, 3, _c(255, 220, 90))
+    rect(img, 8, 17, 27, 30, _c(200, 205, 215))                     # 은 가슴 · 팔
+    rect(img, 3, 18, 7, 34, _c(185, 190, 200))
+    rect(img, 28, 18, 32, 34, _c(185, 190, 200))
+    rect(img, 9, 31, 26, 42, _c(180, 120, 60))                      # 놋 배
+    rect(img, 10, 43, 16, 60, _c(110, 115, 125))                    # 철 다리
+    rect(img, 19, 43, 25, 60, _c(110, 115, 125))
+    rect(img, 8, 61, 16, 71, _c(150, 120, 90))                      # 철과 진흙 발
+    rect(img, 19, 61, 27, 71, _c(150, 120, 90))
+    for x, y in ((10, 64), (14, 67), (21, 65), (25, 68)):
+        put(img, [(x, y)], _c(110, 115, 125))
+    return outline(img, (50, 35, 10, 255))
+
+
+def clay_foot():
+    """진흙 발 (14x10)"""
+    img = canvas(14, 10)
+    rect(img, 1, 2, 12, 9, _c(150, 120, 90))
+    for x, y in ((3, 4), (7, 6), (10, 3)):
+        put(img, [(x, y)], _c(110, 115, 125))
+    _line(img, (4, 2), (6, 8), _c(100, 75, 55))
+    return outline(img)
+
+
+def cut_stone():
+    """손대지 않고 뜨인 돌 (24x24)"""
+    img = canvas(24, 24)
+    ellipse(img, 11.5, 11.5, 11, 11, _c(170, 165, 160))
+    ellipse(img, 9, 9, 5, 4, _c(205, 200, 195))
+    for x, y in ((14, 15), (6, 14), (16, 6)):
+        put(img, [(x, y)], _c(120, 115, 110))
+    return outline(img)
+
+
+def babylon_spearman():
+    return _warrior(16, 22, _c(200, 160, 120), _c(60, 90, 160), _c(40, 60, 110), _c(200, 170, 80), crest=(240, 200, 80), weapon=(200, 200, 210))
+
+
+def chaldean_astrologer():
+    return _wisp(14, 14, (220, 200, 255), (100, 60, 160))
+
+
+def furnace_spirit():
+    return _wisp(14, 14, (255, 230, 120), (230, 90, 30))
+
+
+def floor_babylon():
+    return _floor(933, (150, 120, 80), 5, [(6, (130, 100, 64, 255), 4), (5, (190, 160, 110, 255), 2), (4, (240, 200, 70, 255), 1)])
+
+
+# ---- 94 거인 골리앗
+def goliath():
+    """거인 골리앗 (44x62): 놋 투구 · 비늘 갑옷 · 베틀채 같은 창"""
+    img = _giant(44, 62, _c(200, 150, 110), _c(150, 105, 70), _c(150, 120, 60), _c(70, 50, 30), (40, 20, 10))
+    for y in range(26, 42, 3):
+        for x in range(12, 32, 3):
+            put(img, [(x, y)], _c(170, 140, 70))
+    rect(img, 15, 2, 28, 7, _c(190, 140, 60))
+    rect(img, 40, 2, 41, 58, _c(130, 100, 70))
+    _poly(img, [(38, 4), (40, 0), (42, 0), (43, 4)], _c(220, 220, 230))
+    return outline(img, (50, 30, 15, 255))
+
+
+def shieldbearer():
+    """방패 든 자 (20x24)"""
+    img = _warrior(16, 22, _c(200, 160, 120), _c(150, 110, 60), _c(110, 80, 40), _c(170, 130, 60))
+    out = canvas(20, 24)
+    out.alpha_composite(img, (4, 2))
+    rect(out, 0, 6, 7, 22, _c(170, 130, 60))
+    rect(out, 1, 7, 6, 21, _c(200, 160, 80))
+    put(out, [(3, 14)], _c(240, 210, 120))
+    return outline(out)
+
+
+def sling_stone():
+    """매끄러운 시냇돌 (8x6)"""
+    img = canvas(8, 6)
+    ellipse(img, 3.5, 2.5, 3.5, 2.5, _c(190, 195, 200))
+    put(img, [(2, 1)], _c(240, 240, 245))
+    return outline(img)
+
+
+def philistine_spearman():
+    return _warrior(16, 22, _c(200, 160, 120), _c(150, 60, 50), _c(110, 40, 30), _c(200, 170, 90), crest=(230, 220, 120), weapon=(210, 210, 220))
+
+
+def philistine_slinger():
+    return _warrior(14, 20, _c(200, 160, 120), _c(160, 120, 70), _c(120, 90, 50), _c(140, 100, 60))
+
+
+def gath_giant():
+    return outline(_giant(26, 32, _c(190, 140, 100), _c(140, 100, 70), _c(120, 80, 50), _c(60, 40, 20), (40, 20, 10)))
+
+
+def floor_elah_valley():
+    return _floor(944, (120, 128, 80), 5, [(6, (104, 112, 66, 255), 4), (5, (160, 166, 110, 255), 2), (4, (180, 190, 200, 255), 1)])
+
+
+# ---- 95 여리고 성의 수비대장
+def jericho_captain():
+    """여리고 성의 수비대장 (34x44): 붉은 깃 투구, 큰 활과 창"""
+    img = _hero(34, 44, _c(200, 160, 120), _c(150, 100, 60), _c(110, 70, 40), _c(180, 150, 80), crest=(200, 50, 40), cape=(130, 40, 30), weapon=(150, 110, 70), shield=(170, 120, 60))
+    return outline(img, (50, 30, 15, 255))
+
+
+def jericho_archer():
+    return _warrior(14, 20, _c(200, 160, 120), _c(150, 100, 60), _c(110, 70, 40), _c(180, 150, 80), crest=(200, 50, 40))
+
+
+def jericho_shieldman():
+    return _warrior(16, 22, _c(200, 160, 120), _c(160, 110, 60), _c(120, 80, 40), _c(180, 150, 80), shield=(190, 140, 70), weapon=(200, 200, 210))
+
+
+def wall_hound():
+    return _beast(20, 14, _c(150, 120, 90), _c(100, 80, 60), (255, 200, 60))
+
+
+def floor_jericho():
+    return _floor(955, (160, 132, 96), 5, [(6, (140, 112, 80, 255), 4), (5, (196, 168, 126, 255), 2), (4, (210, 120, 80, 255), 1)])
+
+
+# ---- 96 노아 홍수의 네피림 왕
+def nephilim_king():
+    """네피림 왕 (50x64): 거대한 몸, 왕관, 쇠사슬 띠"""
+    img = _giant(50, 64, _c(170, 140, 120), _c(120, 95, 80), _c(70, 60, 80), _c(40, 30, 30), (255, 200, 80))
+    for x in (18, 22, 26, 30):
+        _poly(img, [(x, 6), (x + 1, 1), (x + 2, 6)], _c(230, 190, 70))
+    rect(img, 16, 6, 33, 7, _c(230, 190, 70))
+    for x in range(14, 36, 3):
+        put(img, [(x, 44), (x + 1, 45)], _c(150, 150, 160))
+    return outline(img, (40, 25, 20, 255))
+
+
+def flood_giant():
+    return outline(_giant(26, 32, _c(160, 140, 130), _c(110, 95, 85), _c(60, 70, 90), _c(40, 30, 30), (230, 220, 120)))
+
+
+def flood_spirit():
+    return _wisp(14, 14, (200, 230, 255), (60, 110, 200))
+
+
+def deep_fish():
+    """바다 괴어 (20x12)"""
+    img = canvas(20, 12)
+    ellipse(img, 9, 6, 8, 4, _c(70, 100, 140))
+    _poly(img, [(1, 6), (-1, 1), (-1, 11)], _c(60, 90, 130))
+    for x in (12, 14, 16):
+        put(img, [(x, 8)], _c(240, 240, 230))
+    put(img, [(15, 4)], _c(255, 230, 80))
+    return outline(img)
+
+
+def ark_plank():
+    """방주의 판자 (40x16)"""
+    img = canvas(40, 16)
+    for i, y in enumerate((2, 7, 11)):
+        rect(img, 1, y, 38, y + 3, _c(150 - i * 10, 105 - i * 6, 60))
+    for x in (6, 20, 33):
+        rect(img, x, 1, x + 1, 15, _c(100, 70, 40))
+    return outline(img)
+
+
+def floor_flood():
+    return _floor(966, (96, 104, 92), 5, [(6, (80, 88, 78, 255), 4), (5, (120, 130, 116, 255), 2), (4, (90, 130, 170, 255), 1)])
+
+
+# ---- 97 갈멜산의 바알 대예언자
+def baal_prophet():
+    """바알 대예언자 (34x46): 황소 뿔 관, 붉은 옷"""
+    img = _hero(34, 44, _c(200, 150, 110), _c(170, 50, 40), _c(120, 30, 25), _c(230, 190, 80), cape=(90, 30, 30))
+    out = canvas(34, 46)
+    out.alpha_composite(img, (0, 2))
+    _poly(out, [(10, 7), (5, 0), (12, 5)], _c(240, 230, 200))
+    _poly(out, [(23, 7), (28, 0), (21, 5)], _c(240, 230, 200))
+    return outline(out, (50, 20, 15, 255))
+
+
+def baal_altar():
+    """바알의 제단 (36x28)"""
+    img = canvas(36, 28)
+    rect(img, 3, 10, 32, 27, _c(130, 60, 50))
+    rect(img, 1, 8, 34, 11, _c(160, 80, 60))
+    _poly(img, [(12, 8), (8, 0), (15, 6)], _c(220, 210, 180))
+    _poly(img, [(23, 8), (27, 0), (20, 6)], _c(220, 210, 180))
+    return outline(img)
+
+
+def elijah_altar():
+    """엘리야의 제단 — 돌 열두 개 (36x26)"""
+    img = canvas(36, 26)
+    for i in range(12):
+        x, y = 3 + (i % 6) * 5, 14 + (i // 6) * 6
+        ellipse(img, x + 2, y + 2, 2.6, 2.6, _c(160, 155, 150))
+    rect(img, 6, 6, 29, 12, _c(130, 90, 50))
+    for x in (9, 15, 21, 26):
+        rect(img, x, 4, x + 1, 12, _c(110, 75, 40))
+    return outline(img)
+
+
+def water_jar():
+    """물동이 (12x14)"""
+    img = canvas(12, 14)
+    ellipse(img, 5.5, 8, 5, 5, _c(170, 110, 70))
+    rect(img, 3, 1, 8, 4, _c(150, 95, 60))
+    ellipse(img, 5.5, 2, 2, 1, _c(90, 150, 220))
+    return outline(img)
+
+
+def baal_priest():
+    return _wisp(14, 14, (255, 180, 120), (170, 50, 40))
+
+
+def baal_dancer():
+    return _warrior(14, 20, _c(200, 150, 110), _c(180, 60, 50), _c(130, 40, 35), _c(230, 190, 80), crest=(240, 200, 90))
+
+
+def asherah_pole():
+    """아세라 목상 (16x24)"""
+    img = canvas(16, 24)
+    rect(img, 6, 6, 9, 23, _c(130, 90, 50))
+    ellipse(img, 7.5, 5, 4, 4, _c(150, 105, 60))
+    put(img, [(6, 5), (9, 5)], _c(240, 80, 40))
+    rect(img, 2, 10, 13, 11, _c(130, 90, 50))
+    return outline(img)
+
+
+def floor_carmel():
+    return _floor(977, (130, 110, 90), 5, [(6, (112, 94, 76, 255), 4), (5, (170, 150, 126, 255), 2), (4, (230, 110, 60, 255), 1)])
+
+
+# ---- 98 치유의 대천사 라파엘
+def raphael():
+    """라파엘 (44x50): 초록빛 옷, 순례자의 지팡이"""
+    img = _angel(44, 50, (230, 200, 170), (110, 180, 120), (70, 130, 80), (200, 160, 100), (230, 245, 230), weapon=(170, 130, 80))
+    return outline(img, (30, 50, 30, 255))
+
+
+def healing_spring():
+    """치유의 샘 (34x20)"""
+    img = canvas(34, 20)
+    ellipse(img, 16.5, 10, 16, 9, _c(150, 145, 140))
+    ellipse(img, 16.5, 10, 13, 7, _c(120, 200, 230))
+    for x, y in ((10, 8), (20, 11), (15, 6)):
+        put(img, [(x, y)], _c(230, 250, 255))
+    return outline(img)
+
+
+def cover_stone():
+    """샘을 덮는 넓적한 돌 (16x12)"""
+    img = canvas(16, 12)
+    ellipse(img, 7.5, 6, 7.5, 5, _c(140, 135, 128))
+    ellipse(img, 5.5, 4.5, 3, 2, _c(175, 170, 162))
+    return outline(img)
+
+
+def tobias_fish():
+    """토비아의 물고기 (16x8)"""
+    img = canvas(16, 8)
+    ellipse(img, 8, 4, 6, 3, _c(140, 170, 190))
+    _poly(img, [(2, 4), (0, 0), (0, 7)], _c(120, 150, 170))
+    put(img, [(12, 3)], _c(30, 30, 40))
+    put(img, [(8, 5)], _c(90, 140, 60))
+    return outline(img)
+
+
+def light_healer():
+    return _wisp(14, 14, (240, 255, 220), (110, 190, 120))
+
+
+def heaven_guard():
+    return _warrior(16, 22, _c(230, 210, 190), _c(220, 230, 220), _c(160, 180, 160), _c(240, 220, 140), crest=(120, 200, 140), weapon=(230, 230, 250))
+
+
+def heaven_stag():
+    return _beast(20, 16, _c(240, 235, 220), _c(190, 180, 160), (120, 200, 255), horns=(230, 200, 120))
+
+
+def floor_healing_sky():
+    return _floor(988, (150, 176, 156), 5, [(6, (130, 156, 136, 255), 4), (5, (190, 214, 196, 255), 2), (3, (200, 240, 255, 255), 1)])
+
+
+# ---- 99 천군의 장 대천사 미카엘
+def michael():
+    """미카엘 (46x52): 은빛 갑옷, 불칼, 빛나는 방패"""
+    img = _angel(46, 52, (230, 200, 170), (210, 215, 230), (150, 155, 175), (230, 190, 90), (245, 245, 255), weapon=(255, 160, 60), shield=(230, 210, 120))
+    return outline(img, (40, 40, 60, 255))
+
+
+def red_dragon():
+    """하늘의 붉은 용 (60x48)"""
+    return _dragon(60, 48, _c(190, 40, 40), _c(130, 20, 25), _c(230, 140, 90), _c(160, 30, 35), _c(110, 15, 20), (255, 230, 80), _c(60, 30, 30), wing_span=1.1, heavy=1)
+
+
+def host_spearman():
+    return _warrior(16, 22, _c(230, 210, 190), _c(220, 220, 235), _c(160, 160, 180), _c(240, 220, 140), crest=(255, 240, 160), weapon=(240, 240, 255))
+
+
+def host_archer():
+    return _warrior(14, 20, _c(230, 210, 190), _c(210, 215, 230), _c(150, 155, 175), _c(240, 220, 140), crest=(160, 200, 255))
+
+
+def dragon_whelp():
+    """붉은 용의 새끼 (22x16)"""
+    img = _beast(22, 16, _c(200, 60, 50), _c(140, 30, 30), (255, 230, 80), horns=(240, 220, 180))
+    _poly(img, [(8, 6), (5, 0), (12, 5)], _c(170, 40, 40))
+    _poly(img, [(12, 6), (14, 0), (16, 5)], _c(150, 30, 35))
+    return img
+
+
+def floor_host_sky():
+    return _floor(999, (156, 150, 170), 5, [(6, (136, 130, 150, 255), 4), (5, (200, 196, 214, 255), 2), (4, (255, 140, 80, 255), 1)])
+
+
+# ---- 100 대천사 가브리엘
+def gabriel():
+    """대천사 가브리엘 (50x58): 여섯 날개, 흰 백합"""
+    img = _angel(50, 58, (235, 210, 185), (245, 245, 250), (200, 200, 215), (240, 210, 140), (250, 250, 255), wings=6, halo=(255, 240, 160))
+    rect(img, 9, 34, 9, 46, _c(80, 150, 70))
+    ellipse(img, 9, 33, 3, 2.5, _c(255, 255, 250))
+    put(img, [(9, 33)], _c(250, 220, 90))
+    return outline(img, (60, 55, 30, 255))
+
+
+def gabriel_wing():
+    """가브리엘의 날개 하나 (20x14)"""
+    img = canvas(20, 14)
+    _poly(img, [(1, 12), (18, 1), (19, 5), (6, 13)], _c(250, 250, 255))
+    for i in range(4):
+        _line(img, (4 + i * 3, 12 - i * 2), (8 + i * 3, 13 - i * 2), _c(215, 215, 230))
+    return outline(img, (90, 90, 110, 255))
+
+
+def lily():
+    """백합 (12x18)"""
+    img = canvas(12, 18)
+    rect(img, 5, 7, 6, 17, _c(80, 150, 70))
+    _poly(img, [(6, 8), (1, 13), (5, 12)], _c(90, 160, 80))
+    for dx in (-3, 0, 3):
+        ellipse(img, 5.5 + dx, 4, 2, 3, _c(255, 255, 250))
+    put(img, [(5, 4), (6, 4)], _c(250, 210, 80))
+    return outline(img, (90, 110, 80, 255))
+
+
+def withered_lily():
+    """시든 백합 (12x18)"""
+    img = canvas(12, 18)
+    _line(img, (5, 17), (7, 9), _c(110, 100, 60))
+    _poly(img, [(7, 9), (11, 11), (8, 13)], _c(170, 150, 110))
+    return outline(img, (70, 60, 40, 255))
+
+
+def lily_spirit():
+    return _wisp(14, 14, (255, 255, 250), (220, 210, 120))
+
+
+def revelation_angel():
+    return _warrior(16, 22, _c(230, 210, 190), _c(245, 245, 250), _c(200, 200, 215), _c(250, 230, 150), crest=(255, 250, 200), weapon=(255, 240, 180))
+
+
+def seraph():
+    """스랍 (18x16): 불타는 여섯 날개"""
+    img = canvas(18, 16)
+    for k, y in enumerate((2, 6, 10)):
+        _poly(img, [(8, 8), (0, y), (2, y + 3)], _c(255, 160 - k * 30, 60))
+        _poly(img, [(9, 8), (17, y), (15, y + 3)], _c(255, 160 - k * 30, 60))
+    ellipse(img, 8.5, 8, 3, 3, _c(255, 230, 150))
+    return outline(img)
+
+
+def floor_gabriel_garden():
+    return _floor(1000, (190, 186, 170), 5, [(6, (170, 166, 150, 255), 4), (5, (226, 222, 206, 255), 2), (3, (255, 250, 230, 255), 1)])
+
+
+def save_late21_sprites():
+    for name, painter in (("cherubim", cherubim), ("eden_guard", eden_guard), ("tree_spirit", tree_spirit), ("eden_serpent", eden_serpent),
+                          ("ophanim_throne", ophanim_throne), ("ophanim_wheel", ophanim_wheel), ("eye_spirit", eye_spirit), ("fire_wheel", fire_wheel),
+                          ("throne_guard", throne_guard), ("gold_statue", gold_statue), ("clay_foot", clay_foot), ("cut_stone", cut_stone),
+                          ("babylon_spearman", babylon_spearman), ("chaldean_astrologer", chaldean_astrologer), ("furnace_spirit", furnace_spirit),
+                          ("goliath", goliath), ("shieldbearer", shieldbearer), ("sling_stone", sling_stone), ("philistine_spearman", philistine_spearman),
+                          ("philistine_slinger", philistine_slinger), ("gath_giant", gath_giant), ("jericho_captain", jericho_captain),
+                          ("jericho_archer", jericho_archer), ("jericho_shieldman", jericho_shieldman), ("wall_hound", wall_hound),
+                          ("nephilim_king", nephilim_king), ("flood_giant", flood_giant), ("flood_spirit", flood_spirit), ("deep_fish", deep_fish),
+                          ("ark_plank", ark_plank), ("baal_prophet", baal_prophet), ("baal_altar", baal_altar), ("elijah_altar", elijah_altar),
+                          ("water_jar", water_jar), ("baal_priest", baal_priest), ("baal_dancer", baal_dancer), ("asherah_pole", asherah_pole),
+                          ("raphael", raphael), ("healing_spring", healing_spring), ("cover_stone", cover_stone), ("tobias_fish", tobias_fish),
+                          ("light_healer", light_healer), ("heaven_guard", heaven_guard), ("heaven_stag", heaven_stag), ("michael", michael),
+                          ("red_dragon", red_dragon), ("host_spearman", host_spearman), ("host_archer", host_archer), ("dragon_whelp", dragon_whelp),
+                          ("gabriel", gabriel), ("gabriel_wing", gabriel_wing), ("lily", lily), ("withered_lily", withered_lily),
+                          ("lily_spirit", lily_spirit), ("revelation_angel", revelation_angel), ("seraph", seraph)):
+        save(painter(), "characters", f"{name}.png")
+    for name, painter in (("floor_eden_gate", floor_eden_gate), ("floor_wheel_sky", floor_wheel_sky), ("floor_babylon", floor_babylon),
+                          ("floor_elah_valley", floor_elah_valley), ("floor_jericho", floor_jericho), ("floor_flood", floor_flood),
+                          ("floor_carmel", floor_carmel), ("floor_healing_sky", floor_healing_sky), ("floor_host_sky", floor_host_sky),
+                          ("floor_gabriel_garden", floor_gabriel_garden)):
+        save(painter(), "tiles", f"{name}.png")
+
+
 def main():
     save(from_map(PLAYER), "characters", "player.png")
     save(from_map(SLIME), "characters", "slime.png")
@@ -7734,6 +8235,7 @@ def main():
     save_late18_sprites()
     save_late19_sprites()
     save_late20_sprites()
+    save_late21_sprites()
 
     save(bar_under(), "ui", "bar_under.png")
     save(bar((200, 50, 70)), "ui", "bar_hp.png")

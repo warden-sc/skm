@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/stage_data.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/tiles/floor_gabriel_garden.png" id="2_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/boss_gabriel.tscn" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/lily_spirit.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/revelation_angel.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/seraph.tscn" id="6_res"]
+
+[resource]
+script = ExtResource("1_res")
+stage_name = "백합의 정원"
+floor_texture = ExtResource("2_res")
+wall_tint = Color(0.8, 0.78, 0.7, 1)
+ambient_color = Color(1.0, 1.0, 0.94, 1)
+boss_intro_text = "백합이 가득한 하늘 정원 — 하늘이 열리고, 빛기둥 속으로 누군가 내려오려 한다…"
+enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
+enemy_weights = Array[float]([1.0, 1.0, 0.9])
+boss_scene = ExtResource("3_res")
+kill_target = 46
+spawn_interval = 1.6
+max_alive = 8

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/stage_data.gd" id="1_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/tiles/floor_babylon.png" id="2_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/boss_gold_statue.tscn" id="3_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/babylon_spearman.tscn" id="4_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/chaldean_astrologer.tscn" id="5_res"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/furnace_spirit.tscn" id="6_res"]
+
+[resource]
+script = ExtResource("1_res")
+stage_name = "두라 평지"
+floor_texture = ExtResource("2_res")
+wall_tint = Color(0.7, 0.58, 0.42, 1)
+ambient_color = Color(1.0, 0.92, 0.74, 1)
+boss_intro_text = "두라 평지에 우뚝 선 금 신상 — 머리는 금, 가슴은 은, 배는 놋, 다리는 철, 발은 진흙…"
+enemy_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
+enemy_weights = Array[float]([1.0, 1.0, 0.9])
+boss_scene = ExtResource("3_res")
+kill_target = 44
+spawn_interval = 1.6
+max_alive = 8
