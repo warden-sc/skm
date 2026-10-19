@@ -251,7 +251,7 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 				_check(seen11["aoe"] and seen11["shot"], "키메라 패턴: 덮치기 · 화염 숨결 · 독액 · 포효")
 				var power_before := chimera.power
 				var contact_before := chimera.contact_damage
-				chimera.tail.take_damage(999999)
+				chimera.tail.take_damage(999999999)
 				await _frames(3)
 				_check(chimera.is_tail_cut() and is_equal_approx(chimera.power, power_before * 0.5) and chimera.contact_damage == roundi(contact_before * 0.5), "[기믹] 꼬리를 자르면 본체 공격력 50%% (%.2f → %.2f)" % [power_before, chimera.power])
 				_check(chimera.get_status_text().contains("50%"), "꼬리 절단 상태 표시 (%s)" % chimera.get_status_text())
@@ -311,7 +311,7 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 				kraken.take_damage(1000, Vector2.ZERO, false, 9999)
 				_check(hp_g - kraken.hp <= 301, "촉수가 남아 있으면 본체 피해 -70%% (%d)" % (hp_g - kraken.hp))
 				for t in kraken.get_tentacles():
-					t.take_damage(999999)
+					t.take_damage(999999999)
 				await _frames(3)
 				_check(not kraken.is_guarded() and kraken.get_status_text().contains("드러남"), "촉수를 모두 베면 본체가 드러남 (%s)" % kraken.get_status_text())
 				hp_g = kraken.hp
@@ -399,7 +399,7 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 				_gm.report_player_attacked(ItemDB.get_weapon(&"rusty_sword"), Vector2.DOWN)
 				await _survive(30)
 				_check(doppel.get_mimic_count() == mimics_before, "2페이즈에서는 따라하기 대신 분신")
-				doppel.mirror.take_damage(999999)
+				doppel.mirror.take_damage(999999999)
 				await _frames(3)
 				_check(doppel.is_mirror_broken() and doppel.get_clones().is_empty(), "거울을 부수면 분신이 모두 사라짐")
 				doppel.summon_clones()
@@ -447,7 +447,7 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 					griffin.take_off()
 				await _survive(20)
 				for w in griffin.get_wings():
-					w.take_damage(999999)
+					w.take_damage(999999999)
 				await _frames(3)
 				_check(griffin.is_groggy() and not griffin.is_flying() and griffin.get_groggy_count() == 1 and griffin.get_status_text().contains("그로기"), "[기믹] 양쪽 날개를 부수면 땅에 처박히며 그로기 (%s)" % griffin.get_status_text())
 				var gx := griffin.global_position
@@ -658,7 +658,7 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 					await _survive(30)
 				_check(not temos.is_overheated() and temos.heat < 40.0, "냉각수 기계가 살아 있으면 스킬을 써도 열이 쌓이지 않음 (열 %.0f)" % temos.heat)
 				for m in temos.get_machines():
-					m.take_damage(999999)
+					m.take_damage(999999999)
 				await _frames(3)
 				_check(temos.get_machines().is_empty() and is_equal_approx(temos.get_cooling_rate(), temos.base_cooling), "냉각수 기계를 부수면 열이 거의 식지 않음")
 				var casts := 0
@@ -819,7 +819,7 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 					player.global_position = spot24)
 				_check(basil.get_petrify_count() == 1 and player.is_charmed() and _gm.player_status.contains("석화"), "석화의 눈에 맞으면 석화 (조작 불가)")
 				basil.set_physics_process(true)
-				basil.gland.take_damage(999999)
+				basil.gland.take_damage(999999999)
 				await _frames(3)
 				_check(basil.is_gland_broken() and fog != null and is_instance_valid(fog) and fog.is_receding(), "[기믹] 독샘을 부수면 독안개가 걷힘")
 				var b1 := basil.get_breath_count()
@@ -998,7 +998,7 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 				_gm.hp = _gm.max_hp
 				var hp_burst := worm.hp
 				if worm.get_wall() != null:
-					worm.get_wall().take_damage(999999)
+					worm.get_wall().take_damage(999999999)
 				await _frames(3)
 				_check(not worm.is_player_inside() and worm.get_escape_count() == 1 and not player.is_rooted() and worm.hp < hp_burst and worm.is_stunned(), "위벽을 부수면 탈출 + 웜이 속이 터져 큰 피해·기절")
 				worm._stun_left = 0.0
@@ -1074,14 +1074,14 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 				var hp_r := gaia.hp
 				await _survive(90)
 				_check(gaia.hp > hp_r, "물의 가호: 체력 재생 (+%d)" % (gaia.hp - hp_r))
-				gaia.get_core(BossGaia.Element.EARTH).take_damage(999999)
+				gaia.get_core(BossGaia.Element.EARTH).take_damage(999999999)
 				await _frames(3)
 				_check(not gaia.has_blessing(BossGaia.Element.EARTH) and gaia.defense == gaia._base_defense, "대지의 핵을 부수면 방어력 가호가 사라짐")
-				gaia.get_core(BossGaia.Element.FIRE).take_damage(999999)
-				gaia.get_core(BossGaia.Element.WIND).take_damage(999999)
+				gaia.get_core(BossGaia.Element.FIRE).take_damage(999999999)
+				gaia.get_core(BossGaia.Element.WIND).take_damage(999999999)
 				await _frames(3)
 				_check(gaia.burn_damage == 0 and is_equal_approx(gaia.move_speed, gaia._base_speed) and not gaia.is_earth_breath(), "불·바람의 핵을 부수면 화상·이속 가호도 사라짐")
-				gaia.get_core(BossGaia.Element.WATER).take_damage(999999)
+				gaia.get_core(BossGaia.Element.WATER).take_damage(999999999)
 				await _frames(3)
 				_check(gaia.get_cores().is_empty() and gaia.is_earth_breath(), "[기믹] 핵이 모두 부서지면 「대지의 숨결」 시작")
 				gaia.set_physics_process(false)
@@ -1108,7 +1108,7 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 				await _frames(3)
 				var hp_s2 := gaia.hp
 				if gaia.get_seed() != null:
-					gaia.get_seed().take_damage(999999)
+					gaia.get_seed().take_damage(999999999)
 				gaia._seed_left = 0.01
 				await _survive(3)
 				_check(not gaia.did_seed_heal() and gaia.hp <= hp_s2 + 50, "씨앗을 부수면 회복하지 못함")
@@ -1232,7 +1232,7 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 				var crystals := coq.get_crystals()
 				_check(coq.is_charging_zero() and crystals.size() == 3, "[기믹] 절대영도 충전 + 서리 결정 3개")
 				for c in crystals:
-					c.take_damage(999999)
+					c.take_damage(999999999)
 				await _frames(3)
 				_check(not coq.is_charging_zero() and coq.get_zero_cancels() == 1 and coq.is_stunned() and coq.get_zero_hits() == 0, "결정을 모두 부수면 절대영도 취소 + 코퀴로스가 휘청임")
 				coq._stun_left = 0.0
@@ -1285,7 +1285,7 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 			35:
 				var heli := boss as BossHelicion
 				await _survive(5)
-				heli.take_damage(999999, Vector2.ZERO, false, 999999)
+				heli.take_damage(999999999, Vector2.ZERO, false, 999999)
 				await _frames(3)
 				_check(heli.is_fallen() and not heli.is_dead() and heli.hp == 0 and heli.get_soul() != null, "[기믹] 불사: 체력이 0 이 되어도 뼈더미로 무너지고 영혼이 빠져나옴")
 				heli.take_damage(5000, Vector2.ZERO, false, 999999)
@@ -1395,7 +1395,7 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 					player.global_position = near)
 				_check(asta.get_fanatic_count() == 1 and player.is_charmed() and _gm.player_status.contains("광신") and asta.faith < 1.0, "신앙이 가득 차면 「광신화」: 조작 불가 (신앙은 0 으로)")
 				var spot37 := statues[1].global_position
-				statues[1].take_damage(999999)
+				statues[1].take_damage(999999999)
 				await _frames(3)
 				var curse := false
 				for zone in get_tree().get_nodes_in_group(&"hostile_zones"):
@@ -3805,7 +3805,7 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 		if n == 35:
 			await _test_hidden_dungeon(main, boss as BossHelicion)
 		elif n < 100:
-			boss.take_damage(999999, Vector2.ZERO, false, 9999)
+			boss.take_damage(999999999, Vector2.ZERO, false, 9999999)
 			await _frames(4)
 			_check(not _gm.is_game_cleared and next_portal.enabled, "%d스테이지 보스 토벌 → 다음 스테이지 텔레포트" % n)
 	return final_boss
@@ -3821,10 +3821,10 @@ func _test_hidden_dungeon(main: Node2D, heli_end: BossHelicion) -> void:
 	stage.ending_delay = 600.0
 	_check(_gm.has_all_dragon_scales() and stage.is_hidden_gate_ready(), "고대 용의 비늘 6개를 모두 모음")
 	if heli_end != null:
-		heli_end.take_damage(999999, Vector2.ZERO, false, 999999)
+		heli_end.take_damage(999999999, Vector2.ZERO, false, 999999)
 		await _frames(3)
 		if heli_end.get_soul() != null:
-			heli_end.get_soul().take_damage(999999)
+			heli_end.get_soul().take_damage(999999999)
 		await _frames(4)
 	_check(heli_end != null and heli_end.is_dead(), "영혼을 부수면 헬리시온이 진짜로 쓰러짐")
 	var hidden_portal := stage.get_hidden_portal()
@@ -3886,7 +3886,7 @@ func _test_hidden_dungeon(main: Node2D, heli_end: BossHelicion) -> void:
 				if (c as Projectile).is_active and (c as Projectile).get_team() == ProjectileSpec.Team.ENEMY:
 					seen_h["shot"] = true)
 		_check(seen_h["aoe"] and seen_h["shot"], "아르케 패턴: 원소 공격 · 고대의 고리 · 원소 숨결")
-		arche.take_damage(999999, Vector2.ZERO, false, 999999)
+		arche.take_damage(999999999, Vector2.ZERO, false, 999999)
 		await _frames(4)
 	_check(_gm.hidden_cleared and not stage.is_in_hidden_dungeon() and stage.get_chest() != null and next_portal_end.enabled and next_portal_end.prompt_text.contains("36") and not _gm.is_game_cleared, "아르케 토벌 → 고대 용의 보물상자 + 36스테이지 텔레포트")
 	_check(WindField.active == null and get_tree().get_nodes_in_group(&"storm_fields").is_empty(), "아르케가 쓰러지면 바람·룬·빙판이 정리됨")
@@ -4897,7 +4897,7 @@ func _run() -> void:
 		await _survive(4)
 		_check(player.is_slowed() and _gm.player_status.contains("점액"), "점액 바닥을 밟으면 이동 속도 감소 + 상태 표시 (%s)" % _gm.player_status)
 		_check(hud.get_node("StatusLabel").visible, "HUD 에 상태 이상 표시")
-	slime_king.take_damage(999999)
+	slime_king.take_damage(999999999)
 	await _frames(4)
 	_check(stage.get_state() == StageManager.State.CLEARED and next_portal.visible and next_portal.enabled, "보스 토벌 → 다음 스테이지 텔레포트 등장")
 	var chest := stage.get_chest()
@@ -4977,7 +4977,7 @@ func _run() -> void:
 		if player.is_burning():
 			fire_hit["burned"] = true)
 	_check(fire_hit["burned"], "수문장의 화염구에 맞으면 화상")
-	gatekeeper.take_damage(999999)
+	gatekeeper.take_damage(999999999)
 	await _frames(4)
 	stage.get_chest()._interact()
 	await _frames(3)
@@ -5023,7 +5023,7 @@ func _run() -> void:
 	archeon.apply_element_buff(Elements.Type.FIRE)
 	_check(archeon.burn_damage > 0 and archeon.defense == archeon._base_defense, "[기믹] 화염: 작열 — 공격에 화상, 이전 속성 능력은 사라짐")
 	await _survive(240)
-	archeon.take_damage(999999)
+	archeon.take_damage(999999999)
 	await _frames(4)
 	_check(not _gm.is_game_cleared and stage.get_chest() != null and next_portal.enabled, "3스테이지 보스 토벌 → 상자 + 4스테이지 텔레포트 (아직 엔딩 아님)")
 	next_portal.interacted.emit()
@@ -5132,7 +5132,7 @@ func _run() -> void:
 				dryad_seen["thorns"] = true)
 	_check(shouts.has("돌격하라!") and shouts.has("포위하라!") and dryad_seen["roots"] and dryad_seen["thorns"], "자동 패턴: 소환 · 돌격 · 포위 · 가시 · 뿌리 (%s)" % ", ".join(shouts.keys()))
 
-	dryad.take_damage(999999)
+	dryad.take_damage(999999999)
 	await _frames(4)
 	_check(not _gm.is_game_cleared and stage.get_chest() != null and next_portal.enabled, "4스테이지 보스 토벌 → 상자 + 5스테이지 텔레포트 (아직 엔딩 아님)")
 	next_portal.interacted.emit()
@@ -5189,7 +5189,7 @@ func _run() -> void:
 	_check(hp_body - dullahan.hp <= 12, "머리 없는 동안 몸에는 피해가 거의 안 들어감 (-%d)" % (hp_body - dullahan.hp))
 	_check(head != null and head.defense == 0 and head.max_hp < dullahan.max_hp * 0.1, "약점인 머리는 방어력 0 · 체력 %d" % (head.max_hp if head != null else 0))
 	if head != null:
-		head.take_damage(999999)
+		head.take_damage(999999999)
 	await _frames(3)
 	_check(dullahan.is_exposed() and dullahan.defense == 0 and dullahan.get_status_text().contains("약점 노출"), "머리를 쓰러뜨리면 무릎 꿇음 + 약점 노출 (방어력 0)")
 	hp_body = dullahan.hp
@@ -5220,9 +5220,9 @@ func _run() -> void:
 
 	dullahan.take_damage(999999, Vector2.ZERO, false, 9999)
 	if not dullahan.is_dead() and dullahan.get_thrown_head() != null:
-		dullahan.get_thrown_head().take_damage(999999)
+		dullahan.get_thrown_head().take_damage(999999999)
 		await _frames(2)
-		dullahan.take_damage(999999)
+		dullahan.take_damage(999999999)
 	await _frames(4)
 	_check(not _gm.is_game_cleared and stage.get_chest() != null and next_portal.enabled, "5스테이지 보스 토벌 → 상자 + 6스테이지 텔레포트 (아직 엔딩 아님)")
 	var stage_mobs := {
@@ -5405,14 +5405,14 @@ func _run() -> void:
 				var hp_k := king.hp
 				king.take_damage(500, Vector2.ZERO, false, 99)
 				_check(king.is_barrier_up() and king.hp == hp_k, "왕관이 있으면 「왕관의 가호」로 공격을 막음")
-				king.crown.take_damage(999999)
+				king.crown.take_damage(999999999)
 				await _frames(3)
 				_check(king.is_crown_broken() and not king.is_barrier_up(), "왕관을 부수면 가호가 사라짐")
 				hp_k = king.hp
 				king.take_damage(500, Vector2.ZERO, false, 99)
 				king.raise_barrier()
 				_check(king.hp < hp_k and not king.is_barrier_up(), "왕관이 없으면 피해가 들어가고 가호를 다시 못 씀")
-		boss.take_damage(999999, Vector2.ZERO, false, 9999)
+		boss.take_damage(999999999, Vector2.ZERO, false, 9999999)
 		await _frames(4)
 		_check(not _gm.is_game_cleared and next_portal.enabled, "%d스테이지 보스 토벌 → 다음 스테이지 텔레포트" % n)
 
