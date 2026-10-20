@@ -83,7 +83,7 @@ func _get_move_velocity(delta: float) -> Vector2:
 		# 보스방 맨 위(체력 바 · 이름 아래)에 가려지지 않게 옥좌를 조금 아래에 둠
 		global_position = _area().get_center() + Vector2(0, -25)
 		throne = FieldProp.spawn(self, global_position + Vector2(0, -6), throne_texture, Color(1.0, 0.3, 0.15))
-		GameManager.show_notice("무저갱의 옥좌 위에서, 마왕 아바돈이 천천히 눈을 뜬다…", Color(1.0, 0.4, 0.3))
+		Net.announce("무저갱의 옥좌 위에서, 마왕 아바돈이 천천히 눈을 뜬다…", Color(1.0, 0.4, 0.3))
 	if _seated:
 		return Vector2.ZERO
 	return super._get_move_velocity(delta)
@@ -104,7 +104,7 @@ func rise() -> void:
 	_apply_sin()
 	Fx.shockwave(self, get_hit_center(), Color(1.0, 0.3, 0.15), 160.0, 0.7)
 	Fx.burst(self, get_hit_center(), Color(0.4, 0.1, 0.1), 40, 110.0, 0.8, Vector2(0, -40))
-	GameManager.show_notice("아바돈이 옥좌에서 일어난다! 무저갱이 입을 벌린다", Color(1.0, 0.35, 0.25))
+	Net.announce("아바돈이 옥좌에서 일어난다! 무저갱이 입을 벌린다", Color(1.0, 0.35, 0.25))
 
 
 func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool = false, armor_pen: int = 0) -> void:
@@ -122,7 +122,7 @@ func _on_fall(player: Player) -> void:
 	_falls += 1
 	player.take_unblockable_hit(roundi(GameManager.max_hp * fall_ratio), pit.global_position, false)
 	player.global_position = _safe_rim(player.global_position)
-	GameManager.show_notice("무저갱에 떨어졌다! 가장자리로 간신히 기어 나왔다", Color(1.0, 0.4, 0.3))
+	Net.announce("무저갱에 떨어졌다! 가장자리로 간신히 기어 나왔다", Color(1.0, 0.4, 0.3))
 
 
 ## 구덩이 가장자리 밖이면서 보스방 안인 자리 — 벽 쪽으로 튕겨 나가 다시 구덩이로 밀려 들어가지 않게
@@ -170,7 +170,7 @@ func _apply_sin() -> void:
 						c.hide_for(99999.0)
 						GameManager.add_gold(30))
 					coins.append(coin)
-	GameManager.show_notice("아바돈이 「%s」의 힘을 빌린다" % SIN_NAMES[current_sin], Color(1.0, 0.5, 0.4))
+	Net.announce("아바돈이 「%s」의 힘을 빌린다" % SIN_NAMES[current_sin], Color(1.0, 0.5, 0.4))
 	_update_status()
 
 
@@ -220,7 +220,7 @@ func _update_status() -> void:
 func _on_phase_two() -> void:
 	_ground_left = 2.0
 	veil = FogVeil.spawn(self, _area())
-	GameManager.show_notice("「나는 아폴리온, 파괴하는 자」 — 아바돈이 날개를 펴고, 무저갱의 연기가 방을 뒤덮는다", Color(1.0, 0.3, 0.25))
+	Net.announce("「나는 아폴리온, 파괴하는 자」 — 아바돈이 날개를 펴고, 무저갱의 연기가 방을 뒤덮는다", Color(1.0, 0.3, 0.25))
 	_update_status()
 
 

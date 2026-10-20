@@ -114,8 +114,12 @@ func _physics_process(delta: float) -> void:
 
 
 func _affect_player() -> void:
-	var player := get_tree().get_first_node_in_group(&"player") as Player
-	if player == null or player.is_dashing() or player.global_position.distance_to(global_position) > radius:
+	for player in Player.get_all(get_tree()):
+		_affect_one(player)
+
+
+func _affect_one(player: Player) -> void:
+	if player.is_dashing() or player.global_position.distance_to(global_position) > radius:
 		return
 	if player_slow < 1.0:
 		player.apply_slow(player_slow, 0.25)
@@ -132,7 +136,7 @@ func _tick() -> void:
 		if enemy.get_hit_center().distance_to(global_position) > radius or enemy.airborne:
 			continue
 		if tick_damage > 0:
-			enemy.take_damage(tick_damage, Vector2.ZERO, false, armor_pen)
+			Enemy.hit(enemy, tick_damage, Vector2.ZERO, false, armor_pen)
 		if slow_duration > 0.0 and not enemy.is_dead():
 			enemy.apply_slow(0.45, slow_duration)
 

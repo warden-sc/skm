@@ -178,4 +178,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("레비아탄이 폭풍을 부른다! 상단·하단 공격이 더 빨라진다", Color(0.75, 0.9, 1.0))
+	Net.announce("레비아탄이 폭풍을 부른다! 상단·하단 공격이 더 빨라진다", Color(0.75, 0.9, 1.0))

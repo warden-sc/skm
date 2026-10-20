@@ -146,9 +146,9 @@ func _on_machine_broken(_enemy: Enemy) -> void:
 	if is_dead():
 		return
 	if _machines.is_empty():
-		GameManager.show_notice("냉각수 기계를 모두 부쉈다! 이제 테모스의 열이 거의 식지 않는다", Color(1.0, 0.6, 0.3))
+		Net.announce("냉각수 기계를 모두 부쉈다! 이제 테모스의 열이 거의 식지 않는다", Color(1.0, 0.6, 0.3))
 	else:
-		GameManager.show_notice("냉각수 기계 파괴! (남은 기계 %d대) 테모스가 점점 뜨거워진다" % _machines.size(), Color(1.0, 0.75, 0.4))
+		Net.announce("냉각수 기계 파괴! (남은 기계 %d대) 테모스가 점점 뜨거워진다" % _machines.size(), Color(1.0, 0.75, 0.4))
 
 
 ## 스킬을 쓸 때마다 열이 오름 → 100 이면 과열
@@ -171,7 +171,7 @@ func _overheat() -> void:
 	base_tint = Color(1.5, 0.7, 0.55)
 	_steam.emitting = true
 	set_status("과열! 공격 불가 · 방어력 -50%", Color(1.0, 0.45, 0.3))
-	GameManager.show_notice("테모스 과열! 열이 식을 때까지 공격하지 못하고 방어력이 절반으로", Color(1.0, 0.5, 0.35))
+	Net.announce("테모스 과열! 열이 식을 때까지 공격하지 못하고 방어력이 절반으로", Color(1.0, 0.5, 0.35))
 	Fx.explosion(self, get_hit_center(), Color(1.0, 0.5, 0.2), 40.0, 2, Vector2(0, -80))
 
 
@@ -182,7 +182,7 @@ func _cool_down() -> void:
 	base_tint = Color.WHITE
 	_steam.emitting = false
 	set_status("", Color.WHITE)
-	GameManager.show_notice("테모스의 열이 정상으로 돌아왔다", Color(0.7, 0.85, 1.0))
+	Net.announce("테모스의 열이 정상으로 돌아왔다", Color(0.7, 0.85, 1.0))
 
 
 ## 과열 중에는 스킬을 쓸 수 없음
@@ -246,5 +246,5 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("테모스: 계산 완료. 출력 최대. — 스킬이 더 잦아진다", Color(1.0, 0.75, 0.4))
+	Net.announce("테모스: 계산 완료. 출력 최대. — 스킬이 더 잦아진다", Color(1.0, 0.75, 0.4))
 	chase_time *= 0.75

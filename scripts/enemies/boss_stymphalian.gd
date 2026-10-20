@@ -122,7 +122,7 @@ func land() -> void:
 	if was_flying:
 		super.stun(2.5)
 		Fx.burst(self, global_position, Color(0.8, 0.6, 0.3), 20, 70.0, 0.5)
-		GameManager.show_notice("징 소리에 놀란 괴조가 땅으로 떨어졌다! 지금이 기회", Color(1.0, 0.85, 0.5))
+		Net.announce("징 소리에 놀란 괴조가 땅으로 떨어졌다! 지금이 기회", Color(1.0, 0.85, 0.5))
 
 
 func take_off() -> void:
@@ -174,4 +174,4 @@ func _update_visual(delta: float, move: Vector2) -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("괴조가 날카롭게 운다! 청동 깃털이 더 쏟아진다", Color(1.0, 0.75, 0.4))
+	Net.announce("괴조가 날카롭게 운다! 청동 깃털이 더 쏟아진다", Color(1.0, 0.75, 0.4))

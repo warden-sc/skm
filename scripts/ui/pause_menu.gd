@@ -18,6 +18,7 @@ var _save_button: Button
 var _status: Label
 var _shake_check: CheckButton
 var _fullscreen_check: CheckButton
+var _story_check: CheckButton
 var _speed_button: Button
 var _confirm_title: bool = false
 var _title_button: Button
@@ -39,7 +40,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		else:
 			close()
 		get_viewport().set_input_as_handled()
-	elif not get_tree().paused:
+	elif not get_tree().paused and not Net.ui_blocks_input():
 		open()
 		get_viewport().set_input_as_handled()
 
@@ -51,7 +52,7 @@ func open() -> void:
 	_refresh_save_button()
 	_show_main()
 	show()
-	get_tree().paused = true
+	Net.pause_tree(get_tree(), true)
 	(_main_box.get_child(1) as Button).grab_focus()
 
 
@@ -59,7 +60,7 @@ func close() -> void:
 	if not visible:
 		return
 	hide()
-	get_tree().paused = false
+	Net.pause_tree(get_tree(), false)
 
 
 func is_open() -> bool:
@@ -90,6 +91,7 @@ func show_settings() -> void:
 func go_to_title() -> void:
 	hide()
 	get_tree().paused = false
+	Net.leave()  # 멀티플레이면 방에서 나감
 	GameManager.tutorial_mode = false
 	GameManager.reset_game()
 	get_tree().change_scene_to_file(TITLE_SCENE)
@@ -146,6 +148,11 @@ func _build() -> void:
 	_fullscreen_check.text = "전체 화면"
 	_fullscreen_check.toggled.connect(func(on: bool) -> void: Profile.set_setting("fullscreen", on))
 	_settings_box.add_child(_fullscreen_check)
+	_story_check = CheckButton.new()
+	_story_check.text = "스토리 대사"
+	_story_check.tooltip_text = "끄면 스테이지 · 보스 · 상인 대사가 나오지 않음"
+	_story_check.toggled.connect(func(on: bool) -> void: Profile.set_setting("story", on))
+	_settings_box.add_child(_story_check)
 	_speed_button = _add_button(_settings_box, "", cycle_text_speed)
 	_add_button(_settings_box, "← 돌아가기", _show_main)
 	_settings_box.hide()
@@ -165,6 +172,7 @@ func cycle_text_speed() -> void:
 func _sync_settings() -> void:
 	_shake_check.set_pressed_no_signal(bool(Profile.get_setting("screen_shake")))
 	_fullscreen_check.set_pressed_no_signal(bool(Profile.get_setting("fullscreen")))
+	_story_check.set_pressed_no_signal(bool(Profile.get_setting("story")))
 	var speed := float(Profile.get_setting("text_speed"))
 	var speed_name := "보통"
 	for i in TEXT_SPEEDS.size():
@@ -188,7 +196,7 @@ func _refresh_save_button() -> void:
 			close()
 			tutorial_skip_requested.emit())
 	else:
-		_save_button.text = "저장하기"
+		_save_button.text = "저장하기" if not Net.is_online() else "저장하기 (멀티플레이는 저장 불가)"
 		_save_button.disabled = not GameManager.can_save()
 		_save_button.pressed.connect(save_now)
 

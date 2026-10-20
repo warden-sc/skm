@@ -178,7 +178,7 @@ func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool =
 	super.take_damage(amount, knockback, is_crit, armor_pen)
 	if not _phase_two and not is_dead() and float(hp) <= max_hp * 0.5:
 		_phase_two = true
-		GameManager.show_notice("원소 융합 — 아르케온의 핵이 폭주한다!", Color(0.8, 0.6, 1.0))
+		Net.announce("원소 융합 — 아르케온의 핵이 폭주한다!", Color(0.8, 0.6, 1.0))
 		for element in CYCLE:
 			Fx.explosion(self, get_hit_center(), Elements.color_of(element), 50.0 + 15.0 * CYCLE.find(element), 3)
 		if _player != null:

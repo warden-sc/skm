@@ -61,7 +61,7 @@ func mark_player() -> void:
 	_marks += 1
 	_mark_left = mark_time
 	FloatingText.spawn(_player, _player.global_position + Vector2(0, -28), "짐승의 표!", Color(1.0, 0.3, 0.3), true)
-	GameManager.show_notice("짐승의 표가 찍혔다! 정화의 샘에서 씻기 전엔 공격이 통하지 않는다", Color(1.0, 0.4, 0.4))
+	Net.announce("짐승의 표가 찍혔다! 정화의 샘에서 씻기 전엔 공격이 통하지 않는다", Color(1.0, 0.4, 0.4))
 
 
 func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool = false, armor_pen: int = 0) -> void:
@@ -119,4 +119,4 @@ func _run_pattern(pattern: int) -> float:
 
 func _on_phase_two() -> void:
 	pattern_order = [Pattern.MARK, Pattern.FIRE_SIGN, Pattern.MARK, Pattern.DECEIT, Pattern.SUMMON]
-	GameManager.show_notice("거짓 예언자: 모두 표를 받으라! 표를 더 자주 찍는다", Color(1.0, 0.45, 0.45))
+	Net.announce("거짓 예언자: 모두 표를 받으라! 표를 더 자주 찍는다", Color(1.0, 0.45, 0.45))

@@ -87,7 +87,7 @@ func exile_goat() -> void:
 	goat.queue_free()
 	goat = null
 	_goat_left = goat_return * (0.7 if phase_two else 1.0)
-	GameManager.show_notice("속죄양이 광야로 떠났다! 짊어진 죄 %d 가 아자젤에게 돌아간다" % sins, Color(1.0, 0.85, 0.5))
+	Net.announce("속죄양이 광야로 떠났다! 짊어진 죄 %d 가 아자젤에게 돌아간다" % sins, Color(1.0, 0.85, 0.5))
 	super.take_damage(sins, Vector2.ZERO, true, 999999)
 	if not is_dead():
 		super.stun(6.0)
@@ -147,4 +147,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("아자젤: 광야는 나의 것이다! 염소가 더 빨리 돌아온다", Color(1.0, 0.75, 0.5))
+	Net.announce("아자젤: 광야는 나의 것이다! 염소가 더 빨리 돌아온다", Color(1.0, 0.75, 0.5))

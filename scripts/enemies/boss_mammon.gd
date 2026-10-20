@@ -79,7 +79,7 @@ func scatter_piles(spots: Array = []) -> void:
 			pile.follow_player = false
 			pile.picked_up.connect(_on_pile_taken)
 			piles.append(pile)
-	GameManager.show_notice("금화 더미가 쏟아졌다! 마몬보다 먼저 주워라", Color(1.0, 0.85, 0.35))
+	Net.announce("금화 더미가 쏟아졌다! 마몬보다 먼저 주워라", Color(1.0, 0.85, 0.35))
 
 
 func _on_pile_taken(pile: CarryItem) -> void:
@@ -157,4 +157,4 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("마몬: 더! 더 많은 금화를! 금화 더미가 더 자주 쏟아진다", Color(1.0, 0.85, 0.35))
+	Net.announce("마몬: 더! 더 많은 금화를! 금화 더미가 더 자주 쏟아진다", Color(1.0, 0.85, 0.35))

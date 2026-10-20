@@ -114,13 +114,13 @@ func veil() -> void:
 	if n == 0:
 		_failed_veils += 1
 		super.stun(10.0)
-		GameManager.show_notice("빛의 제단이 없어 아폴론의 안개가 모이지 않는다! 헥토르가 휘청인다", Color(1.0, 0.85, 0.5))
+		Net.announce("빛의 제단이 없어 아폴론의 안개가 모이지 않는다! 헥토르가 휘청인다", Color(1.0, 0.85, 0.5))
 		return
 	_veil_left = veil_time
 	airborne = true  # 안개 속: 몸통 접촉 피해 없음
 	sprite.modulate.a = 0.15
 	Fx.burst(self, get_hit_center(), Color(1.0, 0.95, 0.8), 30, 60.0, 0.8, Vector2(0, -30))
-	GameManager.show_notice("아폴론의 안개가 헥토르를 감싼다! 빛의 제단을 부숴야 막을 수 있다", Color(1.0, 0.95, 0.75))
+	Net.announce("아폴론의 안개가 헥토르를 감싼다! 빛의 제단을 부숴야 막을 수 있다", Color(1.0, 0.95, 0.75))
 	_update_status()
 
 
@@ -194,4 +194,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("헥토르: 트로이의 성벽이여, 나를 지켜라! 성벽 궁수가 늘어난다", Color(1.0, 0.7, 0.5))
+	Net.announce("헥토르: 트로이의 성벽이여, 나를 지켜라! 성벽 궁수가 늘어난다", Color(1.0, 0.7, 0.5))

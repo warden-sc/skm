@@ -67,7 +67,7 @@ func _physics_process(delta: float) -> void:
 		if _rest_left <= 0.0:
 			base_tint = Color.WHITE
 			set_status("과업: %s" % LABOR_NAMES[labor], Color(1.0, 0.85, 0.5))
-			GameManager.show_notice("헤라클레스가 다시 사자 가죽을 두른다 — 과업 「%s」" % LABOR_NAMES[labor], Color(1.0, 0.85, 0.5))
+			Net.announce("헤라클레스가 다시 사자 가죽을 두른다 — 과업 「%s」" % LABOR_NAMES[labor], Color(1.0, 0.85, 0.5))
 	super._physics_process(delta)
 
 
@@ -84,7 +84,7 @@ func begin_rest() -> void:
 	_stun_left = maxf(_stun_left, rest_time)
 	base_tint = Color(1.0, 0.85, 0.75)
 	set_status("숨 고르기 — 가죽을 벗었다! (검도 통함)", Color(1.0, 0.95, 0.7))
-	GameManager.show_notice("과업을 마친 헤라클레스가 숨을 고른다! 사자 가죽을 벗은 지금은 검도 통한다", Color(1.0, 0.95, 0.7))
+	Net.announce("과업을 마친 헤라클레스가 숨을 고른다! 사자 가죽을 벗은 지금은 검도 통한다", Color(1.0, 0.95, 0.7))
 
 
 # ============================================================ 패턴
@@ -145,4 +145,4 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("헤라클레스: 과업은 아직 반이나 남았다!", Color(1.0, 0.85, 0.5))
+	Net.announce("헤라클레스: 과업은 아직 반이나 남았다!", Color(1.0, 0.85, 0.5))

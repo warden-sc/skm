@@ -109,7 +109,7 @@ func _update_hind(delta: float) -> void:
 			_hind_left = hind_interval
 			var at := _area().get_center() + Vector2(randf_range(-200, 200), randf_range(-110, 110))
 			hind = GoldenHind.spawn(self, at, _area())
-			GameManager.show_notice("아르테미스의 황금 사슴이 나타났다! 거인 형제 사이로 몰아라", Color(1.0, 0.9, 0.5))
+			Net.announce("아르테미스의 황금 사슴이 나타났다! 거인 형제 사이로 몰아라", Color(1.0, 0.9, 0.5))
 		return
 	if is_stunned() or partner.is_stunned():
 		return
@@ -145,7 +145,7 @@ func clash() -> void:
 		if not giant.is_dead():
 			giant.stun(7.0)
 		Fx.cross_glint(giant, giant.get_hit_center(), Color(1.0, 0.5, 0.4), 24.0)
-	GameManager.show_notice("황금 사슴을 노린 창이 거인 형제를 서로 꿰뚫었다!", Color(1.0, 0.85, 0.5))
+	Net.announce("황금 사슴을 노린 창이 거인 형제를 서로 꿰뚫었다!", Color(1.0, 0.85, 0.5))
 
 
 func _on_partner_died(_enemy: Enemy) -> void:
@@ -158,7 +158,7 @@ func _enrage() -> void:
 		return
 	_enraged = true
 	power = _base_power * 1.2
-	GameManager.show_notice("형제를 잃은 거인이 분노한다!", Color(1.0, 0.5, 0.4))
+	Net.announce("형제를 잃은 거인이 분노한다!", Color(1.0, 0.5, 0.4))
 
 
 func _run_pattern(pattern: int) -> float:
@@ -199,7 +199,7 @@ func _die() -> void:
 
 func _on_phase_two() -> void:
 	if role == Role.OTUS:
-		GameManager.show_notice("거인 형제: 올림포스 위에 산을 쌓아 주마! 공격이 거세진다", Color(0.9, 0.8, 0.6))
+		Net.announce("거인 형제: 올림포스 위에 산을 쌓아 주마! 공격이 거세진다", Color(0.9, 0.8, 0.6))
 
 
 ## 에피알테스: 머리 위 작은 체력 바 (보스 체력 바는 오토스)

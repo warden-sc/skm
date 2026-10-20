@@ -81,9 +81,11 @@ func _physics_process(delta: float) -> void:
 
 
 func _try_hit() -> void:
-	var player := get_tree().get_first_node_in_group(&"player") as Player
-	if player == null:
-		return
+	for player in Player.get_all(get_tree()):
+		_try_hit_player(player)
+
+
+func _try_hit_player(player: Player) -> void:
 	var dir := Vector2.from_angle(get_angle())
 	var to_player := player.global_position + Vector2(0, -5) - global_position
 	var along := to_player.dot(dir)

@@ -57,6 +57,8 @@ signal notice_requested(text: String, color: Color)
 signal shop_open_requested(shop_name: String, stock_ids: Array)
 ## 신화 사용 아이템을 썼을 때 (Player 가 효과를 냄)
 signal relic_used(relic: RelicData)
+## 인벤토리에서 장비를 버림 → StageManager 가 용사 발밑에 주울 수 있는 장비로 떨어뜨림 (멀티플레이 참가자는 방장에게 보냄)
+signal item_dropped(item: ItemData, by_peer: int, at_global: Vector2)
 
 enum Difficulty { NORMAL, HARD, VERY_HARD }
 enum WeaponSlot { MELEE, BOW, STAFF }
@@ -261,7 +263,7 @@ var tutorial_mode: bool = false
 
 ## 지금 저장할 수 있는지 (살아 있고 · 튜토리얼이 아니고 · 엔딩 전)
 func can_save() -> bool:
-	return not is_player_dead and not tutorial_mode and not is_game_cleared
+	return not is_player_dead and not tutorial_mode and not is_game_cleared and not Net.is_online()
 
 
 static func _ids(list: Array) -> Array:
@@ -365,7 +367,20 @@ func _equip_saved(item_id: String) -> void:
 
 
 func get_difficulty_info() -> Dictionary:
-	return DIFFICULTY_INFO[difficulty]
+	var hp_mult := Net.get_enemy_hp_multiplier()
+	if hp_mult == 1.0:
+		return DIFFICULTY_INFO[difficulty]
+	# 멀티플레이: 같이 하는 사람이 많을수록 몬스터 체력이 늘어남
+	var info: Dictionary = DIFFICULTY_INFO[difficulty].duplicate()
+	info["enemy_hp"] = float(info["enemy_hp"]) * hp_mult
+	return info
+
+
+## 멀티플레이 부활 (동료가 살아 있으면 야영지에서, 전멸하면 다 같이)
+func revive_player() -> void:
+	is_player_dead = false
+	hp = max_hp
+	player_hp_changed.emit(hp, max_hp)
 
 
 func get_difficulty_name() -> String:
@@ -728,6 +743,33 @@ func sell_item(item: ItemData) -> int:
 	add_gold(value)
 	inventory_changed.emit()
 	return value
+
+
+## 버릴 수 있는 장비인지 (포션 · 사용 아이템은 안 됨, 장착 중이면 먼저 해제 — 마지막 무기는 못 버림)
+func can_drop(item: ItemData) -> bool:
+	if item == null or item is PotionData or item is RelicData or not owns_item(item.id):
+		return false
+	if item is WeaponData and is_equipped(item) and _equipped_weapon_count() <= 1:
+		return false
+	return true
+
+
+## 인벤토리에서 장비를 버림. 바닥에 떨어져서 나나 동료가 다시 주울 수 있음
+func drop_item(item: ItemData, at_global: Vector2) -> bool:
+	if not can_drop(item):
+		if item is WeaponData:
+			show_notice("무기를 하나는 장착하고 있어야 합니다.", Color(1.0, 0.6, 0.5))
+		return false
+	if is_equipped(item) and not unequip_item(item):
+		return false
+	items.erase(item)
+	inventory_changed.emit()
+	show_notice("버림: %s — 바닥에서 다시 주울 수 있음" % item.display_name, item.get_rarity_color())
+	if Net.is_client():
+		Net.request_drop(item.id, at_global)
+	else:
+		item_dropped.emit(item, Net.my_id(), at_global)
+	return true
 
 
 # ============================================================ 회복 포션

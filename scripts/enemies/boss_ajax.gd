@@ -89,10 +89,10 @@ func _tear_layer() -> void:
 	if layers <= 0:
 		defense = maxi(_base_defense - bare_defense, 0)
 		super.stun(6.0)
-		GameManager.show_notice("일곱 겹 방패가 모두 찢어졌다! 아이아스가 무방비가 된다", Color(1.0, 0.85, 0.5))
+		Net.announce("일곱 겹 방패가 모두 찢어졌다! 아이아스가 무방비가 된다", Color(1.0, 0.85, 0.5))
 	else:
 		super.stun(1.0)
-		GameManager.show_notice("소가죽 방패 한 겹이 찢어졌다 (남은 겹 %d/7)" % layers, Color(1.0, 0.85, 0.6))
+		Net.announce("소가죽 방패 한 겹이 찢어졌다 (남은 겹 %d/7)" % layers, Color(1.0, 0.85, 0.6))
 	_update_status()
 
 
@@ -150,4 +150,4 @@ func _draw() -> void:
 
 func _on_phase_two() -> void:
 	pattern_order = [Pattern.SPEAR, Pattern.BRACE, Pattern.BOULDER, Pattern.BRACE, Pattern.SPEAR, Pattern.SUMMON]
-	GameManager.show_notice("아이아스: 이 방패를 넘을 수 있을까! 버티기가 잦아진다", Color(0.95, 0.85, 0.65))
+	Net.announce("아이아스: 이 방패를 넘을 수 있을까! 버티기가 잦아진다", Color(0.95, 0.85, 0.65))

@@ -105,12 +105,12 @@ func burn_brand() -> void:
 	if _burned >= brand_count:
 		brand.hide_for(9999.0)
 		super.stun(8.0)
-		GameManager.show_notice("마지막 장작이 다 타 버렸다! 멜레아그로스의 목숨이 꺼져 간다", Color(1.0, 0.6, 0.3))
+		Net.announce("마지막 장작이 다 타 버렸다! 멜레아그로스의 목숨이 꺼져 간다", Color(1.0, 0.6, 0.3))
 	else:
 		brand.hide_for(3.0)
 		brand.home = _area().get_center() + BRAND_SPOTS[_burned % BRAND_SPOTS.size()]
 		super.stun(2.0)
-		GameManager.show_notice("생명의 장작이 타오른다! 멜레아그로스가 약해진다 (%d/%d)" % [_burned, brand_count], Color(1.0, 0.7, 0.4))
+		Net.announce("생명의 장작이 타오른다! 멜레아그로스가 약해진다 (%d/%d)" % [_burned, brand_count], Color(1.0, 0.7, 0.4))
 	_update_status()
 
 
@@ -158,4 +158,4 @@ func _die() -> void:
 
 func _on_phase_two() -> void:
 	chase_time *= 0.75
-	GameManager.show_notice("멜레아그로스: 칼리돈의 사냥은 끝나지 않았다! 공격이 빨라진다", Color(0.9, 0.85, 0.6))
+	Net.announce("멜레아그로스: 칼리돈의 사냥은 끝나지 않았다! 공격이 빨라진다", Color(0.9, 0.85, 0.6))

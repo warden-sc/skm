@@ -110,7 +110,7 @@ func fanaticize() -> void:
 		return
 	_player.set_faith(0.0)
 	_player.apply_charm(faith_charm, self, "광신")
-	GameManager.show_notice("신앙이 넘쳐 광신에 빠졌다! %d초 동안 몸이 아스타로트에게 끌려간다" % roundi(faith_charm), Color(0.9, 0.5, 0.9))
+	Net.announce("신앙이 넘쳐 광신에 빠졌다! %d초 동안 몸이 아스타로트에게 끌려간다" % roundi(faith_charm), Color(0.9, 0.5, 0.9))
 
 
 # ============================================================ 기믹 2: 신상
@@ -139,7 +139,7 @@ func _on_statue_broken(statue: Enemy) -> void:
 	var at := statue.global_position
 	GroundZone.spawn_hostile(self, at, GroundZone.Kind.CURSE, 46.0, 9999.0, 0.6, roundi(curse_burn * power), 2.0)
 	_update_armor()
-	GameManager.show_notice("신상을 부쉈다! 아스타로트가 약해진다 — 부서진 자리엔 저주의 땅이 남는다", Color(0.9, 0.6, 0.9))
+	Net.announce("신상을 부쉈다! 아스타로트가 약해진다 — 부서진 자리엔 저주의 땅이 남는다", Color(0.9, 0.6, 0.9))
 
 
 # ============================================================ 패턴
@@ -183,4 +183,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("아스타로트: 더 기도하라… 신앙이 더 빨리 차오른다", Color(0.9, 0.5, 0.9))
+	Net.announce("아스타로트: 더 기도하라… 신앙이 더 빨리 차오른다", Color(0.9, 0.5, 0.9))

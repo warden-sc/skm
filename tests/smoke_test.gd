@@ -4317,6 +4317,12 @@ func _test_tutorial_and_save() -> void:
 	pause_menu.cycle_text_speed()
 	_check(not is_equal_approx(float(Profile.get_setting("text_speed")), speed0) and pause_menu._speed_button.text.begins_with("대사 속도"), "대사 속도 바꾸기 (%s)" % pause_menu._speed_button.text)
 	Profile.set_setting("text_speed", 1.0)
+	pause_menu._story_check.button_pressed = false
+	Story.enabled = true
+	_check(not bool(Profile.get_setting("story")) and not Story.play("1스테이지 도착", "*") and not Story.is_playing(), "설정에서 「스토리 대사」 끄기 → 대사가 나오지 않음")
+	Story.enabled = false
+	pause_menu._story_check.button_pressed = true
+	_check(bool(Profile.get_setting("story")), "다시 켜기")
 	await _press_action(&"ui_cancel")
 	_check(pause_menu.is_open() and not pause_menu.is_settings_open(), "설정에서 ESC → 일시정지 메뉴로")
 	# 저장할 모험 만들기
@@ -4534,6 +4540,21 @@ func _test_gear(main: Node2D) -> void:
 	var mob_hp := dummy.hp
 	_check(_gm.use_relic(trumpet) and dummy.is_stunned() and mob_hp - dummy.hp >= roundi(dummy.max_hp * trumpet.normal_damage_ratio) and player._invincible_left > 2.0, "최후의 나팔 [X]: 모든 적 기절 · 일반 몬스터 최대 체력의 %d%% · 용사 무적" % roundi(trumpet.normal_damage_ratio * 100.0))
 	dummy.despawn()
+	print("[신화 장비 스테이지 보상]")
+	stage.go_to_stage(20)
+	stage._do_enter_boss_room()
+	await _frames(int(stage.boss_entry_delay * 60) + 20)
+	var boss20 := stage.get_boss()
+	var count_pickups := func() -> int: return main.get_node("Entities").get_children().filter(func(n: Node) -> bool: return n is Pickup).size()
+	var pickups_before: int = count_pickups.call()
+	_check(boss20 != null and stage.is_mythic_reward_stage(), "20스테이지 보스 = 신화 장비 스테이지")
+	if boss20 != null:
+		boss20.take_damage(999999999)
+	await _frames(5)
+	_check(stage.get_chest() == null and stage.next_stage_portal.enabled and _gm.owns_item(&"archmage_staff") and count_pickups.call() == pickups_before,
+		"신화 장비 스테이지: 보상은 신화 장비(대마법사의 지팡이)뿐 — 보물상자 · 골드 · 장비 드랍 없음 · 텔레포트는 열림")
+	stage.go_to_stage(1)
+	await _frames(2)
 	# 원래대로
 	var location: String = _gm.location_name
 	var stage_title: String = _gm.stage_name
@@ -4579,7 +4600,17 @@ func _run() -> void:
 	await get_tree().process_frame
 	_check(title.get_screen() == "menu" and (title.get_node("%HeroLabel") as Label).text.contains("랜슬롯"), "다시 켜면 이름 · 튜토리얼 없이 메뉴 (싱글 / 멀티)")
 	(title.get_node("%MultiButton") as Button).pressed.emit()
-	_check(title.get_screen() == "menu" and (title.get_node("%MenuNote") as Label).text.contains("다음 업데이트") and title.last_scene_request == "", "멀티플레이: 준비 중 안내")
+	_check(title.get_screen() == "multi" and not Net.is_online(), "멀티플레이 → 방 만들기 / IP 로 참가 화면")
+	Net.port = 24600 + randi() % 900
+	_check(title.host_room() and Net.is_host() and Net.players.size() == 1 and title._multi_lobby.visible and title._lobby_start.visible,
+		"방 만들기 → 대기실 (방장 1명 · 난이도 · 시작 버튼, 포트 %d)" % Net.port)
+	title._cycle_lobby_difficulty()
+	_check(Net.difficulty == 1 and title._lobby_difficulty.text.contains("하드"), "방장이 대기실에서 난이도 바꾸기")
+	title.leave_room()
+	_check(not Net.is_online() and title._multi_connect.visible, "방 나가기")
+	Net.difficulty = 0
+	_check(not title.join_room("") and title._multi_status.text.contains("IP"), "IP 를 비우면 안내")
+	title.open_menu()
 	(title.get_node("%SingleButton") as Button).pressed.emit()
 	_check(title.get_screen() == "single" and (title.get_node("%ContinueButton") as Button).disabled, "싱글플레이 → 이어하기(저장 없음 → 비활성) / 새 게임")
 	(title.get_node("%NewGameButton") as Button).pressed.emit()
@@ -5018,6 +5049,20 @@ func _run() -> void:
 	_check(not _gm.unequip_item(iron) and _gm.equipped_weapon == iron, "마지막 무기는 해제 불가")
 	await _press_action(&"inventory")
 	_check(not inventory.is_open() and not get_tree().paused, "다시 I → 닫힘 + 재개")
+
+	print("[장비 버리기]")
+	_check(not _gm.can_drop(iron) and not _gm.drop_item(iron, player.global_position), "마지막 무기는 버릴 수 없음")
+	_check(inventory.drop(bow) and not _gm.owns_item(bow.id), "인벤토리 「버리기」 → 가방에서 빠짐")
+	await _frames(2)
+	var dropped_bow: Pickup = null
+	for node in entities.get_children():
+		if node is Pickup and (node as Pickup).item == bow:
+			dropped_bow = node
+	_check(dropped_bow != null and dropped_bow.dropped_by == 1 and dropped_bow.global_position.distance_to(player.global_position) < 20.0, "버린 장비가 발밑에 떨어짐")
+	await _frames(60)
+	_check(not _gm.owns_item(bow.id) and is_instance_valid(dropped_bow), "버린 사람은 잠깐 다시 줍지 않음 (동료가 주울 시간)")
+	await _frames(150)
+	_check(_gm.owns_item(bow.id), "잠시 뒤에는 다시 주울 수 있음")
 
 	print("[상점 - 구매 / 판매 / 스테이지 잠금 / 갑옷]")
 	_gm.add_gold(20000)

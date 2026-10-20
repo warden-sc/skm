@@ -104,7 +104,7 @@ func _on_loom_broken(_enemy: Enemy) -> void:
 		w.fade(1.5)
 	_stun_left = 3.0
 	set_status("베틀이 부서졌다 — 직조가 멈췄다", Color(0.95, 0.95, 1.0))
-	GameManager.show_notice("베틀을 부쉈다! 거미줄이 걷히고 아라크네가 휘청인다", Color(0.95, 0.95, 1.0))
+	Net.announce("베틀을 부쉈다! 거미줄이 걷히고 아라크네가 휘청인다", Color(0.95, 0.95, 1.0))
 
 
 # ============================================================ 패턴
@@ -139,4 +139,4 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("아라크네: 내 베는 신보다 아름답다! 더 빨리 짠다", Color(0.95, 0.95, 1.0))
+	Net.announce("아라크네: 내 베는 신보다 아름답다! 더 빨리 짠다", Color(0.95, 0.95, 1.0))

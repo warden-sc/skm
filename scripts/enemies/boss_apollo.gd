@@ -114,7 +114,7 @@ func begin_noon() -> void:
 	_noon_warn_left = noon_warn
 	sundial.noon = true
 	set_status("정오가 다가온다 — 기둥 바로 아래로!", Color(1.0, 0.9, 0.4))
-	GameManager.show_notice("태양이 머리 위로 떠오른다! 정오의 빛을 피해 기둥 바로 아래로", Color(1.0, 0.9, 0.4))
+	Net.announce("태양이 머리 위로 떠오른다! 정오의 빛을 피해 기둥 바로 아래로", Color(1.0, 0.9, 0.4))
 
 
 func strike_noon() -> void:
@@ -174,4 +174,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("아폴론: 빛은 숨을 곳을 남기지 않는다! 태양이 더 빨리 돌고 정오가 잦아진다", Color(1.0, 0.9, 0.4))
+	Net.announce("아폴론: 빛은 숨을 곳을 남기지 않는다! 태양이 더 빨리 돌고 정오가 잦아진다", Color(1.0, 0.9, 0.4))

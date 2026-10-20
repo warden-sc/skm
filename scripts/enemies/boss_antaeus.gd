@@ -107,7 +107,7 @@ func lift(pad: UpdraftPad = null) -> void:
 	_bstate = BossState.CHASE
 	_btimer = chase_time
 	set_status("공중에 떴다! 대지의 힘이 끊겼다", Color(0.8, 1.0, 0.95))
-	GameManager.show_notice("안타이오스가 상승 기류에 떠올랐다! 땅의 힘이 끊긴 지금 몰아쳐라", Color(0.8, 1.0, 0.95))
+	Net.announce("안타이오스가 상승 기류에 떠올랐다! 땅의 힘이 끊긴 지금 몰아쳐라", Color(0.8, 1.0, 0.95))
 
 
 func _physics_process(delta: float) -> void:
@@ -171,4 +171,4 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("안타이오스가 대지를 움켜쥔다! 땅의 힘이 더 빨리 쌓인다", Color(0.9, 0.75, 0.45))
+	Net.announce("안타이오스가 대지를 움켜쥔다! 땅의 힘이 더 빨리 쌓인다", Color(0.9, 0.75, 0.45))

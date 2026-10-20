@@ -14,6 +14,7 @@ var texture: Texture2D
 var hit_callback: Callable
 var _warn_left: float = 0.0
 var _hit_player: bool = false
+var _hit_players: Array[Player] = []
 var _sprite: Sprite2D
 
 
@@ -60,10 +61,11 @@ func _physics_process(delta: float) -> void:
 		return
 	global_position = global_position.move_toward(to, speed * delta)
 	_sprite.rotation += delta * 8.0 * signf(to.x - from.x + 0.01)
-	var player := get_tree().get_first_node_in_group(&"player") as Player
-	if player != null and not _hit_player and player.global_position.distance_to(global_position) < radius + 6.0:
-		_hit_player = true
-		player.take_hit(damage, global_position)
+	for player in Player.get_all(get_tree()):
+		if not _hit_players.has(player) and player.global_position.distance_to(global_position) < radius + 6.0:
+			_hit_players.append(player)
+			_hit_player = true
+			player.take_hit(damage, global_position)
 	if hit_callback.is_valid():
 		hit_callback.call(global_position)
 	queue_redraw()

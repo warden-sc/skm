@@ -132,7 +132,7 @@ func _on_shield_down(_s: Enemy) -> void:
 		return
 	shieldbearer = null
 	_shield_left = shield_return
-	GameManager.show_notice("방패 든 자가 쓰러졌다! 지금 이마를 노려라", Color(0.9, 0.95, 1.0))
+	Net.announce("방패 든 자가 쓰러졌다! 지금 이마를 노려라", Color(0.9, 0.95, 1.0))
 	_update_status()
 
 
@@ -167,7 +167,7 @@ func throw_stone(aim: Vector2) -> bool:
 		super.stun(stone_stun)
 		super.take_damage(roundi(max_hp * stone_hit_ratio), Vector2.ZERO, true, 999999)
 		Fx.star_burst(self, head_position(), 26.0)
-		GameManager.show_notice("물맷돌이 골리앗의 이마에 박혔다! 거인이 비틀거린다", Color(0.9, 0.95, 1.0))
+		Net.announce("물맷돌이 골리앗의 이마에 박혔다! 거인이 비틀거린다", Color(0.9, 0.95, 1.0))
 	if _stones_left() == 0:
 		_respawn_left = stone_respawn
 	_update_status()
@@ -200,7 +200,7 @@ func _physics_process(delta: float) -> void:
 			_respawn_left -= delta
 			if _respawn_left <= 0.0:
 				_scatter_stones()
-				GameManager.show_notice("시냇가에 매끄러운 돌이 다시 보인다", Color(0.85, 0.9, 1.0))
+				Net.announce("시냇가에 매끄러운 돌이 다시 보인다", Color(0.85, 0.9, 1.0))
 	super._physics_process(delta)
 
 
@@ -227,7 +227,7 @@ func _run_pattern(pattern: int) -> float:
 				shoot(dir.rotated((i - 2) * 0.16), 190.0, javelin_damage, javelin_texture)
 			return 1.0
 		Pattern.TAUNT:
-			GameManager.show_notice("골리앗: 「너희 중에서 한 사람을 택하여 내게로 내려보내라!」", Color(0.9, 0.8, 0.6))
+			Net.announce("골리앗: 「너희 중에서 한 사람을 택하여 내게로 내려보내라!」", Color(0.9, 0.8, 0.6))
 			if not minion_scenes.is_empty():
 				for i in 2:
 					request_summon(minion_scenes.pick_random(), global_position + Vector2(-60.0 + 120.0 * i, 40.0))

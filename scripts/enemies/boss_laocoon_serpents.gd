@@ -162,7 +162,7 @@ func bind() -> void:
 	_struggles = 0
 	_squeeze_tick = 0.5
 	_player.apply_root(bind_time, "휘감김! 공격을 연타해 빠져나가라")
-	GameManager.show_notice("바다뱀에게 휘감겼다! 공격을 연타해 빠져나가라", Color(0.6, 0.85, 1.0))
+	Net.announce("바다뱀에게 휘감겼다! 공격을 연타해 빠져나가라", Color(0.6, 0.85, 1.0))
 
 
 func _on_player_attacked() -> void:
@@ -232,4 +232,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("두 바다뱀이 몸부림친다! 더 자주 바뀌고, 휘감기가 더 단단해진다", Color(0.6, 0.85, 1.0))
+	Net.announce("두 바다뱀이 몸부림친다! 더 자주 바뀌고, 휘감기가 더 단단해진다", Color(0.6, 0.85, 1.0))

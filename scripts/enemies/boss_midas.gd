@@ -39,7 +39,8 @@ func _ready() -> void:
 	super._ready()
 	_base_defense = defense
 	pattern_order = [Pattern.GOLD_TOUCH, Pattern.COINS, Pattern.SCEPTER, Pattern.GOLD_TOUCH, Pattern.SUMMON]
-	GameManager.player_damaged.connect(_on_player_damaged)
+	if not has_meta(&"net_mirror"):  # 멀티플레이 참가자 화면의 복제본은 반응하지 않음
+		GameManager.player_damaged.connect(_on_player_damaged)
 
 
 func apply_difficulty(info: Dictionary) -> void:
@@ -78,7 +79,7 @@ func add_gild(amount: float) -> void:
 		_freezes += 1
 		gild = 40.0
 		_player.apply_charm(freeze_time, null, "황금화")
-		GameManager.show_notice("온몸이 황금으로 굳었다! 팍톨로스 강에서 씻어 내라", Color(1.0, 0.85, 0.3))
+		Net.announce("온몸이 황금으로 굳었다! 팍톨로스 강에서 씻어 내라", Color(1.0, 0.85, 0.3))
 
 
 ## 미다스의 손(몸통)에 닿아도 황금화
@@ -121,7 +122,7 @@ func confuse() -> void:
 		field.reeds_cooldown = reeds_rest
 	super.stun(6.0)
 	FloatingText.spawn(self, global_position + Vector2(0, -56), "「임금님 귀는 당나귀 귀…」", Color(0.8, 1.0, 0.6), true)
-	GameManager.show_notice("갈대밭의 속삭임에 미다스가 혼란에 빠졌다! (방어력 -%d)" % Balance.scale(confuse_defense), Color(0.8, 1.0, 0.6))
+	Net.announce("갈대밭의 속삭임에 미다스가 혼란에 빠졌다! (방어력 -%d)" % Balance.scale(confuse_defense), Color(0.8, 1.0, 0.6))
 
 
 func _update_status() -> void:
@@ -174,4 +175,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("미다스: 모든 것을 황금으로! 웅덩이가 더 많이, 더 오래 남는다", Color(1.0, 0.85, 0.35))
+	Net.announce("미다스: 모든 것을 황금으로! 웅덩이가 더 많이, 더 오래 남는다", Color(1.0, 0.85, 0.35))

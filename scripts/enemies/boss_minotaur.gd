@@ -114,7 +114,7 @@ func shift_maze() -> void:
 	maze.wall_count = 8 if phase_two else 6
 	maze.warn(1.6, _avoid_points())
 	_maze_left = maze_interval * (0.75 if phase_two else 1.0)
-	GameManager.show_notice("미궁이 움직인다! 점선 자리에 새 벽이 선다", Color(0.95, 0.85, 0.6))
+	Net.announce("미궁이 움직인다! 점선 자리에 새 벽이 선다", Color(0.95, 0.85, 0.6))
 
 
 # ============================================================ 기믹 2: 돌진 · 뿔 박힘
@@ -157,7 +157,7 @@ func _get_stuck() -> void:
 	_stuck_left = stuck_time
 	_btimer = 0.2
 	set_status("뿔이 벽에 박혔다! (받는 피해 x%.1f)" % stuck_multiplier, Color(1.0, 0.85, 0.5))
-	GameManager.show_notice("미노타우로스의 뿔이 벽에 박혔다! 지금 몰아쳐라", Color(1.0, 0.85, 0.5))
+	Net.announce("미노타우로스의 뿔이 벽에 박혔다! 지금 몰아쳐라", Color(1.0, 0.85, 0.5))
 	Fx.explosion(self, global_position + _charge_dir * 12.0, Color(0.7, 0.6, 0.5), 30.0, 2)
 	if _player != null:
 		_player.shake_camera(6.0)
@@ -177,7 +177,7 @@ func begin_trap() -> void:
 	var start := _player.global_position + Vector2.from_angle(randf() * TAU) * 60.0
 	thread = AriadneThread.spawn(self, area, AriadneThread.make_path(area, start.clamp(area.position, area.end)), trap_warn)
 	_trap_cooldown = trap_interval
-	GameManager.show_notice("미궁의 함정이 깨어난다! 금빛 실 위로 피하라", Color(1.0, 0.9, 0.5))
+	Net.announce("미궁의 함정이 깨어난다! 금빛 실 위로 피하라", Color(1.0, 0.9, 0.5))
 	_after(trap_warn, _resolve_trap)
 
 
@@ -232,4 +232,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("미노타우로스가 포효한다! 미궁이 더 자주, 더 복잡하게 바뀐다", Color(1.0, 0.6, 0.4))
+	Net.announce("미노타우로스가 포효한다! 미궁이 더 자주, 더 복잡하게 바뀐다", Color(1.0, 0.6, 0.4))

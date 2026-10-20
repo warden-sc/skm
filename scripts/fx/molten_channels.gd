@@ -82,12 +82,12 @@ func _physics_process(delta: float) -> void:
 	if _pour_left > 0.0:
 		_pour_left -= delta
 		_tick -= delta
-		var player := get_tree().get_first_node_in_group(&"player") as Player
-		if player != null and _tick <= 0.0 and is_in_flow(player.global_position):
+		if _tick <= 0.0:
 			_tick = 0.5
-			if player.take_unblockable_hit(maxi(1, roundi(GameManager.max_hp * tick_ratio)), player.global_position + Vector2(0, -6), false) == Player.HitResult.DAMAGED:
-				hits += 1
-				player.apply_burn(10, 2.0)
+			for player in Player.get_all(get_tree()):
+				if is_in_flow(player.global_position) and player.take_unblockable_hit(maxi(1, roundi(GameManager.max_hp * tick_ratio)), player.global_position + Vector2(0, -6), false) == Player.HitResult.DAMAGED:
+					hits += 1
+					player.apply_burn(10, 2.0)
 	queue_redraw()
 
 

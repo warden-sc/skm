@@ -83,7 +83,7 @@ func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool =
 	super.take_damage(amount, knockback, is_crit, armor_pen)
 	if not _phase_two and not is_dead() and float(hp) <= max_hp * 0.5:
 		_phase_two = true
-		GameManager.show_notice("슬라임 킹이 분노했다!", Color(1.0, 0.4, 0.6))
+		Net.announce("슬라임 킹이 분노했다!", Color(1.0, 0.4, 0.6))
 
 
 func _next_pattern() -> void:
@@ -120,7 +120,7 @@ func spew_slime() -> void:
 	if not has_target():
 		return
 	var count := 7 if _phase_two else 5
-	GameManager.show_notice("슬라임 킹이 점액을 뿜어낸다! (밟으면 느려짐)", Color(0.6, 1.0, 0.5))
+	Net.announce("슬라임 킹이 점액을 뿜어낸다! (밟으면 느려짐)", Color(0.6, 1.0, 0.5))
 	for i in count:
 		var target := _player.global_position
 		if i > 0:

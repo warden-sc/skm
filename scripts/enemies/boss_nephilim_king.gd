@@ -81,7 +81,7 @@ func start_flood() -> void:
 	flood_state = Flood.RISING
 	_state_left = flood_rise
 	_floods += 1
-	GameManager.show_notice("큰 깊음의 샘들이 터지고 하늘의 창문이 열린다 — 방주의 판자 위로!", Color(0.6, 0.8, 1.0))
+	Net.announce("큰 깊음의 샘들이 터지고 하늘의 창문이 열린다 — 방주의 판자 위로!", Color(0.6, 0.8, 1.0))
 	_update_status()
 
 
@@ -94,7 +94,7 @@ func drain() -> void:
 	_mud_left = mud_stun
 	super.stun(mud_stun)
 	Fx.burst(self, global_position, Color(0.45, 0.35, 0.25), 24, 70.0, 0.6)
-	GameManager.show_notice("물이 빠지자 네피림 왕이 진흙에 발이 빠졌다! (피해 x%.1f)" % mud_ratio, Color(0.9, 0.75, 0.5))
+	Net.announce("물이 빠지자 네피림 왕이 진흙에 발이 빠졌다! (피해 x%.1f)" % mud_ratio, Color(0.9, 0.75, 0.5))
 	_update_status()
 
 
@@ -130,7 +130,7 @@ func _physics_process(delta: float) -> void:
 				if _state_left <= 0.0:
 					flood_state = Flood.RECEDING
 					_state_left = flood_recede
-					GameManager.show_notice("물이 빠지기 시작한다…", Color(0.7, 0.85, 1.0))
+					Net.announce("물이 빠지기 시작한다…", Color(0.7, 0.85, 1.0))
 					_update_status()
 			Flood.RECEDING:
 				flood.level = clampf(_state_left / flood_recede, 0.0, 1.0)

@@ -41,7 +41,8 @@ func _ready() -> void:
 	super._ready()
 	pattern_order = [Pattern.CLUB, Pattern.BOULDER, Pattern.STOMP, Pattern.SUMMON, Pattern.BOULDER, Pattern.CLUB]
 	_base_defense = defense
-	GameManager.player_attacked.connect(_on_player_attacked)
+	if not has_meta(&"net_mirror"):  # 멀티플레이 참가자 화면의 복제본은 반응하지 않음
+		GameManager.player_attacked.connect(_on_player_attacked)
 
 
 func get_eye() -> BossPart:
@@ -123,7 +124,7 @@ func _on_eye_broken(_enemy: Enemy) -> void:
 	super.take_damage(maxi(1, roundi(max_hp * blind_burst_ratio)), Vector2.ZERO, true, 999999)
 	_stun_left = 3.0
 	set_status("눈이 멀었다 — 소리로 찾는다", Color(0.9, 0.85, 0.7))
-	GameManager.show_notice("폴리페모스의 눈을 찔렀다! 이제 소리로만 찾는다 — 공격·대시 소리를 조심하고, 양 곁에 숨어라", Color(1.0, 0.9, 0.6))
+	Net.announce("폴리페모스의 눈을 찔렀다! 이제 소리로만 찾는다 — 공격·대시 소리를 조심하고, 양 곁에 숨어라", Color(1.0, 0.9, 0.6))
 	if _player != null:
 		_player.shake_camera(6.0)
 
@@ -179,4 +180,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("폴리페모스가 분노해 몸부림친다!", Color(1.0, 0.6, 0.4))
+	Net.announce("폴리페모스가 분노해 몸부림친다!", Color(1.0, 0.6, 0.4))

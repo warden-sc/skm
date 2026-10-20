@@ -123,7 +123,7 @@ func begin_chant() -> void:
 		if _safe_spot.distance_to(_player.global_position) > 90.0 and _safe_spot.distance_to(global_position) > 60.0:
 			break
 	set_status("대마법 영창: 메테오 스웜", Color(1.0, 0.6, 0.3))
-	GameManager.show_notice("아르카나가 메테오를 영창한다! 영창을 끊거나 초록 안전지대로!", Color(1.0, 0.65, 0.35))
+	Net.announce("아르카나가 메테오를 영창한다! 영창을 끊거나 초록 안전지대로!", Color(1.0, 0.65, 0.35))
 
 
 func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool = false, armor_pen: int = 0) -> void:
@@ -143,7 +143,7 @@ func _interrupt() -> void:
 	_safe_spot = Vector2.INF
 	_backlash_left = backlash_time
 	set_status("영창 실패! 마력 역류 (받는 피해 1.5배)", Color(0.6, 0.9, 1.0))
-	GameManager.show_notice("영창을 끊었다! 아르카나가 마력 역류로 비틀거린다", Color(0.6, 0.9, 1.0))
+	Net.announce("영창을 끊었다! 아르카나가 마력 역류로 비틀거린다", Color(0.6, 0.9, 1.0))
 	Fx.explosion(self, get_hit_center(), Color(0.6, 0.5, 1.0), 40.0, 3)
 	stun(backlash_time)
 	_after(backlash_time, func() -> void:
@@ -237,4 +237,4 @@ func _cast_element(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("아르카나: 이제부터가 진짜 마법이다…! 원소 마법이 겹쳐 온다", Color(0.75, 0.6, 1.0))
+	Net.announce("아르카나: 이제부터가 진짜 마법이다…! 원소 마법이 겹쳐 온다", Color(0.75, 0.6, 1.0))

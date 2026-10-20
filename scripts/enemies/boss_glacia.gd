@@ -140,7 +140,7 @@ func begin_blizzard() -> void:
 	_blizzard_cooldown = blizzard_interval * (0.75 if phase_two else 1.0)
 	var from_side := "왼쪽" if _wind.x > 0.0 else "오른쪽"
 	set_status("눈보라가 %s에서 몰려온다 — 기둥 뒤로!" % from_side, Color(0.8, 0.92, 1.0))
-	GameManager.show_notice("눈보라! %s에서 바람이 분다 — 얼음 기둥 뒤에 숨어라" % from_side, Color(0.8, 0.92, 1.0))
+	Net.announce("눈보라! %s에서 바람이 분다 — 얼음 기둥 뒤에 숨어라" % from_side, Color(0.8, 0.92, 1.0))
 
 
 func _update_blizzard(delta: float) -> void:
@@ -240,4 +240,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("글라시아: 영원한 겨울을 맞이하라…! 눈보라가 더 거세진다", Color(0.8, 0.92, 1.0))
+	Net.announce("글라시아: 영원한 겨울을 맞이하라…! 눈보라가 더 거세진다", Color(0.8, 0.92, 1.0))

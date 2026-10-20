@@ -129,7 +129,7 @@ func _on_stone_picked(stone: CarryItem) -> void:
 	if is_dead():
 		return
 	stone.hide_for(stone_respawn)
-	var player := get_tree().get_first_node_in_group(&"player") as Player
+	var player := Player.find_nearest(get_tree(), global_position)
 	var from := player.global_position if player != null else stone.global_position
 	CarryItem.fly(self, from, get_hit_center(), stone_texture)
 	_after(0.35, discord)
@@ -150,7 +150,7 @@ func discord() -> void:
 	take_damage(roundi(max_hp * discord_ratio * maxi(alive.size(), 1)), Vector2.ZERO, false, 999999)
 	stun(2.0)
 	set_status("불화! 전사들이 서로를 겨눔", Color(1.0, 0.5, 0.4))
-	GameManager.show_notice("돌이 날아들자 스파르토이들이 서로를 의심하며 칼을 겨눈다!", Color(1.0, 0.75, 0.5))
+	Net.announce("돌이 날아들자 스파르토이들이 서로를 의심하며 칼을 겨눈다!", Color(1.0, 0.75, 0.5))
 
 
 func _run_pattern(pattern: int) -> float:
@@ -192,4 +192,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("에키온: 용의 이빨은 다시 솟는다! 전사들이 더 빨리 되살아난다", Color(0.9, 0.85, 0.6))
+	Net.announce("에키온: 용의 이빨은 다시 솟는다! 전사들이 더 빨리 되살아난다", Color(0.9, 0.85, 0.6))

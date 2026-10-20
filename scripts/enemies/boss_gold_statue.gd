@@ -128,7 +128,7 @@ func _on_foot_broken(_f: Enemy) -> void:
 	if living_feet().is_empty() and not is_collapsed():
 		collapse()
 	else:
-		GameManager.show_notice("진흙 발 하나가 부서졌다! 하나 남았다", Color(0.85, 0.7, 0.5))
+		Net.announce("진흙 발 하나가 부서졌다! 하나 남았다", Color(0.85, 0.7, 0.5))
 	_update_status()
 
 
@@ -143,7 +143,7 @@ func collapse() -> void:
 	_regrow_left = foot_regrow
 	super.stun(collapse_time)
 	Fx.explosion(self, global_position, Color(0.85, 0.7, 0.45), 60.0, 2)
-	GameManager.show_notice("진흙 발이 부서져 금 신상이 무너졌다! 지금 몰아쳐라 (피해 x%.1f)" % collapse_ratio, Color(1.0, 0.85, 0.4))
+	Net.announce("진흙 발이 부서져 금 신상이 무너졌다! 지금 몰아쳐라 (피해 x%.1f)" % collapse_ratio, Color(1.0, 0.85, 0.4))
 	_update_status()
 
 
@@ -182,7 +182,7 @@ func roll_stone(start: Vector2, end: Vector2, warn: float = 2.5) -> void:
 			if not struck[0] and not is_dead() and at.distance_to(global_position + Vector2(0, -16)) < 34.0:
 				struck[0] = true
 				_on_stone_struck()
-	GameManager.show_notice("손대지 않고 뜨인 돌이 굴러오려 한다 — 신상을 그 길로 끌어들여라", Color(0.95, 0.9, 0.8))
+	Net.announce("손대지 않고 뜨인 돌이 굴러오려 한다 — 신상을 그 길로 끌어들여라", Color(0.95, 0.9, 0.8))
 
 
 func _on_stone_struck() -> void:
@@ -197,7 +197,7 @@ func _physics_process(delta: float) -> void:
 		if _collapse_left > 0.0:
 			_collapse_left -= delta
 			if _collapse_left <= 0.0:
-				GameManager.show_notice("금 신상이 다시 일어선다", Color(1.0, 0.85, 0.4))
+				Net.announce("금 신상이 다시 일어선다", Color(1.0, 0.85, 0.4))
 				_update_status()
 		elif _regrow_left > 0.0:
 			_regrow_left -= delta

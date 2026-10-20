@@ -75,7 +75,7 @@ func _get_move_velocity(delta: float) -> Vector2:
 				request_summon(archer_scene, center + spot)
 		_last_angle = (_player.global_position - center).angle()
 		_archer_left = archer_interval
-		GameManager.show_notice("굳게 닫힌 여리고 성 — 성벽 바깥 길을 일곱 바퀴 돌아라", Color(1.0, 0.9, 0.6))
+		Net.announce("굳게 닫힌 여리고 성 — 성벽 바깥 길을 일곱 바퀴 돌아라", Color(1.0, 0.9, 0.6))
 		_update_status()
 	if _walled:
 		return Vector2.ZERO
@@ -104,7 +104,7 @@ func add_lap() -> void:
 	if laps >= laps_needed:
 		collapse_walls()
 	else:
-		GameManager.show_notice("%d바퀴 — 성벽에 금이 간다 (%d/%d)" % [laps, laps, laps_needed], Color(1.0, 0.9, 0.6))
+		Net.announce("%d바퀴 — 성벽에 금이 간다 (%d/%d)" % [laps, laps, laps_needed], Color(1.0, 0.9, 0.6))
 	_update_status()
 
 
@@ -120,7 +120,7 @@ func collapse_walls() -> void:
 		a.despawn()
 	super.stun(collapse_stun)
 	Fx.explosion(self, center, Color(0.75, 0.6, 0.45), 90.0, 2)
-	GameManager.show_notice("일곱 바퀴를 채우자 여리고 성벽이 무너졌다! 수비대장이 성벽에서 떨어진다", Color(1.0, 0.85, 0.5))
+	Net.announce("일곱 바퀴를 채우자 여리고 성벽이 무너졌다! 수비대장이 성벽에서 떨어진다", Color(1.0, 0.85, 0.5))
 	_update_status()
 
 

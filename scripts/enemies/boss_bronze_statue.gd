@@ -51,7 +51,7 @@ func begin_glow() -> void:
 	_glow_left = glow_time * (1.35 if phase_two else 1.0)
 	_until_glow = glow_interval
 	base_tint = Color(1.4, 1.3, 0.9)
-	GameManager.show_notice("수호상의 방패가 빛난다! 화살과 마법이 되받아쳐진다 — 근접으로", Color(1.0, 0.9, 0.5))
+	Net.announce("수호상의 방패가 빛난다! 화살과 마법이 되받아쳐진다 — 근접으로", Color(1.0, 0.9, 0.5))
 
 
 func _physics_process(delta: float) -> void:
@@ -115,4 +115,4 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("청동 수호상의 눈이 빛난다! 방패가 더 오래 빛난다", Color(1.0, 0.9, 0.5))
+	Net.announce("청동 수호상의 눈이 빛난다! 방패가 더 오래 빛난다", Color(1.0, 0.9, 0.5))

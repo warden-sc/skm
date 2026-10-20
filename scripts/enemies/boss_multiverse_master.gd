@@ -198,7 +198,7 @@ func reveal() -> void:
 	Fx.explosion(self, get_hit_center(), Color(0.7, 0.4, 1.0), 90.0, 3)
 	if has_target():
 		_player.shake_camera(8.0)
-	GameManager.show_notice("상인의 모습이 찢어지고 — 멀티버스의 주인이 정체를 드러낸다!", Color(1.0, 0.55, 1.0))
+	Net.announce("상인의 모습이 찢어지고 — 멀티버스의 주인이 정체를 드러낸다!", Color(1.0, 0.55, 1.0))
 	shift_world()
 	Story.queue("최종장 정체")
 
@@ -206,7 +206,7 @@ func reveal() -> void:
 func _begin_transform() -> void:
 	mode = Mode.TRANSFORM
 	_mode_left = transform_time
-	GameManager.show_notice("상인의 몸이 일그러진다… 보스방 너머로 수많은 세계가 비친다", Color(0.9, 0.6, 1.0))
+	Net.announce("상인의 몸이 일그러진다… 보스방 너머로 수많은 세계가 비친다", Color(0.9, 0.6, 1.0))
 
 
 func _intro_process(delta: float) -> void:
@@ -218,7 +218,7 @@ func _intro_process(delta: float) -> void:
 				_mode_left = 0.3
 				return
 			if _line < LINES.size():
-				GameManager.show_notice("상인: 「%s」" % LINES[_line], Color(1.0, 0.85, 0.55))
+				Net.announce("상인: 「%s」" % LINES[_line], Color(1.0, 0.85, 0.55))
 				_line += 1
 				_mode_left = line_time
 			else:
@@ -279,7 +279,7 @@ func shift_world(next: int = -1) -> void:
 		_manager.apply_world(_manager.get_stage_data(WORLD_STAGES[world]))
 	_start_world(world)
 	Fx.shockwave(self, center, Color(0.85, 0.6, 1.0), 260.0, 0.6)
-	GameManager.show_notice("세계 전환 — 「%s」: %s%s" % [WORLD_NAMES[world], WORLD_HINTS[world], (" (「%s」와 겹침)" % WORLD_NAMES[world2]) if world2 >= 0 else ""], Color(0.9, 0.7, 1.0))
+	Net.announce("세계 전환 — 「%s」: %s%s" % [WORLD_NAMES[world], WORLD_HINTS[world], (" (「%s」와 겹침)" % WORLD_NAMES[world2]) if world2 >= 0 else ""], Color(0.9, 0.7, 1.0))
 	_update_status()
 
 
@@ -382,7 +382,7 @@ func _world_process(delta: float) -> void:
 func _on_fall(player: Player) -> void:
 	player.take_unblockable_hit(roundi(GameManager.max_hp * 0.12), pit.global_position, false)
 	player.global_position = _safe_rim(player.global_position)
-	GameManager.show_notice("무저갱에 떨어졌다! 가장자리로 간신히 기어 나왔다", Color(1.0, 0.4, 0.3))
+	Net.announce("무저갱에 떨어졌다! 가장자리로 간신히 기어 나왔다", Color(1.0, 0.4, 0.3))
 
 
 func _safe_rim(from: Vector2) -> Vector2:
@@ -413,12 +413,12 @@ func _on_stone_struck() -> void:
 	_stone_hits += 1
 	super.take_damage(roundi(max_hp * 0.02), Vector2.ZERO, true, 999999)
 	super.stun(3.0)
-	GameManager.show_notice("뜨인 돌이 멀티버스의 주인을 쳤다!", Color(0.95, 0.9, 0.8))
+	Net.announce("뜨인 돌이 멀티버스의 주인을 쳤다!", Color(0.95, 0.9, 0.8))
 
 
 ## 하늘의 전언 — 보스방 절반(0 동 · 1 서 · 2 북 · 3 남)에 빛 (테스트에서도 직접 호출)
 func announce_light(half: int) -> void:
-	GameManager.show_notice("주인이 가브리엘의 목소리를 흉내 낸다: 「%s에 빛이 내리리라」" % ["동쪽", "서쪽", "북쪽", "남쪽"][half], Color(1.0, 0.97, 0.8))
+	Net.announce("주인이 가브리엘의 목소리를 흉내 낸다: 「%s에 빛이 내리리라」" % ["동쪽", "서쪽", "북쪽", "남쪽"][half], Color(1.0, 0.97, 0.8))
 	var area := _area().grow(-10.0)
 	var y := area.position.y + 24.0
 	while y < area.end.y:
@@ -479,7 +479,7 @@ func begin_spectate() -> void:
 		if not scenes.is_empty():
 			_pending_champions += 1
 			request_summon(scenes.pick_random(), center + Vector2(-120.0 + 120.0 * i, 40.0))
-	GameManager.show_notice("「자, 구경 좀 하자!」 — 주인이 관람석에 올라 서로 다른 세계의 투사들을 싸움 붙인다 (%d초)" % roundi(spectate_time), Color(1.0, 0.75, 0.4))
+	Net.announce("「자, 구경 좀 하자!」 — 주인이 관람석에 올라 서로 다른 세계의 투사들을 싸움 붙인다 (%d초)" % roundi(spectate_time), Color(1.0, 0.75, 0.4))
 	_update_status()
 
 
@@ -511,7 +511,7 @@ func _fall_from_seat() -> void:
 	global_position = center + Vector2(0, -25)
 	super.stun(fall_stun)
 	Fx.shockwave(self, global_position, Color(1.0, 0.8, 0.4), 120.0, 0.6)
-	GameManager.show_notice("투사들이 모두 쓰러졌다! 흥이 깨진 주인이 관람석에서 굴러떨어진다 (피해 x%.1f)" % fall_ratio, Color(1.0, 0.85, 0.5))
+	Net.announce("투사들이 모두 쓰러졌다! 흥이 깨진 주인이 관람석에서 굴러떨어진다 (피해 x%.1f)" % fall_ratio, Color(1.0, 0.85, 0.5))
 	_update_status()
 
 
@@ -524,7 +524,7 @@ func _spectate_timeout() -> void:
 	var heal := mini(roundi(max_hp * 0.04), max_hp - hp)
 	hp += heal
 	health_changed.emit(hp, max_hp)
-	GameManager.show_notice("「재미있었어!」 — 구경을 마친 주인이 기운을 되찾는다 (+%d)" % heal, Color(1.0, 0.6, 0.6))
+	Net.announce("「재미있었어!」 — 구경을 마친 주인이 기운을 되찾는다 (+%d)" % heal, Color(1.0, 0.6, 0.6))
 	_update_status()
 
 
@@ -545,7 +545,7 @@ func awaken() -> void:
 	add_child(aura)
 	if has_target():
 		_player.shake_camera(10.0)
-	GameManager.show_notice("멀티버스의 주인이 각성한다!", Color(1.0, 0.45, 0.85))
+	Net.announce("멀티버스의 주인이 각성한다!", Color(1.0, 0.45, 0.85))
 	get_tree().create_timer(0.9, false).timeout.connect(_awaken_line)
 
 
@@ -553,7 +553,7 @@ func _awaken_line() -> void:
 	if is_dead():
 		return
 	if not Story.play("최종장 2페이즈"):
-		GameManager.show_notice("멀티버스의 주인: 「%s」" % AWAKEN_LINE, Color(1.0, 0.6, 0.9))
+		Net.announce("멀티버스의 주인: 「%s」" % AWAKEN_LINE, Color(1.0, 0.6, 0.9))
 
 
 func is_awakened() -> bool:
@@ -571,7 +571,7 @@ func open_rifts() -> void:
 	var area := _area()
 	for side in [-1.0, 1.0]:
 		request_summon(rift_scene, center + Vector2(side * area.size.x * 0.42, -20.0))
-	GameManager.show_notice("멀티버스의 균열이 열렸다 — 균열이 열려 있는 동안 주인에게 피해가 덜 들어간다", Color(0.9, 0.5, 1.0))
+	Net.announce("멀티버스의 균열이 열렸다 — 균열이 열려 있는 동안 주인에게 피해가 덜 들어간다", Color(0.9, 0.5, 1.0))
 	_update_status()
 
 
@@ -580,7 +580,7 @@ func _on_rift_closed(_r: Enemy) -> void:
 		return
 	if living_rifts().is_empty():
 		_rift_left = rift_reopen
-		GameManager.show_notice("균열이 모두 닫혔다!", Color(0.9, 0.8, 1.0))
+		Net.announce("균열이 모두 닫혔다!", Color(0.9, 0.8, 1.0))
 	_update_status()
 
 

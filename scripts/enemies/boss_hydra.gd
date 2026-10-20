@@ -174,7 +174,7 @@ func _on_head_cut(_enemy: Enemy, slot: int) -> void:
 	set_status("목이 잘렸다! 불로 지지지 않으면 둘로 자란다", Color(1.0, 0.7, 0.4))
 	if _hint_cooldown <= 0.0:
 		_hint_cooldown = 4.0
-		GameManager.show_notice("히드라의 목을 잘랐다! 성화대의 불꽃을 무기에 두르고 잘린 목을 지져라", Color(1.0, 0.7, 0.4))
+		Net.announce("히드라의 목을 잘랐다! 성화대의 불꽃을 무기에 두르고 잘린 목을 지져라", Color(1.0, 0.7, 0.4))
 
 
 func _regrow(stump: HydraStump) -> void:
@@ -189,7 +189,7 @@ func _regrow(stump: HydraStump) -> void:
 	if get_heads().size() + _pending.size() < MAX_HEADS:
 		_grow(_free_slot())
 	Fx.burst(self, global_position + slot_offset(slot), Color(0.5, 0.9, 0.5), 16, 50.0, 0.4)
-	GameManager.show_notice("잘린 목에서 머리 두 개가 돋아났다!", Color(0.6, 1.0, 0.5))
+	Net.announce("잘린 목에서 머리 두 개가 돋아났다!", Color(0.6, 1.0, 0.5))
 
 
 # ============================================================ 기믹 2: 지지기
@@ -218,7 +218,7 @@ func on_stump_hit(stump: HydraStump) -> void:
 	stump.despawn()
 	super.take_damage(maxi(1, roundi(max_hp * cauterize_ratio)), Vector2.ZERO, true, 999999)
 	set_status("", Color.WHITE)
-	GameManager.show_notice("잘린 목을 불로 지졌다! 더는 자라지 않는다", Color(1.0, 0.75, 0.4))
+	Net.announce("잘린 목을 불로 지졌다! 더는 자라지 않는다", Color(1.0, 0.75, 0.4))
 
 
 # ============================================================ 패턴
@@ -279,4 +279,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("히드라가 울부짖는다! 잘린 목이 더 빨리 자란다", Color(0.6, 1.0, 0.5))
+	Net.announce("히드라가 울부짖는다! 잘린 목이 더 빨리 자란다", Color(0.6, 1.0, 0.5))

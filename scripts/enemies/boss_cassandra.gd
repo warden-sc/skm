@@ -62,10 +62,10 @@ func prophesy(truthful: int = -1) -> void:
 					strike.color = Color(0.6, 0.8, 1.0) if truth else Color(1.0, 0.4, 0.4))
 	if last_true:
 		FloatingText.spawn(self, global_position + Vector2(0, -52), "「이 자리에 빛이 떨어지리라」", Color(0.55, 0.75, 1.0), true)
-		GameManager.show_notice("카산드라의 예언 — 푸른 목소리 (참): 표식에서 벗어나라", Color(0.55, 0.75, 1.0))
+		Net.announce("카산드라의 예언 — 푸른 목소리 (참): 표식에서 벗어나라", Color(0.55, 0.75, 1.0))
 	else:
 		FloatingText.spawn(self, global_position + Vector2(0, -52), "「이 자리에 빛이 떨어지리라…」", Color(1.0, 0.4, 0.4), true)
-		GameManager.show_notice("카산드라의 예언 — 붉은 목소리 (저주받은 거짓): 표식 안이 안전하다", Color(1.0, 0.45, 0.45))
+		Net.announce("카산드라의 예언 — 붉은 목소리 (저주받은 거짓): 표식 안이 안전하다", Color(1.0, 0.45, 0.45))
 
 
 func _run_pattern(pattern: int) -> float:
@@ -93,4 +93,4 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("카산드라: 트로이는 불타리라… 아무도 믿지 않겠지만! 거짓 예언이 잦아진다", Color(1.0, 0.5, 0.5))
+	Net.announce("카산드라: 트로이는 불타리라… 아무도 믿지 않겠지만! 거짓 예언이 잦아진다", Color(1.0, 0.5, 0.5))

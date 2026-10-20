@@ -119,7 +119,7 @@ func seek_spring() -> void:
 		return
 	_heal_spring = best
 	mode = Mode.FLYING
-	GameManager.show_notice("라파엘이 치유의 샘으로 날아간다 — 샘을 돌로 덮거나 연기로 막아라", Color(0.6, 0.95, 0.75))
+	Net.announce("라파엘이 치유의 샘으로 날아간다 — 샘을 돌로 덮거나 연기로 막아라", Color(0.6, 0.95, 0.75))
 	_update_status()
 
 
@@ -134,7 +134,7 @@ func _stagger(text: String) -> void:
 	mode = Mode.FIGHT
 	_heal_spring = -1
 	super.stun(stagger_time)
-	GameManager.show_notice(text + " 라파엘이 휘청인다", Color(0.9, 0.95, 0.8))
+	Net.announce(text + " 라파엘이 휘청인다", Color(0.9, 0.95, 0.8))
 	_update_status()
 
 
@@ -148,7 +148,7 @@ func seal_spring(i: int) -> void:
 		_heal_blocked += 1
 		_stagger("치유의 샘이 덮였다!")
 	else:
-		GameManager.show_notice("치유의 샘을 넓적한 돌로 덮었다 (%.0f초)" % seal_time, Color(0.8, 0.9, 0.8))
+		Net.announce("치유의 샘을 넓적한 돌로 덮었다 (%.0f초)" % seal_time, Color(0.8, 0.9, 0.8))
 	_update_status()
 
 
@@ -157,7 +157,7 @@ func burn_fish(at: Vector2) -> void:
 	smoke_at = at
 	_smoke_left = smoke_time
 	Fx.burst(self, at, Color(0.55, 0.55, 0.6), 30, 50.0, 1.0, Vector2(0, -40))
-	GameManager.show_notice("토비아의 물고기 쓸개를 태웠다 — 연기 안에서는 라파엘의 치유가 끊긴다", Color(0.75, 0.8, 0.85))
+	Net.announce("토비아의 물고기 쓸개를 태웠다 — 연기 안에서는 라파엘의 치유가 끊긴다", Color(0.75, 0.8, 0.85))
 
 
 func _spawn_fish() -> void:

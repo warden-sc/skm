@@ -86,7 +86,7 @@ func begin_judgement(side: int) -> void:
 	scale_node.warn(side, warn_time)
 	var side_name := "왼쪽" if side == JudgementScale.Side.LEFT else "오른쪽"
 	set_status("천칭이 기울었다 — %s에 심판!" % side_name, Color(1.0, 0.9, 0.5))
-	GameManager.show_notice("천칭이 %s으로 기울었다! 심판의 빛이 내린다 — 반대쪽으로 피하라" % side_name, Color(1.0, 0.9, 0.5))
+	Net.announce("천칭이 %s으로 기울었다! 심판의 빛이 내린다 — 반대쪽으로 피하라" % side_name, Color(1.0, 0.9, 0.5))
 	_after(warn_time, _resolve_judgement)
 
 
@@ -163,4 +163,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("세라핀: 죄의 무게를 달아 보겠다… 천칭이 더 쉽게 기운다", Color(1.0, 0.9, 0.5))
+	Net.announce("세라핀: 죄의 무게를 달아 보겠다… 천칭이 더 쉽게 기운다", Color(1.0, 0.9, 0.5))

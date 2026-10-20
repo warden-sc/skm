@@ -102,7 +102,7 @@ func _on_gland_broken(_enemy: Enemy) -> void:
 	_after(2.0, func() -> void:
 		if get_status_text().begins_with("독샘이"):
 			set_status("", Color.WHITE))
-	GameManager.show_notice("바실리스크의 독샘을 부쉈다! 독안개가 걷히고 독 브레스를 쓰지 못한다", Color(0.7, 1.0, 0.5))
+	Net.announce("바실리스크의 독샘을 부쉈다! 독안개가 걷히고 독 브레스를 쓰지 못한다", Color(0.7, 1.0, 0.5))
 	stun(1.5)
 	Fx.explosion(self, global_position + Vector2(GLAND_OFFSET.x * (-1.0 if sprite.flip_h else 1.0), GLAND_OFFSET.y), Color(0.5, 0.9, 0.3), 36.0, 2)
 
@@ -211,4 +211,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("바실리스크가 분노한다! 독 브레스가 넓어지고 석화의 눈이 세 갈래로", Color(0.6, 1.0, 0.4))
+	Net.announce("바실리스크가 분노한다! 독 브레스가 넓어지고 석화의 눈이 세 갈래로", Color(0.6, 1.0, 0.4))

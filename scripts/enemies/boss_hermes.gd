@@ -128,14 +128,14 @@ func try_steal() -> bool:
 	_recover_left = maxi(1, roundi(max_hp * recover_ratio))
 	stolen = GameManager.steal_active_weapon()
 	if stolen != null:
-		GameManager.show_notice("헤르메스가 [%s]을(를) 훔쳤다! 돌려받으려면 헤르메스를 때려라" % stolen.display_name, Color(1.0, 0.85, 0.5))
+		Net.announce("헤르메스가 [%s]을(를) 훔쳤다! 돌려받으려면 헤르메스를 때려라" % stolen.display_name, Color(1.0, 0.85, 0.5))
 	else:
 		stolen_gold = mini(GameManager.gold, 300)
 		if stolen_gold <= 0 or not GameManager.spend_gold(stolen_gold):
 			stolen_gold = 0
 			_steals -= 1
 			return false
-		GameManager.show_notice("헤르메스가 골드 %d 을(를) 훔쳤다! 때려서 돌려받아라" % stolen_gold, Color(1.0, 0.85, 0.5))
+		Net.announce("헤르메스가 골드 %d 을(를) 훔쳤다! 때려서 돌려받아라" % stolen_gold, Color(1.0, 0.85, 0.5))
 	FloatingText.spawn(_player, _player.global_position + Vector2(0, -24), "도둑맞았다!", Color(1.0, 0.85, 0.5), true)
 	set_status("훔친 것을 돌려받기까지 %d" % _recover_left, Color(1.0, 0.85, 0.5))
 	return true
@@ -144,10 +144,10 @@ func try_steal() -> bool:
 func give_back() -> void:
 	if stolen != null:
 		GameManager.return_stolen_weapon()
-		GameManager.show_notice("[%s]을(를) 되찾았다!" % stolen.display_name, Color(0.7, 1.0, 0.7))
+		Net.announce("[%s]을(를) 되찾았다!" % stolen.display_name, Color(0.7, 1.0, 0.7))
 	if stolen_gold > 0:
 		GameManager.add_gold(stolen_gold)
-		GameManager.show_notice("골드 %d 을(를) 되찾았다!" % stolen_gold, Color(0.7, 1.0, 0.7))
+		Net.announce("골드 %d 을(를) 되찾았다!" % stolen_gold, Color(0.7, 1.0, 0.7))
 	stolen = null
 	stolen_gold = 0
 	_recover_left = 0
@@ -165,7 +165,7 @@ func send_letters() -> void:
 	for i in (4 if phase_two else 3):
 		_letter_queue.append(corners[i])
 		request_summon(letter_scene, get_hit_center())
-	GameManager.show_notice("헤르메스가 편지를 날려 보냈다! 구석에 닿기 전에 떨어뜨려라", Color(0.75, 0.9, 1.0))
+	Net.announce("헤르메스가 편지를 날려 보냈다! 구석에 닿기 전에 떨어뜨려라", Color(0.75, 0.9, 1.0))
 
 
 func register_minion(minion: Enemy) -> void:
@@ -198,7 +198,7 @@ func _bless() -> void:
 	move_speed = _base_speed * (1.0 + 0.12 * blessings)
 	power = _base_power * (1.0 + 0.1 * blessings)
 	FloatingText.spawn(self, global_position + Vector2(0, -56), "전령의 축복 %d" % blessings, Color(0.8, 0.95, 1.0), true)
-	GameManager.show_notice("편지가 전해졌다! 헤르메스가 더 빨라지고 강해진다 (축복 %d)" % blessings, Color(0.75, 0.9, 1.0))
+	Net.announce("편지가 전해졌다! 헤르메스가 더 빨라지고 강해진다 (축복 %d)" % blessings, Color(0.75, 0.9, 1.0))
 
 
 # ============================================================ 패턴
@@ -254,4 +254,4 @@ func despawn() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("헤르메스: 신들의 소식은 멈추지 않는다! 편지가 늘어난다", Color(0.75, 0.9, 1.0))
+	Net.announce("헤르메스: 신들의 소식은 멈추지 않는다! 편지가 늘어난다", Color(0.75, 0.9, 1.0))

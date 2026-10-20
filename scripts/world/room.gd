@@ -38,6 +38,7 @@ func _ready() -> void:
 
 
 func apply_theme(new_floor: Texture2D, wall_tint: Color) -> void:
+	Net.room_theme(self, new_floor, wall_tint)  # 멀티플레이: 참가자 화면의 방도 같은 모습으로
 	if new_floor != null:
 		_floor.texture = new_floor
 	_walls.modulate = wall_tint

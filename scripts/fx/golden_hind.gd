@@ -44,7 +44,7 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	var player := get_tree().get_first_node_in_group(&"player") as Player
+	var player := Player.find_nearest(get_tree(), global_position)
 	var velocity := Vector2.ZERO
 	if player != null and player.global_position.distance_to(global_position) < FLEE_RANGE:
 		velocity = player.global_position.direction_to(global_position) * FLEE_SPEED

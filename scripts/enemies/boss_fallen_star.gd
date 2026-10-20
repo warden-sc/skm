@@ -103,7 +103,7 @@ func _on_key_knocked(_k: Enemy) -> void:
 			dropped_key.dropped.connect(_on_key_dropped)
 	else:
 		dropped_key.reappear(at)
-	GameManager.show_notice("무저갱의 열쇠가 떨어졌다! 주워서 가운데 문으로 가져가라", Color(1.0, 0.8, 0.4))
+	Net.announce("무저갱의 열쇠가 떨어졌다! 주워서 가운데 문으로 가져가라", Color(1.0, 0.8, 0.4))
 
 
 ## 플레이어가 열쇠를 떨어뜨리면 별이 다시 쥠
@@ -123,7 +123,7 @@ func close_gate() -> void:
 		dropped_key.hide_for(99999.0)
 	super.stun(8.0)
 	Fx.explosion(self, gate_position(), Color(1.0, 0.8, 0.4), 50.0, 2)
-	GameManager.show_notice("무저갱의 문이 닫혔다! 타락한 별이 크게 휘청인다", Color(1.0, 0.85, 0.5))
+	Net.announce("무저갱의 문이 닫혔다! 타락한 별이 크게 휘청인다", Color(1.0, 0.85, 0.5))
 	_update_status()
 
 

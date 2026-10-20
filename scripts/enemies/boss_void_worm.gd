@@ -168,7 +168,7 @@ func _swallowed() -> void:
 	_player.global_position = global_position + Vector2(0, 2)
 	_player.apply_root(digest_time + 0.5, "삼켜짐! 위벽을 공격해 탈출하라")
 	set_status("삼켰다… 소화 중", Color(0.9, 0.5, 1.0))
-	GameManager.show_notice("보이드 웜에게 삼켜졌다! 눈앞의 위벽을 부숴 탈출하라", Color(0.9, 0.5, 1.0))
+	Net.announce("보이드 웜에게 삼켜졌다! 눈앞의 위벽을 부숴 탈출하라", Color(0.9, 0.5, 1.0))
 	if wall_scene != null:
 		request_summon(wall_scene, global_position + Vector2(0, -26))
 
@@ -213,7 +213,7 @@ func _spit_out(escaped: bool) -> void:
 		_player.velocity = Vector2(0, 220)
 	if escaped:
 		set_status("속이 터졌다!", Color(1.0, 0.7, 0.9))
-		GameManager.show_notice("위벽을 부수고 탈출했다! 보이드 웜이 비틀거린다", Color(1.0, 0.8, 0.95))
+		Net.announce("위벽을 부수고 탈출했다! 보이드 웜이 비틀거린다", Color(1.0, 0.8, 0.95))
 		stun(2.5)
 	else:
 		set_status("", Color.WHITE)
@@ -277,4 +277,4 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("보이드 웜이 굶주림에 몸부림친다! 더 자주 삼키려 든다", Color(0.9, 0.5, 1.0))
+	Net.announce("보이드 웜이 굶주림에 몸부림친다! 더 자주 삼키려 든다", Color(0.9, 0.5, 1.0))

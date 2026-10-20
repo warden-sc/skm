@@ -62,7 +62,8 @@ func _ready() -> void:
 	_base_speed = move_speed
 	_base_chase = chase_time
 	pattern_order = [Pattern.SPEAR, Pattern.CHARIOT, Pattern.PILUM_RAIN, Pattern.SPEAR, Pattern.WAR_CRY, Pattern.CHARIOT, Pattern.SUMMON]
-	GameManager.player_damaged.connect(_on_player_damaged)
+	if not has_meta(&"net_mirror"):  # 멀티플레이 참가자 화면의 복제본은 반응하지 않음
+		GameManager.player_damaged.connect(_on_player_damaged)
 
 
 func apply_difficulty(info: Dictionary) -> void:
@@ -148,7 +149,7 @@ func _on_shield_broken(shield: Enemy) -> void:
 		defense = _base_defense
 		super.stun(5.0)
 		Fx.explosion(self, shield.get_hit_center(), Color(1.0, 0.85, 0.4), 40.0, 2)
-		GameManager.show_notice("진짜 앙킬레를 부쉈다! 마르스의 가호가 사라진다", Color(1.0, 0.85, 0.5))
+		Net.announce("진짜 앙킬레를 부쉈다! 마르스의 가호가 사라진다", Color(1.0, 0.85, 0.5))
 	else:
 		_fakes_broken += 1
 		var from := shield.get_hit_center()
@@ -212,7 +213,7 @@ func _begin_frenzy() -> void:
 	move_speed = _base_speed * 1.3
 	chase_time = _base_chase * 0.6
 	Fx.shockwave(self, get_hit_center(), Color(1.0, 0.3, 0.2), 120.0, 0.6)
-	GameManager.show_notice("전쟁의 광기! 마르스가 피에 취해 날뛴다", Color(1.0, 0.4, 0.3))
+	Net.announce("전쟁의 광기! 마르스가 피에 취해 날뛴다", Color(1.0, 0.4, 0.3))
 	_update_status()
 
 
@@ -276,7 +277,7 @@ func _run_pattern(pattern: int) -> float:
 		Pattern.CHARIOT:
 			_charges_queued = 1 if phase_two else 0
 			_start_charge()
-			GameManager.show_notice("포보스와 데이모스의 전차가 달려든다! 치이면 공포에 질려 움직일 수 없다", Color(1.0, 0.5, 0.4))
+			Net.announce("포보스와 데이모스의 전차가 달려든다! 치이면 공포에 질려 움직일 수 없다", Color(1.0, 0.5, 0.4))
 			return 1.4 if phase_two else 1.3
 		Pattern.PILUM_RAIN:
 			for i in 8:
@@ -306,4 +307,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("마르스: 전쟁은 이제부터다! 전차가 두 번 연달아 달린다", Color(1.0, 0.45, 0.35))
+	Net.announce("마르스: 전쟁은 이제부터다! 전차가 두 번 연달아 달린다", Color(1.0, 0.45, 0.35))

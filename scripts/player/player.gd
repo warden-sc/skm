@@ -22,6 +22,9 @@ signal attacked
 
 ## take_hit() 의 결과. 투사체는 이 값을 보고 소멸/통과/반사를 결정합니다.
 enum HitResult { IGNORED, DAMAGED, BLOCKED, PARRIED }
+## 멀티플레이: LOCAL = 이 컴퓨터에서 조작하는 용사 / PUPPET = 방장 컴퓨터에 있는 다른 사람의 용사 (위치·모습은 그 사람이 보내 줌,
+## 적·장판이 이 용사에게 거는 효과는 그 사람 컴퓨터로 전달) / MIRROR = 참가자 화면에 보이는 남의 용사 (그림만)
+enum NetMode { LOCAL, PUPPET, MIRROR }
 
 const WEAPON_REST_ANGLE := PI / 4.0
 ## *_held.png 활 그림에서 시위가 걸리는 양 끝 (WeaponSprite 기준 좌표)
@@ -161,7 +164,132 @@ var _charge_particles: CPUParticles2D
 var _target_ring: TargetRing
 
 
+# ============================================================ 멀티플레이
+var net_mode: NetMode = NetMode.LOCAL
+## 이 용사를 조작하는 컴퓨터 (방장 1, 혼자 할 때도 1)
+var peer_id: int = 1
+## 그 사람이 보내 준 상태 (대시 · 가드 · 상태 이상 등) — PUPPET 의 is_*() 가 이 값을 돌려줌
+var net_status: Dictionary = {}
+var _net_target: Vector2 = Vector2.ZERO
+var _net_has_target: bool = false
+var _name_label: Label
+
+
+## 이 컴퓨터가 조작하는 용사인지
+func is_local() -> bool:
+	return net_mode == NetMode.LOCAL
+
+
+## 쓰러졌는지 (남의 용사는 그 사람이 알려 준 값)
+func is_net_dead() -> bool:
+	if net_mode == NetMode.LOCAL:
+		return GameManager.is_player_dead or _is_dead
+	return bool(net_status.get("dead", false))
+
+
+## 적 · 장판이 공격할 수 있는 용사 전부 (이 컴퓨터의 용사 + 방장 컴퓨터의 다른 사람 용사)
+static func get_all(tree: SceneTree) -> Array[Player]:
+	var result: Array[Player] = []
+	if tree == null:
+		return result
+	for node in tree.get_nodes_in_group(&"player"):
+		var player := node as Player
+		if player != null and player.net_mode != NetMode.MIRROR:
+			result.append(player)
+	return result
+
+
+## 살아 있는 용사 중 at_global 에 가장 가까운 용사 (없으면 아무나, 그것도 없으면 null)
+static func find_nearest(tree: SceneTree, at_global: Vector2) -> Player:
+	var best: Player = null
+	var best_dist := INF
+	var fallback: Player = null
+	for player in get_all(tree):
+		if fallback == null:
+			fallback = player
+		if player.is_net_dead():
+			continue
+		var d := player.global_position.distance_squared_to(at_global)
+		if d < best_dist:
+			best_dist = d
+			best = player
+	return best if best != null else fallback
+
+
+## PUPPET 이면 이 호출을 그 사람 컴퓨터로 보내고 true (이 컴퓨터에서는 아무것도 안 함). MIRROR 는 그냥 무시하고 true
+func _forwarded(method: StringName, args: Array = [], every_frame: bool = false) -> bool:
+	if net_mode == NetMode.LOCAL:
+		return false
+	if net_mode == NetMode.PUPPET:
+		Net.forward_player_call(peer_id, method, args, every_frame)
+	return true
+
+
+func _ns(key: String, default: Variant = false) -> Variant:
+	return net_status.get(key, default)
+
+
+## 다른 사람 용사(PUPPET)의 위치를 받아 부드럽게 따라감
+func set_net_target(at_global: Vector2, snap: bool = false) -> void:
+	_net_target = at_global
+	if snap or not _net_has_target or global_position.distance_to(at_global) > 160.0:
+		global_position = at_global
+	_net_has_target = true
+
+
+func _puppet_process(delta: float) -> void:
+	if not _net_has_target:
+		return
+	var before := global_position
+	global_position = global_position.lerp(_net_target, 1.0 - exp(-18.0 * delta))
+	velocity = (global_position - before) / maxf(delta, 0.001)
+	var aim: Vector2 = _ns("aim", Vector2.RIGHT)
+	if aim != Vector2.ZERO:
+		_aim_direction = aim
+	death_marks = int(_ns("death_marks", 0))
+
+
+## 멀티플레이에서 머리 위 이름표
+func _add_name_label() -> void:
+	_name_label = Label.new()
+	_name_label.name = "NetName"
+	_name_label.text = Net.get_player_name(peer_id) if net_mode != NetMode.MIRROR else ""
+	_name_label.add_theme_font_size_override(&"font_size", 7)
+	_name_label.add_theme_color_override(&"font_outline_color", Color(0.05, 0.05, 0.1))
+	_name_label.add_theme_constant_override(&"outline_size", 3)
+	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_name_label.position = Vector2(-40, -36)
+	_name_label.size = Vector2(80, 10)
+	_name_label.modulate = Color(0.75, 1.0, 0.8) if net_mode == NetMode.LOCAL else Color(1, 1, 1)
+	add_child(_name_label)
+
+
+## 멀티플레이 부활 (동료가 살아남아 야영지에 도착했을 때 등)
+func revive() -> void:
+	_is_dead = false
+	_weapon_pivot.show()
+	_body_sprite.rotation = 0.0
+	_body_sprite.modulate = Color.WHITE
+	_invincible_left = 1.5
+	cleanse()
+
+
 func _ready() -> void:
+	if has_meta(&"net_mirror"):
+		net_mode = NetMode.MIRROR
+	if net_mode == NetMode.LOCAL:
+		peer_id = Net.my_id()
+	if Net.is_online():
+		_add_name_label()
+	if net_mode != NetMode.LOCAL:
+		_body_base_y = _body_sprite.position.y
+		_swing_fx.modulate.a = 0.0
+		_camera.enabled = false
+		if net_mode == NetMode.PUPPET:
+			add_to_group(&"player")
+			add_to_group(&"remote_players")
+			collision_mask = 0  # 위치는 그 사람이 보내 준 대로 — 벽에 걸리지 않게
+		return
 	add_to_group(&"player")
 	_body_base_y = _body_sprite.position.y
 	_swing_fx.modulate.a = 0.0
@@ -185,6 +313,10 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if net_mode != NetMode.LOCAL:
+		if net_mode == NetMode.PUPPET:
+			_puppet_process(delta)
+		return
 	if _is_dead:
 		velocity = velocity.move_toward(Vector2.ZERO, friction * delta)
 		move_and_slide()
@@ -205,6 +337,9 @@ func _physics_process(delta: float) -> void:
 	else:
 		# get_vector 는 이미 길이 1 이하로 정규화되어 대각선도 속도가 같습니다.
 		var input_dir := Input.get_vector(&"move_left", &"move_right", &"move_up", &"move_down")
+		var ui_locked := Net.ui_blocks_input()  # 멀티플레이: 상점 · 인벤토리 · 설정창이 열려 있으면 멈춰 섬 (게임은 계속 흐름)
+		if ui_locked:
+			input_dir = Vector2.ZERO
 		if is_charmed():
 			# 매혹: 조작 불가, 매혹한 적에게 천천히 끌려감
 			input_dir = Vector2.ZERO
@@ -225,7 +360,7 @@ func _physics_process(delta: float) -> void:
 		else:
 			velocity = velocity.move_toward(Vector2.ZERO, friction * traction * delta)
 
-		if Input.is_action_just_pressed(&"dash") and _dash_cooldown_left <= 0.0 and not is_charmed() and not is_puppeted() and _root_left <= 0.0:
+		if not ui_locked and Input.is_action_just_pressed(&"dash") and _dash_cooldown_left <= 0.0 and not is_charmed() and not is_puppeted() and _root_left <= 0.0:
 			_start_dash(input_dir)
 
 	# 미는 힘은 이번 프레임 이동에만 더하고 속도에는 남기지 않음 (쌓이지 않게)
@@ -238,7 +373,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _is_dead or is_charmed():
+	if net_mode != NetMode.LOCAL or _is_dead or is_charmed() or Net.ui_blocks_input():
 		return
 	if event.is_action_pressed(&"use_potion"):
 		if _potion_cooldown_left <= 0.0 and GameManager.use_potion():
@@ -267,7 +402,7 @@ func _unhandled_input(event: InputEvent) -> void:
 # ============================================================ 공개 API (컴포넌트들이 사용)
 ## 정규화된 조준 방향 (플레이어 손 → 마우스)
 func get_aim_direction() -> Vector2:
-	return _aim_direction
+	return _aim_direction  # PUPPET 은 _puppet_process 에서 그 사람이 보낸 조준으로 맞춰 둠
 
 
 ## 근접 공격 판정 중심 (무기 피벗 = 플레이어 손 위치)
@@ -290,16 +425,22 @@ func get_aim_point(max_range: float) -> Vector2:
 
 
 func can_attack() -> bool:
-	return not _is_dead and _dash_time_left <= 0.0 and not _guard.is_guarding() and not is_charmed() and not is_puppeted()
+	if net_mode != NetMode.LOCAL:
+		return bool(_ns("can_attack", false))
+	return not _is_dead and _dash_time_left <= 0.0 and not _guard.is_guarding() and not is_charmed() and not is_puppeted() and not Net.ui_blocks_input()
 
 
 func can_guard() -> bool:
-	return not _is_dead and _dash_time_left <= 0.0 and not is_charmed() and not is_puppeted()
+	if net_mode != NetMode.LOCAL:
+		return bool(_ns("can_guard", false))
+	return not _is_dead and _dash_time_left <= 0.0 and not is_charmed() and not is_puppeted() and not Net.ui_blocks_input()
 
 
 ## 매혹 (서큐버스): duration 동안 이동·공격·가드·대시·포션 불가. charmer 쪽으로 천천히 끌려감
 ## (바실리스크의 「석화」, 마르스의 「공포」도 같은 행동불능 — charmer 가 없으면 제자리)
 func apply_charm(duration: float, charmer: Node2D = null, label: String = "매혹") -> void:
+	if _forwarded(&"apply_charm", [duration, Net.node_ref(charmer), label]):
+		return
 	if _is_dead:
 		return
 	_charm_label = label
@@ -319,16 +460,22 @@ func apply_charm(duration: float, charmer: Node2D = null, label: String = "매�
 
 ## 매혹·석화·공포를 바로 풀어 줌 (보스가 쓰러졌을 때 등)
 func release_charm() -> void:
+	if _forwarded(&"release_charm", []):
+		return
 	_charm_left = 0.0
 
 
 func is_charmed() -> bool:
+	if net_mode != NetMode.LOCAL:
+		return bool(_ns("charmed", false))
 	return _charm_left > 0.0
 
 
 ## 꼭두각시 조종 시작/갱신 (마리오네트). master 는 get_puppet_pull(player) -> Vector2 를 가져야 함.
 ## strength: 1 이면 완전히 조종당함, 낮을수록 내 입력이 더 먹힘. threads: 남은 실 수 (상태 표시)
 func set_puppet(master: Node2D, strength: float, threads: int) -> void:
+	if _forwarded(&"set_puppet", [Net.node_ref(master), strength, threads], true):
+		return
 	if _is_dead:
 		return
 	_puppet_master = master
@@ -339,6 +486,8 @@ func set_puppet(master: Node2D, strength: float, threads: int) -> void:
 
 
 func release_puppet() -> void:
+	if _forwarded(&"release_puppet", []):
+		return
 	_puppet_master = null
 	_puppet_strength = 0.0
 	_puppet_threads = 0
@@ -346,16 +495,22 @@ func release_puppet() -> void:
 
 ## 바깥에서 미는 힘 (눈보라). 매 프레임 호출해야 계속 밀림
 func apply_push(push_velocity: Vector2) -> void:
+	if _forwarded(&"apply_push", [push_velocity], true):
+		return
 	_push += push_velocity
 
 
 ## 냉기 게이지 표시 (빙결의 여왕이 매 프레임 알려 줌, 0 이면 숨김)
 func set_chill(value: float) -> void:
+	if _forwarded(&"set_chill", [value], true):
+		return
 	_chill = clampf(value, 0.0, 100.0)
 
 
 ## 묶임: duration 동안 이동·대시 불가 (공격·가드는 가능). label 은 상태 표시 이름
 func apply_root(duration: float, label: String) -> void:
+	if _forwarded(&"apply_root", [duration, label]):
+		return
 	if _is_dead:
 		return
 	_root_left = maxf(_root_left, duration)
@@ -369,20 +524,28 @@ const SLIP_TRACTION := 0.12
 
 ## 빙판 위에 있음 (매 프레임 호출해야 유지)
 func mark_slippery() -> void:
+	if _forwarded(&"mark_slippery", [], true):
+		return
 	_slip_left = 0.1
 
 
 ## 신탁의 연기 속 (매 프레임 호출): 조준이 흔들림
 func mark_smoke() -> void:
+	if _forwarded(&"mark_smoke", [], true):
+		return
 	_smoke_left = 0.1
 
 
 func is_in_smoke() -> bool:
+	if net_mode != NetMode.LOCAL:
+		return bool(_ns("smoke", false))
 	return _smoke_left > 0.0
 
 
 ## 역병: duration 동안 포션 회복 절반 + 2초마다 발밑에 역병 장판이 퍼짐
 func apply_plague(duration: float) -> void:
+	if _forwarded(&"apply_plague", [duration]):
+		return
 	if _is_dead:
 		return
 	if _plague_left <= 0.0:
@@ -393,6 +556,8 @@ func apply_plague(duration: float) -> void:
 
 ## 상태 이상을 모두 씻어 냄 (고대 용의 피)
 func cleanse() -> void:
+	if _forwarded(&"cleanse", []):
+		return
 	_burn_left = 0.0
 	_slow_left = 0.0
 	_armor_break_left = 0.0
@@ -441,7 +606,7 @@ func sound_last_trumpet(relic: RelicData) -> void:
 		var ratio := relic.boss_damage_ratio if enemy.is_boss else relic.normal_damage_ratio
 		Fx.pillar(enemy, enemy.global_position, Color(1.0, 0.95, 0.6), 18.0, 160.0, 0.6)
 		enemy.stun(relic.stun_time)
-		enemy.take_damage(maxi(1, roundi(enemy.max_hp * ratio)), Vector2.ZERO, true, 99999999)
+		Enemy.hit(enemy, maxi(1, roundi(enemy.max_hp * ratio)), Vector2.ZERO, true, 99999999)
 	_invincible_left = maxf(_invincible_left, relic.invincible_time)
 	GameManager.heal_player(roundi(GameManager.max_hp * relic.heal_ratio))
 	Fx.flash(self, global_position, Color(1.0, 0.95, 0.7), 260.0, 0.8)
@@ -452,30 +617,42 @@ func sound_last_trumpet(relic: RelicData) -> void:
 
 
 func cure_plague() -> void:
+	if _forwarded(&"cure_plague", []):
+		return
 	_plague_left = 0.0
 
 
 func is_plagued() -> bool:
+	if net_mode != NetMode.LOCAL:
+		return bool(_ns("plagued", false))
 	return _plague_left > 0.0
 
 
 func is_slippery() -> bool:
+	if net_mode != NetMode.LOCAL:
+		return bool(_ns("slippery", false))
 	return _slip_left > 0.0
 
 
 ## 부패: duration 동안 포션으로 회복할 수 없음
 func apply_decay(duration: float) -> void:
+	if _forwarded(&"apply_decay", [duration]):
+		return
 	if _is_dead:
 		return
 	_decay_left = maxf(_decay_left, duration)
 
 
 func is_decayed() -> bool:
+	if net_mode != NetMode.LOCAL:
+		return bool(_ns("decayed", false))
 	return _decay_left > 0.0
 
 
 ## 성흔: duration 동안 포션의 회복이 피해로 바뀜
 func apply_stigma(duration: float) -> void:
+	if _forwarded(&"apply_stigma", [duration]):
+		return
 	if _is_dead:
 		return
 	_stigma_left = maxf(_stigma_left, duration)
@@ -483,21 +660,29 @@ func apply_stigma(duration: float) -> void:
 
 
 func is_stigmatized() -> bool:
+	if net_mode != NetMode.LOCAL:
+		return bool(_ns("stigma", false))
 	return _stigma_left > 0.0
 
 
 ## 신앙 게이지 (0~100). 높을수록 공격력이 오름 — 가득 차면 아스타로트가 광신화를 검
 func set_faith(value: float) -> void:
+	if _forwarded(&"set_faith", [value], true):
+		return
 	_faith = clampf(value, 0.0, 100.0)
 	GameManager.faith_damage_bonus = _faith / 100.0 * FAITH_MAX_BONUS
 
 
 func get_faith() -> float:
+	if net_mode != NetMode.LOCAL:
+		return float(_ns("faith", 0.0))
 	return _faith
 
 
 ## 불꽃 부여 (화로에 닿으면 duration 동안)
 func apply_fire_enchant(duration: float) -> void:
+	if _forwarded(&"apply_fire_enchant", [duration]):
+		return
 	if _is_dead:
 		return
 	if _fire_enchant_left <= 0.0:
@@ -506,6 +691,8 @@ func apply_fire_enchant(duration: float) -> void:
 
 
 func has_fire_enchant() -> bool:
+	if net_mode != NetMode.LOCAL:
+		return bool(_ns("fire_enchant", false))
 	return _fire_enchant_left > 0.0
 
 
@@ -514,28 +701,40 @@ const FAITH_MAX_BONUS := 0.5
 
 
 func release_root() -> void:
+	if _forwarded(&"release_root", []):
+		return
 	_root_left = 0.0
 
 
 func is_rooted() -> bool:
+	if net_mode != NetMode.LOCAL:
+		return bool(_ns("rooted", false))
 	return _root_left > 0.0
 
 
 func get_chill() -> float:
+	if net_mode != NetMode.LOCAL:
+		return float(_ns("chill", 0.0))
 	return _chill
 
 
 func is_puppeted() -> bool:
+	if net_mode != NetMode.LOCAL:
+		return bool(_ns("puppeted", false))
 	return _puppet_master != null and is_instance_valid(_puppet_master) and _puppet_strength > 0.0
 
 
 func get_puppet_strength() -> float:
+	if net_mode != NetMode.LOCAL:
+		return float(_ns("puppet_strength", 0.0))
 	return _puppet_strength if is_puppeted() else 0.0
 
 
 ## 「죽음의 낙인」 추가. DEATH_MARK_MAX 개가 되면 사형 선고 (EXECUTION_DELAY 뒤 최대 체력의 35% 피해, 그 순간 대시 중이면 회피)
 ## 낙인은 마지막으로 쌓인 뒤 DEATH_MARK_KEEP_TIME 이 지나면 하나씩 사라짐
 func add_death_mark(count: int = 1) -> void:
+	if _forwarded(&"add_death_mark", [count]):
+		return
 	if _is_dead or count <= 0 or _execution_left >= 0.0:
 		return
 	death_marks = mini(death_marks + count, DEATH_MARK_MAX)
@@ -549,6 +748,8 @@ func add_death_mark(count: int = 1) -> void:
 
 
 func is_sentenced() -> bool:
+	if net_mode != NetMode.LOCAL:
+		return bool(_ns("sentenced", false))
 	return _execution_left >= 0.0
 
 
@@ -576,14 +777,20 @@ func _update_death_marks(delta: float) -> void:
 
 
 func is_dashing() -> bool:
+	if net_mode != NetMode.LOCAL:
+		return bool(_ns("dashing", false))
 	return _dash_time_left > 0.0
 
 
 func is_guarding() -> bool:
+	if net_mode != NetMode.LOCAL:
+		return bool(_ns("guarding", false))
 	return _guard.is_guarding()
 
 
 func is_invincible() -> bool:
+	if net_mode != NetMode.LOCAL:
+		return bool(_ns("invincible", false))
 	return _invincible_left > 0.0 or _dash_time_left > 0.0
 
 
@@ -681,11 +888,18 @@ func end_windup(fired: bool) -> void:
 
 
 func is_winding_up() -> bool:
+	if net_mode != NetMode.LOCAL:
+		return bool(_ns("winding_up", false))
 	return _windup_weapon != null
 
 
 ## 텔레포트: 즉시 이동 + 카메라를 새 방의 경계에 맞춤
 func teleport_to(at_global: Vector2, camera_bounds: Rect2) -> void:
+	if net_mode == NetMode.PUPPET:
+		set_net_target(at_global, true)
+		return
+	if net_mode == NetMode.LOCAL and Net.is_host():
+		Net.on_host_teleport(at_global, camera_bounds)  # 동료들도 같은 곳으로
 	if _windup_weapon != null:
 		end_windup(false)
 	global_position = at_global
@@ -713,12 +927,16 @@ func set_camera_bounds(bounds: Rect2) -> void:
 
 ## 빙결 등으로 이동속도 감소
 func apply_slow(multiplier: float, duration: float) -> void:
+	if _forwarded(&"apply_slow", [multiplier, duration]):
+		return
 	_slow_multiplier = minf(multiplier, _slow_multiplier) if _slow_left > 0.0 else multiplier
 	_slow_left = maxf(_slow_left, duration)
 
 
 ## 방어력 감소: duration 동안 방패·투구·갑옷 등의 방어력이 amount 만큼 줄어듦 (그리핀의 포효)
 func apply_armor_break(amount: int, duration: float) -> void:
+	if _forwarded(&"apply_armor_break", [amount, duration]):
+		return
 	if _is_dead or amount <= 0:
 		return
 	amount = Balance.scale(amount)  # 몬스터 쪽 예전 단위
@@ -727,15 +945,21 @@ func apply_armor_break(amount: int, duration: float) -> void:
 
 
 func is_armor_broken() -> bool:
+	if net_mode != NetMode.LOCAL:
+		return bool(_ns("armor_broken", false))
 	return _armor_break_left > 0.0
 
 
 ## 지금 실제로 적용되는 방어력 (방어력 감소 반영)
 func get_effective_defense() -> int:
+	if net_mode != NetMode.LOCAL:
+		return int(_ns("defense", 0))
 	return maxi(GameManager.get_total_defense() - (_armor_break_amount if _armor_break_left > 0.0 else 0), 0)
 
 
 func is_slowed() -> bool:
+	if net_mode != NetMode.LOCAL:
+		return bool(_ns("slowed", false))
 	return _slow_left > 0.0
 
 
@@ -746,6 +970,8 @@ const BURN_TICK_TIME := 0.5
 ## 실제 피해 = tick_damage × GameManager.get_dot_multiplier() (방어력이 높을수록 덜 들어옴, 최소 1).
 ## 가드·대시 무적으로 막을 수 없고, 펜던트의 체력 재생으로 버팁니다.
 func apply_burn(tick_damage: int, duration: float, poison: bool = false) -> void:
+	if _forwarded(&"apply_burn", [tick_damage, duration, poison]):
+		return
 	if _is_dead or tick_damage <= 0 or GameManager.get_buff_value("burn_immune") > 0.0:
 		return  # 원초의 불꽃: 화상 면역
 	tick_damage = Balance.scale(tick_damage)  # 화상 수치는 몬스터 쪽 예전 단위
@@ -757,16 +983,22 @@ func apply_burn(tick_damage: int, duration: float, poison: bool = false) -> void
 
 
 func is_burning() -> bool:
+	if net_mode != NetMode.LOCAL:
+		return bool(_ns("burning", false))
 	return _burn_left > 0.0
 
 
 ## 화상 1회분 실제 피해 (방어력 반영)
 func get_burn_tick_damage() -> int:
+	if net_mode != NetMode.LOCAL:
+		return int(_ns("burn_tick", 0))
 	return maxi(1, roundi(_burn_tick_damage * GameManager.get_dot_multiplier()))
 
 
 ## 적 장판(점액 바닥 등) 위에 있는 동안 매 프레임 호출 → 상태 표시
 func mark_floor_status(text: String) -> void:
+	if _forwarded(&"mark_floor_status", [text], true):
+		return
 	_floor_status = text
 	_floor_status_left = 0.15
 
@@ -849,6 +1081,8 @@ func _update_status(delta: float) -> void:
 
 
 func shake_camera(strength: float) -> void:
+	if _forwarded(&"shake_camera", [strength], true):
+		return
 	if not bool(Profile.get_setting("screen_shake")):
 		return  # 설정에서 화면 흔들림을 끔
 	_shake_strength = maxf(_shake_strength, strength)
@@ -859,6 +1093,8 @@ func shake_camera(strength: float) -> void:
 ## attacker: 근접 공격한 적 (막으면 밀려나고, 퍼펙트 가드면 기절)
 ## amount 는 몬스터 쪽 예전 단위 — 여기서 Balance.K 배가 됨
 func take_hit(amount: int, from_position: Vector2, attacker: Enemy = null) -> HitResult:
+	if net_mode != NetMode.LOCAL:
+		return _puppet_take_hit(amount, from_position, attacker)
 	if _is_dead or is_dashing():
 		return HitResult.IGNORED  # 대시 중에는 공격이 통과
 	amount = Balance.scale(amount)
@@ -888,6 +1124,12 @@ func take_hit(amount: int, from_position: Vector2, attacker: Enemy = null) -> Hi
 ## amount 는 실제 피해 (대부분 최대 체력 비율). 예전 단위 수치를 넘길 때는 Balance.scale() 로 키워서
 ## dodgeable 이 false 면 대시로도 못 피함 (대마법사 아르카나의 메테오 — 안전지대로만 피함)
 func take_unblockable_hit(amount: int, from_position: Vector2, dodgeable: bool = true) -> HitResult:
+	if net_mode != NetMode.LOCAL:
+		if net_mode == NetMode.MIRROR or is_net_dead() or (dodgeable and is_dashing()):
+			return HitResult.IGNORED
+		# 최대 체력 비율로 보내서 그 사람의 최대 체력에 맞춰 들어가게
+		Net.forward_player_call(peer_id, &"_net_unblockable_hit", [float(amount) / maxf(GameManager.max_hp, 1.0), from_position, dodgeable], false)
+		return HitResult.DAMAGED
 	if _is_dead or (dodgeable and is_dashing()):
 		return HitResult.IGNORED
 	var hit_dir := global_position.direction_to(from_position)
@@ -896,6 +1138,50 @@ func take_unblockable_hit(amount: int, from_position: Vector2, dodgeable: bool =
 	shake_camera(6.0)
 	GameManager.damage_player(maxi(amount, 1))
 	return HitResult.DAMAGED
+
+
+## 방장 컴퓨터에서 남의 용사가 맞았을 때: 가드 · 무적은 그 사람이 보내 준 상태로 판정하고, 실제 피해는 그 사람 컴퓨터에서
+func _puppet_take_hit(amount: int, from_position: Vector2, attacker: Enemy) -> HitResult:
+	if net_mode == NetMode.MIRROR or is_net_dead() or is_dashing():
+		return HitResult.IGNORED
+	var hit_dir := global_position.direction_to(from_position)
+	var result := HitResult.DAMAGED
+	if is_guarding() and (hit_dir == Vector2.ZERO or absf(_aim_direction.angle_to(hit_dir)) <= deg_to_rad(float(_ns("block_arc", 120.0))) * 0.5):
+		result = HitResult.PARRIED if bool(_ns("perfect", false)) else HitResult.BLOCKED
+		if attacker != null:
+			if result == HitResult.PARRIED:
+				attacker.apply_knockback(global_position.direction_to(attacker.global_position) * block_push_force * 1.5)
+				attacker.stun(parry_stun_time)
+			else:
+				attacker.apply_knockback(hit_dir * block_push_force)
+	elif bool(_ns("invincible", false)):
+		return HitResult.IGNORED
+	Net.forward_player_call(peer_id, &"_net_take_hit", [amount, from_position], false)
+	return result
+
+
+## 방장이 보낸 「맞음」을 이 컴퓨터의 용사에게 적용 (참가자 쪽)
+func _net_take_hit(amount: int, from_position: Vector2) -> void:
+	take_hit(amount, from_position, null)
+
+
+func _net_unblockable_hit(ratio: float, from_position: Vector2, dodgeable: bool) -> void:
+	take_unblockable_hit(maxi(1, roundi(ratio * GameManager.max_hp)), from_position, dodgeable)
+
+
+## 방장에게 보낼 이 용사의 상태 (PUPPET 의 is_*() 가 씀)
+func get_net_status() -> Dictionary:
+	var shield := GameManager.equipped_shield
+	return {
+		"aim": _aim_direction, "dead": is_net_dead(), "dashing": is_dashing(), "guarding": is_guarding(), "invincible": is_invincible(),
+		"perfect": _guard.is_in_perfect_window(), "block_arc": shield.block_arc_degrees if shield != null else 0.0,
+		"charmed": is_charmed(), "smoke": is_in_smoke(), "plagued": is_plagued(), "slippery": is_slippery(), "decayed": is_decayed(),
+		"stigma": is_stigmatized(), "faith": get_faith(), "fire_enchant": has_fire_enchant(), "rooted": is_rooted(), "chill": get_chill(),
+		"puppeted": is_puppeted(), "puppet_strength": get_puppet_strength(), "sentenced": is_sentenced(), "winding_up": is_winding_up(),
+		"armor_broken": is_armor_broken(), "defense": get_effective_defense(), "slowed": is_slowed(), "burning": is_burning(),
+		"burn_tick": get_burn_tick_damage(), "can_attack": can_attack(), "can_guard": can_guard(), "death_marks": death_marks,
+		"hp": GameManager.hp, "max_hp": GameManager.max_hp,
+	}
 
 
 # ============================================================ 내부

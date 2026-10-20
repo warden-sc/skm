@@ -165,7 +165,7 @@ func plug(index: int) -> void:
 			_branch_spot = (_branch_spot + 1) % BRANCH_SPOTS.size()
 			branch.home = _area().get_center() + BRANCH_SPOTS[_branch_spot]
 			branch.hide_for(branch_respawn)
-	GameManager.show_notice("월계수 가지로 틈을 막았다! (남은 틈 %d)" % open_fissures().size(), Color(0.6, 1.0, 0.5))
+	Net.announce("월계수 가지로 틈을 막았다! (남은 틈 %d)" % open_fissures().size(), Color(0.6, 1.0, 0.5))
 	if open_fissures().is_empty() and not _hiding:
 		_corner()
 	_update_status()
@@ -176,7 +176,7 @@ func _corner() -> void:
 		return
 	_cornered = true
 	super.stun(8.0)
-	GameManager.show_notice("모든 틈이 막혔다! 피톤이 숨을 곳을 잃고 휘청인다", Color(0.7, 1.0, 0.6))
+	Net.announce("모든 틈이 막혔다! 피톤이 숨을 곳을 잃고 휘청인다", Color(0.7, 1.0, 0.6))
 
 
 func _update_status() -> void:
@@ -224,4 +224,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("피톤이 땅을 울리며 몸부림친다! 더 자주 틈으로 숨는다", Color(0.7, 0.9, 0.5))
+	Net.announce("피톤이 땅을 울리며 몸부림친다! 더 자주 틈으로 숨는다", Color(0.7, 0.9, 0.5))

@@ -114,7 +114,7 @@ func _physics_process(delta: float) -> void:
 			if _buried_left <= 0.0:
 				defense = _base_defense
 				set_status("가장자리의 바위를 쳐서 거인 위로 떨어뜨려라", Color(1.0, 0.75, 0.5))
-				GameManager.show_notice("엔켈라도스가 바위를 밀쳐 내고 일어선다!", Color(1.0, 0.6, 0.3))
+				Net.announce("엔켈라도스가 바위를 밀쳐 내고 일어선다!", Color(1.0, 0.6, 0.3))
 	super._physics_process(delta)
 
 
@@ -152,7 +152,7 @@ func _land_rock(target: Vector2) -> void:
 		take_damage(roundi(max_hp * bury_ratio), Vector2.ZERO, false, 999999)
 		super.stun(bury_time)
 		set_status("시칠리아 섬에 묻힘! 방어력 -%d" % Balance.scale(bury_defense), Color(1.0, 0.85, 0.5))
-		GameManager.show_notice("떨어진 바위산이 엔켈라도스를 짓눌렀다!", Color(1.0, 0.85, 0.5))
+		Net.announce("떨어진 바위산이 엔켈라도스를 짓눌렀다!", Color(1.0, 0.85, 0.5))
 	else:
 		_misses += 1
 		FloatingText.spawn(self, target + Vector2(0, -20), "빗나갔다!", Color(0.8, 0.8, 0.7), true)
@@ -195,4 +195,4 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("엔켈라도스: 섬 하나로 나를 묻을 수는 없다! 화산이 더 거세게 터진다", Color(1.0, 0.5, 0.3))
+	Net.announce("엔켈라도스: 섬 하나로 나를 묻을 수는 없다! 화산이 더 거세게 터진다", Color(1.0, 0.5, 0.3))

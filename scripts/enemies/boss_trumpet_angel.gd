@@ -97,7 +97,7 @@ func _on_trumpet_broken(_t: Enemy) -> void:
 	_regrow_left = trumpet_regrow
 	_skipped += 1
 	_windup_left = 0.0
-	GameManager.show_notice("나팔을 부쉈다! 「%s」의 재앙이 끊긴다" % PLAGUE_NAMES[next_plague], Color(1.0, 0.9, 0.6))
+	Net.announce("나팔을 부쉈다! 「%s」의 재앙이 끊긴다" % PLAGUE_NAMES[next_plague], Color(1.0, 0.9, 0.6))
 	next_plague = (next_plague + 1) % PLAGUE_NAMES.size()
 	super.stun(5.0)
 	_update_status()
@@ -111,7 +111,7 @@ func blow_trumpet() -> bool:
 	next_plague = (next_plague + 1) % PLAGUE_NAMES.size()
 	_blown += 1
 	Fx.shockwave(self, get_hit_center(), Color(1.0, 0.9, 0.5), 140.0, 0.6)
-	GameManager.show_notice("%d번째 나팔: 「%s」" % [_blown, PLAGUE_NAMES[plague]], Color(1.0, 0.9, 0.6))
+	Net.announce("%d번째 나팔: 「%s」" % [_blown, PLAGUE_NAMES[plague]], Color(1.0, 0.9, 0.6))
 	var area := _area().grow(-20.0)
 	match plague:
 		Plague.HAIL:
@@ -180,7 +180,7 @@ func _run_pattern(pattern: int) -> float:
 			if not has_trumpet():
 				return _run_pattern(Pattern.FEATHER)
 			_windup_left = trumpet_windup * (0.75 if phase_two else 1.0)
-			GameManager.show_notice("천사가 나팔을 든다 — 다음 재앙: 「%s」 (나팔을 부수면 끊긴다)" % PLAGUE_NAMES[next_plague], Color(1.0, 0.9, 0.6))
+			Net.announce("천사가 나팔을 든다 — 다음 재앙: 「%s」 (나팔을 부수면 끊긴다)" % PLAGUE_NAMES[next_plague], Color(1.0, 0.9, 0.6))
 			return _windup_left + 0.3
 		Pattern.SPEAR:
 			for i in 12:
@@ -209,4 +209,4 @@ func _die() -> void:
 
 func _on_phase_two() -> void:
 	pattern_order = [Pattern.TRUMPET, Pattern.SPEAR, Pattern.TRUMPET, Pattern.FEATHER, Pattern.CHORUS]
-	GameManager.show_notice("천사가 하늘을 우러른다 — 나팔을 더 자주 분다", Color(1.0, 0.9, 0.6))
+	Net.announce("천사가 하늘을 우러른다 — 나팔을 더 자주 분다", Color(1.0, 0.9, 0.6))

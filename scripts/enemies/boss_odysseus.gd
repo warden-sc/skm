@@ -148,7 +148,7 @@ func disguise() -> void:
 		for i in decoy_count:
 			request_summon(decoy_scene, global_position + Vector2.from_angle(TAU * i / decoy_count) * 70.0)
 	Fx.burst(self, get_hit_center(), Color(0.8, 0.75, 0.6), 24, 60.0, 0.6)
-	GameManager.show_notice("오디세우스가 늙은 거지로 변장해 거지들 사이에 숨었다!", Color(0.9, 0.85, 0.7))
+	Net.announce("오디세우스가 늙은 거지로 변장해 거지들 사이에 숨었다!", Color(0.9, 0.85, 0.7))
 
 
 func _end_disguise(revealed: bool) -> void:
@@ -161,7 +161,7 @@ func _end_disguise(revealed: bool) -> void:
 	if revealed:
 		_reveals += 1
 		super.stun(5.0)
-		GameManager.show_notice("정체를 들켰다! 오디세우스가 휘청인다", Color(1.0, 0.85, 0.5))
+		Net.announce("정체를 들켰다! 오디세우스가 휘청인다", Color(1.0, 0.85, 0.5))
 	set_status("도끼 %d/12" % standing_axes(), Color(0.95, 0.85, 0.6))
 
 
@@ -177,7 +177,7 @@ func _physics_process(delta: float) -> void:
 			_restand_left -= delta
 			if _restand_left <= 0.0:
 				stand_axes()
-				GameManager.show_notice("오디세우스가 열두 도끼를 다시 세웠다", Color(0.95, 0.85, 0.6))
+				Net.announce("오디세우스가 열두 도끼를 다시 세웠다", Color(0.95, 0.85, 0.6))
 		if _disguise_left > 0.0:
 			_disguise_left -= delta
 			if _disguise_left <= 0.0:
@@ -194,7 +194,7 @@ func _run_pattern(pattern: int) -> float:
 	match pattern:
 		Pattern.AXE_ARROW:
 			var from_left := global_position.x < _area().get_center().x
-			GameManager.show_notice("오디세우스가 열두 도끼 줄을 겨눈다! 도끼 줄 위에서 벗어나라", Color(1.0, 0.85, 0.5))
+			Net.announce("오디세우스가 열두 도끼 줄을 겨눈다! 도끼 줄 위에서 벗어나라", Color(1.0, 0.85, 0.5))
 			shoot_through_axes(from_left)
 			if phase_two:
 				_after(1.2, func() -> void:
@@ -223,4 +223,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("오디세우스: 이타카의 왕이 돌아왔다! 열두 도끼 화살이 두 번 날아온다", Color(1.0, 0.8, 0.5))
+	Net.announce("오디세우스: 이타카의 왕이 돌아왔다! 열두 도끼 화살이 두 번 날아온다", Color(1.0, 0.8, 0.5))

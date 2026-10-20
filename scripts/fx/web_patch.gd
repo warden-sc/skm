@@ -6,6 +6,8 @@ extends Node2D
 var radius: float = 30.0
 var bind_time: float = 1.2
 var _stand: float = 0.0
+## 멀티플레이: 용사마다 거미줄 위에 서 있던 시간
+var _stands: Dictionary = {}
 var _fade_left: float = -1.0
 var _time: float = 0.0
 
@@ -44,16 +46,21 @@ func _physics_process(delta: float) -> void:
 		if _fade_left <= 0.0:
 			queue_free()
 			return
-	var player := get_tree().get_first_node_in_group(&"player") as Player
-	if player != null and contains(player.global_position) and not player.is_dashing():
-		player.apply_slow(0.5, 0.2)
-		player.mark_floor_status("거미줄 (이동 속도 -50%, 오래 서 있으면 묶임)")
-		_stand += delta
-		if _stand >= bind_time and not player.is_rooted():
-			_stand = 0.0
-			player.apply_root(1.5, "거미줄에 묶임! (1.5초)")
-	else:
-		_stand = maxf(_stand - delta * 2.0, 0.0)
+	var anyone := false
+	for player in Player.get_all(get_tree()):
+		var stand: float = _stands.get(player.get_instance_id(), 0.0)
+		if contains(player.global_position) and not player.is_dashing():
+			anyone = true
+			player.apply_slow(0.5, 0.2)
+			player.mark_floor_status("거미줄 (이동 속도 -50%, 오래 서 있으면 묶임)")
+			stand += delta
+			if stand >= bind_time and not player.is_rooted():
+				stand = 0.0
+				player.apply_root(1.5, "거미줄에 묶임! (1.5초)")
+		else:
+			stand = maxf(stand - delta * 2.0, 0.0)
+		_stands[player.get_instance_id()] = stand
+	_stand = _stands.values().max() if anyone and not _stands.is_empty() else maxf(_stand - delta * 2.0, 0.0)
 	queue_redraw()
 
 

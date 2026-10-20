@@ -142,7 +142,7 @@ func begin_swallow() -> void:
 	_swallows += 1
 	_swallow_cooldown = swallow_interval * (0.75 if phase_two else 1.0)
 	whirlpool.swallow(swallow_time)
-	GameManager.show_notice("카립디스가 바닷물을 삼킨다! 한가운데로 빨려 들어가지 마라", Color(0.6, 0.85, 1.0))
+	Net.announce("카립디스가 바닷물을 삼킨다! 한가운데로 빨려 들어가지 마라", Color(0.6, 0.85, 1.0))
 	_after(swallow_time, func() -> void:
 		if not is_dead():
 			spit())
@@ -194,4 +194,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("해협이 요동친다! 카립디스가 더 자주 바닷물을 삼킨다", Color(0.6, 0.85, 1.0))
+	Net.announce("해협이 요동친다! 카립디스가 더 자주 바닷물을 삼킨다", Color(0.6, 0.85, 1.0))

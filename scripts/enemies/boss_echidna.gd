@@ -77,7 +77,7 @@ func lay_eggs() -> void:
 		_egg_queue += 1
 		var at := (global_position + Vector2.from_angle(TAU * i / count + randf_range(-0.3, 0.3)) * randf_range(70.0, 120.0)).clamp(a.position + Vector2(20, 30), a.end - Vector2(20, 20))
 		request_summon(egg_scene, at)
-	GameManager.show_notice("에키드나가 괴물의 알을 낳았다! 부화하기 전에 부술지, 어미의 분노를 피할지…", Color(0.9, 0.7, 1.0))
+	Net.announce("에키드나가 괴물의 알을 낳았다! 부화하기 전에 부술지, 어미의 분노를 피할지…", Color(0.9, 0.7, 1.0))
 
 
 func register_minion(minion: Enemy) -> void:
@@ -142,4 +142,4 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("에키드나: 아이들아, 깨어나라! 알이 더 빨리 부화한다", Color(0.9, 0.7, 1.0))
+	Net.announce("에키드나: 아이들아, 깨어나라! 알이 더 빨리 부화한다", Color(0.9, 0.7, 1.0))

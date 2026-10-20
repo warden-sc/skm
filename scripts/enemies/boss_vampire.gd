@@ -98,7 +98,7 @@ func begin_drain() -> void:
 	_drain_tick = DRAIN_TICK
 	_drain_cooldown = drain_interval * (0.75 if phase_two else 1.0)
 	set_status("흡혈: 피를 빨아들인다 — 멀리 떨어져 핏줄기를 끊어라!", Color(1.0, 0.35, 0.4))
-	GameManager.show_notice("피의 군주 벨이 피를 빨아들인다! 멀리 떨어지면 끊어진다", Color(1.0, 0.4, 0.45))
+	Net.announce("피의 군주 벨이 피를 빨아들인다! 멀리 떨어지면 끊어진다", Color(1.0, 0.4, 0.45))
 
 
 func _update_drain(delta: float) -> void:
@@ -191,4 +191,4 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("벨: 더… 더 많은 피를…! 흡혈이 더 잦아진다", Color(1.0, 0.35, 0.4))
+	Net.announce("벨: 더… 더 많은 피를…! 흡혈이 더 잦아진다", Color(1.0, 0.35, 0.4))

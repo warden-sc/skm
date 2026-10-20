@@ -87,7 +87,7 @@ func _on_wolf_died(wolf: Enemy) -> void:
 		_scatters += 1
 		super.stun(5.0)
 		Fx.burst(self, get_hit_center(), Color(0.7, 0.7, 0.75), 20, 70.0, 0.6)
-		GameManager.show_notice("무리가 흩어졌다! 루푸스가 홀로 남아 휘청인다", Color(0.85, 0.85, 0.9))
+		Net.announce("무리가 흩어졌다! 루푸스가 홀로 남아 휘청인다", Color(0.85, 0.85, 0.9))
 
 
 func _physics_process(delta: float) -> void:
@@ -132,7 +132,7 @@ func _run_pattern(pattern: int) -> float:
 				telegraph_strike(get_hit_center() + Vector2.from_angle(TAU * i / 12.0) * 52.0, 20.0, 0.9, howl_damage, Elements.Type.NONE)
 			Fx.shockwave(self, get_hit_center(), Color(0.9, 0.5, 0.4), 90.0, 0.6)
 			call_pack(pack_max)
-			GameManager.show_notice("루푸스가 울부짖는다! 늑대 무리가 다시 모여든다", Color(0.9, 0.7, 0.6))
+			Net.announce("루푸스가 울부짖는다! 늑대 무리가 다시 모여든다", Color(0.9, 0.7, 0.6))
 			return 1.3
 		Pattern.PECK:
 			var at := _player.global_position
@@ -158,4 +158,4 @@ func _die() -> void:
 
 func _on_phase_two() -> void:
 	pattern_order = [Pattern.BITE, Pattern.HOWL, Pattern.PECK, Pattern.BITE, Pattern.HOWL, Pattern.SUMMON]
-	GameManager.show_notice("루푸스의 눈이 붉게 타오른다! 울부짖음이 잦아진다", Color(1.0, 0.5, 0.4))
+	Net.announce("루푸스의 눈이 붉게 타오른다! 울부짖음이 잦아진다", Color(1.0, 0.5, 0.4))

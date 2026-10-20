@@ -88,7 +88,7 @@ func begin_illusion() -> void:
 		else:
 			request_summon(illusion_scene, at)
 	set_status("", Color.WHITE)  # 머리 위 문구로 진짜가 드러나지 않도록
-	GameManager.show_notice("나이트메어의 환각! 그림자가 있는 것이 진짜다", Color(0.85, 0.7, 1.0))
+	Net.announce("나이트메어의 환각! 그림자가 있는 것이 진짜다", Color(0.85, 0.7, 1.0))
 
 
 func register_minion(minion: Enemy) -> void:
@@ -169,4 +169,4 @@ func sleep_orbs() -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("나이트메어: 깨어날 수 없는 꿈을 꾸어라… 환영이 늘어난다", Color(0.85, 0.7, 1.0))
+	Net.announce("나이트메어: 깨어날 수 없는 꿈을 꾸어라… 환영이 늘어난다", Color(0.85, 0.7, 1.0))

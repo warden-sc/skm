@@ -109,7 +109,7 @@ func _on_tripod_broken(tripod: Enemy) -> void:
 		_breaks += 1
 		super.stun(6.0)
 		Fx.burst(self, get_hit_center(), Color(0.85, 0.75, 1.0), 24, 70.0, 0.6)
-		GameManager.show_notice("신탁이 내린 삼발이를 부쉈다! 피티아의 보호막이 걷힌다", Color(0.85, 0.8, 1.0))
+		Net.announce("신탁이 내린 삼발이를 부쉈다! 피티아의 보호막이 걷힌다", Color(0.85, 0.8, 1.0))
 		_oracle_left = 10.0
 	_update_status()
 
@@ -186,4 +186,4 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("피티아: 아폴론의 목소리가 들린다…! 신탁이 더 자주 옮겨 간다", Color(0.85, 0.8, 1.0))
+	Net.announce("피티아: 아폴론의 목소리가 들린다…! 신탁이 더 자주 옮겨 간다", Color(0.85, 0.8, 1.0))

@@ -107,7 +107,7 @@ func _on_tentacle_cut(_enemy: Enemy) -> void:
 		return
 	_regrow_left = regrow_time * (0.7 if phase_two else 1.0)
 	set_status("촉수를 모두 베었다: 본체가 드러남!", Color(1.0, 0.85, 0.5))
-	GameManager.show_notice("크라켄의 촉수를 모두 베었다! 지금 본체를 공격하라", Color(1.0, 0.85, 0.5))
+	Net.announce("크라켄의 촉수를 모두 베었다! 지금 본체를 공격하라", Color(1.0, 0.85, 0.5))
 	stun(2.0)
 	_after(3.0, func() -> void:
 		if get_status_text().begins_with("촉수를 모두"):
@@ -180,4 +180,4 @@ func _whirl(step: int, waves: int) -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("크라켄이 분노한다! 촉수가 더 빨리 다시 자란다", Color(0.6, 0.85, 1.0))
+	Net.announce("크라켄이 분노한다! 촉수가 더 빨리 다시 자란다", Color(0.6, 0.85, 1.0))

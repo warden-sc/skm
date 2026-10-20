@@ -96,7 +96,7 @@ func begin_rewind() -> void:
 	var snap := get_past_snapshot()
 	var target: Vector2 = snap["pos"]
 	set_status("모래시계가 뒤집힌다: 시간 역행!", Color(1.0, 0.85, 0.45))
-	GameManager.show_notice("아르케오스가 시간을 되감는다! %d초 전 자리로 끌려간다 — 도착하면 바로 대시!" % roundi(rewind_seconds), Color(1.0, 0.85, 0.45))
+	Net.announce("아르케오스가 시간을 되감는다! %d초 전 자리로 끌려간다 — 도착하면 바로 대시!" % roundi(rewind_seconds), Color(1.0, 0.85, 0.45))
 	# 보스는 플레이어가 끌려갈 자리를 알고 있다
 	telegraph_strike(target, 30.0, rewind_delay + rewind_strike_after, rewind_damage, Elements.Type.EARTH)
 	if phase_two:
@@ -163,4 +163,4 @@ func _hands(step: int) -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("아르케오스: 시간은 나의 편이다… 역행이 더 잦아진다", Color(1.0, 0.85, 0.45))
+	Net.announce("아르케오스: 시간은 나의 편이다… 역행이 더 잦아진다", Color(1.0, 0.85, 0.45))

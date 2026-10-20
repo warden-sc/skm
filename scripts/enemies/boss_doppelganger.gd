@@ -50,7 +50,8 @@ var _swaps: int = 0
 func _ready() -> void:
 	super._ready()
 	pattern_order = [Pattern.SHARDS, Pattern.BLINK, Pattern.RAIN, Pattern.SUMMON, Pattern.SHARDS, Pattern.BLINK]
-	GameManager.player_attacked.connect(_on_player_attacked)
+	if not has_meta(&"net_mirror"):  # 멀티플레이 참가자 화면의 복제본은 반응하지 않음
+		GameManager.player_attacked.connect(_on_player_attacked)
 
 
 func is_emerging() -> bool:
@@ -212,16 +213,16 @@ func _on_mirror_broken(_enemy: Enemy) -> void:
 	stun(2.0)
 	set_status("거울이… 깨졌어…!", Color(1.0, 0.7, 0.9))
 	_after(1.8, set_status.bind("", Color.WHITE))
-	GameManager.show_notice("거울을 부쉈다! 분신이 모두 사라졌다", Color(0.85, 0.75, 1.0))
+	Net.announce("거울을 부쉈다! 분신이 모두 사라졌다", Color(0.85, 0.75, 1.0))
 
 
 func _on_phase_two() -> void:
 	_clone_timer = 0.0
 	_swap_timer = swap_interval
 	if has_mirror():
-		GameManager.show_notice("도플갱어가 거울 속 분신들을 불러낸다! 거울을 부수면 분신이 사라진다", Color(0.85, 0.75, 1.0))
+		Net.announce("도플갱어가 거울 속 분신들을 불러낸다! 거울을 부수면 분신이 사라진다", Color(0.85, 0.75, 1.0))
 	else:
-		GameManager.show_notice("도플갱어: 거울만 있었다면…!", Color(0.85, 0.75, 1.0))
+		Net.announce("도플갱어: 거울만 있었다면…!", Color(0.85, 0.75, 1.0))
 
 
 # ============================================================ 패턴

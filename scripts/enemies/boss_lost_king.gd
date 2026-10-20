@@ -119,7 +119,7 @@ func _on_crown_broken(_enemy: Enemy) -> void:
 	_barrier_ring.hide()
 	set_status("왕관이… 짐의 마지막 왕권이…!", Color(1.0, 0.7, 0.4))
 	_after(1.5, set_status.bind("", Color.WHITE))
-	GameManager.show_notice("왕관이 부서졌다! 이제 왕관의 가호가 없다", Color(1.0, 0.85, 0.4))
+	Net.announce("왕관이 부서졌다! 이제 왕관의 가호가 없다", Color(1.0, 0.85, 0.4))
 	stun(2.0)
 	Fx.explosion(self, get_hit_center() + Vector2(0, -40), Color(1.0, 0.85, 0.35), 40.0, 3)
 
@@ -160,4 +160,4 @@ func _wrath(wave: int) -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("옥좌 잃은 왕: 듀라한마저 쓰러뜨렸단 말이냐… 짐의 옥좌를 돌려다오!", Color(0.8, 0.6, 1.0))
+	Net.announce("옥좌 잃은 왕: 듀라한마저 쓰러뜨렸단 말이냐… 짐의 옥좌를 돌려다오!", Color(0.8, 0.6, 1.0))

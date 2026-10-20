@@ -100,10 +100,18 @@ var _command_dir: Vector2 = Vector2.ZERO
 @onready var _hit_shape: CollisionShape2D = $CollisionShape2D
 
 
+## 멀티플레이 참가자 화면의 그림자 복제본 (움직임은 방장이 보내 줌, 맞히면 방장에게 피해를 보냄)
+var net_mirror: bool = false
+## 멀티플레이: 가까운 용사로 목표를 다시 고르는 간격
+const RETARGET_TIME := 1.5
+var _retarget_left: float = 0.0
+
+
 func _ready() -> void:
+	net_mirror = has_meta(&"net_mirror")
 	add_to_group(&"enemies")
 	collision_layer = Layers.ENEMY
-	collision_mask = Layers.PLAYER
+	collision_mask = 0 if net_mirror else Layers.PLAYER
 	hp = max_hp
 	_anim_time = randf() * 10.0
 	body_entered.connect(_on_body_entered)
@@ -137,8 +145,10 @@ func _physics_process(delta: float) -> void:
 	if _dead:
 		return
 	_anim_time += delta
-	if _player == null or not is_instance_valid(_player):
-		_player = get_tree().get_first_node_in_group(&"player") as Player
+	_retarget_left -= delta
+	if _player == null or not is_instance_valid(_player) or _player.is_net_dead() or _retarget_left <= 0.0:
+		_retarget_left = RETARGET_TIME
+		_pick_target()
 
 	_immune_text_cooldown = maxf(_immune_text_cooldown - delta, 0.0)
 	_stun_left = maxf(_stun_left - delta, 0.0)
@@ -188,7 +198,18 @@ func _update_visual(_delta: float, move: Vector2) -> void:
 
 
 func has_target() -> bool:
-	return _player != null and is_instance_valid(_player) and not GameManager.is_player_dead
+	return _player != null and is_instance_valid(_player) and not _player.is_net_dead()
+
+
+## 목표 용사 고르기: 혼자면 그 용사, 멀티플레이면 살아 있는 용사 중 가까운 쪽 (지금 목표보다 확실히 가까울 때만 바꿈)
+func _pick_target() -> void:
+	var nearest := Player.find_nearest(get_tree(), global_position)
+	if nearest == null:
+		return
+	if _player == null or not is_instance_valid(_player) or _player.is_net_dead():
+		_player = nearest
+	elif nearest != _player and nearest.global_position.distance_to(global_position) < _player.global_position.distance_to(global_position) * 0.7:
+		_player = nearest
 
 
 func is_dead() -> bool:
@@ -207,6 +228,9 @@ func get_hit_center() -> Vector2:
 ## 빙결 등으로 감속 (보스는 넉백 저항만큼 덜 느려짐)
 func apply_slow(multiplier: float, duration: float) -> void:
 	if _dead:
+		return
+	if net_mirror:
+		Net.forward_enemy_call(self, &"apply_slow", [multiplier, duration])
 		return
 	_slow_multiplier = lerpf(multiplier, 1.0, knockback_resistance * 0.5)
 	_slow_left = maxf(_slow_left, duration)
@@ -263,6 +287,9 @@ func _aura_radius() -> float:
 func apply_knockback(force: Vector2) -> void:
 	if _dead:
 		return
+	if net_mirror:
+		Net.forward_enemy_call(self, &"apply_knockback", [force])
+		return
 	_knockback += force * (1.0 - knockback_resistance)
 
 
@@ -285,6 +312,9 @@ static func on_player_hit(enemy: Enemy, hit_damage: int) -> void:
 ## duration 초 동안 0.5초마다 tick 피해 (방어력 무시) — 더 센 불이 붙으면 그쪽으로
 func ignite(tick: int, duration: float) -> void:
 	if _dead or tick <= 0:
+		return
+	if net_mirror:
+		Net.forward_enemy_call(self, &"ignite", [tick, duration])
 		return
 	if _ignite_left <= 0.0:
 		_ignite_timer = IGNITE_TICK
@@ -313,6 +343,9 @@ func _tick_ignite(delta: float) -> void:
 ## 퍼펙트 가드 등으로 기절. 보스는 넉백 저항만큼 기절 시간이 줄어듭니다.
 func stun(duration: float) -> void:
 	if _dead:
+		return
+	if net_mirror:
+		Net.forward_enemy_call(self, &"stun", [duration])
 		return
 	var actual := duration * (1.0 - knockback_resistance * 0.6)
 	_stun_left = maxf(_stun_left, actual)
@@ -402,6 +435,16 @@ func calc_damage(amount: int, armor_pen: int = 0) -> int:
 		return 0
 	var effective_defense := maxi(get_defense_value() - maxi(armor_pen, 0), 0)
 	return maxi(amount - effective_defense, maxi(ceili(amount * MIN_DAMAGE_RATIO), 1))
+
+
+## 용사의 공격이 적에게 닿을 때는 이 함수로 — 멀티플레이 참가자 화면의 복제본이면 방장에게 보내서 진짜 적이 맞음
+static func hit(enemy: Enemy, amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool = false, armor_pen: int = 0) -> void:
+	if enemy == null or enemy.is_dead():
+		return
+	if enemy.net_mirror:
+		Net.forward_enemy_call(enemy, &"take_damage", [amount, knockback, is_crit, armor_pen])
+		return
+	enemy.take_damage(amount, knockback, is_crit, armor_pen)
 
 
 ## amount 는 방어력 적용 전 피해. armor_pen 만큼 방어력을 무시합니다.

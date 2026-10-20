@@ -56,7 +56,7 @@ func _get_move_velocity(delta: float) -> Vector2:
 		_started = true
 		lamp = CarryItem.spawn(self, _area().get_center() + LAMP_SPOT, lamp_texture, "아테나의 등불", Color(1.0, 0.9, 0.6))
 		veil = FogVeil.spawn(self, _area())
-		GameManager.show_notice("짙은 안개가 전장을 덮었다! 아테나의 등불 곁에서만 적이 보인다", Color(0.85, 0.88, 0.95))
+		Net.announce("짙은 안개가 전장을 덮었다! 아테나의 등불 곁에서만 적이 보인다", Color(0.85, 0.88, 0.95))
 	return super._get_move_velocity(delta)
 
 
@@ -120,4 +120,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("디오메데스: 안개 속에서도 나는 너를 본다! 안개가 짙어진다", Color(0.85, 0.88, 0.95))
+	Net.announce("디오메데스: 안개 속에서도 나는 너를 본다! 안개가 짙어진다", Color(0.85, 0.88, 0.95))

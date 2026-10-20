@@ -107,7 +107,7 @@ func _on_dragon_fire() -> void:
 	super.stun(2.5)
 	_shield_left = 0.0
 	Fx.fire_blast(self, get_hit_center(), 40.0, 2)
-	GameManager.show_notice("붉은 용의 불길이 미카엘을 덮쳤다!", Color(1.0, 0.55, 0.3))
+	Net.announce("붉은 용의 불길이 미카엘을 덮쳤다!", Color(1.0, 0.55, 0.3))
 	_update_status()
 
 
@@ -117,7 +117,7 @@ func raise_shield() -> void:
 		return
 	_shield_left = shield_time
 	shield_dir = direction_to_player() if has_target() else Vector2.DOWN
-	GameManager.show_notice("「누가 하나님과 같으랴!」 — 미카엘이 빛나는 방패를 든다. 옆이나 뒤로!", Color(1.0, 0.95, 0.6))
+	Net.announce("「누가 하나님과 같으랴!」 — 미카엘이 빛나는 방패를 든다. 옆이나 뒤로!", Color(1.0, 0.95, 0.6))
 	_update_status()
 
 

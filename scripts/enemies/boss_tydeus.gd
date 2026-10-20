@@ -84,14 +84,14 @@ func drop_potion(at: Vector2 = Vector2.INF) -> void:
 				potion.picked_up.connect(_on_potion_smashed)
 		else:
 			potion.reappear(spot))
-	GameManager.show_notice("아테나의 불사의 약병이 떨어진다! 티데우스보다 먼저 깨뜨려라", Color(1.0, 0.9, 0.5))
+	Net.announce("아테나의 불사의 약병이 떨어진다! 티데우스보다 먼저 깨뜨려라", Color(1.0, 0.9, 0.5))
 
 
 func _on_potion_smashed(item: CarryItem) -> void:
 	_smashed += 1
 	item.hide_for(99999.0)
 	Fx.burst(item, item.global_position, Color(1.0, 0.9, 0.6), 18, 60.0, 0.5)
-	GameManager.show_notice("불사의 약병을 깨뜨렸다!", Color(0.9, 0.9, 1.0))
+	Net.announce("불사의 약병을 깨뜨렸다!", Color(0.9, 0.9, 1.0))
 
 
 func _drink() -> void:
@@ -102,7 +102,7 @@ func _drink() -> void:
 	hp += heal
 	health_changed.emit(hp, max_hp)
 	Fx.burst(self, get_hit_center(), Color(1.0, 0.9, 0.5), 24, 70.0, 0.6, Vector2(0, -50))
-	GameManager.show_notice("티데우스가 불사의 약을 마셨다! %d초 동안 불사" % roundi(immortal_time), Color(1.0, 0.6, 0.4))
+	Net.announce("티데우스가 불사의 약을 마셨다! %d초 동안 불사" % roundi(immortal_time), Color(1.0, 0.6, 0.4))
 
 
 func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool = false, armor_pen: int = 0) -> void:
@@ -160,4 +160,4 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("티데우스가 피에 굶주린다! 약병이 더 자주 떨어진다", Color(1.0, 0.5, 0.4))
+	Net.announce("티데우스가 피에 굶주린다! 약병이 더 자주 떨어진다", Color(1.0, 0.5, 0.4))

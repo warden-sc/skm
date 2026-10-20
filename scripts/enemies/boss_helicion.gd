@@ -95,7 +95,7 @@ func _fall() -> void:
 	_soul_start = _soul_start.clamp(area.position + Vector2(30, 30), area.end - Vector2(30, 20))
 	if soul_scene != null:
 		request_summon(soul_scene, _soul_start)
-	GameManager.show_notice("헬리시온이 무너졌다… 영혼이 빠져나왔다! %d초 안에 영혼을 부숴라" % roundi(soul_time), Color(0.7, 1.0, 0.8))
+	Net.announce("헬리시온이 무너졌다… 영혼이 빠져나왔다! %d초 안에 영혼을 부숴라" % roundi(soul_time), Color(0.7, 1.0, 0.8))
 
 
 func register_minion(minion: Enemy) -> void:
@@ -123,7 +123,7 @@ func _on_soul_broken(_enemy: Enemy) -> void:
 		return
 	_soul_broken = true
 	_soul = null
-	GameManager.show_notice("영혼을 부쉈다! 헬리시온이 영원한 잠에 든다", Color(0.8, 1.0, 0.85))
+	Net.announce("영혼을 부쉈다! 헬리시온이 영원한 잠에 든다", Color(0.8, 1.0, 0.85))
 	_die()
 
 
@@ -140,7 +140,7 @@ func _revive() -> void:
 	sprite.rotation = 0.0
 	immune_text = "공중! 활만 닿음"
 	set_status("", Color.WHITE)
-	GameManager.show_notice("영혼이 돌아왔다! 헬리시온이 다시 일어선다 (체력 %d%%)" % roundi(revive_ratio * 100.0), Color(0.6, 1.0, 0.7))
+	Net.announce("영혼이 돌아왔다! 헬리시온이 다시 일어선다 (체력 %d%%)" % roundi(revive_ratio * 100.0), Color(0.6, 1.0, 0.7))
 	Fx.burst(self, get_hit_center(), Color(0.5, 1.0, 0.6), 30, 80.0, 0.6)
 	for i in 3:
 		if not minion_scenes.is_empty():
@@ -196,4 +196,4 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("헬리시온: 죽음은 끝이 아니다… 망자들이 깨어난다", Color(0.6, 1.0, 0.7))
+	Net.announce("헬리시온: 죽음은 끝이 아니다… 망자들이 깨어난다", Color(0.6, 1.0, 0.7))

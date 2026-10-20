@@ -102,7 +102,7 @@ func _on_altar_broken(altar: Enemy) -> void:
 	if not is_warded() and not is_dead():
 		super.stun(4.0)
 		Fx.burst(self, get_hit_center(), Color(0.9, 0.9, 1.0), 24, 80.0, 0.6)
-		GameManager.show_notice("해골 제단이 모두 무너졌다! 키크노스의 가호가 깨진다", Color(0.85, 0.9, 1.0))
+		Net.announce("해골 제단이 모두 무너졌다! 키크노스의 가호가 깨진다", Color(0.85, 0.9, 1.0))
 	_update_status()
 
 
@@ -123,7 +123,7 @@ func rebuild_altar() -> void:
 	_raise_altar(slot)
 	if pilgrim_scene != null:
 		request_summon(pilgrim_scene, _area().get_center() + ALTAR_SPOTS[slot] + Vector2(20, 10))
-	GameManager.show_notice("해골 순례자가 제단을 다시 쌓아 올렸다", Color(0.85, 0.85, 0.8))
+	Net.announce("해골 순례자가 제단을 다시 쌓아 올렸다", Color(0.85, 0.85, 0.8))
 	_rebuild_left = rebuild_time * (0.7 if phase_two else 1.0) if not _missing.is_empty() else 0.0
 
 
@@ -179,9 +179,9 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _die() -> void:
-	GameManager.show_notice("쓰러진 키크노스의 몸이 하얀 백조가 되어 날아오른다…", Color(0.9, 0.95, 1.0))
+	Net.announce("쓰러진 키크노스의 몸이 하얀 백조가 되어 날아오른다…", Color(0.9, 0.95, 1.0))
 	super._die()
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("키크노스: 아버지 아레스께 바칠 해골이 하나 더 늘겠군! 제단이 더 빨리 쌓인다", Color(0.85, 0.85, 1.0))
+	Net.announce("키크노스: 아버지 아레스께 바칠 해골이 하나 더 늘겠군! 제단이 더 빨리 쌓인다", Color(0.85, 0.85, 1.0))

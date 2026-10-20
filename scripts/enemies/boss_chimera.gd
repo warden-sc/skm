@@ -69,7 +69,7 @@ func _on_tail_cut(_enemy: Enemy) -> void:
 	contact_damage = roundi(contact_damage * TAIL_CUT_POWER)
 	base_tint = Color(0.85, 0.85, 0.95)
 	set_status("꼬리 절단: 공격력 50%", Color(0.6, 1.0, 0.5))
-	GameManager.show_notice("키메라의 꼬리를 잘랐다! 키메라의 공격력이 절반으로 떨어진다", Color(0.6, 1.0, 0.5))
+	Net.announce("키메라의 꼬리를 잘랐다! 키메라의 공격력이 절반으로 떨어진다", Color(0.6, 1.0, 0.5))
 	stun(1.6)
 	Fx.explosion(self, get_hit_center() + Vector2(20, -10), Color(0.5, 0.9, 0.4), 30.0, 2)
 
@@ -153,4 +153,4 @@ func _sting() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("키메라가 날뛴다! 덮치기가 2연속으로", Color(1.0, 0.6, 0.4))
+	Net.announce("키메라가 날뛴다! 덮치기가 2연속으로", Color(1.0, 0.6, 0.4))

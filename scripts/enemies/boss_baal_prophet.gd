@@ -124,7 +124,7 @@ func pour_water() -> void:
 	else:
 		if jar != null and is_instance_valid(jar):
 			jar.hide_for(0.8)
-		GameManager.show_notice("엘리야의 제단에 물을 부었다 (%d/%d)" % [pours, pours_needed], Color(0.6, 0.85, 1.0))
+		Net.announce("엘리야의 제단에 물을 부었다 (%d/%d)" % [pours, pours_needed], Color(0.6, 0.85, 1.0))
 	_update_status()
 
 
@@ -140,7 +140,7 @@ func fire_from_heaven() -> void:
 	end_dance()
 	super.take_damage(roundi(max_hp * fire_ratio), Vector2.ZERO, true, 999999)
 	super.stun(fire_stun)
-	GameManager.show_notice("하늘에서 불이 내려 번제물과 나무와 돌과 흙을 태웠다! 바알 대예언자가 무너진다", Color(1.0, 0.75, 0.4))
+	Net.announce("하늘에서 불이 내려 번제물과 나무와 돌과 흙을 태웠다! 바알 대예언자가 무너진다", Color(1.0, 0.75, 0.4))
 	_update_status()
 
 
@@ -152,7 +152,7 @@ func begin_dance() -> void:
 	var at := baal_altar.global_position if baal_altar != null else global_position
 	for i in dancer_count:
 		request_summon(dancer_scene, at + Vector2.from_angle(TAU * i / dancer_count) * 34.0 + Vector2(0, 30))
-	GameManager.show_notice("바알의 춤이 시작된다 — 춤꾼을 쓰러뜨려 춤을 끊어라", Color(1.0, 0.5, 0.4))
+	Net.announce("바알의 춤이 시작된다 — 춤꾼을 쓰러뜨려 춤을 끊어라", Color(1.0, 0.5, 0.4))
 	_update_status()
 
 
@@ -174,7 +174,7 @@ func _physics_process(delta: float) -> void:
 			_dance_left -= delta
 			var alive := living_dancers().size()
 			if _dance_left <= 0.0 or (alive == 0 and not dancers.is_empty()):
-				GameManager.show_notice("바알의 춤이 끊겼다", Color(1.0, 0.75, 0.6))
+				Net.announce("바알의 춤이 끊겼다", Color(1.0, 0.75, 0.6))
 				end_dance()
 			else:
 				power = _base_power * (1.0 + dancer_power * alive)

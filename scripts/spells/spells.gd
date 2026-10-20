@@ -91,7 +91,7 @@ static func damage_area(context: Node, center: Vector2, radius: float, core_dama
 			continue
 		var core := offset.length() <= radius * CORE_RATIO
 		var push := offset.normalized() if offset != Vector2.ZERO else Vector2.ZERO
-		enemy.take_damage(core_damage if core else splash_damage, push * knockback, is_crit and core, armor_pen)
+		Enemy.hit(enemy, core_damage if core else splash_damage, push * knockback, is_crit and core, armor_pen)
 		Enemy.on_player_hit(enemy, core_damage if core else splash_damage)
 		if slow_duration > 0.0 and not enemy.is_dead():
 			enemy.apply_slow(0.45, slow_duration)

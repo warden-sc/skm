@@ -120,7 +120,7 @@ func register_minion(minion: Enemy) -> void:
 		nail.died.connect(_on_nail_broken)
 		defense = _base_defense + nail_armor
 		if _nails_broken > 0:
-			GameManager.show_notice("탈로스가 발목에 새 청동 못을 박았다! 더 단단하다", Color(0.95, 0.75, 0.45))
+			Net.announce("탈로스가 발목에 새 청동 못을 박았다! 더 단단하다", Color(0.95, 0.75, 0.45))
 
 
 func _on_nail_broken(_enemy: Enemy) -> void:
@@ -133,7 +133,7 @@ func _on_nail_broken(_enemy: Enemy) -> void:
 	_bleed_left = bleed_time
 	_bleed_tick = 0.5
 	set_status("이코르가 흘러나온다!", Color(1.0, 0.85, 0.4))
-	GameManager.show_notice("청동 못이 뽑혔다! 신의 피가 흘러나와 탈로스가 무너진다 — 지금 몰아쳐라", Color(1.0, 0.85, 0.4))
+	Net.announce("청동 못이 뽑혔다! 신의 피가 흘러나와 탈로스가 무너진다 — 지금 몰아쳐라", Color(1.0, 0.85, 0.4))
 	Fx.explosion(self, global_position + Vector2(-12, -4), Color(1.0, 0.8, 0.3), 30.0, 2)
 	if _player != null:
 		_player.shake_camera(6.0)
@@ -168,7 +168,7 @@ func cool_down(pool: WaterPool = null) -> void:
 	if pool != null:
 		pool.steam()
 	set_status("", Color.WHITE)
-	GameManager.show_notice("탈로스가 물웅덩이에 들어가 식었다!", Color(0.7, 0.9, 1.0))
+	Net.announce("탈로스가 물웅덩이에 들어가 식었다!", Color(0.7, 0.9, 1.0))
 
 
 # ============================================================ 패턴
@@ -201,4 +201,4 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("탈로스의 청동 몸이 더 빨리 달아오른다!", Color(1.0, 0.6, 0.3))
+	Net.announce("탈로스의 청동 몸이 더 빨리 달아오른다!", Color(1.0, 0.6, 0.3))

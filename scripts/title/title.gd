@@ -40,7 +40,16 @@ const FLOW_TEXT := "진행: 야영지 상인에게서 장비 구매·판매 → 
 @onready var _continue_button: Button = %ContinueButton
 @onready var _save_info: Label = %SaveInfo
 
-const MULTI_NOTE := "멀티플레이(협동 · 최대 4명 · 방장이 방을 만들고 IP 로 접속)는 다음 업데이트에서 열립니다"
+## 멀티플레이 창 (코드로 만듦): 방 만들기 / IP 로 참가 → 대기실 (방장이 난이도 고르고 시작)
+var _multi_panel: PanelContainer
+var _multi_connect: VBoxContainer
+var _multi_lobby: VBoxContainer
+var _ip_edit: LineEdit
+var _multi_status: Label
+var _lobby_list: Label
+var _lobby_info: Label
+var _lobby_difficulty: Button
+var _lobby_start: Button
 
 ## false 면 씬을 바꾸지 않고 last_scene_request 에만 남김 (자동 테스트용)
 var scene_changes: bool = true
@@ -70,7 +79,8 @@ func _ready() -> void:
 	(%NameConfirmButton as Button).pressed.connect(confirm_name)
 	_hero_name_edit.text_submitted.connect(func(_t: String) -> void: confirm_name())
 	(%SingleButton as Button).pressed.connect(open_single)
-	(%MultiButton as Button).pressed.connect(func() -> void: _menu_note.text = MULTI_NOTE)
+	(%MultiButton as Button).text = "멀티플레이 (협동 · 최대 4명)"
+	(%MultiButton as Button).pressed.connect(open_multi)
 	(%TutorialButton as Button).pressed.connect(start_tutorial)
 	(%RenameButton as Button).pressed.connect(open_name)
 	(%QuitButton as Button).pressed.connect(func() -> void: get_tree().quit())
@@ -83,6 +93,11 @@ func _ready() -> void:
 	_add_embers()
 	_show_description(GameManager.Difficulty.NORMAL)
 	GameManager.tutorial_mode = false
+	_build_multi_panel()
+	Net.lobby_changed.connect(_refresh_lobby)
+	Net.join_failed.connect(_on_join_failed)
+	if Net.in_game:
+		Net.leave()  # 게임을 마치고(엔딩 · 나가기) 돌아오면 방을 닫음
 	if Profile.has_hero_name():
 		open_menu()
 	else:
@@ -117,14 +132,14 @@ func get_hero_name() -> String:
 
 ## 지금 보이는 화면: "name" · "menu" · "single" · "difficulty" · "help"
 func get_screen() -> String:
-	for pair in [["name", _name_panel], ["menu", _menu_panel], ["single", _single_panel], ["difficulty", _difficulty_panel], ["help", _help_panel]]:
+	for pair in [["name", _name_panel], ["menu", _menu_panel], ["single", _single_panel], ["difficulty", _difficulty_panel], ["help", _help_panel], ["multi", _multi_panel]]:
 		if (pair[1] as Control).visible:
 			return pair[0]
 	return ""
 
 
 func _show_only(panel: Control) -> void:
-	for p in [_name_panel, _menu_panel, _single_panel, _difficulty_panel, _help_panel]:
+	for p in [_name_panel, _menu_panel, _single_panel, _difficulty_panel, _help_panel, _multi_panel]:
 		(p as Control).visible = p == panel
 
 
@@ -226,3 +241,148 @@ func _add_embers() -> void:
 	add_child(embers)
 	move_child(embers, 2)
 	embers.emitting = true
+
+
+# ============================================================ 멀티플레이
+func _build_multi_panel() -> void:
+	_multi_panel = PanelContainer.new()
+	_multi_panel.name = "MultiPanel"
+	_multi_panel.add_theme_stylebox_override(&"panel", _menu_panel.get_theme_stylebox(&"panel"))
+	_multi_panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	_multi_panel.offset_left = -150.0
+	_multi_panel.offset_right = 150.0
+	_multi_panel.offset_top = -190.0
+	_multi_panel.offset_bottom = -10.0
+	_multi_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_multi_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_multi_panel.visible = false
+	add_child(_multi_panel)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override(&"separation", 4)
+	_multi_panel.add_child(box)
+	box.add_child(_make_label("멀티플레이 — 협동 (최대 4명)", 12, Color(1.0, 0.86, 0.45)))
+
+	_multi_connect = VBoxContainer.new()
+	_multi_connect.add_theme_constant_override(&"separation", 4)
+	box.add_child(_multi_connect)
+	_multi_connect.add_child(_make_button("방 만들기 (내가 방장)", host_room))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override(&"separation", 4)
+	_ip_edit = LineEdit.new()
+	_ip_edit.placeholder_text = "방장 IP (예: 192.168.0.10)"
+	_ip_edit.add_theme_font_size_override(&"font_size", 10)
+	_ip_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_ip_edit.text_submitted.connect(func(_t: String) -> void: join_room(_ip_edit.text))
+	row.add_child(_ip_edit)
+	row.add_child(_make_button("참가", func() -> void: join_room(_ip_edit.text)))
+	_multi_connect.add_child(row)
+	_multi_connect.add_child(_make_button("← 뒤로", open_menu))
+
+	_multi_lobby = VBoxContainer.new()
+	_multi_lobby.add_theme_constant_override(&"separation", 4)
+	box.add_child(_multi_lobby)
+	_lobby_info = _make_label("", 8, Color(0.75, 0.9, 1.0))
+	_multi_lobby.add_child(_lobby_info)
+	_lobby_list = _make_label("", 10, Color(1, 1, 1))
+	_multi_lobby.add_child(_lobby_list)
+	_lobby_difficulty = _make_button("", _cycle_lobby_difficulty)
+	_multi_lobby.add_child(_lobby_difficulty)
+	_lobby_start = _make_button("게임 시작 ▶", func() -> void: Net.start_game())
+	_multi_lobby.add_child(_lobby_start)
+	_multi_lobby.add_child(_make_button("방 나가기", leave_room))
+
+	_multi_status = _make_label("", 8, Color(1.0, 0.75, 0.5))
+	box.add_child(_multi_status)
+
+
+func _make_label(text: String, size: int, color: Color) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_size_override(&"font_size", size)
+	label.add_theme_color_override(&"font_color", color)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.custom_minimum_size = Vector2(280, 0)
+	return label
+
+
+func _make_button(text: String, callback: Callable) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.add_theme_font_size_override(&"font_size", 10)
+	button.pressed.connect(callback)
+	return button
+
+
+func open_multi() -> void:
+	_multi_status.text = ""
+	_show_only(_multi_panel)
+	_refresh_lobby()
+	if OS.has_feature("web"):
+		# 브라우저에서는 이 방식(ENet · UDP)의 네트워크를 쓸 수 없음
+		for child in _multi_connect.get_children():
+			if child is HBoxContainer or (child is Button and (child as Button).text.begins_with("방 만들기")):
+				child.hide()
+		_multi_status.text = "웹 버전에서는 멀티플레이를 할 수 없습니다 — 윈도우 버전으로 하세요"
+
+
+## 방 만들기: 이 컴퓨터가 방장(서버)이 됨
+func host_room() -> bool:
+	if Net.host_game(GameManager.hero_name) != OK:
+		_multi_status.text = Net.last_error
+		return false
+	_multi_status.text = "방을 만들었습니다. 친구에게 아래 IP 를 알려 주세요"
+	_refresh_lobby()
+	return true
+
+
+## 방장 IP 로 참가
+func join_room(address: String) -> bool:
+	if address.strip_edges() == "":
+		_multi_status.text = "방장의 IP 주소를 입력하세요"
+		return false
+	if Net.join_game(address, GameManager.hero_name) != OK:
+		_multi_status.text = Net.last_error
+		return false
+	_multi_status.text = "%s 에 접속하는 중…" % address.strip_edges()
+	_refresh_lobby()
+	return true
+
+
+func leave_room() -> void:
+	Net.leave()
+	_multi_status.text = "방에서 나왔습니다"
+	_refresh_lobby()
+
+
+func _on_join_failed(reason: String) -> void:
+	_multi_status.text = reason
+	_refresh_lobby()
+
+
+func _cycle_lobby_difficulty() -> void:
+	if Net.is_host():
+		Net.set_difficulty((Net.difficulty + 1) % GameManager.Difficulty.size())
+
+
+func _refresh_lobby() -> void:
+	if _multi_panel == null:
+		return
+	var connected := Net.is_online()
+	_multi_connect.visible = not connected
+	_multi_lobby.visible = connected
+	if not connected:
+		return
+	var names := PackedStringArray()
+	for id in Net.players:
+		names.append(("★ " if id == 1 else "· ") + Net.get_player_name(id) + (" (나)" if id == Net.my_id() else ""))
+	_lobby_list.text = "함께하는 용사 %d/%d\n%s" % [Net.players.size(), Net.MAX_PLAYERS, "\n".join(names)]
+	var info: Dictionary = GameManager.DIFFICULTY_INFO[clampi(Net.difficulty, 0, GameManager.Difficulty.size() - 1)]
+	_lobby_difficulty.text = "난이도: %s%s" % [info["name"], "  (눌러서 바꾸기)" if Net.is_host() else ""]
+	_lobby_difficulty.disabled = not Net.is_host()
+	_lobby_start.visible = Net.is_host()
+	if Net.is_host():
+		var addresses := Net.get_local_addresses()
+		_lobby_info.text = "내 IP: %s  (포트 %d)\n같은 와이파이는 이 주소로, 인터넷은 공유기에서 포트 포워딩한 뒤 공인 IP 로 접속" % [", ".join(addresses) if not addresses.is_empty() else "알 수 없음", Net.port]
+	else:
+		_lobby_info.text = "방장이 게임을 시작하길 기다리는 중…" if not Net.players.is_empty() else "접속하는 중…"

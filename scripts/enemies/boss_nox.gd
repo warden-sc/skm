@@ -117,7 +117,7 @@ func _setup_darkness() -> void:
 	_veil.material = mat
 	_veil.add_to_group(&"storm_fields")  # 스테이지가 바뀌면 함께 정리
 	root.add_child(_veil)
-	GameManager.show_notice("보스방이 어둠에 잠겼다! 횃불을 밟아 불을 밝혀라", Color(0.75, 0.6, 1.0))
+	Net.announce("보스방이 어둠에 잠겼다! 횃불을 밟아 불을 밝혀라", Color(0.75, 0.6, 1.0))
 
 
 func _update_veil() -> void:
@@ -230,4 +230,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("녹스: 빛은 언젠가 꺼진다… 횃불이 더 빨리 꺼진다", Color(0.75, 0.6, 1.0))
+	Net.announce("녹스: 빛은 언젠가 꺼진다… 횃불이 더 빨리 꺼진다", Color(0.75, 0.6, 1.0))

@@ -147,7 +147,7 @@ func fire_laser() -> float:
 	if phase_two:
 		_laser_dir_sign = -_laser_dir_sign
 	set_status("마도코어 과부하: 회전 레이저!", Color(1.0, 0.4, 0.4))
-	GameManager.show_notice("레기온의 회전 레이저! 레이저를 따라 돌거나 대시로 넘어라", Color(1.0, 0.5, 0.5))
+	Net.announce("레기온의 회전 레이저! 레이저를 따라 돌거나 대시로 넘어라", Color(1.0, 0.5, 0.5))
 	var start := direction_to_player().angle() if has_target() else 0.0
 	_laser = LaserSweep.spawn(self, start, TAU * _laser_dir_sign, spin, laser_damage, 280.0, Color(1.0, 0.3, 0.35), get_core())
 	_after(spin + 0.8, set_status.bind("", Color.WHITE))
@@ -162,5 +162,5 @@ func _volley(wave: int) -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("레기온 폭주 가속! 레이저가 더 빨라지고 방향이 바뀐다", Color(1.0, 0.45, 0.45))
+	Net.announce("레기온 폭주 가속! 레이저가 더 빨라지고 방향이 바뀐다", Color(1.0, 0.45, 0.45))
 	base_tint = Color(1.2, 0.85, 0.85)

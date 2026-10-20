@@ -161,5 +161,5 @@ func _raise() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("죽음의 사신: 너의 영혼도 거두어 주마…", Color(0.6, 0.95, 0.9))
+	Net.announce("죽음의 사신: 너의 영혼도 거두어 주마…", Color(0.6, 0.95, 0.9))
 	pattern_order = [Pattern.SWEEP, Pattern.BLINK, Pattern.SOULS, Pattern.BLINK, Pattern.RAISE]

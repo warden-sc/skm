@@ -94,7 +94,7 @@ func _on_girdle_broken(_enemy: Enemy) -> void:
 	set_status("허리띠가 끊어짐", Color(1.0, 0.6, 0.5))
 	super.stun(4.0)
 	Fx.burst(self, get_hit_center(), Color(1.0, 0.8, 0.3), 24, 80.0, 0.6)
-	GameManager.show_notice("전쟁의 허리띠를 끊었다! 히폴리테가 크게 휘청인다", Color(1.0, 0.85, 0.5))
+	Net.announce("전쟁의 허리띠를 끊었다! 히폴리테가 크게 휘청인다", Color(1.0, 0.85, 0.5))
 
 
 func _charge_velocity(delta: float) -> Vector2:
@@ -145,7 +145,7 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("히폴리테: 아마존이여, 달려라! 기마병이 몰려온다", Color(1.0, 0.6, 0.5))
+	Net.announce("히폴리테: 아마존이여, 달려라! 기마병이 몰려온다", Color(1.0, 0.6, 0.5))
 	if rider_scene != null:
 		for i in 3:
 			request_summon(rider_scene, global_position + Vector2.from_angle(TAU * i / 3.0) * 60.0)

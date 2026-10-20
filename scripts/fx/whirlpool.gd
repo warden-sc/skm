@@ -47,16 +47,19 @@ func in_core(point: Vector2) -> bool:
 func _physics_process(delta: float) -> void:
 	_time += delta
 	_swallow_left = maxf(_swallow_left - delta, 0.0)
-	var player := get_tree().get_first_node_in_group(&"player") as Player
-	if player != null and not GameManager.is_player_dead:
+	_tick -= delta
+	var tick_now := _tick <= 0.0
+	if tick_now:
+		_tick = 0.5
+	for player in Player.get_all(get_tree()):
+		if player.is_net_dead():
+			continue
 		var to_center := player.global_position - global_position
 		var dist := to_center.length()
 		if dist < radius and dist > 2.0 and not player.is_dashing():
 			var strength := (swallow_pull if is_swallowing() else calm_pull) * (1.0 - dist / radius * 0.5)
 			player.apply_push(-to_center.normalized() * strength)
-		_tick -= delta
-		if in_core(player.global_position) and _tick <= 0.0:
-			_tick = 0.5
+		if tick_now and in_core(player.global_position):
 			if player.take_unblockable_hit(maxi(1, roundi(GameManager.max_hp * core_ratio)), global_position, false) == Player.HitResult.DAMAGED:
 				core_hits += 1
 	queue_redraw()

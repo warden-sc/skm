@@ -116,10 +116,14 @@ var _finale_done: bool = false
 
 
 func _ready() -> void:
+	if Net.is_client():
+		_ready_client()
+		return
 	assert(entities_root != null and player != null, "StageManager: entities_root / player 를 지정하세요.")
 	assert(not stages.is_empty() and pickup_scene != null and chest_scene != null, "StageManager: stages / pickup_scene / chest_scene 을 지정하세요.")
 	assert(camp_room != null and field_room != null and boss_room != null, "StageManager: 방 3개를 지정하세요.")
 	GameManager.player_died.connect(_on_player_died)
+	GameManager.item_dropped.connect(spawn_dropped_item)
 	chest_rng.randomize()
 	field_portal.interacted.connect(enter_field)
 	camp_portal.interacted.connect(return_to_camp)
@@ -138,8 +142,18 @@ func _ready() -> void:
 	_arrive_at_camp()
 	# 문구는 띄우는 순간의 스테이지로 만듦 (그 사이 스테이지가 바뀌어도 맞는 번호가 나오게)
 	get_tree().create_timer(0.3, false).timeout.connect(func() -> void:
-		GameManager.show_notice("STAGE %d 「%s」 — 상인에게서 장비를 갖추고 텔레포트[E]로 사냥터에 가세요" % [GameManager.stage, GameManager.stage_name], Color(0.6, 1.0, 0.7))
+		Net.announce("STAGE %d 「%s」 — 상인에게서 장비를 갖추고 텔레포트[E]로 사냥터에 가세요" % [GameManager.stage, GameManager.stage_name], Color(0.6, 1.0, 0.7))
 		Story.queue("%d스테이지 도착" % GameManager.stage))
+
+
+## 멀티플레이 참가자: 스테이지 진행은 방장 컴퓨터에서 — 여기서는 화면 색(어둠)만 받아서 씀
+func _ready_client() -> void:
+	add_to_group(&"stage_manager")
+	_ambient = CanvasModulate.new()
+	_ambient.name = "Ambient"
+	add_child(_ambient)
+	set_process(false)
+	set_physics_process(false)
 
 
 func _process(delta: float) -> void:
@@ -234,6 +248,7 @@ func go_to_ending() -> void:
 
 
 func _do_go_to_ending() -> void:
+	Net.broadcast_ending()
 	get_tree().paused = false
 	get_tree().change_scene_to_file(ENDING_SCENE)
 
@@ -264,15 +279,15 @@ func _do_enter_field() -> void:
 	GameManager.set_location(LOCATION_FIELD)
 	_place_dragon_scale()
 	if boss_gate.is_open():
-		GameManager.show_notice("보스방이 열려 있습니다! 사냥터 북쪽의 문으로 가세요", Color(1.0, 0.6, 0.5))
+		Net.announce("보스방이 열려 있습니다! 사냥터 북쪽의 문으로 가세요", Color(1.0, 0.6, 0.5))
 	else:
-		GameManager.show_notice("몬스터 %d마리를 처치하면 보스방이 열립니다" % _kill_target, Color(1.0, 0.9, 0.5))
+		Net.announce("몬스터 %d마리를 처치하면 보스방이 열립니다" % _kill_target, Color(1.0, 0.9, 0.5))
 
 
 func _do_return_to_camp() -> void:
 	_clear_enemies()
 	_arrive_at_camp()
-	GameManager.show_notice("야영지로 귀환했습니다", Color(0.6, 1.0, 0.7))
+	Net.announce("야영지로 귀환했습니다", Color(0.6, 1.0, 0.7))
 
 
 func _do_enter_boss_room() -> void:
@@ -281,7 +296,7 @@ func _do_enter_boss_room() -> void:
 	player.teleport_to(boss_arrival.global_position, boss_room.get_bounds())
 	_state = State.BOSS
 	GameManager.set_location(LOCATION_BOSS)
-	GameManager.show_notice("무언가 다가온다…", Color(1.0, 0.5, 0.5))
+	Net.announce("무언가 다가온다…", Color(1.0, 0.5, 0.5))
 	get_tree().create_timer(boss_entry_delay, false).timeout.connect(_spawn_boss)
 
 
@@ -294,7 +309,7 @@ func _do_go_to_next_stage() -> void:
 	var next_stage := GameManager.stage + 1
 	_setup_stage(next_stage)
 	_arrive_at_camp()
-	GameManager.show_notice("STAGE %d 「%s」 도착!" % [next_stage, GameManager.stage_name], Color(0.6, 1.0, 0.7))
+	Net.announce("STAGE %d 「%s」 도착!" % [next_stage, GameManager.stage_name], Color(0.6, 1.0, 0.7))
 	Story.queue("%d스테이지 도착" % next_stage)
 	var unlocked := _rarity_unlocked_at(next_stage)
 	if unlocked != "":
@@ -306,6 +321,7 @@ func _arrive_at_camp() -> void:
 	player.teleport_to(camp_spawn.global_position, camp_room.get_bounds())
 	_state = State.CAMP
 	GameManager.set_location(LOCATION_CAMP)
+	Net.revive_all()  # 멀티플레이: 쓰러졌던 동료는 야영지에서 다시 일어남
 
 
 # ============================================================ 스테이지 준비
@@ -370,7 +386,7 @@ func _spawn_boss() -> void:
 	_add_enemy(boss, at, boss_room.get_arena_rect())
 	Fx.explosion(player, at, Color(1.0, 0.4, 0.4), 50.0, 3)
 	GameManager.report_boss_spawned("%s  · 방어력 %d" % [boss.display_name, boss.get_defense_value()], boss.max_hp)
-	GameManager.show_notice(data.boss_intro_text if data.boss_intro_text != "" else "보스 등장: %s" % boss.display_name, Color(1.0, 0.4, 0.5))
+	Net.announce(data.boss_intro_text if data.boss_intro_text != "" else "보스 등장: %s" % boss.display_name, Color(1.0, 0.4, 0.5))
 	if _hidden_active:
 		Story.queue("히든 보스 등장")
 	elif not _finale_active:  # 최종장은 최종 보스가 직접 [최종장 등장] 대사를 띄움
@@ -401,14 +417,23 @@ func _on_boss_defeated() -> void:
 		else:
 			_on_final_boss_defeated()
 		return
-	# 보물상자 + 다음 스테이지 텔레포트 (히든 던전이 열릴 차례면 상자를 연 뒤 고대의 문)
-	_spawn_chest(false)
 	next_stage_portal.set_prompt(_next_portal_prompt())
 	next_stage_portal.enabled = true
+	if is_mythic_reward_stage() and not _hidden_pending:
+		# 신화 장비 스테이지: 보상은 신화 장비 하나뿐 (보물상자 · 골드 없음)
+		Net.announce("보스 토벌! 보상은 신화 장비 — 텔레포트로 다음 스테이지로 가세요", Color(1.0, 0.45, 0.5))
+		return
+	# 보물상자 + 다음 스테이지 텔레포트 (히든 던전이 열릴 차례면 상자를 연 뒤 고대의 문)
+	_spawn_chest(false)
 	if _hidden_pending:
-		GameManager.show_notice("보스 토벌! …고대 용의 비늘들이 떨리기 시작한다. 보물상자를 열어 보세요", Color(1.0, 0.9, 0.6))
+		Net.announce("보스 토벌! …고대 용의 비늘들이 떨리기 시작한다. 보물상자를 열어 보세요", Color(1.0, 0.9, 0.6))
 	else:
-		GameManager.show_notice("보스 토벌! 보물상자를 열고 텔레포트로 다음 스테이지로 가세요", Color(1.0, 0.85, 0.4))
+		Net.announce("보스 토벌! 보물상자를 열고 텔레포트로 다음 스테이지로 가세요", Color(1.0, 0.85, 0.4))
+
+
+## 이 스테이지 보스가 신화 장비를 주는지 (10스테이지마다 — 히든 · 최종장 제외)
+func is_mythic_reward_stage() -> bool:
+	return not _hidden_active and not _finale_active and ItemDB.get_mythic_for_stage(GameManager.stage) != null
 
 
 func _spawn_chest(hidden_reward: bool) -> void:
@@ -426,6 +451,8 @@ func _next_portal_prompt() -> String:
 ## 10스테이지마다 보스가 신화 장비를 넘겨줌 (가방으로 바로). 100스테이지 보스를 쓰러뜨리면 봉인이 모두 풀림
 func _grant_mythic(stage: int) -> void:
 	var mythic := ItemDB.get_mythic_for_stage(stage)
+	if mythic != null:
+		Net.grant_all("item", mythic.id)  # 멀티플레이: 동료들도 하나씩
 	if mythic != null and not GameManager.owns_item(mythic.id):
 		GameManager.add_item(mythic)
 		if mythic.icon != null:
@@ -433,6 +460,9 @@ func _grant_mythic(stage: int) -> void:
 		Fx.explosion(player, player.global_position + Vector2(0, -8), mythic.get_rarity_color(), 40.0, 3)
 		_notice_later("[신화] %s 을(를) 받았다 — %s" % [mythic.display_name, "봉인됨 · 100스테이지를 클리어하면 착용 가능" if not GameManager.mythic_unlocked and stage < 100 else "가방에 들어감"],
 			mythic.get_rarity_color(), 1.2)
+	if is_final_stage(stage):
+		Net.grant_all("relic", &"last_trumpet")
+		Net.grant_all("unlock_mythic", &"")
 	if is_final_stage(stage) and GameManager.add_relic(ItemDB.get_relic(&"last_trumpet")):
 		_notice_later("[신화] 최후의 나팔을 받았다 — [X] 하늘의 심판", ItemData.RARITY_COLORS[ItemData.Rarity.MYTHIC], 1.9)
 	if is_final_stage(stage) and not GameManager.mythic_unlocked:
@@ -462,7 +492,7 @@ func is_in_finale() -> bool:
 ## 마지막 스테이지 보스 토벌 → 잠시 뒤 최종 보스전
 func _begin_finale() -> void:
 	next_stage_portal.enabled = false
-	GameManager.show_notice("대천사가 쓰러졌다… 그런데 어디선가 느릿한 박수 소리가 들려온다", Color(1.0, 0.85, 0.5))
+	Net.announce("대천사가 쓰러졌다… 그런데 어디선가 느릿한 박수 소리가 들려온다", Color(1.0, 0.85, 0.5))
 	get_tree().create_timer(maxf(finale_delay, 0.05), false).timeout.connect(start_finale)
 
 
@@ -490,7 +520,7 @@ func _on_final_boss_defeated() -> void:
 	next_stage_portal.enabled = false
 	GameManager.report_game_cleared()
 	Fx.explosion(player, player.global_position, Color(1.0, 0.9, 0.5), 80.0, 3)
-	GameManager.show_notice("모든 스테이지 클리어! 세상에 평화가 찾아옵니다…", Color(1.0, 0.9, 0.45))
+	Net.announce("모든 스테이지 클리어! 세상에 평화가 찾아옵니다…", Color(1.0, 0.9, 0.45))
 	_ending_timer.start(maxf(ending_delay, 0.05))
 
 
@@ -520,9 +550,9 @@ func _on_chest_opened(chest: Chest, hidden_reward: bool = false) -> void:
 	last_chest_gold = gold
 	last_chest_items = picked
 	if names.is_empty():
-		GameManager.show_notice("%s골드 %d" % ["고대 용의 보물: " if hidden_reward else "보물상자: ", gold], Color(1.0, 0.86, 0.35))
+		Net.announce("%s골드 %d" % ["고대 용의 보물: " if hidden_reward else "보물상자: ", gold], Color(1.0, 0.86, 0.35))
 	else:
-		GameManager.show_notice(("고대 용의 보물: " if hidden_reward else "보물상자: ") + ", ".join(names) + " · 골드 %d" % gold,
+		Net.announce(("고대 용의 보물: " if hidden_reward else "보물상자: ") + ", ".join(names) + " · 골드 %d" % gold,
 			Color(1.0, 0.9, 0.55) if hidden_reward else picked[0].get_rarity_color())
 	for i in 4:
 		var coin := pickup_scene.instantiate() as Pickup
@@ -538,6 +568,8 @@ func _on_boss_health_changed(current: int, max_hp: int) -> void:
 
 
 func _on_player_died() -> void:
+	if Net.is_online():
+		return  # 멀티플레이: 동료가 살아 있으면 계속 (모두 쓰러지면 Net 이 야영지에서 다 같이 부활)
 	_state = State.GAME_OVER
 
 
@@ -562,6 +594,16 @@ func _add_enemy(enemy: Enemy, at_global: Vector2, arena: Rect2) -> void:
 
 
 ## 충돌 콜백 도중에도 안전하도록 항상 call_deferred 로 트리에 추가합니다.
+## 인벤토리에서 버린 장비를 바닥에 (멀티플레이 참가자가 버린 것도 방장이 여기로)
+func spawn_dropped_item(item: ItemData, by_peer: int, at_global: Vector2) -> Pickup:
+	if item == null:
+		return null
+	var drop := pickup_scene.instantiate() as Pickup
+	drop.setup_dropped(item, by_peer)
+	_add_entity(drop, at_global + Vector2(randf_range(-6, 6), 10))
+	return drop
+
+
 func _add_entity(node: Node2D, at_global: Vector2) -> void:
 	node.position = entities_root.to_local(at_global)
 	entities_root.add_child.call_deferred(node)
@@ -605,6 +647,9 @@ func _clear_enemies() -> void:
 
 ## 최후의 나팔: 적의 탄 · 예고 장판 · 해로운 장판을 모두 지움
 func clear_hostile_attacks() -> void:
+	if Net.is_client():
+		Net.request_clear_hostile()
+		return
 	_release_projectiles()
 
 
@@ -621,7 +666,9 @@ func _release_projectiles() -> void:
 
 # ============================================================ 사망 / 드랍
 func _on_enemy_died(enemy: Enemy) -> void:
-	_spawn_drops(enemy.global_position, enemy)
+	# 신화 장비를 주는 보스(10스테이지마다)는 신화 장비 말고는 아무것도 떨어뜨리지 않음
+	if not (enemy == _boss and is_mythic_reward_stage()):
+		_spawn_drops(enemy.global_position, enemy)
 	GameManager.report_kill()
 	if enemy == _boss:
 		_boss_fall_position = enemy.get_hit_center()
@@ -633,7 +680,7 @@ func _on_enemy_died(enemy: Enemy) -> void:
 		boss_gate.update_progress(_kills, _kill_target)
 		if _kills >= _kill_target:
 			boss_gate.open()
-			GameManager.show_notice("보스방의 봉인이 풀렸습니다! 사냥터 북쪽의 문으로 가세요", Color(1.0, 0.55, 0.45))
+			Net.announce("보스방의 봉인이 풀렸습니다! 사냥터 북쪽의 문으로 가세요", Color(1.0, 0.55, 0.45))
 
 
 func _spawn_drops(at_global: Vector2, enemy: Enemy) -> void:
@@ -698,7 +745,7 @@ func open_hidden_portal() -> void:
 		return
 	_hidden_portal.enabled = true
 	Fx.explosion(player, _hidden_portal.global_position + Vector2(0, -16), Color(1.0, 0.9, 0.6), 60.0, 3)
-	GameManager.show_notice("여섯 개의 고대 용의 비늘이 공명한다… 「고대의 문」이 열렸다!", Color(1.0, 0.92, 0.6))
+	Net.announce("여섯 개의 고대 용의 비늘이 공명한다… 「고대의 문」이 열렸다!", Color(1.0, 0.92, 0.6))
 
 
 func enter_hidden_dungeon() -> void:
@@ -726,7 +773,7 @@ func _do_enter_hidden_dungeon() -> void:
 	_state = State.BOSS
 	GameManager.set_stage(GameManager.stage, "히든 · " + hidden_stage.stage_name)
 	GameManager.set_location(LOCATION_HIDDEN)
-	GameManager.show_notice("「%s」 — 공기가 무겁다. 무언가 아주 오래된 것이 깨어난다…" % hidden_stage.stage_name, Color(1.0, 0.9, 0.6))
+	Net.announce("「%s」 — 공기가 무겁다. 무언가 아주 오래된 것이 깨어난다…" % hidden_stage.stage_name, Color(1.0, 0.9, 0.6))
 	get_tree().create_timer(boss_entry_delay, false).timeout.connect(_spawn_boss)
 
 
@@ -736,12 +783,13 @@ func _on_hidden_boss_defeated() -> void:
 	GameManager.hidden_cleared = true
 	var blood := ItemDB.get_potion(&"dragon_blood")
 	if blood != null:
+		Net.grant_all("potion", blood.id, DRAGON_BLOOD_REWARD)
 		var got := GameManager.add_potion(blood, DRAGON_BLOOD_REWARD)
 		_notice_later("[신화] 고대 용의 피 %d병을 받았다 — 봉인됨 · 100스테이지를 클리어하면 [C] 로 사용" % got, blood.get_rarity_color(), 2.4)
 	_spawn_chest(true)
 	next_stage_portal.set_prompt(_next_portal_prompt())
 	next_stage_portal.enabled = true
-	GameManager.show_notice("고대 드래곤 토벌! 고대 용의 보물상자가 나타났다", Color(1.0, 0.92, 0.6))
+	Net.announce("고대 드래곤 토벌! 고대 용의 보물상자가 나타났다", Color(1.0, 0.92, 0.6))
 
 
 ## 30~35스테이지 사냥터: 정해진 자리에 고대 용의 비늘 (이미 주웠으면 없음)
@@ -772,9 +820,9 @@ func _on_dragon_scale_collected(_scale: DragonScale, stage: int) -> void:
 	var count := GameManager.get_dragon_scale_count()
 	var total := GameManager.DRAGON_SCALE_STAGES.size()
 	if count >= total:
-		GameManager.show_notice("고대 용의 비늘 (%d/%d) — 비늘들이 하나의 이름을 속삭인다… 「아르케」" % [count, total], Color(1.0, 0.92, 0.6))
+		Net.announce("고대 용의 비늘 (%d/%d) — 비늘들이 하나의 이름을 속삭인다… 「아르케」" % [count, total], Color(1.0, 0.92, 0.6))
 	else:
-		GameManager.show_notice("고대 용의 비늘을 주웠다 (%d/%d) — 아주 오래된 힘이 느껴진다" % [count, total], Color(1.0, 0.9, 0.6))
+		Net.announce("고대 용의 비늘을 주웠다 (%d/%d) — 아주 오래된 힘이 느껴진다" % [count, total], Color(1.0, 0.9, 0.6))
 
 
 # ============================================================ 기타

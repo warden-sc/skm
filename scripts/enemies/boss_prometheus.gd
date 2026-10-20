@@ -109,9 +109,9 @@ func _on_chain_broken(_enemy: Enemy) -> void:
 	_update_freedom()
 	Fx.fire_blast(self, get_hit_center(), 30.0, 2)
 	if freed >= 4:
-		GameManager.show_notice("마지막 사슬이 끊어졌다! 프로메테우스가 완전히 해방되었다", Color(1.0, 0.6, 0.3))
+		Net.announce("마지막 사슬이 끊어졌다! 프로메테우스가 완전히 해방되었다", Color(1.0, 0.6, 0.3))
 	else:
-		GameManager.show_notice("사슬이 끊어졌다! 방어력이 떨어졌지만 프로메테우스가 더 사나워진다 (해방 %d)" % freed, Color(1.0, 0.7, 0.4))
+		Net.announce("사슬이 끊어졌다! 방어력이 떨어졌지만 프로메테우스가 더 사나워진다 (해방 %d)" % freed, Color(1.0, 0.7, 0.4))
 
 
 # ============================================================ 패턴
@@ -152,11 +152,11 @@ func _die() -> void:
 	if not GameManager.key_items.has(EMBER_ID):
 		GameManager.key_items.append(EMBER_ID)
 		GameManager.inventory_changed.emit()
-	GameManager.show_notice("「프로메테우스의 불씨」를 얻었다 — 인간에게 불을 준 티탄의 마지막 불씨", Color(1.0, 0.7, 0.3))
+	Net.announce("「프로메테우스의 불씨」를 얻었다 — 인간에게 불을 준 티탄의 마지막 불씨", Color(1.0, 0.7, 0.3))
 	for c in get_chains():
 		c.despawn()
 	super._die()
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("프로메테우스: 이 불은 신들의 것이 아니다! 불길이 거세진다", Color(1.0, 0.6, 0.3))
+	Net.announce("프로메테우스: 이 불은 신들의 것이 아니다! 불길이 거세진다", Color(1.0, 0.6, 0.3))

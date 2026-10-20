@@ -81,14 +81,16 @@ func _physics_process(delta: float) -> void:
 		return
 	_elapsed += delta
 	queue_redraw()
-	var player := get_tree().get_first_node_in_group(&"player") as Player
-	if player == null or not is_in_fog(player.global_position):
-		return
-	player.mark_floor_status("독안개 속")
 	_tick_left -= delta
-	if _tick_left <= 0.0:
+	var tick_now := _tick_left <= 0.0
+	if tick_now:
 		_tick_left = TICK
-		player.apply_burn(poison_tick, 1.2, true)
+	for player in Player.get_all(get_tree()):
+		if not is_in_fog(player.global_position):
+			continue
+		player.mark_floor_status("독안개 속")
+		if tick_now:
+			player.apply_burn(poison_tick, 1.2, true)
 
 
 func _draw() -> void:

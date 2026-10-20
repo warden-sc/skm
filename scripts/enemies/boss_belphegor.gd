@@ -65,7 +65,7 @@ func fall_asleep() -> void:
 	_asleep = true
 	_sleeps += 1
 	set_status("깊은 잠 — 회복 중 (때려서 깨워라)", Color(0.75, 0.7, 1.0))
-	GameManager.show_notice("벨페고르가 깊은 잠에 빠져 회복한다! 어서 때려 깨워라", Color(0.75, 0.7, 1.0))
+	Net.announce("벨페고르가 깊은 잠에 빠져 회복한다! 어서 때려 깨워라", Color(0.75, 0.7, 1.0))
 
 
 func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool = false, armor_pen: int = 0) -> void:
@@ -135,4 +135,4 @@ func _draw() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("벨페고르가 하품을 한다… 오라가 넓어지고 더 빨리 잠든다", Color(0.75, 0.7, 1.0))
+	Net.announce("벨페고르가 하품을 한다… 오라가 넓어지고 더 빨리 잠든다", Color(0.75, 0.7, 1.0))

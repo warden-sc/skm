@@ -108,7 +108,7 @@ func _on_pillar_cut(_pillar: Enemy) -> void:
 	if get_pillars().is_empty():
 		fall()
 	else:
-		GameManager.show_notice("고삐 하나를 끊었다! 전차가 느려진다 (남은 고삐 %d)" % get_pillars().size(), Color(1.0, 0.85, 0.5))
+		Net.announce("고삐 하나를 끊었다! 전차가 느려진다 (남은 고삐 %d)" % get_pillars().size(), Color(1.0, 0.85, 0.5))
 	_update_status()
 
 
@@ -123,7 +123,7 @@ func fall() -> void:
 	defense = maxi(_base_defense - fall_defense, 0)
 	super.stun(10.0)
 	Fx.explosion(self, get_hit_center(), Color(1.0, 0.7, 0.3), 50.0, 2)
-	GameManager.show_notice("고삐가 모두 끊어졌다! 태양 전차가 멈추고 파에톤이 떨어진다", Color(1.0, 0.85, 0.5))
+	Net.announce("고삐가 모두 끊어졌다! 태양 전차가 멈추고 파에톤이 떨어진다", Color(1.0, 0.85, 0.5))
 	_update_status()
 
 
@@ -199,4 +199,4 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("파에톤: 멈춰! 말을 들어! 전차가 더 거칠게 날뛴다", Color(1.0, 0.6, 0.3))
+	Net.announce("파에톤: 멈춰! 말을 들어! 전차가 더 거칠게 날뛴다", Color(1.0, 0.6, 0.3))

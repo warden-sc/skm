@@ -93,14 +93,14 @@ func open(shop_name: String, stock_ids: Array) -> void:
 	_detail.text = "장비에 마우스를 올리면 상세 정보가 표시됩니다.  장착 중인 장비는 인벤토리[I]에서 해제한 뒤 팔 수 있습니다."
 	_refresh()
 	show()
-	get_tree().paused = true
+	Net.pause_tree(get_tree(), true)
 
 
 func close() -> void:
 	if not visible:
 		return
 	hide()
-	get_tree().paused = false
+	Net.pause_tree(get_tree(), false)
 
 
 func is_open() -> bool:

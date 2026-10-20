@@ -108,7 +108,7 @@ func begin_mesh() -> void:
 	if has_wheel():
 		wheel.global_position = global_position + Vector2(0, 2)
 	Fx.shockwave(self, get_hit_center(), Color(1.0, 0.9, 0.5), 70.0, 0.4)
-	GameManager.show_notice("두 바퀴가 맞물렸다! 지금 몰아쳐라", Color(1.0, 0.9, 0.5))
+	Net.announce("두 바퀴가 맞물렸다! 지금 몰아쳐라", Color(1.0, 0.9, 0.5))
 	_update_status()
 
 
@@ -164,7 +164,7 @@ func _physics_process(delta: float) -> void:
 					wheel.global_position = wheel.global_position.move_toward(target, 120.0 * delta)
 				if _mesh_left <= 0.0:
 					state = WheelState.ROLLING_IN
-					GameManager.show_notice("둘째 바퀴가 굴러온다…", Color(0.85, 0.85, 1.0))
+					Net.announce("둘째 바퀴가 굴러온다…", Color(0.85, 0.85, 1.0))
 			WheelState.ROLLING_IN:
 				if not has_wheel():
 					begin_mesh()

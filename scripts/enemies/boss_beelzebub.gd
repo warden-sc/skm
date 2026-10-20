@@ -115,4 +115,4 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("바알제붑: 배가 고프다…! 졸개를 더 자주 잡아먹는다", Color(0.7, 0.8, 0.4))
+	Net.announce("바알제붑: 배가 고프다…! 졸개를 더 자주 잡아먹는다", Color(0.7, 0.8, 0.4))

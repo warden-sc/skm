@@ -134,5 +134,5 @@ func throw_boulder() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("티탄이 쇠사슬을 끊을 듯 날뛴다! 바위를 연달아 던진다", Color(1.0, 0.6, 0.45))
+	Net.announce("티탄이 쇠사슬을 끊을 듯 날뛴다! 바위를 연달아 던진다", Color(1.0, 0.6, 0.45))
 	base_tint = Color(1.15, 0.95, 0.9)

@@ -18,6 +18,8 @@ var follow_player: bool = true
 var home: Vector2 = Vector2.ZERO
 var available: bool = true
 var _carried: bool = false
+## 들고 있는 용사 (멀티플레이에서는 집은 사람)
+var _carrier: Player
 var _hidden_left: float = 0.0
 var _sprite: Sprite2D
 var _glow: CPUParticles2D
@@ -68,7 +70,8 @@ func _ready() -> void:
 	_glow.position = Vector2(0, -6)
 	add_child(_glow)
 	_glow.emitting = true
-	GameManager.player_damaged.connect(_on_player_damaged)
+	if not has_meta(&"net_mirror"):  # 멀티플레이 참가자 화면의 복제본은 반응하지 않음
+		GameManager.player_damaged.connect(_on_player_damaged)
 
 
 func is_carried() -> bool:
@@ -100,7 +103,7 @@ func drop(notice: bool = true) -> void:
 	_carried = false
 	global_position = home
 	if notice:
-		var player := get_tree().get_first_node_in_group(&"player") as Player
+		var player := _carrier if _carrier != null and is_instance_valid(_carrier) else Player.find_nearest(get_tree(), global_position)
 		if player != null:
 			FloatingText.spawn(player, player.global_position + Vector2(0, -28), "%s을(를) 떨어뜨렸다!" % item_name, Color(1.0, 0.6, 0.5), true)
 	dropped.emit(self)
@@ -117,11 +120,11 @@ func _physics_process(delta: float) -> void:
 		if _hidden_left <= 0.0:
 			reappear()
 		return
-	var player := get_tree().get_first_node_in_group(&"player") as Player
-	if player == null:
+	if _carried and _carrier != null and is_instance_valid(_carrier):
+		global_position = _carrier.global_position + Vector2(0, -26)
 		return
-	if _carried:
-		global_position = player.global_position + Vector2(0, -26)
+	var player := Player.find_nearest(get_tree(), global_position)
+	if player == null:
 		return
 	if player.global_position.distance_to(global_position) > REACH:
 		return
@@ -130,5 +133,6 @@ func _physics_process(delta: float) -> void:
 			return
 	if follow_player:
 		_carried = true
+		_carrier = player
 		FloatingText.spawn(player, player.global_position + Vector2(0, -28), "%s을(를) 들었다" % item_name, Color(1.0, 0.95, 0.6), true)
 	picked_up.emit(self)

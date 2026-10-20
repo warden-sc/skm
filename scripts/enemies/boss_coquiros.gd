@@ -108,7 +108,7 @@ func begin_absolute_zero() -> void:
 		var a := TAU * i / count + randf_range(-0.3, 0.3)
 		var at := (area.get_center() + Vector2(cos(a) * area.size.x * 0.36, sin(a) * area.size.y * 0.34)).clamp(area.position + Vector2(20, 20), area.end - Vector2(20, 10))
 		request_summon(crystal_scene, at)
-	GameManager.show_notice("코퀴로스가 절대영도를 모은다! %d초 안에 서리 결정을 모두 부숴라" % roundi(zero_time), Color(0.7, 0.9, 1.0))
+	Net.announce("코퀴로스가 절대영도를 모은다! %d초 안에 서리 결정을 모두 부숴라" % roundi(zero_time), Color(0.7, 0.9, 1.0))
 	Fx.frost_nova(self, get_hit_center(), 60.0, 2)
 
 
@@ -127,7 +127,7 @@ func _cancel_zero() -> void:
 	_crystals.clear()
 	_stun_left = 2.5
 	set_status("절대영도가 흩어졌다!", Color(0.8, 1.0, 1.0))
-	GameManager.show_notice("서리 결정을 모두 부쉈다! 코퀴로스가 휘청인다", Color(0.8, 1.0, 1.0))
+	Net.announce("서리 결정을 모두 부쉈다! 코퀴로스가 휘청인다", Color(0.8, 1.0, 1.0))
 	_after(1.5, func() -> void:
 		if _zero_left <= 0.0 and get_status_text().begins_with("절대영도가"):
 			set_status("", Color.WHITE))
@@ -140,7 +140,7 @@ func _release_zero() -> void:
 	_crystals.clear()
 	set_status("", Color.WHITE)
 	Fx.frost_nova(self, get_hit_center(), 200.0, 3)
-	GameManager.show_notice("절대영도! 모든 것이 얼어붙었다", Color(0.6, 0.85, 1.0))
+	Net.announce("절대영도! 모든 것이 얼어붙었다", Color(0.6, 0.85, 1.0))
 	if has_target():
 		if _player.take_unblockable_hit(maxi(1, roundi(GameManager.max_hp * zero_ratio)), get_hit_center(), false) == Player.HitResult.DAMAGED:
 			_zero_hits += 1
@@ -191,4 +191,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("코퀴로스: 호수의 밑바닥처럼 차갑게 잠들어라… 서리 결정이 늘어난다", Color(0.7, 0.9, 1.0))
+	Net.announce("코퀴로스: 호수의 밑바닥처럼 차갑게 잠들어라… 서리 결정이 늘어난다", Color(0.7, 0.9, 1.0))

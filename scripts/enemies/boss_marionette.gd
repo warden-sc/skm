@@ -116,7 +116,7 @@ func begin_control() -> void:
 			sw.activate()
 	_update_puppet()
 	set_status("꼭두각시 조종: 실 %d가닥" % _threads, Color(1.0, 0.75, 0.9))
-	GameManager.show_notice("마리오네트의 실에 묶였다! 가장자리의 스위치 4개를 밟아 실을 끊어라", Color(1.0, 0.75, 0.9))
+	Net.announce("마리오네트의 실에 묶였다! 가장자리의 스위치 4개를 밟아 실을 끊어라", Color(1.0, 0.75, 0.9))
 	FloatingText.spawn(_player, _player.global_position + Vector2(0, -24), "조종당함!", Color(1.0, 0.7, 0.9), true)
 
 
@@ -143,7 +143,7 @@ func end_control(freed: bool) -> void:
 	if freed:
 		_releases += 1
 		set_status("실이 모두 끊겼다!", Color(1.0, 0.9, 0.5))
-		GameManager.show_notice("구속에서 해방되었다! 마리오네트가 휘청인다", Color(1.0, 0.9, 0.5))
+		Net.announce("구속에서 해방되었다! 마리오네트가 휘청인다", Color(1.0, 0.9, 0.5))
 		stun(3.0)
 	else:
 		set_status("", Color.WHITE)
@@ -224,4 +224,4 @@ func _dance(step: int) -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("마리오네트의 실이 더 질겨졌다… 조종이 더 자주 온다", Color(1.0, 0.75, 0.9))
+	Net.announce("마리오네트의 실이 더 질겨졌다… 조종이 더 자주 온다", Color(1.0, 0.75, 0.9))

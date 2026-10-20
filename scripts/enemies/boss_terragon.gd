@@ -81,7 +81,7 @@ func _physics_process(delta: float) -> void:
 		if _break_left <= 0.0:
 			defense = _base_defense + scale_armor
 			set_status("", Color.WHITE)
-			GameManager.show_notice("테라곤의 바위 비늘이 다시 굳었다", Color(0.85, 0.7, 0.5))
+			Net.announce("테라곤의 바위 비늘이 다시 굳었다", Color(0.85, 0.7, 0.5))
 	super._physics_process(delta)
 
 
@@ -163,7 +163,7 @@ func _crash(pillar: StonePillar) -> void:
 	defense = _base_defense
 	_btimer = 0.2
 	set_status("비늘이 깨졌다! 방어력 -%d" % Balance.scale(scale_armor), Color(1.0, 0.85, 0.5))
-	GameManager.show_notice("테라곤이 돌기둥에 처박혔다! 바위 비늘이 깨졌다 — 지금 몰아쳐라", Color(1.0, 0.85, 0.5))
+	Net.announce("테라곤이 돌기둥에 처박혔다! 바위 비늘이 깨졌다 — 지금 몰아쳐라", Color(1.0, 0.85, 0.5))
 	Fx.explosion(self, global_position, Color(0.7, 0.6, 0.45), 50.0, 2, Vector2(0, 100))
 	if _player != null:
 		_player.shake_camera(7.0)
@@ -211,4 +211,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("테라곤이 대지를 울린다! 돌진이 더 빨라지고 연달아 들이받는다", Color(0.9, 0.7, 0.5))
+	Net.announce("테라곤이 대지를 울린다! 돌진이 더 빨라지고 연달아 들이받는다", Color(0.9, 0.7, 0.5))

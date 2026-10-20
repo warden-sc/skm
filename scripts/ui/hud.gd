@@ -69,6 +69,7 @@ func _ready() -> void:
 
 	_boss_box.hide()
 	_game_over.hide()
+	GameManager.player_hp_changed.connect(_hide_game_over_on_revive)
 	_notice_label.modulate.a = 0.0
 	_damage_flash.modulate.a = 0.0
 
@@ -181,7 +182,16 @@ func _on_notice_requested(text: String, color: Color) -> void:
 	_notice_tween.tween_property(_notice_label, "modulate:a", 0.0, 0.5)
 
 
+## 멀티플레이 부활: 체력이 다시 차면 「쓰러짐」 화면을 닫음
+func _hide_game_over_on_revive(current: int, _max_hp: int) -> void:
+	if current > 0 and not GameManager.is_player_dead:
+		_game_over.hide()
+
+
 func _on_player_died() -> void:
+	if Net.is_online():
+		# 멀티플레이: 동료가 살아 있으면 야영지에 도착할 때 다시 일어남
+		(_game_over.get_node(^"GameOverLabel") as Label).text = "쓰러졌습니다…\n동료가 야영지에 도착하면 다시 일어납니다 (모두 쓰러지면 다 같이 야영지에서)"
 	_game_over.show()
 
 

@@ -81,12 +81,12 @@ func _physics_process(delta: float) -> void:
 			rock.absorb_hit()
 			_shatter()
 			return
-	var player := get_tree().get_first_node_in_group(&"player") as Player
-	if player != null and not player.is_dashing() and (player.global_position + Vector2(0, -5)).distance_to(global_position) <= HIT_RADIUS:
-		_hit_player = true
-		player.take_unblockable_hit(damage, global_position)
-		_shatter()
-		return
+	for player in Player.get_all(get_tree()):
+		if not player.is_dashing() and (player.global_position + Vector2(0, -5)).distance_to(global_position) <= HIT_RADIUS:
+			_hit_player = true
+			player.take_unblockable_hit(damage, global_position)
+			_shatter()
+			return
 	if _travelled >= max_distance:
 		_shatter()
 

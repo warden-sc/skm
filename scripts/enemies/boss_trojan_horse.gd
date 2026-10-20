@@ -131,9 +131,9 @@ func _on_wheel_broken(_wheel: Enemy) -> void:
 		_charge_windup = 0.0
 		_charge_left = 0.0
 		super.stun(10.0)
-		GameManager.show_notice("바퀴가 모두 부서졌다! 트로이 목마가 멈춰 선다", Color(1.0, 0.85, 0.5))
+		Net.announce("바퀴가 모두 부서졌다! 트로이 목마가 멈춰 선다", Color(1.0, 0.85, 0.5))
 	else:
-		GameManager.show_notice("바퀴 하나를 부쉈다! 목마가 느려진다 (남은 바퀴 %d)" % get_wheels().size(), Color(1.0, 0.85, 0.5))
+		Net.announce("바퀴 하나를 부쉈다! 목마가 느려진다 (남은 바퀴 %d)" % get_wheels().size(), Color(1.0, 0.85, 0.5))
 	_update_status()
 
 
@@ -161,7 +161,7 @@ func open_hatch() -> void:
 	for i in 3:
 		if not soldier_scenes.is_empty():
 			request_summon(soldier_scenes.pick_random(), global_position + Vector2(-30.0 + 30.0 * i, 30.0))
-	GameManager.show_notice("목마의 해치가 열렸다! 쏟아지는 병사 사이로 해치를 노려라", Color(1.0, 0.8, 0.4))
+	Net.announce("목마의 해치가 열렸다! 쏟아지는 병사 사이로 해치를 노려라", Color(1.0, 0.8, 0.4))
 	_update_status()
 
 
@@ -234,4 +234,4 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("목마 속에서 함성이 터져 나온다! 해치가 더 자주 열린다", Color(1.0, 0.7, 0.4))
+	Net.announce("목마 속에서 함성이 터져 나온다! 해치가 더 자주 열린다", Color(1.0, 0.7, 0.4))

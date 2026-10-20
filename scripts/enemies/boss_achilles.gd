@@ -136,4 +136,4 @@ func _draw() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("아킬레우스의 분노! 돌진이 더 길고 빨라진다", Color(1.0, 0.5, 0.4))
+	Net.announce("아킬레우스의 분노! 돌진이 더 길고 빨라진다", Color(1.0, 0.5, 0.4))

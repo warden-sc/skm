@@ -111,7 +111,7 @@ func change_wind() -> void:
 	wind.set_wind(dir, wind_strength * (1.2 if phase_two else 1.0))
 	_wind_changes += 1
 	_wind_left = wind_interval * (0.7 if phase_two else 1.0)
-	GameManager.show_notice("바람의 방향이 바뀐다 %s  — 화살과 마법이 바람에 휜다" % wind.get_arrow(), Color(0.7, 1.0, 0.85))
+	Net.announce("바람의 방향이 바뀐다 %s  — 화살과 마법이 바람에 휜다" % wind.get_arrow(), Color(0.7, 1.0, 0.85))
 
 
 # ============================================================ 기믹 2: 비상
@@ -125,7 +125,7 @@ func soar() -> void:
 	_orbit_angle = randf() * TAU
 	contact_damage = 0
 	set_status("하늘 위: 활로만 공격 가능 — 바람을 읽어라!", Color(0.7, 1.0, 0.85))
-	GameManager.show_notice("제피로스가 폭풍 위로 날아올랐다! 활로만 닿는다 — 바람에 휘는 걸 감안해 쏴라", Color(0.7, 1.0, 0.85))
+	Net.announce("제피로스가 폭풍 위로 날아올랐다! 활로만 닿는다 — 바람에 휘는 걸 감안해 쏴라", Color(0.7, 1.0, 0.85))
 	Fx.burst(self, global_position, Color(0.8, 1.0, 0.9), 24, 70.0, 0.6, Vector2(0, 40), 1.4)
 
 
@@ -180,7 +180,7 @@ func summon_tornadoes() -> void:
 		if arena_rect.has_area():
 			at = at.clamp(arena_rect.position, arena_rect.end)
 		Tornado.spawn(self, at, roundi(tornado_damage * power), 9.0)
-	GameManager.show_notice("회오리가 일어난다! 닿으면 휘말려 날아간다 (대시로 통과)", Color(0.7, 1.0, 0.85))
+	Net.announce("회오리가 일어난다! 닿으면 휘말려 날아간다 (대시로 통과)", Color(0.7, 1.0, 0.85))
 
 
 # ============================================================ 패턴
@@ -233,5 +233,5 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("제피로스: 폭풍이여, 모두 쓸어버려라! 회오리가 일어난다", Color(0.7, 1.0, 0.85))
+	Net.announce("제피로스: 폭풍이여, 모두 쓸어버려라! 회오리가 일어난다", Color(0.7, 1.0, 0.85))
 	_tornado_left = 1.0

@@ -87,7 +87,7 @@ func rotate_faces() -> void:
 	face_offset = (face_offset + 1) % 4
 	_face_left = face_time * (0.7 if phase_two else 1.0)
 	Fx.burst(self, get_hit_center(), FACE_COLORS[Face.MAN], 14, 60.0, 0.5)
-	GameManager.show_notice("케루빔의 네 얼굴이 돈다 — 사람 얼굴 쪽으로 돌아가라", FACE_COLORS[Face.MAN])
+	Net.announce("케루빔의 네 얼굴이 돈다 — 사람 얼굴 쪽으로 돌아가라", FACE_COLORS[Face.MAN])
 	_update_status()
 
 
@@ -130,7 +130,7 @@ func _segment_distance(at: Vector2, index: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("케루빔이 날개를 펼친다 — 불칼이 둘이 되어 더 빨리 돈다!", Color(1.0, 0.55, 0.2))
+	Net.announce("케루빔이 날개를 펼친다 — 불칼이 둘이 되어 더 빨리 돈다!", Color(1.0, 0.55, 0.2))
 
 
 func _update_status() -> void:

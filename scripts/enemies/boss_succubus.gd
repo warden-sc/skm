@@ -123,4 +123,4 @@ func _blink_to(at: Vector2) -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("서큐버스: 후후… 이제 진심으로 놀아줄게", Color(1.0, 0.5, 0.85))
+	Net.announce("서큐버스: 후후… 이제 진심으로 놀아줄게", Color(1.0, 0.5, 0.85))

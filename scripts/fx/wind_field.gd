@@ -70,9 +70,9 @@ func get_arrow() -> String:
 
 func _physics_process(delta: float) -> void:
 	_time += delta
-	var player := get_tree().get_first_node_in_group(&"player") as Player
-	if player != null and area.has_point(player.global_position) and not player.is_dashing():
-		player.apply_push(direction * player_push)
+	for player in Player.get_all(get_tree()):
+		if area.has_point(player.global_position) and not player.is_dashing():
+			player.apply_push(direction * player_push)
 	var flow := direction * (120.0 + strength * 0.3) * delta
 	for i in _streaks.size():
 		var p := _streaks[i] + flow

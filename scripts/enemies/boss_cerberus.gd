@@ -125,7 +125,7 @@ func put_to_sleep(i: int) -> void:
 		head.base_tint = Color(0.6, 0.6, 0.8)
 		head.sprite.rotation = 0.4
 		FloatingText.spawn(head, head.global_position + Vector2(0, -20), "Zzz…", Color(0.8, 0.85, 1.0), true)
-	GameManager.show_notice("리라 소리에 %s가 잠들었다! 잠든 머리는 피해 %d배" % [HEAD_NAMES[i], roundi(sleep_multiplier)], Color(1.0, 0.92, 0.6))
+	Net.announce("리라 소리에 %s가 잠들었다! 잠든 머리는 피해 %d배" % [HEAD_NAMES[i], roundi(sleep_multiplier)], Color(1.0, 0.92, 0.6))
 
 
 func _wake(i: int) -> void:
@@ -201,4 +201,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("케르베로스가 세 머리로 울부짖는다! 잠이 얕아진다", Color(0.9, 0.6, 0.6))
+	Net.announce("케르베로스가 세 머리로 울부짖는다! 잠이 얕아진다", Color(0.9, 0.6, 0.6))

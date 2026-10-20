@@ -134,12 +134,12 @@ func _judge() -> void:
 		_lose_left = lose_time
 		defense = maxi(_base_defense - lose_defense, 0)
 		super.stun(5.0)
-		GameManager.show_notice("궁술 경연에서 이겼다! 에우리토스가 분해서 휘청인다 (방어력 -%d)" % Balance.scale(lose_defense), Color(0.7, 0.9, 1.0))
+		Net.announce("궁술 경연에서 이겼다! 에우리토스가 분해서 휘청인다 (방어력 -%d)" % Balance.scale(lose_defense), Color(0.7, 0.9, 1.0))
 	else:
 		_boss_wins += 1
 		_win_left = win_time
 		power = _base_power * (1.0 + win_power)
-		GameManager.show_notice("에우리토스가 경연에서 이겼다! 기세가 올라 공격력이 오른다", Color(1.0, 0.6, 0.5))
+		Net.announce("에우리토스가 경연에서 이겼다! 기세가 올라 공격력이 오른다", Color(1.0, 0.6, 0.5))
 	_round_rest_left = round_rest
 
 
@@ -157,7 +157,7 @@ func _physics_process(delta: float) -> void:
 			_round_rest_left -= delta
 			if _round_rest_left <= 0.0:
 				_set_up_targets()
-				GameManager.show_notice("새 과녁이 섰다! 에우리토스보다 먼저 맞혀라", Color(1.0, 0.9, 0.6))
+				Net.announce("새 과녁이 섰다! 에우리토스보다 먼저 맞혀라", Color(1.0, 0.9, 0.6))
 		_parry_arrows()
 	super._physics_process(delta)
 
@@ -237,4 +237,4 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("에우리토스: 아폴론조차 내 활을 두려워했다! 경연 화살이 빨라진다", Color(0.9, 1.0, 0.7))
+	Net.announce("에우리토스: 아폴론조차 내 활을 두려워했다! 경연 화살이 빨라진다", Color(0.9, 1.0, 0.7))

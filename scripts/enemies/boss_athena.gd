@@ -139,7 +139,7 @@ func _physics_process(delta: float) -> void:
 			var size := maxi(phalanx_size - _reforms, 0)
 			if size > living_shields():
 				form_phalanx(size)
-				GameManager.show_notice("아테나가 팔랑크스 진형을 다시 짠다 (방패병 %d명)" % size, Color(0.75, 0.85, 1.0))
+				Net.announce("아테나가 팔랑크스 진형을 다시 짠다 (방패병 %d명)" % size, Color(0.75, 0.85, 1.0))
 		if Engine.get_physics_frames() % 15 == 0:
 			_update_status()
 	super._physics_process(delta)
@@ -205,7 +205,7 @@ func _run_pattern(pattern: int) -> float:
 		Pattern.STRATEGY:
 			if board != null:
 				board.plan(4 if phase_two else 3, 6 if phase_two else 5, 1.4, 0.7 if phase_two else 0.8)
-			GameManager.show_notice("아테나가 다음 세 수를 둔다 — 번호 순서대로 터진다", Color(0.75, 0.85, 1.0))
+			Net.announce("아테나가 다음 세 수를 둔다 — 번호 순서대로 터진다", Color(0.75, 0.85, 1.0))
 			return 1.0
 		Pattern.FEATHERS:
 			for w in 2:
@@ -224,4 +224,4 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("아테나: 지혜는 언제나 한 수 앞선다! 전략의 수가 늘어나고 빨라진다", Color(0.75, 0.85, 1.0))
+	Net.announce("아테나: 지혜는 언제나 한 수 앞선다! 전략의 수가 늘어나고 빨라진다", Color(0.75, 0.85, 1.0))

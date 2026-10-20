@@ -117,7 +117,7 @@ func grow_wings() -> void:
 	for side in [-1.0, 1.0]:
 		request_summon(wing_scene, global_position + Vector2(WING_OFFSET.x * side, WING_OFFSET.y))
 	if _groggies > 0:
-		GameManager.show_notice("그리핀의 날개가 다시 돋아났다!", Color(0.85, 0.9, 1.0))
+		Net.announce("그리핀의 날개가 다시 돋아났다!", Color(0.85, 0.9, 1.0))
 
 
 func register_minion(minion: Enemy) -> void:
@@ -147,7 +147,7 @@ func _update_wings() -> void:
 func _on_wing_broken(_enemy: Enemy) -> void:
 	_wings = get_wings()
 	if not _wings.is_empty() or is_dead():
-		GameManager.show_notice("그리핀의 한쪽 날개가 꺾였다!", Color(0.85, 0.9, 1.0))
+		Net.announce("그리핀의 한쪽 날개가 꺾였다!", Color(0.85, 0.9, 1.0))
 		return
 	_wings_broken = true
 	crash()
@@ -167,7 +167,7 @@ func crash() -> void:
 	_regrow_left = wing_regrow_time
 	base_tint = Color(0.75, 0.75, 0.85)
 	set_status("그로기! 땅에 처박혔다", Color(1.0, 0.85, 0.45))
-	GameManager.show_notice("양쪽 날개가 부서져 그리핀이 땅에 처박혔다! 지금이 기회다", Color(1.0, 0.85, 0.45))
+	Net.announce("양쪽 날개가 부서져 그리핀이 땅에 처박혔다! 지금이 기회다", Color(1.0, 0.85, 0.45))
 	Fx.explosion(self, global_position, Color(0.75, 0.7, 0.6), 50.0, 3, Vector2(0, 120))
 	if _player != null:
 		_player.shake_camera(6.0)
@@ -183,7 +183,7 @@ func take_off() -> void:
 	_feather_timer = 0.8
 	_orbit_angle = randf() * TAU
 	set_status("비행 중: 활로만 공격 가능!", Color(0.7, 0.85, 1.0))
-	GameManager.show_notice("그리핀이 날아올랐다! 공중에서는 활로만 공격할 수 있다", Color(0.7, 0.85, 1.0))
+	Net.announce("그리핀이 날아올랐다! 공중에서는 활로만 공격할 수 있다", Color(0.7, 0.85, 1.0))
 	Fx.burst(self, global_position, Color(0.85, 0.85, 0.8), 20, 60.0, 0.6, Vector2(0, 40), 1.3)
 
 
@@ -304,4 +304,4 @@ func _update_visual(delta: float, move: Vector2) -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("그리핀이 사납게 울부짖는다! 더 자주 날아오른다", Color(1.0, 0.6, 0.45))
+	Net.announce("그리핀이 사납게 울부짖는다! 더 자주 날아오른다", Color(1.0, 0.6, 0.45))

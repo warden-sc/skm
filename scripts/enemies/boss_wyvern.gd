@@ -101,7 +101,7 @@ func take_off() -> void:
 	_bomb_timer = 0.8
 	_orbit_angle = randf() * TAU
 	set_status("비행 중: 활로만 공격 가능!", Color(0.7, 0.85, 1.0))
-	GameManager.show_notice("와이번이 날아올랐다! 공중에서는 활로만 공격할 수 있다", Color(0.7, 0.85, 1.0))
+	Net.announce("와이번이 날아올랐다! 공중에서는 활로만 공격할 수 있다", Color(0.7, 0.85, 1.0))
 	Fx.burst(self, global_position, Color(0.8, 0.75, 0.6), 20, 60.0, 0.6, Vector2(0, 40), 1.3)
 
 
@@ -154,5 +154,5 @@ func _update_visual(delta: float, move: Vector2) -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("와이번이 포효한다!", Color(1.0, 0.5, 0.35))
+	Net.announce("와이번이 포효한다!", Color(1.0, 0.5, 0.35))
 	take_off()

@@ -80,7 +80,7 @@ func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool =
 	super.take_damage(amount, knockback, is_crit, armor_pen)
 	if not _phase_two and not is_dead() and float(hp) <= max_hp * 0.5:
 		_phase_two = true
-		GameManager.show_notice("지옥의 수문장이 업화를 두른다!", Color(1.0, 0.45, 0.2))
+		Net.announce("지옥의 수문장이 업화를 두른다!", Color(1.0, 0.45, 0.2))
 		Fx.explosion(self, get_hit_center(), Elements.color_of(Elements.Type.FIRE), 60.0, 3, Vector2(0, -80))
 		if _aura != null:
 			_aura.amount = _aura.amount * 2

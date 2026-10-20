@@ -64,7 +64,7 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()
 	if not active or is_pressed:
 		return
-	var player := get_tree().get_first_node_in_group(&"player") as Player
+	var player := Player.find_nearest(get_tree(), global_position)
 	if player != null and player.global_position.distance_to(global_position) <= PRESS_RADIUS:
 		press()
 

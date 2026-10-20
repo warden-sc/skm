@@ -67,8 +67,9 @@ func _detonate() -> void:
 	_done = true
 	if not harmless:
 		Fx.explosion(self, global_position, color, radius, 2, fx_gravity)
-	var player := get_tree().get_first_node_in_group(&"player") as Player
-	if not harmless and player != null and player.global_position.distance_to(global_position) <= radius + 4.0:
+	for player in Player.get_all(get_tree()):
+		if harmless or player.global_position.distance_to(global_position) > radius + 4.0:
+			continue
 		var result := player.take_hit(damage, global_position)
 		if result == Player.HitResult.DAMAGED and slow_duration > 0.0:
 			player.apply_slow(0.5, slow_duration)

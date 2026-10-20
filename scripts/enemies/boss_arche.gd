@@ -133,7 +133,7 @@ func set_aspect(next: Aspect) -> void:
 		Aspect.FIRE:
 			extra = "불꽃을 두른다 — 화상 · 발밑에 용암"
 	set_status("원소: %s" % ASPECT_NAMES[aspect], ASPECT_COLORS[aspect])
-	GameManager.show_notice("아르케가 「%s」의 힘을 두른다! %s" % [ASPECT_NAMES[aspect], extra], ASPECT_COLORS[aspect])
+	Net.announce("아르케가 「%s」의 힘을 두른다! %s" % [ASPECT_NAMES[aspect], extra], ASPECT_COLORS[aspect])
 
 
 func _update_hazards(delta: float) -> void:
@@ -171,7 +171,7 @@ func begin_runes(safe: int = -1) -> void:
 	_rune_cooldown = rune_interval * (0.75 if phase_two else 1.0)
 	runes = DragonRunes.spawn(self, points, safe, _rune_left)
 	set_status("고대 용언: 「%s」!" % DragonRunes.NAMES[safe], DragonRunes.COLORS[safe])
-	GameManager.show_notice("아르케의 고대 용언 — 「%s」! %s의 룬 원 안으로 들어가라" % [DragonRunes.NAMES[safe], DragonRunes.NAMES[safe]], DragonRunes.COLORS[safe])
+	Net.announce("아르케의 고대 용언 — 「%s」! %s의 룬 원 안으로 들어가라" % [DragonRunes.NAMES[safe], DragonRunes.NAMES[safe]], DragonRunes.COLORS[safe])
 
 
 func _resolve_runes() -> void:
@@ -270,4 +270,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("아르케: 다섯 용의 근원을 보아라! 원소가 더 빨리 바뀐다", Color(1.0, 0.95, 0.7))
+	Net.announce("아르케: 다섯 용의 근원을 보아라! 원소가 더 빨리 바뀐다", Color(1.0, 0.95, 0.7))

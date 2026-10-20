@@ -47,11 +47,12 @@ func rim_point(at: Vector2, margin: float = 30.0) -> Vector2:
 func _physics_process(delta: float) -> void:
 	radius = minf(radius + grow_rate * delta, max_radius)
 	_fall_cd = maxf(_fall_cd - delta, 0.0)
-	var player := get_tree().get_first_node_in_group(&"player") as Player
-	if player != null and _fall_cd <= 0.0 and not player.is_dashing() and contains(player.global_position):
-		_fall_cd = 1.0
-		if fall_callback.is_valid():
-			fall_callback.call(player)
+	if _fall_cd <= 0.0:
+		for player in Player.get_all(get_tree()):
+			if not player.is_dashing() and contains(player.global_position):
+				_fall_cd = 1.0
+				if fall_callback.is_valid():
+					fall_callback.call(player)
 	queue_redraw()
 
 

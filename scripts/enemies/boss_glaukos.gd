@@ -84,7 +84,7 @@ func _get_move_velocity(delta: float) -> Vector2:
 			if pillar != null:
 				pillar.hits = 999999
 				pillars.append(pillar)
-		GameManager.show_notice("어둠 속에서 올빼미의 눈이 빛난다! 시선을 피해 돌기둥 뒤로", Color(1.0, 0.9, 0.5))
+		Net.announce("어둠 속에서 올빼미의 눈이 빛난다! 시선을 피해 돌기둥 뒤로", Color(1.0, 0.9, 0.5))
 	if is_player_marked():
 		return super._get_move_velocity(delta)
 	# 들키지 않았으면 보스방 가운데 위쪽을 천천히 맴돎
@@ -175,4 +175,4 @@ func _draw() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("글라우크스의 눈이 더 밝게 빛난다! 시선이 더 빨리, 더 멀리 닿는다", Color(1.0, 0.9, 0.5))
+	Net.announce("글라우크스의 눈이 더 밝게 빛난다! 시선이 더 빨리, 더 멀리 닿는다", Color(1.0, 0.9, 0.5))

@@ -122,7 +122,7 @@ func rage_burst() -> void:
 	move_speed = _base_speed * 1.5
 	chase_time = 1.0
 	set_status("역린을 건드렸다! 분노", Color(1.0, 0.4, 0.2))
-	GameManager.show_notice("베르단이 역린을 건드려 분노한다! 몸 주위가 폭발한다 — 물러서라", Color(1.0, 0.5, 0.25))
+	Net.announce("베르단이 역린을 건드려 분노한다! 몸 주위가 폭발한다 — 물러서라", Color(1.0, 0.5, 0.25))
 	for i in 12:
 		telegraph_strike(get_hit_center() + Vector2.from_angle(TAU * i / 12.0) * 46.0, 26.0, 1.0, nova_damage, Elements.Type.FIRE)
 	telegraph_strike(get_hit_center(), 34.0, 1.0, nova_damage, Elements.Type.FIRE)
@@ -180,4 +180,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("베르단: 화산이 깨어난다! 용암이 더 넓게 번진다", Color(1.0, 0.5, 0.25))
+	Net.announce("베르단: 화산이 깨어난다! 용암이 더 넓게 번진다", Color(1.0, 0.5, 0.25))

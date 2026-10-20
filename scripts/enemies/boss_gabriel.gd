@@ -104,7 +104,7 @@ func _get_move_velocity(delta: float) -> Vector2:
 		global_position = center + Vector2(0, -25)
 		_descend_left = descend_time
 		Fx.pillar(self, global_position, Color(1.0, 0.97, 0.8), 40.0, 260.0, 0.9)
-		GameManager.show_notice("하늘이 열리고 빛기둥이 내린다…", Color(1.0, 0.97, 0.8))
+		Net.announce("하늘이 열리고 빛기둥이 내린다…", Color(1.0, 0.97, 0.8))
 		set_status("강림하는 중…", Color(1.0, 0.97, 0.8))
 	if _descending:
 		return Vector2.ZERO
@@ -124,7 +124,7 @@ func descend() -> void:
 		withered.append(0.0)
 	_wither_left = wither_interval
 	Fx.shockwave(self, get_hit_center(), Color(1.0, 0.97, 0.8), 180.0, 0.8)
-	GameManager.show_notice("「나는 하나님 앞에 서 있는 가브리엘이라」 — 대천사가 내려와 백합이 피어난다", Color(1.0, 0.97, 0.8))
+	Net.announce("「나는 하나님 앞에 서 있는 가브리엘이라」 — 대천사가 내려와 백합이 피어난다", Color(1.0, 0.97, 0.8))
 	_update_status()
 
 
@@ -191,9 +191,9 @@ func announce(region: int, sealed: bool) -> int:
 	_revelations += 1
 	if sealed:
 		_sealed += 1
-		GameManager.show_notice("봉인된 계시: 「%s」 — 반대쪽에 빛이 내린다!" % REGION_NAMES[region], Color(0.85, 0.75, 1.0))
+		Net.announce("봉인된 계시: 「%s」 — 반대쪽에 빛이 내린다!" % REGION_NAMES[region], Color(0.85, 0.75, 1.0))
 	else:
-		GameManager.show_notice("가브리엘의 전언: 「%s에 빛이 내리리라」" % REGION_NAMES[region], Color(1.0, 0.97, 0.8))
+		Net.announce("가브리엘의 전언: 「%s에 빛이 내리리라」" % REGION_NAMES[region], Color(1.0, 0.97, 0.8))
 	var area := _area().grow(-10.0)
 	var y := area.position.y + 24.0
 	while y < area.end.y:
@@ -225,7 +225,7 @@ func _on_phase_two() -> void:
 	if wing_scene != null:
 		for i in 6:
 			request_summon(wing_scene, global_position + _wing_offset(i))
-	GameManager.show_notice("가브리엘이 여섯 날개를 펴고 날아오른다 — 활로 날개를 떨어뜨려라", Color(1.0, 0.97, 0.8))
+	Net.announce("가브리엘이 여섯 날개를 펴고 날아오른다 — 활로 날개를 떨어뜨려라", Color(1.0, 0.97, 0.8))
 	_update_status()
 
 
@@ -258,7 +258,7 @@ func _on_wing_lost(_w: Enemy) -> void:
 	if living_wings().is_empty() and _flying:
 		land()
 	else:
-		GameManager.show_notice("날개 하나가 떨어졌다 (남은 날개 %d)" % living_wings().size(), Color(1.0, 0.97, 0.8))
+		Net.announce("날개 하나가 떨어졌다 (남은 날개 %d)" % living_wings().size(), Color(1.0, 0.97, 0.8))
 	_update_status()
 
 
@@ -271,7 +271,7 @@ func land() -> void:
 		w.despawn()
 	super.stun(land_stun)
 	Fx.shockwave(self, global_position, Color(1.0, 0.97, 0.8), 120.0, 0.6)
-	GameManager.show_notice("여섯 날개를 모두 잃은 가브리엘이 땅에 내려섰다!", Color(1.0, 0.97, 0.8))
+	Net.announce("여섯 날개를 모두 잃은 가브리엘이 땅에 내려섰다!", Color(1.0, 0.97, 0.8))
 	_update_status()
 
 
@@ -293,7 +293,7 @@ func _physics_process(delta: float) -> void:
 				var i := _nearest_lily_to_player()
 				if i >= 0:
 					wither_lily(i)
-					GameManager.show_notice("가브리엘이 손을 들자 백합 한 송이가 시든다 — 다른 백합으로", Color(0.9, 0.85, 0.65))
+					Net.announce("가브리엘이 손을 들자 백합 한 송이가 시든다 — 다른 백합으로", Color(0.9, 0.85, 0.65))
 			if _flying:
 				_rain_left -= delta
 				if _rain_left <= 0.0:

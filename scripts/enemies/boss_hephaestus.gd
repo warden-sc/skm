@@ -133,7 +133,7 @@ func begin_pour(is_vertical: int = -1) -> void:
 	var lanes: Array[int] = pick.slice(0, 3 if phase_two else 2)
 	channels.tick_ratio = 0.12
 	channels.warn(lanes, vertical, pour_warn)
-	GameManager.show_notice("용광로가 끓어 넘친다! 붉게 달아오른 홈에서 비켜라", Color(1.0, 0.6, 0.3))
+	Net.announce("용광로가 끓어 넘친다! 붉게 달아오른 홈에서 비켜라", Color(1.0, 0.6, 0.3))
 	_after(pour_warn, func() -> void:
 		if not is_dead() and channels != null and is_instance_valid(channels):
 			channels.pour(pour_time))
@@ -160,7 +160,7 @@ func register_minion(minion: Enemy) -> void:
 func _on_anvil_broken(_enemy: Enemy) -> void:
 	_anvil_broken = true
 	anvil = null
-	GameManager.show_notice("모루를 부쉈다! 헤파이스토스는 더 이상 새 무기를 벼릴 수 없다", Color(1.0, 0.8, 0.5))
+	Net.announce("모루를 부쉈다! 헤파이스토스는 더 이상 새 무기를 벼릴 수 없다", Color(1.0, 0.8, 0.5))
 
 
 func begin_forge() -> void:
@@ -174,7 +174,7 @@ func begin_forge() -> void:
 	_btimer = chase_time
 	global_position = (anvil.global_position + Vector2(36, 0)).clamp(_area().position, _area().end)
 	set_status("담금질 중… 모루를 부수면 막을 수 있다", Color(1.0, 0.75, 0.4))
-	GameManager.show_notice("헤파이스토스가 모루에서 새 무기를 벼린다! %d초 안에 모루를 부숴라" % roundi(forge_time), Color(1.0, 0.75, 0.4))
+	Net.announce("헤파이스토스가 모루에서 새 무기를 벼린다! %d초 안에 모루를 부숴라" % roundi(forge_time), Color(1.0, 0.75, 0.4))
 
 
 func _finish_forge() -> void:
@@ -186,7 +186,7 @@ func _finish_forge() -> void:
 	weapon = mini(int(weapon) + 1, 2) as Weapon
 	power = _base_power * (1.0 + 0.15 * int(weapon))
 	set_status("무기: %s" % WEAPON_NAMES[weapon], Color(1.0, 0.75, 0.4))
-	GameManager.show_notice("새 무기 「%s」가 완성되었다! 공격이 바뀐다" % WEAPON_NAMES[weapon], Color(1.0, 0.75, 0.4))
+	Net.announce("새 무기 「%s」가 완성되었다! 공격이 바뀐다" % WEAPON_NAMES[weapon], Color(1.0, 0.75, 0.4))
 	Fx.explosion(self, get_hit_center(), Color(1.0, 0.7, 0.3), 50.0, 2)
 
 
@@ -199,7 +199,7 @@ func trap_in_net() -> bool:
 	_net_left = net_time
 	_player.apply_root(net_time, "황금 그물에 갇힘! 그물을 공격해 찢어라")
 	request_summon(net_scene, _player.global_position + Vector2(0, -2))
-	GameManager.show_notice("황금 그물에 갇혔다! 그물을 공격해서 찢어라", Color(1.0, 0.9, 0.5))
+	Net.announce("황금 그물에 갇혔다! 그물을 공격해서 찢어라", Color(1.0, 0.9, 0.5))
 	return true
 
 
@@ -278,9 +278,10 @@ func _die() -> void:
 		# 프로메테우스의 불씨 → 헤파이스토스가 쓰러지며 용광로에서 「원초의 불꽃」으로 제련
 		GameManager.key_items.erase(&"prometheus_ember")
 		GameManager.add_relic(ItemDB.get_relic(&"primal_flame"))
-		GameManager.show_notice("프로메테우스의 불씨가 용광로 속에서 다시 타올라 「원초의 불꽃」이 되었다! — 봉인됨 · 100스테이지를 클리어하면 [Z] 로 사용", Color(1.0, 0.6, 0.25))
+		Net.grant_all("relic", &"primal_flame")
+		Net.announce("프로메테우스의 불씨가 용광로 속에서 다시 타올라 「원초의 불꽃」이 되었다! — 봉인됨 · 100스테이지를 클리어하면 [Z] 로 사용", Color(1.0, 0.6, 0.25))
 	super._die()
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("헤파이스토스: 대장간의 불은 꺼지지 않는다! 쇳물이 더 넓게 흐른다", Color(1.0, 0.6, 0.3))
+	Net.announce("헤파이스토스: 대장간의 불은 꺼지지 않는다! 쇳물이 더 넓게 흐른다", Color(1.0, 0.6, 0.3))

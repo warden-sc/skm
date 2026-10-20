@@ -35,13 +35,14 @@ func covers(at: Vector2) -> bool:
 
 
 func _physics_process(delta: float) -> void:
-	var player := get_tree().get_first_node_in_group(&"player") as Player
+	var player := Player.find_nearest(get_tree(), global_position)
 	if player == null:
 		return
 	global_position = global_position.move_toward(player.global_position, SPEED * delta)
-	if covers(player.global_position):
-		player.apply_slow(0.75, 0.15)
-		player.mark_floor_status("파리 떼 — 시야가 가려짐 (대시로 벗어나기)")
+	for p in Player.get_all(get_tree()):
+		if covers(p.global_position):
+			p.apply_slow(0.75, 0.15)
+			p.mark_floor_status("파리 떼 — 시야가 가려짐 (대시로 벗어나기)")
 	queue_redraw()
 
 

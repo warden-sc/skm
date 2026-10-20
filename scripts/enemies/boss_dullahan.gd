@@ -140,11 +140,11 @@ func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool =
 		amount = roundi(amount * EXPOSED_DAMAGE_MULTIPLIER)
 	super.take_damage(amount, knockback, is_crit, armor_pen)
 	if is_dead():
-		GameManager.show_notice("듀라한: 폐하… 옥좌를… 지키지 못했습니다…", Color(0.8, 0.6, 1.0))
+		Net.announce("듀라한: 폐하… 옥좌를… 지키지 못했습니다…", Color(0.8, 0.6, 1.0))
 		return
 	if not _phase_two and not is_dead() and float(hp) <= max_hp * 0.5:
 		_phase_two = true
-		GameManager.show_notice("기사단장 듀라한: 폐하께서 돌아오실 때까지… 이 옥좌는 내가 지킨다!", Color(0.8, 0.5, 1.0))
+		Net.announce("기사단장 듀라한: 폐하께서 돌아오실 때까지… 이 옥좌는 내가 지킨다!", Color(0.8, 0.5, 1.0))
 		Fx.explosion(self, get_hit_center(), Elements.color_of(Elements.Type.DARK), 70.0, 3, Vector2(0, -30))
 
 
@@ -176,7 +176,7 @@ func _start_next_pattern() -> void:
 func throw_head() -> void:
 	if is_headless() or head_scene == null:
 		return
-	GameManager.show_notice("듀라한이 머리를 던졌다! 약점은 머리 — 머리를 쓰러뜨려라!", Color(0.85, 0.6, 1.0))
+	Net.announce("듀라한이 머리를 던졌다! 약점은 머리 — 머리를 쓰러뜨려라!", Color(0.85, 0.6, 1.0))
 	request_summon(head_scene, get_hit_center() + Vector2(0, -10))
 	Fx.explosion(self, get_hit_center(), Elements.color_of(Elements.Type.DARK), 30.0, 2, Vector2(0, -30))
 
@@ -217,7 +217,7 @@ func _head_returns() -> void:
 	hp = mini(hp + heal, max_hp)
 	health_changed.emit(hp, max_hp)
 	FloatingText.spawn(self, global_position + Vector2(0, -44), "+%d" % heal, Color(0.7, 0.5, 1.0))
-	GameManager.show_notice("머리가 몸으로 돌아갔다… 듀라한이 회복한다", Color(0.8, 0.6, 1.0))
+	Net.announce("머리가 몸으로 돌아갔다… 듀라한이 회복한다", Color(0.8, 0.6, 1.0))
 	_recover_head()
 
 
@@ -230,7 +230,7 @@ func _on_head_died(_enemy: Enemy) -> void:
 	defense = 0
 	_label.text = "약점 노출! 받는 피해 x%.1f" % EXPOSED_DAMAGE_MULTIPLIER
 	_label.add_theme_color_override(&"font_color", Color(1.0, 0.85, 0.4))
-	GameManager.show_notice("듀라한이 무릎을 꿇었다! 지금이 기회!", Color(1.0, 0.85, 0.4))
+	Net.announce("듀라한이 무릎을 꿇었다! 지금이 기회!", Color(1.0, 0.85, 0.4))
 	Fx.explosion(self, get_hit_center(), Color(1.0, 0.85, 0.5), 50.0, 3)
 	if _player != null:
 		_player.shake_camera(4.0)

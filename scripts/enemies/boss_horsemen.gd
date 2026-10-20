@@ -92,7 +92,7 @@ func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool =
 			_revive_left = 0.0
 			_interrupts += 1
 			super.stun(5.0)
-			GameManager.show_notice("부활의 의식이 끊겼다! 「죽음」이 휘청인다", Color(0.7, 1.0, 0.75))
+			Net.announce("부활의 의식이 끊겼다! 「죽음」이 휘청인다", Color(0.7, 1.0, 0.75))
 	var next := clampi(int((1.0 - float(hp) / max_hp) * 4.0), 0, 3)
 	if next > int(rider):
 		switch_rider(next as Rider)
@@ -105,7 +105,7 @@ func switch_rider(next: Rider) -> void:
 	_charge_left = 0.0
 	Fx.burst(self, get_hit_center(), Color(0.8, 0.8, 0.8), 28, 90.0, 0.6)
 	_apply_rider()
-	GameManager.show_notice("묵시록의 기사가 바뀐다: %s" % RIDER_NAMES[rider], Color(0.9, 0.9, 0.95))
+	Net.announce("묵시록의 기사가 바뀐다: %s" % RIDER_NAMES[rider], Color(0.9, 0.9, 0.95))
 	if rider == Rider.DEATH and not _revive_done:
 		_revive_done = true
 		_after(1.3, begin_revive)
@@ -116,7 +116,7 @@ func begin_revive() -> void:
 		return
 	_revive_left = revive_time
 	_revive_damage = 0
-	GameManager.show_notice("「죽음」이 쓰러진 기사들을 되살리려 한다! 몰아쳐서 의식을 끊어라", Color(0.7, 1.0, 0.75))
+	Net.announce("「죽음」이 쓰러진 기사들을 되살리려 한다! 몰아쳐서 의식을 끊어라", Color(0.7, 1.0, 0.75))
 
 
 func _physics_process(delta: float) -> void:
@@ -129,7 +129,7 @@ func _physics_process(delta: float) -> void:
 				var heal := mini(roundi(max_hp * revive_heal), max_hp - hp)
 				hp += heal
 				health_changed.emit(hp, max_hp)
-				GameManager.show_notice("기사들이 되살아나 「죽음」에게 힘을 보탰다 (+%d)" % heal, Color(0.7, 1.0, 0.75))
+				Net.announce("기사들이 되살아나 「죽음」에게 힘을 보탰다 (+%d)" % heal, Color(0.7, 1.0, 0.75))
 		queue_redraw()
 	super._physics_process(delta)
 

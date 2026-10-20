@@ -75,7 +75,7 @@ func turn_black() -> void:
 		for i in clone_count + (2 if phase_two else 0):
 			request_summon(shade_scene, global_position + Vector2.from_angle(TAU * i / clone_count) * 70.0)
 	Fx.burst(self, get_hit_center(), Color(0.1, 0.1, 0.15), 30, 80.0, 0.6)
-	GameManager.show_notice("까마귀가 새까맣게 타오르며 분신이 생겨났다! 그림자가 있는 진짜를 찾아라", Color(0.7, 0.7, 0.85))
+	Net.announce("까마귀가 새까맣게 타오르며 분신이 생겨났다! 그림자가 있는 진짜를 찾아라", Color(0.7, 0.7, 0.85))
 	_update_status()
 
 
@@ -120,7 +120,7 @@ func reveal() -> void:
 	_reveals += 1
 	turn_white()
 	stun(6.0)
-	GameManager.show_notice("그림자가 있는 진짜를 찾았다! 까마귀가 하얗게 질려 휘청인다", Color(0.9, 0.9, 1.0))
+	Net.announce("그림자가 있는 진짜를 찾았다! 까마귀가 하얗게 질려 휘청인다", Color(0.9, 0.9, 1.0))
 
 
 func _update_status() -> void:
@@ -171,4 +171,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("까마귀가 날카롭게 운다! 분신이 늘어난다", Color(0.7, 0.7, 0.85))
+	Net.announce("까마귀가 날카롭게 운다! 분신이 늘어난다", Color(0.7, 0.7, 0.85))

@@ -49,7 +49,7 @@ func is_ready() -> bool:
 func _physics_process(delta: float) -> void:
 	_time += delta
 	_cool_left = maxf(_cool_left - delta, 0.0)
-	var player := get_tree().get_first_node_in_group(&"player") as Player
+	var player := Player.find_nearest(get_tree(), global_position)
 	var playing := is_ready() and player != null and player.global_position.distance_to(global_position) <= REACH
 	_notes.emitting = playing
 	if playing:

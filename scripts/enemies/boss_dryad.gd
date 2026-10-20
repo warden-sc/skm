@@ -111,7 +111,7 @@ func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool =
 	super.take_damage(amount, knockback, is_crit, armor_pen)
 	if not _phase_two and not is_dead() and float(hp) <= max_hp * 0.5:
 		_phase_two = true
-		GameManager.show_notice("드라이어드: 숲이 분노한다!", Color(0.6, 1.0, 0.45))
+		Net.announce("드라이어드: 숲이 분노한다!", Color(0.6, 1.0, 0.45))
 		Fx.explosion(self, get_hit_center(), Elements.color_of(Elements.Type.NATURE), 70.0, 3, Vector2(0, -40))
 		_say("숲이여, 분노하라!")
 		if _aura != null:

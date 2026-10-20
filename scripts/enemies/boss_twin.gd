@@ -130,7 +130,7 @@ func _fall() -> void:
 	sprite.rotation = 0.5
 	immune_text = "쓰러짐 — 다른 쪽을 쓰러뜨려라!"
 	set_status("쓰러졌다…", Color(0.7, 0.7, 0.75))
-	GameManager.show_notice("%s 쓰러짐! %d초 안에 %s도 쓰러뜨려야 한다!" % [display_name, roundi(revive_time), partner.display_name], Color(1.0, 0.85, 0.5))
+	Net.announce("%s 쓰러짐! %d초 안에 %s도 쓰러뜨려야 한다!" % [display_name, roundi(revive_time), partner.display_name], Color(1.0, 0.85, 0.5))
 	partner.start_revive()
 
 
@@ -151,7 +151,7 @@ func revive() -> void:
 	sprite.rotation = 0.0
 	immune_text = "공중! 활만 닿음"
 	set_status("", Color.WHITE)
-	GameManager.show_notice("%s(이)가 되살아났다! (체력 %d%%)" % [display_name, roundi(revive_ratio * 100.0)], Color(1.0, 0.6, 0.5))
+	Net.announce("%s(이)가 되살아났다! (체력 %d%%)" % [display_name, roundi(revive_ratio * 100.0)], Color(1.0, 0.6, 0.5))
 	Fx.explosion(self, get_hit_center(), Color(1.0, 0.9, 0.6) if role == Role.SOL else Color(0.7, 0.8, 1.0), 40.0, 3)
 
 
@@ -248,4 +248,4 @@ func _casting_velocity(delta: float) -> Vector2:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("%s: 해와 달은 결코 떨어지지 않는다!" % display_name, Color(1.0, 0.9, 0.6) if role == Role.SOL else Color(0.7, 0.8, 1.0))
+	Net.announce("%s: 해와 달은 결코 떨어지지 않는다!" % display_name, Color(1.0, 0.9, 0.6) if role == Role.SOL else Color(0.7, 0.8, 1.0))

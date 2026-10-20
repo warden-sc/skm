@@ -97,7 +97,7 @@ func tame() -> void:
 		bridle.hide_for(99999.0)
 	super.stun(10.0)
 	Fx.burst(self, get_hit_center(), Color(1.0, 0.95, 0.8), 30, 90.0, 0.8, Vector2(0, -80))
-	GameManager.show_notice("황금 굴레에 길들여진 페가수스가 벨레로폰을 떨어뜨리고 날아간다!", Color(1.0, 0.9, 0.5))
+	Net.announce("황금 굴레에 길들여진 페가수스가 벨레로폰을 떨어뜨리고 날아간다!", Color(1.0, 0.9, 0.5))
 	_update_status()
 
 
@@ -150,4 +150,4 @@ func _update_visual(delta: float, move: Vector2) -> void:
 func _on_phase_two() -> void:
 	if not _fallen:
 		pattern_order = [Pattern.SWOOP, Pattern.LANCE, Pattern.SWOOP, Pattern.GALE, Pattern.SUMMON]
-	GameManager.show_notice("벨레로폰: 올림포스까지 날아오르리라! 급강하가 잦아진다", Color(0.9, 0.95, 1.0))
+	Net.announce("벨레로폰: 올림포스까지 날아오르리라! 급강하가 잦아진다", Color(0.9, 0.95, 1.0))

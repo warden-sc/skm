@@ -98,7 +98,7 @@ func _physics_process(delta: float) -> void:
 		if _stash_left > 0.0:
 			_stash_left -= delta
 			if _stash_left <= 0.0:
-				GameManager.show_notice("콜키스의 용이 아르고호에서 황금 양털을 되찾아 왔다!", Color(1.0, 0.85, 0.4))
+				Net.announce("콜키스의 용이 아르고호에서 황금 양털을 되찾아 왔다!", Color(1.0, 0.85, 0.4))
 		elif fleece.is_carried() and fleece.global_position.distance_to(ship_position()) <= 34.0:
 			stash_fleece()
 		if is_guarding_fleece() and _stash_left <= 0.0 and hp < max_hp:
@@ -135,7 +135,7 @@ func stash_fleece() -> void:
 	fleece.hide_for(stash_time)
 	super.stun(2.5)
 	Fx.burst(self, ship_position(), Color(1.0, 0.9, 0.4), 24, 70.0, 0.7, Vector2(0, -50))
-	GameManager.show_notice("황금 양털을 아르고호에 실었다! 용이 더는 회복하지 못한다", Color(1.0, 0.9, 0.5))
+	Net.announce("황금 양털을 아르고호에 실었다! 용이 더는 회복하지 못한다", Color(1.0, 0.9, 0.5))
 
 
 func _run_pattern(pattern: int) -> float:
@@ -169,4 +169,4 @@ func _run_pattern(pattern: int) -> float:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("잠들지 않는 용이 포효한다! 양털 곁에서 더 빨리 회복한다", Color(0.6, 1.0, 0.6))
+	Net.announce("잠들지 않는 용이 포효한다! 양털 곁에서 더 빨리 회복한다", Color(0.6, 1.0, 0.6))

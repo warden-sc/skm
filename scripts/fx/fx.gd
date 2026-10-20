@@ -34,7 +34,9 @@ static func burst(context: Node, at_global: Vector2, color: Color, amount: int, 
 	var root := _root_of(context)
 	if root == null:
 		return
+	Net.fx_event(&"burst", [at_global, color, amount, speed, lifetime, gravity, size])
 	var p := CPUParticles2D.new()
+	p.set_meta(&"net_local", true)
 	p.texture = SPARK_TEXTURE
 	p.material = additive_material()
 	p.z_index = 60
@@ -63,7 +65,9 @@ static func flash(context: Node, at_global: Vector2, color: Color, radius: float
 	var root := _root_of(context)
 	if root == null:
 		return
+	Net.fx_event(&"flash", [at_global, color, radius, duration])
 	var s := Sprite2D.new()
+	s.set_meta(&"net_local", true)
 	s.texture = GLOW_TEXTURE
 	s.material = additive_material()
 	s.z_index = 55
@@ -84,7 +88,9 @@ static func shockwave(context: Node, at_global: Vector2, color: Color, radius: f
 	var root := _root_of(context)
 	if root == null:
 		return
+	Net.fx_event(&"shockwave", [at_global, color, radius, duration])
 	var s := Sprite2D.new()
+	s.set_meta(&"net_local", true)
 	s.texture = RING_TEXTURE
 	s.material = additive_material()
 	s.z_index = 55
@@ -214,9 +220,11 @@ static func flying_sprites(context: Node, at_global: Vector2, texture: Texture2D
 	var root := _root_of(context)
 	if root == null:
 		return
+	Net.fx_event(&"flying_sprites", [at_global, texture.resource_path if texture != null else "", count, distance, color, duration, point_outward])
 	for i in count:
 		var dir := Vector2.RIGHT.rotated(TAU * float(i) / float(count) + randf_range(-0.2, 0.2))
 		var s := Sprite2D.new()
+		s.set_meta(&"net_local", true)
 		s.texture = texture
 		s.modulate = color
 		s.z_index = 56
@@ -236,7 +244,9 @@ static func pillar(context: Node, at_global: Vector2, color: Color, width: float
 	var root := _root_of(context)
 	if root == null:
 		return
+	Net.fx_event(&"pillar", [at_global, color, width, height, duration])
 	var s := Sprite2D.new()
+	s.set_meta(&"net_local", true)
 	s.texture = GLOW_TEXTURE
 	s.material = additive_material()
 	s.modulate = color
@@ -257,8 +267,10 @@ static func cross_glint(context: Node, at_global: Vector2, color: Color, length:
 	var root := _root_of(context)
 	if root == null:
 		return
+	Net.fx_event(&"cross_glint", [at_global, color, length, duration])
 	for angle in [0.0, PI / 2.0]:
 		var s := Sprite2D.new()
+		s.set_meta(&"net_local", true)
 		s.texture = GLOW_TEXTURE
 		s.material = additive_material()
 		s.modulate = color

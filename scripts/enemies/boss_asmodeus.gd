@@ -87,7 +87,7 @@ func _on_pillar_broken(_p: Enemy) -> void:
 		_chained = false
 		super.stun(8.0)
 		Fx.burst(self, get_hit_center(), Color(1.0, 0.6, 0.8), 30, 90.0, 0.7)
-		GameManager.show_notice("사슬 기둥이 모두 무너져 욕망의 사슬이 끊어졌다! 아스모데우스가 휘청인다", Color(1.0, 0.7, 0.85))
+		Net.announce("사슬 기둥이 모두 무너져 욕망의 사슬이 끊어졌다! 아스모데우스가 휘청인다", Color(1.0, 0.7, 0.85))
 		set_status("사슬이 끊어짐", Color(1.0, 0.6, 0.6))
 	else:
 		set_status("욕망의 사슬 — 사슬 기둥 %d개" % get_pillars().size(), Color(1.0, 0.55, 0.75))
@@ -155,4 +155,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("아스모데우스: 더 가까이…! 사슬이 짧아진다", Color(1.0, 0.55, 0.75))
+	Net.announce("아스모데우스: 더 가까이…! 사슬이 짧아진다", Color(1.0, 0.55, 0.75))

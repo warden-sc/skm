@@ -180,7 +180,7 @@ func _on_core_broken(_enemy: Enemy, element: int) -> void:
 	if is_dead():
 		return
 	_update_blessings()
-	GameManager.show_notice("%s의 정령핵을 부쉈다! %s의 가호가 사라진다" % [ELEMENT_NAMES[element], ELEMENT_NAMES[element]], Color(0.7, 1.0, 0.7))
+	Net.announce("%s의 정령핵을 부쉈다! %s의 가호가 사라진다" % [ELEMENT_NAMES[element], ELEMENT_NAMES[element]], Color(0.7, 1.0, 0.7))
 	if get_cores().is_empty():
 		_begin_earth_breath()
 
@@ -193,7 +193,7 @@ func _begin_earth_breath() -> void:
 	field = CollapseField.spawn(self, area)
 	_collapse_timer = 2.0
 	set_status("대지의 숨결: 땅이 무너진다!", Color(1.0, 0.75, 0.4))
-	GameManager.show_notice("정령핵이 모두 부서졌다! 가이아가 대지와 하나가 된다 — 금 간 바닥을 피하라", Color(1.0, 0.75, 0.4))
+	Net.announce("정령핵이 모두 부서졌다! 가이아가 대지와 하나가 된다 — 금 간 바닥을 피하라", Color(1.0, 0.75, 0.4))
 
 
 func begin_collapse() -> void:
@@ -239,7 +239,7 @@ func plant_seed() -> void:
 	_seed_left = seed_time
 	request_summon(seed_scene, global_position + Vector2(0, 46))
 	set_status("세계수의 씨앗: 다 자라기 전에 부숴라!", Color(0.6, 1.0, 0.5))
-	GameManager.show_notice("가이아가 세계수의 씨앗을 심었다! %d초 안에 부수지 않으면 크게 회복한다" % roundi(seed_time), Color(0.6, 1.0, 0.5))
+	Net.announce("가이아가 세계수의 씨앗을 심었다! %d초 안에 부수지 않으면 크게 회복한다" % roundi(seed_time), Color(0.6, 1.0, 0.5))
 
 
 func _seed_grown() -> void:
@@ -258,7 +258,7 @@ func _on_seed_broken(_enemy: Enemy) -> void:
 	_seed_left = 0.0
 	_seed = null
 	set_status("", Color.WHITE)
-	GameManager.show_notice("세계수의 씨앗을 부쉈다!", Color(0.6, 1.0, 0.5))
+	Net.announce("세계수의 씨앗을 부쉈다!", Color(0.6, 1.0, 0.5))
 
 
 # ============================================================ 패턴
@@ -303,4 +303,4 @@ func _die() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("벨페르 가이아: 모든 생명은 대지로 돌아간다…", Color(0.7, 1.0, 0.7))
+	Net.announce("벨페르 가이아: 모든 생명은 대지로 돌아간다…", Color(0.7, 1.0, 0.7))

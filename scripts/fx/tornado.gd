@@ -39,16 +39,17 @@ func _physics_process(delta: float) -> void:
 		Fx.burst(self, global_position + Vector2(0, -14), Color(0.8, 1.0, 0.9), 14, 60.0, 0.4)
 		queue_free()
 		return
-	var player := get_tree().get_first_node_in_group(&"player") as Player
+	var player := Player.find_nearest(get_tree(), global_position)
 	var drift := WindField.get_wind_at(global_position) * 0.12
-	if player != null and not GameManager.is_player_dead:
+	if player != null and not player.is_net_dead():
 		drift += global_position.direction_to(player.global_position) * speed
+	for p in Player.get_all(get_tree()):
 		# 이미 휘말려 있으면 다른 회오리가 겹쳐 때리지 않음 (두 개가 한꺼번에 들어오는 즉사 방지)
-		if _hit_cooldown <= 0.0 and not player.is_dashing() and not player.is_charmed() and player.global_position.distance_to(global_position) <= RADIUS:
+		if _hit_cooldown <= 0.0 and not p.is_net_dead() and not p.is_dashing() and not p.is_charmed() and p.global_position.distance_to(global_position) <= RADIUS:
 			_hit_cooldown = 1.2
-			if player.take_unblockable_hit(Balance.scale(damage), global_position) == Player.HitResult.DAMAGED:
-				player.apply_charm(0.7, null, "휘말림")
-				player.velocity = global_position.direction_to(player.global_position).rotated(0.6) * 320.0
+			if p.take_unblockable_hit(Balance.scale(damage), global_position) == Player.HitResult.DAMAGED:
+				p.apply_charm(0.7, null, "휘말림")
+				p.velocity = global_position.direction_to(p.global_position).rotated(0.6) * 320.0
 	global_position += drift * delta
 	queue_redraw()
 

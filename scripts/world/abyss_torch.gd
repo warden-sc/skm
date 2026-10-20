@@ -53,6 +53,6 @@ func set_lit(value: bool) -> void:
 func _physics_process(_delta: float) -> void:
 	if lit:
 		return
-	var player := get_tree().get_first_node_in_group(&"player") as Player
+	var player := Player.find_nearest(get_tree(), global_position)
 	if player != null and player.global_position.distance_to(global_position) <= TOUCH_RADIUS:
 		set_lit(true)

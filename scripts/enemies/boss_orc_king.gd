@@ -162,7 +162,7 @@ func _war_cry() -> void:
 			request_summon(minion_scenes.pick_random(), global_position + Vector2.from_angle(TAU * i / 3.0) * 50.0)
 	var rallied := rally_minions()
 	if rallied > 0:
-		GameManager.show_notice("족장의 함성! 오크킹의 부하 %d명이 강해졌다" % rallied, Color(1.0, 0.55, 0.35))
+		Net.announce("족장의 함성! 오크킹의 부하 %d명이 강해졌다" % rallied, Color(1.0, 0.55, 0.35))
 	Fx.shockwave(self, get_hit_center(), Color(1.0, 0.7, 0.3), 70.0, 0.4)
 	Fx.shockwave(self, get_hit_center(), Color(1.0, 0.4, 0.25), 110.0, 0.5)
 	if _player != null:
@@ -170,5 +170,5 @@ func _war_cry() -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("오크킹이 분노했다!", Color(1.0, 0.5, 0.3))
+	Net.announce("오크킹이 분노했다!", Color(1.0, 0.5, 0.3))
 	Fx.explosion(self, get_hit_center(), Color(1.0, 0.5, 0.3), 70.0, 3)

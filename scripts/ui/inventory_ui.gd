@@ -51,14 +51,14 @@ func open() -> void:
 	_detail.text = "장비에 마우스를 올리면 상세 정보가 표시됩니다."
 	_refresh()
 	show()
-	get_tree().paused = true
+	Net.pause_tree(get_tree(), true)
 
 
 func close() -> void:
 	if not visible:
 		return
 	hide()
-	get_tree().paused = false
+	Net.pause_tree(get_tree(), false)
 
 
 func is_open() -> bool:
@@ -103,8 +103,10 @@ func _refresh() -> void:
 		var sealed := item.is_sealed()
 		var button := ItemRow.make_button("봉인" if sealed else ("해제" if equipped else "장착"), sealed,
 			_on_unequip_pressed.bind(item) if equipped else _on_equip_pressed.bind(item), 40.0)
+		var drop_button := ItemRow.make_button("버리기", not GameManager.can_drop(item), _on_drop_pressed.bind(item), 40.0)
+		drop_button.tooltip_text = "바닥에 떨어뜨림 — 나나 동료가 주울 수 있음"
 		var subtitle := ("장착중 · " if equipped else "") + ("[봉인] " if sealed else "") + item.get_summary()
-		_bag_list.add_child(ItemRow.build(item, [button], _show_detail.bind(item), false, subtitle))
+		_bag_list.add_child(ItemRow.build(item, [button, drop_button], _show_detail.bind(item), false, subtitle))
 
 
 func _make_slot(item: ItemData, caption: String, highlight: bool) -> Control:
@@ -194,6 +196,19 @@ func _show_detail(item: ItemData) -> void:
 
 func _on_equip_pressed(item: ItemData) -> void:
 	GameManager.equip_item(item)
+
+
+## 버리기: 용사 발밑에 떨어뜨림
+func drop(item: ItemData) -> bool:
+	var player: Player = null
+	for p in Player.get_all(get_tree()):
+		if p.is_local():
+			player = p
+	return GameManager.drop_item(item, player.global_position if player != null else Vector2.ZERO)
+
+
+func _on_drop_pressed(item: ItemData) -> void:
+	drop(item)
 
 
 func _on_use_potion_pressed(potion: PotionData) -> void:

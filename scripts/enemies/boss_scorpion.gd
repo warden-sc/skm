@@ -104,7 +104,7 @@ func burrow() -> void:
 	sprite.hide()
 	_mound.show()
 	set_status("모래 속으로 숨었다 — 공격이 닿지 않고 체력 회복 중", Color(1.0, 0.85, 0.5))
-	GameManager.show_notice("스콜피언이 모래 속으로 숨었다! 발밑을 조심하라", Color(1.0, 0.85, 0.5))
+	Net.announce("스콜피언이 모래 속으로 숨었다! 발밑을 조심하라", Color(1.0, 0.85, 0.5))
 	Fx.burst(self, global_position, Color(0.85, 0.7, 0.45), 24, 70.0, 0.5, Vector2(0, 60), 1.4)
 
 
@@ -226,4 +226,4 @@ func _check_pincer(at: Vector2) -> void:
 
 
 func _on_phase_two() -> void:
-	GameManager.show_notice("스콜피언의 독이 진해진다… 더 자주 모래 속으로 숨는다", Color(0.85, 0.5, 1.0))
+	Net.announce("스콜피언의 독이 진해진다… 더 자주 모래 속으로 숨는다", Color(0.85, 0.5, 1.0))

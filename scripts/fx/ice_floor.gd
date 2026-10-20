@@ -37,9 +37,9 @@ func _physics_process(delta: float) -> void:
 	if _age >= lifetime:
 		queue_free()
 		return
-	var player := get_tree().get_first_node_in_group(&"player") as Player
-	if player != null and contains(player.global_position):
-		player.mark_slippery()
+	for player in Player.get_all(get_tree()):
+		if contains(player.global_position):
+			player.mark_slippery()
 	queue_redraw()
 
 
