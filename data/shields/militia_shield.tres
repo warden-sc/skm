@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ShieldData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/shield_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/shields/militia_shield.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+defense = 22
+block_ratio = 0.72
+block_arc_degrees = 111.5
+max_guard = 580
+guard_regen = 200
+perfect_guard_window = 0.3
+guard_move_multiplier = 0.55
+guard_break_time = 1.175
+id = &"militia_shield"
+display_name = "자경단 방패"
+description = "판자에 쇠테를 두른 둥근 방패."
+rarity = 0
+tier = 1
+price = 860

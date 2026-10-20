@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="AccessoryData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/accessory_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/accessories/garrison_ring.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+slot_type = 1
+crit_chance_bonus = 0.055
+attack_bonus = 0.09
+id = &"garrison_ring"
+display_name = "수비대 반지"
+description = "성문 열쇠를 녹여 만들었다는 반지."
+rarity = 1
+tier = 1
+price = 3330

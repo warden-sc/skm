@@ -14,6 +14,6 @@ id = &"dragonscale_boots"
 display_name = "용비늘 장화"
 description = "용의 비늘을 덧댄 장화."
 rarity = 2
-tier = 1
+tier = 2
 set_id = &"dragonscale"
 price = 13300

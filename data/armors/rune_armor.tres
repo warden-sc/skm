@@ -14,6 +14,6 @@ id = &"rune_armor"
 display_name = "룬 판금"
 description = "룬이 빛나는 검푸른 판금."
 rarity = 2
-tier = 2
+tier = 4
 set_id = &"rune"
 price = 18800

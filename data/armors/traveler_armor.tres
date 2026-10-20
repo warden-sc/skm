@@ -14,5 +14,5 @@ id = &"traveler_armor"
 display_name = "여행자의 외투"
 description = "두꺼운 천에 가죽을 덧댄 외투."
 rarity = 0
-tier = 1
+tier = 2
 price = 1330

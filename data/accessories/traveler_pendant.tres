@@ -13,5 +13,5 @@ id = &"traveler_pendant"
 display_name = "여행자의 부적"
 description = "길 떠나는 이에게 주는 부적."
 rarity = 0
-tier = 1
+tier = 2
 price = 1230

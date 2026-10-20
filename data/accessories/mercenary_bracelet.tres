@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="AccessoryData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/accessory_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/accessories/mercenary_bracelet.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+slot_type = 0
+crit_damage_bonus = 0.175
+armor_pen = 22
+id = &"mercenary_bracelet"
+display_name = "용병 손목 보호대"
+description = "급소를 찌르는 손목을 받쳐 주는 보호대."
+rarity = 0
+tier = 3
+price = 1730

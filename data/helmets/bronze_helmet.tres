@@ -14,6 +14,6 @@ id = &"bronze_helmet"
 display_name = "청동 투구"
 description = "청동으로 만든 둥근 투구."
 rarity = 0
-tier = 2
+tier = 4
 set_id = &"bronze"
 price = 2010

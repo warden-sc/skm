@@ -13,6 +13,6 @@ id = &"bronze_bracelet"
 display_name = "청동 팔찌"
 description = "청동 고리 팔찌. 묵직한 일격에 힘이 실린다."
 rarity = 0
-tier = 2
+tier = 4
 set_id = &"bronze"
 price = 2180

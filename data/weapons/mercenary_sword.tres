@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/mercenary_sword.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+weapon_type = 0
+damage = 700
+crit_chance = 0.07
+crit_multiplier = 1.525
+attack_cooldown = 0.345
+melee_range = 39.5
+melee_arc_degrees = 133.5
+armor_pen = 0
+knockback = 165
+element = 0
+effect_color = Color(1, 0.75, 0.6, 1)
+id = &"mercenary_sword"
+display_name = "용병의 대검"
+description = "전장을 떠도는 용병의 대검. 거칠지만 한 방이 크다."
+rarity = 0
+tier = 3
+price = 2790

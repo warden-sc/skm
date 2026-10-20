@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ShieldData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/shield_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/shields/gravekeeper_shield.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+defense = 56
+block_ratio = 0.85
+block_arc_degrees = 130
+max_guard = 1770
+guard_regen = 620
+perfect_guard_window = 0.335
+guard_move_multiplier = 0.6
+guard_break_time = 0.9375
+id = &"gravekeeper_shield"
+display_name = "묘지기 방패"
+description = "묘비를 깎아 만든 방패."
+rarity = 1
+tier = 2
+in_shop = false
+price = 5040

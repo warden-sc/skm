@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="HelmetData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/helmet_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/helmets/ancient_helmet.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/helmets/ancient_helmet_worn.png" id="3_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+worn_texture = ExtResource("3_res")
+defense = 100
+bonus_max_hp = 930
+id = &"ancient_helmet"
+display_name = "고대 왕의 투구"
+description = "잊힌 왕국의 왕관 투구."
+rarity = 3
+tier = 2
+in_shop = false
+price = 17300

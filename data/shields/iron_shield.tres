@@ -18,5 +18,5 @@ display_name = "강철 방패"
 description = "정면 공격을 거의 완벽하게 막아내는 튼튼한 방패."
 rarity = 1
 icon = ExtResource("2_res")
-price = 2210
+price = 2130
 tier = 0

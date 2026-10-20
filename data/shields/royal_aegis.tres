@@ -18,5 +18,5 @@ display_name = "왕실의 아이기스"
 description = "왕국 기사단의 방패. 넓은 범위의 공격을 전부 막아낸다."
 rarity = 2
 icon = ExtResource("2_res")
-price = 10300
+price = 9900
 tier = 0

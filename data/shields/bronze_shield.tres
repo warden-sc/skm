@@ -18,6 +18,6 @@ id = &"bronze_shield"
 display_name = "청동 방패"
 description = "청동판을 두른 둥근 방패. 두드리면 맑은 소리가 난다."
 rarity = 0
-tier = 2
+tier = 4
 set_id = &"bronze"
 price = 2010

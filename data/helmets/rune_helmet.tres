@@ -14,6 +14,6 @@ id = &"rune_helmet"
 display_name = "룬 투구"
 description = "면갑의 틈으로 룬 빛이 새어 나오는 투구."
 rarity = 2
-tier = 2
+tier = 4
 set_id = &"rune"
 price = 17300

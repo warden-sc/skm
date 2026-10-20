@@ -13,5 +13,5 @@ display_name = "별의 반지"
 description = "별빛을 가둔 전설의 반지. 모든 일격이 치명적이다."
 rarity = 3
 icon = ExtResource("2_res")
-price = 22200
+price = 21400
 tier = 0

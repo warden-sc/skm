@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/darksteel_staff.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/void_orb.png" id="3_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+projectile_texture = ExtResource("3_res")
+weapon_type = 2
+damage = 5000
+crit_chance = 0.105
+crit_multiplier = 1.725
+attack_cooldown = 0.22
+windup_time = 0.4
+spell = 0
+armor_pen = 57
+projectiles_per_shot = 1
+spread_degrees = 0
+explosion_radius = 52
+explosion_damage_ratio = 0.8
+projectile_speed = 260
+projectile_range = 239.5
+projectile_scale = 1.395
+knockback = 119
+chant_text = "어둠이여, 삼켜라!"
+slow_duration = 0
+zone_duration = 0
+zone_tick_ratio = 0
+pierce = 0
+element = 8
+effect_color = Color(0.8, 0.4, 0.5, 1)
+id = &"darksteel_staff"
+display_name = "흑철 지팡이"
+description = "흑철 가시가 돋은 지팡이. 어둠 구슬 하나가 크게 터진다."
+rarity = 2
+tier = 1
+price = 18600

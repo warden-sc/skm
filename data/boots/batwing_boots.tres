@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="BootsData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/boots_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/boots/batwing_boots.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/boots/batwing_boots_worn.png" id="3_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+worn_texture = ExtResource("3_res")
+defense = 31
+move_bonus = 0.0525
+id = &"batwing_boots"
+display_name = "박쥐 날개 장화"
+description = "발목에 박쥐 날개를 단 장화. 발이 가볍다."
+rarity = 0
+tier = 2
+in_shop = false
+price = 1340

@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/dragonlord_sword.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+weapon_type = 0
+damage = 6700
+crit_chance = 0.195
+crit_multiplier = 1.975
+attack_cooldown = 0.285
+melee_range = 59
+melee_arc_degrees = 187.5
+armor_pen = 0
+knockback = 255
+element = 1
+effect_color = Color(1, 0.5, 0.3, 1)
+id = &"dragonlord_sword"
+display_name = "용왕의 검"
+description = "용들의 왕이 쥐던 검. 휘두를 때마다 업화가 일렁인다."
+rarity = 3
+tier = 3
+price = 38200

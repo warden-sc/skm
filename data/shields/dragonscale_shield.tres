@@ -18,6 +18,6 @@ id = &"dragonscale_shield"
 display_name = "용비늘 방패"
 description = "용의 비늘을 겹겹이 이은 큰 방패."
 rarity = 2
-tier = 1
+tier = 2
 set_id = &"dragonscale"
 price = 13300

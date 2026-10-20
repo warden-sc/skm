@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/hero_bow.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/hero_bow_held.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/arrow.png" id="4_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+held_texture = ExtResource("3_res")
+projectile_texture = ExtResource("4_res")
+weapon_type = 1
+damage = 1930
+crit_chance = 0.205
+crit_multiplier = 2.025
+attack_cooldown = 0.091
+windup_time = 0.151
+armor_pen = 225
+projectiles_per_shot = 2
+spread_degrees = 4
+pierce = 4
+projectile_speed = 564
+projectile_range = 337
+projectile_scale = 1.38
+knockback = 147
+explosion_radius = 0
+explosion_damage_ratio = 0.5
+element = 6
+effect_color = Color(1, 0.9, 0.55, 1)
+id = &"hero_bow"
+display_name = "영웅의 활"
+description = "영웅이 마왕의 눈을 꿰뚫었다는 활. 빛의 화살 두 발이 꿰뚫는다."
+rarity = 3
+tier = 1
+price = 34000

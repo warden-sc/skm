@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/goblin_bow.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/goblin_bow_held.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/arrow.png" id="4_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+held_texture = ExtResource("3_res")
+projectile_texture = ExtResource("4_res")
+weapon_type = 1
+damage = 220
+crit_chance = 0.1525
+crit_multiplier = 1.8
+attack_cooldown = 0.116
+windup_time = 0.176
+armor_pen = 76
+projectiles_per_shot = 2
+spread_degrees = 4
+pierce = 1
+projectile_speed = 465
+projectile_range = 287.5
+projectile_scale = 1.05
+knockback = 97.5
+explosion_radius = 0
+explosion_damage_ratio = 0.5
+element = 0
+effect_color = Color(0.9, 0.8, 0.65, 1)
+id = &"goblin_bow"
+display_name = "고블린 사냥활"
+description = "고블린이 쓰던 작은 활. 화살 두 발을 대충 흩뿌린다."
+rarity = 0
+tier = 2
+in_shop = false
+price = 2350

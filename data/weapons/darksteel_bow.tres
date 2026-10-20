@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/darksteel_bow.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/darksteel_bow_held.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/arrow.png" id="4_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+held_texture = ExtResource("3_res")
+projectile_texture = ExtResource("4_res")
+weapon_type = 1
+damage = 2280
+crit_chance = 0.185
+crit_multiplier = 1.925
+attack_cooldown = 0.1
+windup_time = 0.161
+armor_pen = 171
+projectiles_per_shot = 1
+spread_degrees = 0
+pierce = 5
+projectile_speed = 528
+projectile_range = 319
+projectile_scale = 1.26
+knockback = 129
+explosion_radius = 0
+explosion_damage_ratio = 0.5
+element = 8
+effect_color = Color(0.8, 0.4, 0.5, 1)
+id = &"darksteel_bow"
+display_name = "흑철 석궁"
+description = "흑철 활대를 단 무거운 석궁. 볼트가 다섯 마리를 꿰뚫는다."
+rarity = 2
+tier = 1
+price = 18600

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ShieldData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/shield_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/shields/garrison_shield.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+defense = 47
+block_ratio = 0.82
+block_arc_degrees = 124
+max_guard = 1450
+guard_regen = 510
+perfect_guard_window = 0.325
+guard_move_multiplier = 0.59
+guard_break_time = 0.975
+id = &"garrison_shield"
+display_name = "수비대 탑 방패"
+description = "몸을 다 가리는 커다란 탑 방패."
+rarity = 1
+tier = 1
+price = 2850

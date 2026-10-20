@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/mercenary_bow.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/mercenary_bow_held.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/arrow.png" id="4_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+held_texture = ExtResource("3_res")
+projectile_texture = ExtResource("4_res")
+weapon_type = 1
+damage = 460
+crit_chance = 0.155
+crit_multiplier = 1.8
+attack_cooldown = 0.115
+windup_time = 0.175
+armor_pen = 81
+projectiles_per_shot = 1
+spread_degrees = 0
+pierce = 3
+projectile_speed = 468
+projectile_range = 289
+projectile_scale = 1.06
+knockback = 99
+explosion_radius = 0
+explosion_damage_ratio = 0.5
+element = 0
+effect_color = Color(1, 0.75, 0.6, 1)
+id = &"mercenary_bow"
+display_name = "용병 석궁"
+description = "용병단의 표준 석궁. 볼트가 세 마리를 꿰뚫는다."
+rarity = 0
+tier = 3
+price = 2790

@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/necro_staff.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/decay_orb.png" id="3_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+projectile_texture = ExtResource("3_res")
+weapon_type = 2
+damage = 860
+crit_chance = 0.0925
+crit_multiplier = 1.6275
+attack_cooldown = 0.22
+windup_time = 0.4
+spell = 0
+armor_pen = 50
+projectiles_per_shot = 3
+spread_degrees = 20
+explosion_radius = 34
+explosion_damage_ratio = 0.8
+projectile_speed = 260
+projectile_range = 232.75
+projectile_scale = 1.3275
+knockback = 105.5
+chant_text = "망자여, 일어나라!"
+slow_duration = 0
+zone_duration = 0
+zone_tick_ratio = 0
+pierce = 0
+element = 8
+effect_color = Color(0.7, 1, 0.8, 1)
+id = &"necro_staff"
+display_name = "강령술사의 지팡이"
+description = "해골이 달린 지팡이. 저주 구슬 3발이 터진다."
+rarity = 1
+tier = 2
+in_shop = false
+price = 8820

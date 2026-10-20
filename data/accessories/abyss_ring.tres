@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="AccessoryData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/accessory_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/accessories/abyss_ring.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+slot_type = 1
+crit_chance_bonus = 0.0925
+attack_bonus = 0.165
+id = &"abyss_ring"
+display_name = "심연의 반지"
+description = "들여다보면 끝이 보이지 않는 반지."
+rarity = 2
+tier = 2
+in_shop = false
+price = 15800

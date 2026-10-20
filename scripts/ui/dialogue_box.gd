@@ -145,7 +145,7 @@ func _process(delta: float) -> void:
 		if _face_left <= 0.0:
 			_portrait.texture = _face_texture
 	if is_typing():
-		_typed += delta * CHARS_PER_SECOND
+		_typed += delta * CHARS_PER_SECOND * float(Profile.get_setting("text_speed"))
 		_text.visible_characters = mini(int(_typed), _text.text.length())
 	else:
 		_hint.visible = true

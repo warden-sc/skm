@@ -13,5 +13,5 @@ display_name = "루비 반지"
 description = "붉게 빛나는 루비 반지. 치명타와 공격력이 오른다."
 rarity = 1
 icon = ExtResource("2_res")
-price = 2580
+price = 2490
 tier = 0

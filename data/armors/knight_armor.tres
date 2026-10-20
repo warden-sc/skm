@@ -14,6 +14,6 @@ id = &"knight_armor"
 display_name = "기사단 판금"
 description = "기사단의 십자가 새겨진 판금 갑옷."
 rarity = 1
-tier = 1
+tier = 2
 set_id = &"knight"
 price = 4470

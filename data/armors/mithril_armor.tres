@@ -14,6 +14,6 @@ id = &"mithril_armor"
 display_name = "미스릴 사슬 갑옷"
 description = "미스릴 고리로 엮은 가벼운 갑옷."
 rarity = 1
-tier = 2
+tier = 4
 set_id = &"mithril"
 price = 10100

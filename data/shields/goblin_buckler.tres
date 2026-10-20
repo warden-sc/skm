@@ -5,11 +5,11 @@
 
 [resource]
 script = ExtResource("1_script")
-defense = 38
+defense = 31
 block_ratio = 0.75
 block_arc_degrees = 90
-max_guard = 790
-guard_regen = 670
+max_guard = 610
+guard_regen = 530
 perfect_guard_window = 0.45
 guard_move_multiplier = 0.85
 guard_break_time = 0.8
@@ -19,6 +19,6 @@ description = "작고 가벼운 원형 방패. 퍼펙트 가드 판정이 넉넉
 (고블린 드랍 전용)"
 rarity = 0
 icon = ExtResource("2_res")
-price = 2010
+price = 1340
 tier = 2
 in_shop = false

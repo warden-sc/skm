@@ -21,6 +21,6 @@ id = &"knight_sword"
 display_name = "기사단 장검"
 description = "왕국 기사단의 장검. 정직한 칼날이 넓게 휩쓴다."
 rarity = 1
-tier = 1
+tier = 2
 set_id = &"knight"
 price = 7220

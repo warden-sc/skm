@@ -8,7 +8,7 @@ extends Node
 ##   보스방(BOSS)  : 보스문[E]으로 입장 → 보스 등장
 ##   토벌(CLEARED) : 보스 처치 → 보물상자(다음 스테이지 등급 장비 1개) + 다음 스테이지 텔레포트 등장
 ##   다음 스테이지 텔레포트[E] → 다음 스테이지 야영지
-##   마지막 스테이지 보스 토벌 → 「모든 스테이지 클리어」 → ending_delay 초 뒤 엔딩 화면 → 난이도 선택으로
+##   마지막 스테이지 보스 토벌 → 「모든 스테이지 클리어」 → ending_delay 초 뒤 엔딩 화면 → 타이틀 메뉴로
 ##
 ## 히든 던전 (이스터에그)
 ##   30~35스테이지 사냥터의 정해진 구석에 「고대 용의 비늘」이 하나씩 희미하게 숨겨져 있음 (닿으면 주움)
@@ -21,8 +21,9 @@ extends Node
 ##   최종 보스 토벌 → 「모든 스테이지 클리어」 → 엔딩
 ##
 ## 드랍 등급
-##   일반 몬스터: 그 스테이지 등급(1~10 일반 · 11~40 희귀 · 41~70 레어 · 71~100 전설)에서 이미 풀린 단계(하급 · 중급 · 상급)만 (ItemDB.get_drop_pool)
-##   보물상자   : 다음 스테이지 등급에서 조금 앞선 단계까지 (상점 장비 중 하나, 아직 없는 것 우선)
+##   일반 몬스터: 그 스테이지 등급(1~10 일반 · 11~40 희귀 · 41~70 레어 · 71~100 전설)에서 이미 풀린 단계 + 드랍 전용 장비 (ItemDB.get_drop_pool)
+##   보물상자   : 골드 + 칸마다 확률로 장비 (chest_item_chances 70% · 30%, 히든 100% · 60% · 30%) — 다음 스테이지 등급에서
+##                조금 앞선 단계까지, 드랍 전용 포함, 아직 없는 것 우선. 장비가 하나도 안 나오면 골드 두 배
 ##   신화       : 10스테이지마다 보스가 하나씩 바로 가방으로 (_grant_mythic) — 100스테이지 보스를 쓰러뜨리면 봉인 해제
 ##
 ## Node 상속이므로 자신의 위치 함수는 쓰지 않고, 타입이 지정된 Node2D 참조(방, 마커, 플레이어)만 사용합니다.
@@ -77,9 +78,17 @@ const HIDDEN_GATE_STAGE := 35
 @export var ending_delay: float = 4.0
 ## 마지막 스테이지 보스를 쓰러뜨린 뒤 최종 보스가 나타나기까지의 시간(초)
 @export var finale_delay: float = 3.0
+## 보스 상자의 장비 칸별 확률 (칸마다 따로 굴림). 장비가 하나도 안 나오면 골드 두 배
+@export var chest_item_chances: Array[float] = [0.7, 0.3]
+## 히든 보스(고대 용의 보물) 상자
+@export var hidden_chest_item_chances: Array[float] = [1.0, 0.6, 0.3]
 
 ## true 면 텔레포트 시 화면 전환 없이 즉시 이동 (테스트용)
 var instant_travel: bool = false
+var chest_rng := RandomNumberGenerator.new()
+## 마지막으로 연 상자의 골드 · 장비 (테스트 · 안내용)
+var last_chest_gold: int = 0
+var last_chest_items: Array[ItemData] = []
 
 var _state: State = State.CAMP
 var _spawn_timer: float = 0.0
@@ -111,6 +120,7 @@ func _ready() -> void:
 	assert(not stages.is_empty() and pickup_scene != null and chest_scene != null, "StageManager: stages / pickup_scene / chest_scene 을 지정하세요.")
 	assert(camp_room != null and field_room != null and boss_room != null, "StageManager: 방 3개를 지정하세요.")
 	GameManager.player_died.connect(_on_player_died)
+	chest_rng.randomize()
 	field_portal.interacted.connect(enter_field)
 	camp_portal.interacted.connect(return_to_camp)
 	boss_gate.interacted.connect(enter_boss_room)
@@ -485,27 +495,39 @@ func _on_final_boss_defeated() -> void:
 
 
 func _on_chest_opened(chest: Chest, hidden_reward: bool = false) -> void:
-	# 다음 스테이지 등급에서, 조금 앞선 단계(5스테이지 뒤에 풀릴 단계)까지
+	# 골드는 항상, 장비는 칸마다 확률로 (다음 스테이지 등급에서, 조금 앞선 단계까지 · 드랍 전용 장비 포함)
 	var rarity := ItemData.max_rarity_for_stage(GameManager.stage + 1)
-	var candidates := ItemDB.get_chest_candidates(rarity, GameManager.stage + 6 + (10 if hidden_reward else 0))
+	var candidates := ItemDB.get_chest_candidates(rarity, GameManager.stage + 6 + (10 if hidden_reward else 0), true)
 	var not_owned := candidates.filter(func(it: ItemData) -> bool: return not GameManager.owns_item(it.id))
 	var pool: Array = not_owned if not not_owned.is_empty() else candidates
 	pool = pool.duplicate()
 	pool.shuffle()
+	var chances: Array[float] = hidden_chest_item_chances if hidden_reward else chest_item_chances
+	var picked: Array[ItemData] = []
+	for chance in chances:
+		if picked.size() < pool.size() and chest_rng.randf() < chance:
+			picked.append(pool[picked.size()])
 	var names := PackedStringArray()
-	for i in mini(2 if hidden_reward else 1, pool.size()):
-		var item: ItemData = pool[i]
+	for i in picked.size():
+		var item := picked[i]
 		var drop := pickup_scene.instantiate() as Pickup
 		drop.setup_item(item)
-		_add_entity(drop, chest.global_position + Vector2(-12.0 * i if hidden_reward else 0.0, 14))
+		_add_entity(drop, chest.global_position + Vector2(-12.0 * i + 6.0 * (picked.size() - 1), 14))
 		names.append("[%s] %s" % [item.get_grade_text(), item.display_name])
-	if not names.is_empty():
-		GameManager.show_notice(("고대 용의 보물: " if hidden_reward else "보물상자: ") + ", ".join(names), Color(1.0, 0.9, 0.55) if hidden_reward else (pool[0] as ItemData).get_rarity_color())
-	var gold := roundi(60.0 * GameManager.stage * float(GameManager.get_difficulty_info()["gold"]) * (3.0 if hidden_reward else 1.0))
+	# 장비가 하나도 안 나오면 골드를 두 배로
+	var gold := roundi(60.0 * GameManager.stage * float(GameManager.get_difficulty_info()["gold"]) * (3.0 if hidden_reward else 1.0)
+		* chest_rng.randf_range(0.8, 1.2) * (2.0 if picked.is_empty() else 1.0))
+	last_chest_gold = gold
+	last_chest_items = picked
+	if names.is_empty():
+		GameManager.show_notice("%s골드 %d" % ["고대 용의 보물: " if hidden_reward else "보물상자: ", gold], Color(1.0, 0.86, 0.35))
+	else:
+		GameManager.show_notice(("고대 용의 보물: " if hidden_reward else "보물상자: ") + ", ".join(names) + " · 골드 %d" % gold,
+			Color(1.0, 0.9, 0.55) if hidden_reward else picked[0].get_rarity_color())
 	for i in 4:
 		var coin := pickup_scene.instantiate() as Pickup
 		@warning_ignore("integer_division")
-		coin.setup_gold(gold / 4)
+		coin.setup_gold(gold / 4 + (gold % 4 if i == 0 else 0))
 		_add_entity(coin, chest.global_position)
 	if _hidden_pending and not hidden_reward:
 		open_hidden_portal()

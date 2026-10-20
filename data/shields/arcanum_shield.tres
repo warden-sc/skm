@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ShieldData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/shield_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/shields/arcanum_shield.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+defense = 78
+block_ratio = 0.93
+block_arc_degrees = 167.5
+max_guard = 2710
+guard_regen = 950
+perfect_guard_window = 0.395
+guard_move_multiplier = 0.625
+guard_break_time = 0.725
+id = &"arcanum_shield"
+display_name = "비전 방패"
+description = "마력 막이 겹쳐진 방패."
+rarity = 2
+tier = 3
+price = 15200

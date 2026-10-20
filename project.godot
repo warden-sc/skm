@@ -14,6 +14,7 @@ config/features=PackedStringArray("4.3", "GL Compatibility")
 
 GameManager="*res://scripts/autoload/game_manager.gd"
 Story="*res://scripts/autoload/story.gd"
+Profile="*res://scripts/autoload/profile.gd"
 
 [display]
 

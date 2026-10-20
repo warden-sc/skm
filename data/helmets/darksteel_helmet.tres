@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="HelmetData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/helmet_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/helmets/darksteel_helmet.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/helmets/darksteel_helmet_worn.png" id="3_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+worn_texture = ExtResource("3_res")
+defense = 89
+bonus_max_hp = 740
+id = &"darksteel_helmet"
+display_name = "흑철 투구"
+description = "뿔이 솟은 흑철 투구."
+rarity = 2
+tier = 1
+price = 10600

@@ -18,6 +18,6 @@ id = &"mithril_shield"
 display_name = "미스릴 방패"
 description = "가볍고 단단한 미스릴 방패. 가드를 올린 채로도 빠르게 움직인다."
 rarity = 1
-tier = 2
+tier = 4
 set_id = &"mithril"
 price = 9340

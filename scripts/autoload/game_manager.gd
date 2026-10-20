@@ -254,6 +254,116 @@ func emit_all() -> void:
 	kill_progress_changed.emit(kills, kill_target)
 
 
+# ============================================================ 저장 / 불러오기 (Profile 이 파일로 씀)
+## 튜토리얼 중이면 true — 저장 불가, 끝나면 타이틀로
+var tutorial_mode: bool = false
+
+
+## 지금 저장할 수 있는지 (살아 있고 · 튜토리얼이 아니고 · 엔딩 전)
+func can_save() -> bool:
+	return not is_player_dead and not tutorial_mode and not is_game_cleared
+
+
+static func _ids(list: Array) -> Array:
+	return list.map(func(it: ItemData) -> String: return String(it.id) if it != null else "")
+
+
+## 저장할 내용 — 장비는 id 로. 불러오면 그 스테이지 야영지에서 체력을 가득 채운 채 이어함
+func to_save_data() -> Dictionary:
+	var potion_counts := {}
+	for potion_id in potions:
+		potion_counts[String(potion_id)] = int(potions[potion_id])
+	var bag := items.duplicate()
+	if stolen_weapon != null and not bag.has(stolen_weapon):
+		bag.append(stolen_weapon)  # 헤르메스가 훔쳐 간 무기는 불러올 때 돌려줌
+	return {
+		"version": 1,
+		"hero_name": hero_name,
+		"difficulty": int(difficulty),
+		"stage": stage,
+		"gold": gold,
+		"items": _ids(bag),
+		"weapon_slots": _ids(weapon_slots),
+		"active_weapon_slot": active_weapon_slot,
+		"accessory_slots": _ids(accessory_slots),
+		"shield": String(equipped_shield.id) if equipped_shield else "",
+		"helmet": String(equipped_helmet.id) if equipped_helmet else "",
+		"armor": String(equipped_armor.id) if equipped_armor else "",
+		"boots": String(equipped_boots.id) if equipped_boots else "",
+		"potions": potion_counts,
+		"relics": relics.map(func(r: RelicData) -> String: return String(r.id)),
+		"dragon_scales": dragon_scales.duplicate(),
+		"hidden_cleared": hidden_cleared,
+		"mythic_unlocked": mythic_unlocked,
+		"faith_damage_bonus": faith_damage_bonus,
+		"key_items": key_items.map(func(k: StringName) -> String: return String(k)),
+		"total_kills": total_kills,
+		"play_time": play_time,
+		"story_played": Story.get_played_marks(),
+	}
+
+
+## 저장 내용 적용 (모르는 id 는 건너뜀). 성공하면 true
+func apply_save_data(data: Dictionary) -> bool:
+	if not data.has("stage") or not data.has("items"):
+		return false
+	difficulty = clampi(int(data.get("difficulty", 0)), 0, Difficulty.size() - 1) as Difficulty
+	reset_game()
+	items.clear()
+	weapon_slots = [null, null, null]
+	equipped_shield = null
+	for item_id in data.get("items", []):
+		if ItemDB.has_item(StringName(item_id)):
+			var item := ItemDB.get_item(StringName(item_id))
+			if not (item is PotionData) and not owns_item(item.id):
+				items.append(item)
+	stage = maxi(1, int(data.get("stage", 1)))
+	gold = maxi(0, int(data.get("gold", 0)))
+	dragon_scales.assign((data.get("dragon_scales", []) as Array).map(func(v: Variant) -> int: return int(v)))
+	hidden_cleared = bool(data.get("hidden_cleared", false))
+	mythic_unlocked = bool(data.get("mythic_unlocked", false))
+	faith_damage_bonus = float(data.get("faith_damage_bonus", 0.0))
+	key_items.assign((data.get("key_items", []) as Array).map(func(v: Variant) -> StringName: return StringName(v)))
+	total_kills = int(data.get("total_kills", 0))
+	play_time = float(data.get("play_time", 0.0))
+	potions = {}
+	var saved_potions: Dictionary = data.get("potions", {})
+	for potion_id in saved_potions:
+		if ItemDB.has_item(StringName(potion_id)):
+			potions[StringName(potion_id)] = clampi(int(saved_potions[potion_id]), 0, 99)
+	relics.clear()
+	for relic_id in data.get("relics", []):
+		var relic := ItemDB.get_relic(StringName(relic_id)) if ItemDB.has_item(StringName(relic_id)) else null
+		if relic != null:
+			relics.append(relic)
+	for list_key in ["weapon_slots", "accessory_slots"]:
+		for item_id in data.get(list_key, []):
+			_equip_saved(String(item_id))
+	for key in ["shield", "helmet", "armor", "boots"]:
+		_equip_saved(String(data.get(key, "")))
+	if weapon_slots.all(func(w: WeaponData) -> bool: return w == null):
+		var fallback := get_weapons()
+		if fallback.is_empty():
+			add_item(ItemDB.get_item(STARTING_ITEM_IDS[0]))
+			fallback = get_weapons()
+		equip_item(fallback[0])
+	var slot := int(data.get("active_weapon_slot", 0))
+	if slot >= 0 and slot < weapon_slots.size() and weapon_slots[slot] != null:
+		_set_active_weapon_slot(slot)
+	Story.set_played_marks(data.get("story_played", []))
+	_recalculate_stats()
+	hp = max_hp
+	emit_all()
+	return true
+
+
+func _equip_saved(item_id: String) -> void:
+	if item_id != "" and owns_item(StringName(item_id)):
+		var item := ItemDB.get_item(StringName(item_id))
+		if not item.is_sealed():
+			equip_item(item)
+
+
 func get_difficulty_info() -> Dictionary:
 	return DIFFICULTY_INFO[difficulty]
 

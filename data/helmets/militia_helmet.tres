@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="HelmetData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/helmet_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/helmets/militia_helmet.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/helmets/militia_helmet_worn.png" id="3_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+worn_texture = ExtResource("3_res")
+defense = 27
+bonus_max_hp = 68
+id = &"militia_helmet"
+display_name = "자경단 두건"
+description = "쇠판을 덧댄 두꺼운 두건."
+rarity = 0
+tier = 1
+price = 860

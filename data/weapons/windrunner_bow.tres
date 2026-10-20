@@ -33,6 +33,6 @@ display_name = "질풍의 활"
 description = "바람의 정령이 깃든 활. 화살 세 발이 바람을 타고 적을 꿰뚫는다."
 rarity = 2
 icon = ExtResource("4_res")
-price = 18000
+price = 17400
 explosion_damage_ratio = 0.5
 tier = 0

@@ -34,6 +34,6 @@ display_name = "업화의 지팡이 이그니스"
 description = "거대한 화염구를 쏘아 조준한 곳을 불기둥과 함께 폭발시키고, 땅을 불태운다."
 rarity = 2
 icon = ExtResource("3_res")
-price = 18000
+price = 17400
 armor_pen = 54
 tier = 0

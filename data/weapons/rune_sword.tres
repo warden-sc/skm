@@ -21,6 +21,6 @@ id = &"rune_sword"
 display_name = "룬 대검"
 description = "칼날에 새긴 룬이 푸르게 빛나는 대검. 마력이 실린 참격이 멀리까지 닿는다."
 rarity = 2
-tier = 2
+tier = 4
 set_id = &"rune"
 price = 30300

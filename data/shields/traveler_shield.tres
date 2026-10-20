@@ -18,5 +18,5 @@ id = &"traveler_shield"
 display_name = "둥근 방패"
 description = "가죽을 덧댄 둥근 방패. 가볍게 들고 다닌다."
 rarity = 0
-tier = 1
+tier = 2
 price = 1230

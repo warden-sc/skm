@@ -35,6 +35,6 @@ id = &"knight_staff"
 display_name = "기사단 전투 지팡이"
 description = "기사단 마법사의 지팡이. 번개 구슬 3발이 터지며 적을 밀어낸다."
 rarity = 1
-tier = 1
+tier = 2
 set_id = &"knight"
 price = 7220

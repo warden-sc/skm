@@ -3900,9 +3900,11 @@ func _test_hidden_dungeon(main: Node2D, heli_end: BossHelicion) -> void:
 	_gm.heal_full()
 	_check(WindField.active == null and get_tree().get_nodes_in_group(&"storm_fields").is_empty(), "아르케가 쓰러지면 바람·룬·빙판이 정리됨")
 	var items_before := _item_pickups(main.get_node("Entities")).size()
+	stage.hidden_chest_item_chances = [1.0, 1.0, 0.0]
 	stage.get_chest()._interact()
 	await _frames(4)
-	_check(_item_pickups(main.get_node("Entities")).size() == items_before + 2, "고대 용의 보물상자: 장비 2개")
+	_check(_item_pickups(main.get_node("Entities")).size() == items_before + 2 and stage.last_chest_gold >= roundi(60.0 * 35 * 3 * 0.8 * float(_gm.get_difficulty_info()["gold"])) - 1,
+		"고대 용의 보물상자: 골드 %d (보통 상자의 3배) + 장비 (100%% · 60%% · 30%% 확률 → 이번엔 2개로 고정)" % stage.last_chest_gold)
 
 
 ## 최종장: 100스테이지 보스를 쓰러뜨린 뒤 상인 → 멀티버스의 주인. 쓰러뜨리지 않은 채 돌려줌
@@ -4241,6 +4243,127 @@ func _test_dialogue(main: Node2D) -> void:
 	Story.enabled = false
 
 
+## 튜토리얼 한 바퀴 + ESC 설정창 + 저장 / 이어하기
+func _test_tutorial_and_save() -> void:
+	print("[튜토리얼]")
+	_gm.start_new_game(_gm.Difficulty.NORMAL)
+	_gm.tutorial_mode = true
+	var main: Node2D = load("res://scenes/main/main.tscn").instantiate()
+	get_tree().root.add_child(main)
+	await _frames(3)
+	var tutorial := main.get_node_or_null("Tutorial") as TutorialDirector
+	var pause_menu := main.get_node("PauseMenu") as PauseMenu
+	var player := main.get_node("Entities/Player") as Player
+	_check(tutorial != null and tutorial.get_step_id() == "move" and not Story.enabled, "튜토리얼 모드로 메인 씬 → 1단계 「이동」 (이야기 대사는 끔)")
+	if tutorial == null:
+		main.queue_free()
+		return
+	tutorial.return_to_title = false
+	await _frames(30)
+	Input.action_press(&"move_right")
+	await _frames(50)
+	Input.action_release(&"move_right")
+	await _frames(2)
+	_check(tutorial.get_step_id() == "attack", "움직이면 → 「공격」")
+	Input.action_press(&"attack")
+	await _frames(110)
+	Input.action_release(&"attack")
+	await _frames(2)
+	_check(tutorial.get_step_id() == "dash", "좌클릭 공격 3번 → 「대시」")
+	Input.action_press(&"move_right")
+	await _press_action(&"dash")
+	Input.action_release(&"move_right")
+	await _frames(2)
+	_check(tutorial.get_step_id() == "guard", "대시 → 「가드」")
+	await _frames(40)
+	Input.action_press(&"guard")
+	await _frames(50)
+	Input.action_release(&"guard")
+	await _frames(2)
+	_check(tutorial.get_step_id() == "switch" and _gm.weapon_slots[1] != null and _gm.active_weapon_slot == _gm.WeaponSlot.BOW, "가드를 누르고 있으면 → 「무기 전환」 (연습용 활을 손에 듦)")
+	await _press_action(&"weapon_slot_1")
+	await _frames(2)
+	_check(tutorial.get_step_id() == "potion" and _gm.hp < _gm.max_hp, "1 키로 검 → 「포션」 (체력이 깎임)")
+	await _press_action(&"use_potion")
+	await _frames(2)
+	_check(tutorial.get_step_id() == "inventory", "H 로 포션 → 「인벤토리」")
+	await _press_action(&"inventory")
+	await _frames(2)
+	await _press_action(&"inventory")
+	await _frames(3)
+	_check(tutorial.get_step_id() == "shop", "인벤토리를 열었다 닫으면 → 「상점」")
+	_gm.request_shop("상점", [])
+	await _frames(2)
+	(main.get_node("ShopUI") as ShopUI).close()
+	_check(tutorial.get_step_id() == "hunt", "상점을 열면 → 「사냥」")
+	for i in tutorial.KILL_TARGET:
+		_gm.report_kill()
+	await _frames(2)
+	_check(tutorial.get_step_id() == "done", "몬스터 %d마리 → 「완료」" % tutorial.KILL_TARGET)
+	await _frames(int(tutorial.DONE_DELAY * 60) + 10)
+	_check(Profile.tutorial_done and not _gm.tutorial_mode and _gm.weapon_slots[1] == null, "튜토리얼 완료 → 프로필에 기록, 튜토리얼에서 받은 것은 초기화 → 타이틀로")
+
+	print("[ESC 설정창 · 저장]")
+	_gm.reset_game()
+	await _press_action(&"ui_cancel")
+	_check(pause_menu.is_open() and get_tree().paused, "게임 도중 ESC → 일시정지 · 설정창")
+	pause_menu.show_settings()
+	_check(pause_menu.is_settings_open(), "설정 화면 (화면 흔들림 · 전체 화면 · 대사 속도)")
+	pause_menu._shake_check.button_pressed = false
+	player.shake_camera(6.0)
+	_check(not bool(Profile.get_setting("screen_shake")) and player._shake_strength == 0.0, "화면 흔들림 끄기 → 흔들리지 않음 (설정 저장)")
+	pause_menu._shake_check.button_pressed = true
+	var speed0 := float(Profile.get_setting("text_speed"))
+	pause_menu.cycle_text_speed()
+	_check(not is_equal_approx(float(Profile.get_setting("text_speed")), speed0) and pause_menu._speed_button.text.begins_with("대사 속도"), "대사 속도 바꾸기 (%s)" % pause_menu._speed_button.text)
+	Profile.set_setting("text_speed", 1.0)
+	await _press_action(&"ui_cancel")
+	_check(pause_menu.is_open() and not pause_menu.is_settings_open(), "설정에서 ESC → 일시정지 메뉴로")
+	# 저장할 모험 만들기
+	_gm.stage = 7
+	_gm.gold = 12345
+	for id in [&"knight_sword", &"mithril_ring", &"knight_crossbow"]:
+		_gm.add_item(ItemDB.get_item(id))
+		_gm.equip_item(ItemDB.get_item(id))
+	_gm.add_potion(ItemDB.get_item(&"potion") as PotionData, 3)
+	_gm.dragon_scales.assign([30, 31])
+	_gm.total_kills = 321
+	Story.set_played_marks(["1스테이지 도착", "7스테이지 도착"])
+	var potions_before: int = _gm.get_potion_count(&"potion")
+	_check(pause_menu.save_now() and Profile.has_save(), "「저장하기」 → 저장 파일 생성")
+	_gm.is_player_dead = true
+	pause_menu._refresh_save_button()
+	_check(not pause_menu.save_now() and pause_menu._save_button.disabled, "쓰러진 상태에서는 저장할 수 없음")
+	_gm.is_player_dead = false
+	pause_menu.close()
+	_check(not get_tree().paused, "계속하기 → 게임 재개")
+	_gm.reset_game()
+	Story.reset()
+	_check(_gm.stage == 1 and not _gm.owns_item(&"knight_sword"), "(초기화)")
+	_check(Profile.get_save_summary().begins_with("7스테이지") and Profile.load_game(), "이어하기 요약: %s" % Profile.get_save_summary())
+	_check(_gm.stage == 7 and _gm.gold == 12345 and _gm.weapon_slots[0].id == &"knight_sword" and _gm.weapon_slots[1].id == &"knight_crossbow"
+		and _gm.accessory_slots[1] != null and _gm.accessory_slots[1].id == &"mithril_ring" and _gm.get_potion_count(&"potion") == potions_before
+		and _gm.dragon_scales == [30, 31] and _gm.total_kills == 321 and _gm.hp == _gm.max_hp and _gm.equipped_shield != null,
+		"불러오기: 스테이지 · 골드 · 장비 · 장신구 · 포션 · 비늘 · 처치 수 복원, 체력은 가득")
+	_check(Story.was_played("7스테이지 도착") and not Story.was_played("8스테이지 도착"), "본 대사 기록도 복원")
+	var title: Control = (load("res://scenes/title/title.tscn") as PackedScene).instantiate()
+	title.scene_changes = false
+	get_tree().root.add_child(title)
+	await get_tree().process_frame
+	title.open_single()
+	_check(not (title.get_node("%ContinueButton") as Button).disabled and (title.get_node("%SaveInfo") as Label).text.contains("7스테이지"), "타이틀 싱글플레이: 이어하기 활성 (%s)" % (title.get_node("%SaveInfo") as Label).text)
+	_gm.reset_game()
+	_check(title.continue_game() and _gm.stage == 7 and title.last_scene_request == title.MAIN_SCENE, "이어하기 → 7스테이지 야영지부터")
+	title.queue_free()
+	Profile.delete_save()
+	_check(not Profile.has_save(), "저장 파일 삭제")
+	main.queue_free()
+	await _frames(3)
+	get_tree().paused = false
+	Story.enabled = false
+	_gm.reset_game()
+
+
 func _test_gear(main: Node2D) -> void:
 	print("[장비 · 등급 · 세트 · 신화 · 딜 인플레]")
 	var stage := main.get_node("StageManager") as StageManager
@@ -4252,7 +4375,7 @@ func _test_gear(main: Node2D) -> void:
 		and ItemData.max_rarity_for_stage(41) == ItemData.Rarity.EPIC and ItemData.max_rarity_for_stage(70) == ItemData.Rarity.EPIC
 		and ItemData.max_rarity_for_stage(71) == ItemData.Rarity.LEGENDARY and ItemData.max_rarity_for_stage(100) == ItemData.Rarity.LEGENDARY,
 		"상점 해금: 1~10 일반 · 11~40 희귀 · 41~70 레어 · 71~100 전설")
-	# 종류 × 등급마다 하급 · 중급 · 상급, 상급일수록 강하고 비쌈
+	# 종류 × 등급마다 하급 · 중하급 · 중급 · 중상급 · 상급, 윗 단계일수록 강하고 비쌈
 	var shop_items := ItemDB.get_shop_items()
 	var grid_ok := true
 	var order_ok := true
@@ -4262,18 +4385,29 @@ func _test_gear(main: Node2D) -> void:
 			for item in shop_items:
 				if ShopUI.category_of(item) == cat and item.rarity == r:
 					tiers.append(item)
-			if tiers.size() != 3:
+			if tiers.size() != 5:
 				grid_ok = false
 				print("    %s %s: %d개" % [ShopUI.CATEGORY_NAMES[cat], ItemData.RARITY_NAMES[r], tiers.size()])
 				continue
 			tiers.sort_custom(func(a: ItemData, b: ItemData) -> bool: return a.tier < b.tier)
-			if not (tiers[0].tier == ItemData.Tier.LOW and tiers[1].tier == ItemData.Tier.MID and tiers[2].tier == ItemData.Tier.HIGH):
-				grid_ok = false
-			if not (tiers[0].price <= tiers[1].price and tiers[1].price <= tiers[2].price):
-				order_ok = false
+			for i in 5:
+				if int(tiers[i].tier) != i:
+					grid_ok = false
+				if i > 0 and tiers[i - 1].price > tiers[i].price:
+					order_ok = false
+			if not order_ok:
 				print("    값 순서: %s" % [tiers.map(func(x: ItemData) -> String: return "%s %d" % [x.display_name, x.price])])
-	_check(grid_ok, "장비 10종류 × 4등급마다 하급 · 중급 · 상급 3개씩 (상점 %d개)" % shop_items.size())
-	_check(order_ok, "같은 등급 안에서 상급일수록 비쌈")
+	_check(grid_ok and shop_items.filter(func(it: ItemData) -> bool: return not (it is PotionData)).size() == 200, "장비 10종류 × 4등급마다 5단계씩 (상점 %d개)" % shop_items.size())
+	_check(order_ok, "같은 등급 안에서 윗 단계일수록 비쌈")
+	var drop_only: Array = ItemDB.get_all().filter(func(it: ItemData) -> bool: return it.is_drop_only())
+	var drop_grid := true
+	for r in 4:
+		var cats := {}
+		for it in drop_only:
+			if it.rarity == r:
+				cats[ShopUI.category_of(it)] = true
+		drop_grid = drop_grid and cats.size() == 10
+	_check(drop_only.size() == 40 and drop_grid and not drop_only.any(func(it: ItemData) -> bool: return shop_items.has(it)), "드랍 전용 장비 40개 (등급마다 종류별 하나 · 상점에 없음)")
 	var swords: Array = shop_items.filter(func(it: ItemData) -> bool: return ShopUI.category_of(it) == ShopUI.Category.SWORD)
 	swords.sort_custom(func(a: ItemData, b: ItemData) -> bool: return a.get_fit_stage() < b.get_fit_stage())
 	var rising := true
@@ -4281,13 +4415,14 @@ func _test_gear(main: Node2D) -> void:
 		rising = rising and (swords[i] as WeaponData).damage > (swords[i - 1] as WeaponData).damage
 	_check(rising and (swords.back() as WeaponData).damage >= 5000, "검 공격력이 단계마다 오름 (%d → %d)" % [(swords[0] as WeaponData).damage, (swords.back() as WeaponData).damage])
 	var mithril := ItemDB.get_item(&"mithril_sword")
-	_check(mithril.get_grade_text() == "희귀 · 상급" and mithril.get_fit_stage() == 31 and ItemDB.get_item(&"rusty_sword").get_grade_text() == "일반 · 하급", "등급 표시: [희귀 · 상급] 미스릴 검")
+	_check(mithril.get_grade_text() == "희귀" and mithril.get_fit_stage() == 31 and ItemDB.get_item(&"rusty_sword").get_grade_text() == "일반"
+		and ItemDB.get_item(&"abyss_sword").get_grade_text() == "레어 · 드랍", "등급 표시: 단계는 숨기고 등급만 ([희귀] 미스릴 검 · [레어 · 드랍] 심연의 검)")
 	# 상점 탭
 	_gm.request_shop("상점", [])
 	await get_tree().process_frame
 	shop_ui.set_category(ShopUI.Category.BOW)
 	var bows := shop_ui.get_visible_stock()
-	_check(shop_ui.visible and bows.size() == 12 and bows.all(func(it: ItemData) -> bool: return it is WeaponData and (it as WeaponData).is_bow()), "상점 탭: 활 탭에는 활 12개만")
+	_check(shop_ui.visible and bows.size() == 20 and bows.all(func(it: ItemData) -> bool: return it is WeaponData and (it as WeaponData).is_bow()), "상점 탭: 활 탭에는 활 20개만")
 	shop_ui.set_category(ShopUI.Category.POTION)
 	_check(shop_ui.get_visible_stock().all(func(it: ItemData) -> bool: return it is PotionData) and shop_ui.get_visible_stock().size() == 4, "포션 탭 (작은 · 보통 · 고급 · 전설의 엘릭서)")
 	var tab_names := PackedStringArray()
@@ -4327,6 +4462,8 @@ func _test_gear(main: Node2D) -> void:
 	_check(not pool11.is_empty() and pool11.all(func(it: ItemData) -> bool: return it.rarity == ItemData.Rarity.RARE and it.tier == ItemData.Tier.LOW)
 		and pool35.any(func(it: ItemData) -> bool: return it.tier == ItemData.Tier.HIGH) and pool35.all(func(it: ItemData) -> bool: return not it.is_mythic()),
 		"몬스터 드랍: 11스테이지는 희귀 하급만, 35스테이지는 상급까지 (신화 없음)")
+	_check(pool35.any(func(it: ItemData) -> bool: return it.is_drop_only()) and not pool11.any(func(it: ItemData) -> bool: return it.is_drop_only())
+		and not pool35.any(func(it: ItemData) -> bool: return ItemDB.MONSTER_ONLY.has(it.id)), "드랍 전용 장비도 몬스터가 떨어뜨림 (희귀는 21스테이지부터)")
 	_check(ItemDB.get_drop_pool(1, [&"goblin_dagger"]).any(func(it: ItemData) -> bool: return it.id == &"goblin_dagger"), "고블린 단검 같은 드랍 전용 장비는 그 몬스터만 떨어뜨림")
 	# 신화
 	var mythics: Array = ItemDB.get_all().filter(func(it: ItemData) -> bool: return it.is_mythic() and not (it is PotionData) and not (it is RelicData))
@@ -4411,25 +4548,59 @@ func _run() -> void:
 	_gm = get_node("/root/GameManager")
 	Story.enabled = false  # 대본에 대사가 채워져 있어도 자동 테스트가 대화창에서 멈추지 않게
 
-	print("[타이틀 / 난이도]")
+	print("[타이틀 / 이름 / 메뉴 / 난이도]")
+	# 실제 저장 파일을 건드리지 않도록 테스트용 경로
+	Profile.profile_path = "user://_test_profile.cfg"
+	Profile.save_path = "user://_test_save.json"
+	for path in [Profile.profile_path, Profile.save_path]:
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	Profile.load_profile()
 	var title: Control = (load("res://scenes/title/title.tscn") as PackedScene).instantiate()
+	title.scene_changes = false
 	get_tree().root.add_child(title)
 	await get_tree().process_frame
-	_check(title.get_node("%DifficultyPanel").visible and not title.get_node("%HelpPanel").visible, "난이도 선택 창 표시")
+	_check(title.get_screen() == "name" and not Profile.has_hero_name(), "처음 켜면 용사의 이름부터 정함")
 	_check((title.get_node("Background") as TextureRect).texture != null, "전투 배경 일러스트")
-	title.select_difficulty(_gm.Difficulty.HARD)
-	_check(title.get_node("%HelpPanel").visible and not title.get_node("%DifficultyPanel").visible, "난이도 선택 → 조작 안내 표시")
-	_check(title.get_node("%KeyGrid").get_child_count() == title.CONTROLS.size() * 2, "조작 키 %d개 안내" % title.CONTROLS.size())
-	_check((title.get_node("%HelpTitle") as Label).text.contains("하드"), "안내 제목에 선택 난이도")
 	var name_edit := title.get_node("%HeroNameEdit") as LineEdit
 	name_edit.text = "랜슬롯"
-	_check(name_edit.is_visible_in_tree() and title.get_hero_name() == "랜슬롯", "새 게임 화면에서 용사의 이름을 지음")
-	_gm.set_hero_name(title.get_hero_name())
-	_check(_gm.hero_name == "랜슬롯", "지은 이름이 게임에 저장됨")
-	_gm.set_hero_name("")
-	_gm.start_new_game(title.get_selected_difficulty())
-	_check(_gm.difficulty == _gm.Difficulty.HARD and _gm.get_difficulty_name() == "하드", "하드 난이도로 새 게임")
+	title.confirm_name()
+	_check(_gm.hero_name == "랜슬롯" and Profile.hero_name == "랜슬롯" and title.last_scene_request == title.MAIN_SCENE and _gm.tutorial_mode,
+		"이름을 정하면 → 처음 하는 유저라 튜토리얼 시작")
+	var cfg := ConfigFile.new()
+	_check(cfg.load(Profile.profile_path) == OK and cfg.get_value("player", "hero_name", "") == "랜슬롯" and not cfg.get_value("player", "tutorial_done", true), "이름은 프로필 파일에 저장 (튜토리얼은 아직)")
+	_gm.tutorial_mode = false
+	Profile.complete_tutorial()
 	title.queue_free()
+	await get_tree().process_frame
+	title = (load("res://scenes/title/title.tscn") as PackedScene).instantiate()
+	title.scene_changes = false
+	get_tree().root.add_child(title)
+	await get_tree().process_frame
+	_check(title.get_screen() == "menu" and (title.get_node("%HeroLabel") as Label).text.contains("랜슬롯"), "다시 켜면 이름 · 튜토리얼 없이 메뉴 (싱글 / 멀티)")
+	(title.get_node("%MultiButton") as Button).pressed.emit()
+	_check(title.get_screen() == "menu" and (title.get_node("%MenuNote") as Label).text.contains("다음 업데이트") and title.last_scene_request == "", "멀티플레이: 준비 중 안내")
+	(title.get_node("%SingleButton") as Button).pressed.emit()
+	_check(title.get_screen() == "single" and (title.get_node("%ContinueButton") as Button).disabled, "싱글플레이 → 이어하기(저장 없음 → 비활성) / 새 게임")
+	(title.get_node("%NewGameButton") as Button).pressed.emit()
+	_check(title.get_screen() == "difficulty", "새 게임 → 난이도 선택")
+	title.select_difficulty(_gm.Difficulty.HARD)
+	_check(title.get_screen() == "help", "난이도 선택 → 조작 안내 표시")
+	_check(title.get_node("%KeyGrid").get_child_count() == title.CONTROLS.size() * 2, "조작 키 %d개 안내" % title.CONTROLS.size())
+	_check((title.get_node("%HelpTitle") as Label).text.contains("하드"), "안내 제목에 선택 난이도")
+	title.start_game()
+	_check(_gm.difficulty == _gm.Difficulty.HARD and _gm.get_difficulty_name() == "하드" and _gm.hero_name == "랜슬롯" and not _gm.tutorial_mode, "하드 난이도로 새 게임 (이름 유지)")
+	(title.get_node("%RenameButton") as Button).pressed.emit()
+	name_edit = title.get_node("%HeroNameEdit") as LineEdit
+	_check(title.get_screen() == "name" and name_edit.text == "랜슬롯", "이름 바꾸기 → 이름 화면")
+	name_edit.text = ""
+	title.confirm_name()
+	_check(_gm.hero_name == _gm.DEFAULT_HERO_NAME and title.get_screen() == "menu", "이름을 비우면 「용사」 · 튜토리얼을 마쳤으니 메뉴로")
+	Profile.set_hero_name("랜슬롯")
+	_gm.set_hero_name("")
+	title.queue_free()
+	await get_tree().process_frame
+	await _test_tutorial_and_save()
 	_gm.start_new_game(_gm.Difficulty.NORMAL)
 
 	var main: Node2D = load("res://scenes/main/main.tscn").instantiate()
@@ -4549,7 +4720,7 @@ func _run() -> void:
 	var specialized := true
 	for b in bows:
 		for sw in swords:
-			if sw.rarity == b.rarity and sw.tier == b.tier and (b.damage >= sw.damage or b.attack_cooldown + b.windup_time >= sw.attack_cooldown):
+			if sw.rarity == b.rarity and sw.tier == b.tier and sw.in_shop == b.in_shop and (b.damage >= sw.damage or b.attack_cooldown + b.windup_time >= sw.attack_cooldown):
 				specialized = false
 				print("    %s vs %s" % [b.display_name, sw.display_name])
 		if b.armor_pen <= 0:
@@ -4564,7 +4735,7 @@ func _run() -> void:
 	for sw in swords:
 		for item in ItemDB.get_all():
 			var w2 := item as WeaponData
-			if w2 != null and w2 != sw and w2.rarity == sw.rarity and w2.tier == sw.tier and w2.get_dps() > sw.get_dps():
+			if w2 != null and w2 != sw and w2.rarity == sw.rarity and w2.tier == sw.tier and w2.in_shop == sw.in_shop and w2.get_dps() > sw.get_dps():
 				sword_top = false
 				print("    %s(%.0f) > %s(%.0f)" % [w2.display_name, w2.get_dps(), sw.display_name, sw.get_dps()])
 	_check(sword_top, "검: 같은 등급 · 단계에서 단일 대상 초당 피해가 가장 높음")
@@ -4954,12 +5125,13 @@ func _run() -> void:
 	var chest := stage.get_chest()
 	_check(chest != null and not chest.is_opened(), "보물상자 등장")
 	_check(_item_pickups(entities).filter(func(p: Pickup) -> bool: return stage.boss_room.get_bounds().has_point(p.global_position)).is_empty(), "보스는 장비를 직접 떨어뜨리지 않음 (상자로 보상)")
+	stage.chest_item_chances = [1.0, 0.0]
 	chest._interact()
 	await _frames(3)
 	var chest_drop := _item_pickups(entities).filter(func(p: Pickup) -> bool: return p.global_position.distance_to(chest.global_position) < 40.0)
 	var chest_item: ItemData = (chest_drop[0] as Pickup).item if chest_drop.size() == 1 else null
 	_check(chest_item != null and chest_item.rarity == ItemData.Rarity.COMMON and chest_item.get_fit_stage() <= 7, "1스테이지 보스 상자 → 일반 등급 (상급까지): %s" % (chest_item.get_grade_text() + " " + chest_item.display_name if chest_item else "없음"))
-	_check(chest_item != null and chest_item.in_shop and not chest_item.is_mythic(), "상자 장비: 상점 장비 중에서 (신화 · 드랍 전용 제외)")
+	_check(chest_item != null and not chest_item.is_mythic() and not ItemDB.MONSTER_ONLY.has(chest_item.id), "상자 장비: 상점 · 드랍 전용 장비 중에서 (신화 · 몬스터 고유 장비 제외)")
 	next_portal.interacted.emit()
 	await _frames(3)
 	_check(_gm.stage == 2 and stage.get_state() == StageManager.State.CAMP and _gm.location_name == "야영지", "다음 스테이지 텔레포트 → 2스테이지 야영지")
@@ -5030,10 +5202,24 @@ func _run() -> void:
 	_check(fire_hit["burned"], "수문장의 화염구에 맞으면 화상")
 	gatekeeper.take_damage(999999999)
 	await _frames(4)
+	var items_before2 := _item_pickups(entities).size()
+	stage.chest_item_chances = [0.0, 0.0]
 	stage.get_chest()._interact()
 	await _frames(3)
-	var chest2 := _item_pickups(entities).filter(func(p: Pickup) -> bool: return p.item.rarity == ItemData.Rarity.COMMON and p.item.in_shop)
-	_check(chest2.size() >= 1, "2스테이지 보스 상자 → 일반 등급 (11스테이지 전까지)")
+	var base_gold := 60.0 * 2 * float(_gm.get_difficulty_info()["gold"])
+	_check(_item_pickups(entities).size() == items_before2 and stage.last_chest_items.is_empty() and stage.last_chest_gold >= roundi(base_gold * 1.6) - 1 and stage.last_chest_gold <= roundi(base_gold * 2.4) + 1,
+		"보스 상자 장비는 확률 — 장비가 안 나오면 골드 두 배 (%d)" % stage.last_chest_gold)
+	stage.chest_item_chances = [0.7, 0.3]
+	var rolls := {0: 0, 1: 0, 2: 0}
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	for i in 1000:
+		var n := 0
+		for chance in stage.chest_item_chances:
+			if rng.randf() < chance:
+				n += 1
+		rolls[n] += 1
+	_check(rolls[0] > 120 and rolls[0] < 300 and rolls[2] > 120 and rolls[2] < 300, "보스 상자 기본 확률: 장비 0개 %d · 1개 %d · 2개 %d (1000번)" % [rolls[0], rolls[1], rolls[2]])
 	next_portal.interacted.emit()
 	await _frames(3)
 
@@ -5516,7 +5702,7 @@ func _run() -> void:
 		(ending.get_node("%ReturnButton") as Button).pressed.emit()
 		await _frames(10)
 		var title_after := get_tree().current_scene
-		_check(title_after != null and title_after.name == "Title" and (title_after.get_node("%DifficultyPanel") as Control).visible, "엔딩 → 난이도 선택 화면")
+		_check(title_after != null and title_after.name == "Title" and title_after.get_screen() == "menu", "엔딩 → 타이틀 메뉴")
 		_check(not _gm.is_game_cleared and _gm.stage == 1 and _gm.total_kills == 0 and _gm.dragon_scales.is_empty() and not _gm.hidden_cleared, "새 모험을 위해 GameManager 초기화 (비늘·히든 포함)")
 
 	print("")

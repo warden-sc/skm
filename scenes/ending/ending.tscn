@@ -108,4 +108,4 @@ horizontal_alignment = 1
 [node name="ReturnButton" type="Button" parent="Layout/RecordPanel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "난이도 선택으로 돌아가기"
+text = "타이틀로 돌아가기"

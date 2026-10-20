@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/wraith_sword.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+weapon_type = 0
+damage = 1860
+crit_chance = 0.1125
+crit_multiplier = 1.6625
+attack_cooldown = 0.3275
+melee_range = 44.5
+melee_arc_degrees = 146.25
+armor_pen = 0
+knockback = 192.5
+element = 8
+effect_color = Color(0.7, 1, 0.8, 1)
+id = &"wraith_sword"
+display_name = "망령의 검"
+description = "망령이 쥐던 반투명한 검. 베인 자리가 차갑게 식는다."
+rarity = 1
+tier = 2
+in_shop = false
+price = 8820

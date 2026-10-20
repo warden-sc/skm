@@ -116,6 +116,17 @@ func was_played(mark: String) -> bool:
 	return _played.has(mark)
 
 
+## 저장 파일용 — 이미 본 대사 목록
+func get_played_marks() -> Array:
+	return _played.keys()
+
+
+func set_played_marks(marks: Array) -> void:
+	_played.clear()
+	for mark in marks:
+		_played[String(mark)] = true
+
+
 ## 새 게임을 시작하면 다시 볼 수 있게
 func reset() -> void:
 	_played.clear()

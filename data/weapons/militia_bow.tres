@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/militia_bow.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/militia_bow_held.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/arrow.png" id="4_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+held_texture = ExtResource("3_res")
+projectile_texture = ExtResource("4_res")
+weapon_type = 1
+damage = 260
+crit_chance = 0.15
+crit_multiplier = 1.8
+attack_cooldown = 0.118
+windup_time = 0.178
+armor_pen = 45
+projectiles_per_shot = 1
+spread_degrees = 0
+pierce = 2
+projectile_speed = 456
+projectile_range = 283
+projectile_scale = 1.02
+knockback = 93
+explosion_radius = 0
+explosion_damage_ratio = 0.5
+element = 0
+effect_color = Color(0.95, 0.9, 0.8, 1)
+id = &"militia_bow"
+display_name = "자경단 활"
+description = "마을 사냥꾼에게 빌린 활. 화살이 두 마리를 꿰뚫는다."
+rarity = 0
+tier = 1
+price = 1510

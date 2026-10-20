@@ -13,6 +13,6 @@ id = &"rune_pendant"
 display_name = "룬 펜던트"
 description = "룬이 생명의 힘을 끌어올리는 펜던트."
 rarity = 2
-tier = 2
+tier = 4
 set_id = &"rune"
 price = 17300

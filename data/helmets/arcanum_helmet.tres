@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="HelmetData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/helmet_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/helmets/arcanum_helmet.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/helmets/arcanum_helmet_worn.png" id="3_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+worn_texture = ExtResource("3_res")
+defense = 97
+bonus_max_hp = 830
+id = &"arcanum_helmet"
+display_name = "비전 투구"
+description = "면갑 틈으로 보랏빛이 새는 투구."
+rarity = 2
+tier = 3
+price = 15200

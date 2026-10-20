@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ShieldData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/shield_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/shields/ancient_shield.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+defense = 84
+block_ratio = 0.9775
+block_arc_degrees = 186.25
+max_guard = 3080
+guard_regen = 1080
+perfect_guard_window = 0.4325
+guard_move_multiplier = 0.6775
+guard_break_time = 0.5375
+id = &"ancient_shield"
+display_name = "고대 거인의 방패"
+description = "거인이 들던 방패를 깎아 만든 탑 방패."
+rarity = 3
+tier = 2
+in_shop = false
+price = 17300

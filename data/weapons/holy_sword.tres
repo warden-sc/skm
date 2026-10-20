@@ -21,5 +21,5 @@ display_name = "성검 루멘"
 description = "빛의 가호를 받은 전설의 성검. 거대한 빛의 참격이 주위를 휩쓴다."
 rarity = 3
 icon = ExtResource("2_res")
-price = 33300
+price = 32100
 tier = 0

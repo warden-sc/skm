@@ -36,6 +36,6 @@ display_name = "별의 지팡이 아르카나"
 description = "별의 힘을 끌어내는 전설의 지팡이. 조준한 곳 주변에 별똥별이 무작위로 쏟아진다."
 rarity = 3
 icon = ExtResource("3_res")
-price = 33300
+price = 32100
 armor_pen = 72
 tier = 0

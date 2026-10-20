@@ -21,6 +21,6 @@ id = &"dragonscale_sword"
 display_name = "용아검"
 description = "용의 송곳니를 갈아 만든 검. 베인 자리에 용의 불길이 남는다."
 rarity = 2
-tier = 1
+tier = 2
 set_id = &"dragonscale"
 price = 23200

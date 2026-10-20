@@ -849,6 +849,8 @@ func _update_status(delta: float) -> void:
 
 
 func shake_camera(strength: float) -> void:
+	if not bool(Profile.get_setting("screen_shake")):
+		return  # 설정에서 화면 흔들림을 끔
 	_shake_strength = maxf(_shake_strength, strength)
 
 

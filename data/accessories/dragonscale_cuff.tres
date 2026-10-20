@@ -13,6 +13,6 @@ id = &"dragonscale_cuff"
 display_name = "용비늘 팔찌"
 description = "용의 비늘 한 장을 박은 팔찌."
 rarity = 2
-tier = 1
+tier = 2
 set_id = &"dragonscale"
 price = 14400

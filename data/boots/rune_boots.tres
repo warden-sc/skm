@@ -14,6 +14,6 @@ id = &"rune_boots"
 display_name = "룬 각반"
 description = "룬이 빛나는 각반. 발걸음이 가볍다."
 rarity = 2
-tier = 2
+tier = 4
 set_id = &"rune"
 price = 17300

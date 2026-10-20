@@ -35,6 +35,6 @@ id = &"dragonscale_staff"
 display_name = "용의 숨결 지팡이"
 description = "용의 숨결을 가둔 지팡이. 화염구가 크게 터지고 땅이 오래 불탄다."
 rarity = 2
-tier = 1
+tier = 2
 set_id = &"dragonscale"
 price = 23200

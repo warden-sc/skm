@@ -3,7 +3,9 @@
     python3 tools/item_catalog.py            # 데이터 + 아이콘 생성
     python3 tools/item_catalog.py --sheet    # 밸런스 표만 출력
 
-- 등급(일반 · 희귀 · 레어 · 전설)마다 하급 · 중급 · 상급 3단계 = 단계(t) 0 ~ 11, 신화 = 12
+- 등급(일반 · 희귀 · 레어 · 전설)마다 하 · 중하 · 중 · 중상 · 상 5단계 (상점에는 단계 이름 없이 등급만 표시)
+  + 종류 × 등급마다 몬스터 드랍 전용 장비 1개 (중과 중상 사이 세기, 상점에 없음)
+- 수치 계산은 예전 12단계 축(u = 0 ~ 11, 신화 12)을 그대로 쓰고, 새 단계는 그 사이 값(u = 3 × 등급 + 0 · 0.5 · 1 · 1.5 · 2)
 - 수치는 스테이지 데이터(보스 · 몬스터의 체력 · 방어력 · 공격력, 예전 단위 × Balance.K)에서 계산
   · 무기: 그 단계가 쓰이는 스테이지의 보스를 같은 단계 장비로 약 55초에 잡도록
   · 방어구: 보스 몸통 박치기를 약 6~7번 버티도록 (방어력 = 보스 공격의 40%)
@@ -24,7 +26,7 @@ import generate_sprites as gs  # noqa: E402
 K = 10  # scripts/core/balance.gd 의 Balance.K
 FIT = [1, 4, 7, 11, 21, 31, 41, 51, 61, 71, 81, 91]          # 단계가 「제 실력」을 내기 시작하는 스테이지
 REP = [1, 5, 8, 14, 24, 34, 44, 54, 64, 74, 84, 94]           # 그 단계의 대표 스테이지
-TIER_NAMES = ["하급", "중급", "상급"]
+TIER_NAMES = ["하급", "중하급", "중급", "중상급", "상급"]
 RARITY_NAMES = ["일반", "희귀", "레어", "전설", "신화"]
 
 
@@ -69,31 +71,54 @@ def load_stages():
 S = load_stages()
 
 
+class Tab(list):
+    """u 가 소수이면 앞뒤 값을 이어서(선형 보간) 돌려주는 표"""
+    def __getitem__(self, i):
+        if isinstance(i, float) and not i.is_integer():
+            lo = int(math.floor(i))
+            f = i - lo
+            return list.__getitem__(self, lo) * (1 - f) + list.__getitem__(self, lo + 1) * f
+        return list.__getitem__(self, int(i))
+
+
+def lerped(fn):
+    """정수 단계에서 계산한 값을 소수 단계에서는 이어 줌"""
+    def wrap(u, *args):
+        if isinstance(u, float) and not u.is_integer():
+            lo = int(math.floor(u))
+            f = u - lo
+            return fn(lo, *args) * (1 - f) + fn(lo + 1, *args) * f
+        return fn(int(u), *args)
+    return wrap
+
+
+@lerped
 def at(t, key):
     return S[REP[min(t, 11)]][key]
 
 
+@lerped
 def income5(t):
     f = FIT[min(t, 11)]
     return sum(S[n]["gold"] for n in range(f, min(f + 4, 100) + 1))
 
 
 # ============================================================ 단계별 수치 표
-RING_ATK = [.03, .05, .07, .08, .10, .12, .14, .16, .18, .20, .23, .26, .40]
-RING_CRIT = [.02, .03, .04, .05, .06, .07, .08, .09, .10, .11, .13, .15, .20]
-BR_CD = [.10, .15, .20, .25, .30, .35, .40, .45, .50, .55, .62, .70, 1.0]
-SW_CRIT = [.05, .06, .08, .10, .11, .12, .14, .15, .16, .18, .19, .20, .25]
-SW_MULT = [1.5, 1.5, 1.55, 1.6, 1.65, 1.7, 1.75, 1.8, 1.85, 1.9, 1.95, 2.0, 2.4]
-SW_CD = [.36, .35, .34, .34, .33, .32, .32, .31, .30, .30, .29, .28, .26]
-SW_RANGE = [38, 39, 40, 42, 44, 46, 48, 50, 52, 56, 58, 60, 72]
-SW_ARC = [130, 132, 135, 140, 145, 150, 160, 165, 170, 180, 185, 190, 220]
-BOOT_MOVE = [.04, .05, .06, .07, .08, .09, .10, .11, .12, .13, .14, .16, .30]
-BLOCK = [.70, .74, .78, .80, .84, .88, .90, .92, .94, .95, .97, 1.0, 1.0]
-BLOCK_ARC = [110, 113, 116, 120, 128, 136, 160, 165, 170, 180, 185, 190, 220]
-PERFECT = [.30, .30, .31, .32, .33, .35, .38, .39, .40, .42, .43, .44, .50]
-GUARD_MOVE = [.55, .55, .56, .58, .60, .60, .60, .62, .63, .65, .67, .70, .85]
-GUARD_BREAK = [1.2, 1.15, 1.1, 1.0, .95, .9, .8, .75, .7, .6, .55, .5, .4]
-TIER_PRICE = [1.0, 1.25, 1.5]
+RING_ATK = Tab([.03, .05, .07, .08, .10, .12, .14, .16, .18, .20, .23, .26, .40])
+RING_CRIT = Tab([.02, .03, .04, .05, .06, .07, .08, .09, .10, .11, .13, .15, .20])
+BR_CD = Tab([.10, .15, .20, .25, .30, .35, .40, .45, .50, .55, .62, .70, 1.0])
+SW_CRIT = Tab([.05, .06, .08, .10, .11, .12, .14, .15, .16, .18, .19, .20, .25])
+SW_MULT = Tab([1.5, 1.5, 1.55, 1.6, 1.65, 1.7, 1.75, 1.8, 1.85, 1.9, 1.95, 2.0, 2.4])
+SW_CD = Tab([.36, .35, .34, .34, .33, .32, .32, .31, .30, .30, .29, .28, .26])
+SW_RANGE = Tab([38, 39, 40, 42, 44, 46, 48, 50, 52, 56, 58, 60, 72])
+SW_ARC = Tab([130, 132, 135, 140, 145, 150, 160, 165, 170, 180, 185, 190, 220])
+BOOT_MOVE = Tab([.04, .05, .06, .07, .08, .09, .10, .11, .12, .13, .14, .16, .30])
+BLOCK = Tab([.70, .74, .78, .80, .84, .88, .90, .92, .94, .95, .97, 1.0, 1.0])
+BLOCK_ARC = Tab([110, 113, 116, 120, 128, 136, 160, 165, 170, 180, 185, 190, 220])
+PERFECT = Tab([.30, .30, .31, .32, .33, .35, .38, .39, .40, .42, .43, .44, .50])
+GUARD_MOVE = Tab([.55, .55, .56, .58, .60, .60, .60, .62, .63, .65, .67, .70, .85])
+GUARD_BREAK = Tab([1.2, 1.15, 1.1, 1.0, .95, .9, .8, .75, .7, .6, .55, .5, .4])
+TIER_PRICE = [1.0, 1.12, 1.25, 1.37, 1.5]
 MYTHIC = 12
 
 
@@ -106,10 +131,12 @@ def accessory_mult(t):
     return (1 + RING_ATK[t]) * (1 + (SW_CRIT[t] + RING_CRIT[t]) * (SW_MULT[t] - 1 + BR_CD[t]))
 
 
+@lerped
 def bracelet_pen(t):
     return round(0.12 * at(t, "boss_def")) if t < MYTHIC else round(0.2 * at(11, "boss_def"))
 
 
+@lerped
 def sword_damage(t):
     if t == MYTHIC:
         return round(sword_damage(11) * 1.7, -1)
@@ -125,12 +152,14 @@ def sword_raw_dps(t):
     return sword_damage(t) * (1 + SW_CRIT[t] * (SW_MULT[t] - 1)) / SW_CD[t]
 
 
+@lerped
 def total_defense(t):
     if t == MYTHIC:
         return round(total_defense(11) * 1.45)
     return 0.40 * at(t, "boss_cd")
 
 
+@lerped
 def hp_bonus(t):
     if t == MYTHIC:
         return round(hp_bonus(11) * 1.6)
@@ -145,15 +174,28 @@ def nice(v):
     return int(round(v))
 
 
-def price(t, weight):
-    if t == MYTHIC:
+def price(item, weight):
+    u = item["u"]
+    if u == MYTHIC:
         return 0
-    if t == 0:
+    if u == 0:
         return None  # 기존 값 유지
-    rarity_tier = t % 3
-    raw = max(income5(t) * weight * TIER_PRICE[rarity_tier], 120 * (t + 1))
-    before = price(t - 1, weight) if t >= 2 else 0
-    return nice(max(raw, before * 1.1))  # 윗 단계가 항상 더 비싸게
+    return nice(max(income5(u) * weight * TIER_PRICE[item["tier"]], 120 * (u + 1)))
+
+
+def fix_prices(prices):
+    """같은 종류 상점 장비는 (등급, 단계) 순으로 항상 더 비싸게"""
+    for cat in {i["cat"] for i in ITEMS}:
+        shop = sorted((i for i in ITEMS if i["cat"] == cat and i.get("in_shop", True) and i["u"] != MYTHIC), key=lambda i: (i["rarity"], i["tier"]))
+        before = 0
+        for item in shop:
+            pr = prices.get(item["id"])
+            if pr is None:
+                before = max(before, item.get("_old_price", 0))
+                continue
+            pr = nice(max(pr, before * 1.06))
+            prices[item["id"]] = pr
+            before = pr
 
 
 # ============================================================ 그림 (16x16, 기존 도트 스타일)
@@ -351,38 +393,89 @@ def mythic_frame(img):
     return out
 
 
-# 단계별 색 (주색, 밝은색, 어두운색, 보석)
+# 계열별 색 (주색, 밝은색, 어두운색, 보석)
 FAMILY = {
-    1: ((126, 98, 62), (176, 146, 96), (84, 62, 40), (110, 200, 110)),       # 여행자
-    2: ((200, 130, 60), (240, 188, 112), (128, 78, 34), (230, 90, 60)),     # 청동
-    4: ((150, 170, 200), (232, 236, 246), (78, 92, 128), (210, 50, 64)),    # 기사단
-    5: ((190, 228, 240), (252, 255, 255), (106, 156, 188), (120, 220, 255)),  # 미스릴
-    7: ((60, 150, 110), (150, 222, 150), (30, 82, 62), (255, 172, 60)),     # 용비늘
-    8: ((72, 72, 112), (120, 204, 255), (40, 40, 70), (120, 224, 255)),     # 룬
-    10: ((244, 244, 234), (255, 222, 120), (186, 188, 210), (150, 222, 255)),  # 천상(세라핌)
-    11: ((112, 62, 172), (255, 216, 110), (60, 30, 100), (255, 120, 222)),  # 창세
+    "traveler": ((126, 98, 62), (176, 146, 96), (84, 62, 40), (110, 200, 110)),
+    "militia": ((120, 112, 100), (178, 170, 156), (70, 64, 58), (200, 170, 90)),
+    "bronze": ((200, 130, 60), (240, 188, 112), (128, 78, 34), (230, 90, 60)),
+    "mercenary": ((150, 70, 52), (206, 132, 96), (82, 38, 30), (240, 200, 90)),
+    "garrison": ((120, 134, 120), (196, 210, 190), (62, 74, 64), (230, 210, 120)),
+    "knight": ((150, 170, 200), (232, 236, 246), (78, 92, 128), (210, 50, 64)),
+    "royalguard": ((44, 70, 150), (226, 196, 100), (24, 36, 90), (255, 230, 140)),
+    "mithril": ((190, 228, 240), (252, 255, 255), (106, 156, 188), (120, 220, 255)),
+    "darksteel": ((64, 64, 72), (150, 150, 166), (32, 32, 40), (220, 60, 60)),
+    "arcanum": ((140, 80, 200), (220, 180, 255), (70, 36, 112), (120, 255, 230)),
+    "dragonscale": ((60, 150, 110), (150, 222, 150), (30, 82, 62), (255, 172, 60)),
+    "rune": ((72, 72, 112), (120, 204, 255), (40, 40, 70), (120, 224, 255)),
+    "hero": ((214, 176, 70), (255, 236, 150), (130, 96, 30), (90, 170, 255)),
+    "seraph": ((244, 244, 234), (255, 222, 120), (186, 188, 210), (150, 222, 255)),
+    "dragonlord": ((170, 30, 40), (255, 160, 70), (90, 14, 24), (255, 230, 90)),
+    "genesis": ((112, 62, 172), (255, 216, 110), (60, 30, 100), (255, 120, 222)),
+    # 드랍 전용
+    "beast": ((140, 110, 80), (214, 200, 170), (80, 60, 44), (200, 60, 50)),
+    "grave": ((110, 120, 130), (190, 210, 200), (54, 60, 70), (120, 255, 170)),
+    "abyss": ((60, 30, 80), (170, 90, 220), (26, 12, 40), (255, 60, 120)),
+    "ancient": ((176, 150, 100), (240, 226, 180), (100, 80, 50), (80, 230, 200)),
 }
-FAMILY_STYLE = {
-    1: dict(helm="hood", deco=None, shield="round", emblem="boss", wings=False, staff="round"),
-    2: dict(helm="helm", deco="trim", shield="round", emblem="diamond", wings=False, staff="square"),
-    4: dict(helm="visor", deco="cross", shield="kite", emblem="cross", wings=False, staff="crystal"),
-    5: dict(helm="helm", deco="chain", shield="kite", emblem="diamond", wings=False, staff="crystal"),
-    7: dict(helm="horned", deco="scale", shield="tower", emblem="diamond", wings=False, staff="round"),
-    8: dict(helm="visor", deco="rune", shield="tower", emblem="diamond", wings=False, staff="crystal"),
-    10: dict(helm="winged", deco="cross", shield="kite", emblem="sun", wings=True, staff="round"),
-    11: dict(helm="crown", deco="rune", shield="tower", emblem="sun", wings=True, staff="crystal"),
-}
+_S = dict(helm="helm", deco=None, shield="round", emblem="diamond", wings=False, staff="square",
+          light=False, guard_light=False, gem=True, broad=False, glow=False, prong=False, acc_light=False)
+FAMILY_STYLE = {k: dict(_S, **v) for k, v in {
+    "traveler": dict(helm="hood", emblem="boss", staff="round", gem=False),
+    "militia": dict(helm="hood", deco="trim", gem=False),
+    "bronze": dict(deco="trim", guard_light=True, gem=False, broad=True, acc_light=True),
+    "mercenary": dict(deco="trim", shield="kite", emblem="cross", broad=True),
+    "garrison": dict(deco="chain", shield="tower", emblem="cross", staff="round"),
+    "knight": dict(helm="visor", deco="cross", shield="kite", emblem="cross", staff="crystal"),
+    "royalguard": dict(helm="visor", deco="cross", shield="kite", emblem="sun", staff="crystal", acc_light=True),
+    "mithril": dict(deco="chain", shield="kite", staff="crystal", acc_light=True),
+    "darksteel": dict(helm="horned", deco="scale", shield="tower", broad=True, prong=True),
+    "arcanum": dict(helm="visor", deco="rune", shield="kite", staff="crystal", glow=True, prong=True),
+    "dragonscale": dict(helm="horned", deco="scale", shield="tower", staff="round", guard_light=True, broad=True, prong=True),
+    "rune": dict(helm="visor", deco="rune", shield="tower", staff="crystal", broad=True, glow=True, prong=True),
+    "hero": dict(helm="winged", deco="cross", shield="kite", emblem="sun", staff="round", glow=True, prong=True, acc_light=True),
+    "seraph": dict(helm="winged", deco="cross", shield="kite", emblem="sun", wings=True, staff="round", light=True, glow=True, prong=True, acc_light=True),
+    "dragonlord": dict(helm="horned", deco="scale", shield="tower", emblem="sun", staff="round", broad=True, glow=True, prong=True),
+    "genesis": dict(helm="crown", deco="rune", shield="tower", emblem="sun", wings=True, staff="crystal", broad=True, glow=True, prong=True, acc_light=True),
+    "beast": dict(helm="hood", deco="trim", emblem="boss", staff="round", gem=False),
+    "grave": dict(helm="horned", deco="chain", shield="kite", emblem="boss", staff="crystal", prong=True),
+    "abyss": dict(helm="horned", deco="rune", shield="tower", emblem="diamond", staff="crystal", broad=True, glow=True, prong=True),
+    "ancient": dict(helm="crown", deco="rune", shield="tower", emblem="sun", wings=True, staff="round", broad=True, glow=True, prong=True, acc_light=True),
+}.items()}
 
 # ============================================================ 장비 목록
-# (id, 이름, 설명, 단계, 세트) — 기존 장비는 아이콘을 그대로 쓰고 수치만 다시 계산
-SETS = {2: "bronze", 4: "knight", 5: "mithril", 7: "dragonscale", 8: "rune", 10: "celestial", 11: "genesis"}
-FAMILY_PREFIX = {1: "traveler", 2: "bronze", 4: "knight", 5: "mithril", 7: "dragonscale", 8: "rune", 10: "seraph", 11: "genesis"}
+# 등급마다 하급 · 중하급 · 중급 · 중상급 · 상급 (5단계). 수치는 u(능력치 단계, 0~11 · 신화 12)로 계산:
+#   하급 = 3r, 중하급 = 3r+0.5, 중급 = 3r+1, 중상급 = 3r+1.5, 상급 = 3r+2   (r = 등급 0 일반 ~ 3 전설)
+#   드랍 전용 = 3r+1.25 (그 등급 중급과 중상급 사이 — 상점에 없는 대신 같은 값의 상점 장비보다 조금 셈)
+# 세트 효과는 기존 계열(청동 · 기사단 · 미스릴 · 용비늘 · 룬 · 천상 · 창세 · 신화)에만
+SETS = {"bronze": "bronze", "knight": "knight", "mithril": "mithril", "dragonscale": "dragonscale", "rune": "rune", "seraph": "celestial", "genesis": "genesis"}
+OLD_FAMILY = {1: "traveler", 2: "bronze", 4: "knight", 5: "mithril", 7: "dragonscale", 8: "rune", 10: "seraph", 11: "genesis"}
 
 ITEMS = []
 
 
 def add(cat, item_id, name, desc, t, **extra):
-    entry = dict(cat=cat, id=item_id, name=name, desc=desc, t=t)
+    """기존 3단계(하 · 중 · 상) 번호 t 로 등록 (0~11, 신화 12)"""
+    if t == MYTHIC:
+        entry = dict(rarity=4, tier=0, u=MYTHIC)
+    else:
+        entry = dict(rarity=t // 3, tier=[0, 2, 4][t % 3], u=t)
+    entry.update(cat=cat, id=item_id, name=name, desc=desc, fam=OLD_FAMILY.get(t))
+    entry.update(extra)
+    if not entry.get("in_shop", True) and t != MYTHIC:
+        entry.update(tier=2, u=3 * entry["rarity"] + 1.25)  # 드랍 전용
+    ITEMS.append(entry)
+
+
+def add_new(cat, item_id, name, desc, rarity, tier, fam, **extra):
+    """새 중하급(tier 1) · 중상급(tier 3) 장비"""
+    entry = dict(cat=cat, id=item_id, name=name, desc=desc, rarity=rarity, tier=tier, u=3 * rarity + tier / 2, fam=fam)
+    entry.update(extra)
+    ITEMS.append(entry)
+
+
+def add_drop(cat, item_id, name, desc, rarity, fam, **extra):
+    """드랍 전용 장비 (상점에 없음 · 몬스터 · 보스 상자에서만)"""
+    entry = dict(cat=cat, id=item_id, name=name, desc=desc, rarity=rarity, tier=2, u=3 * rarity + 1.25, fam=fam, in_shop=False)
     entry.update(extra)
     ITEMS.append(entry)
 
@@ -532,6 +625,180 @@ add("bracelet", "spirit_bracelet", "대정령의 팔찌", "정령의 성역을 �
 add("ring", "gabriel_ring", "대천사 가브리엘의 반지", "대천사 가브리엘이 권능과 함께 넘겨준 반지.", MYTHIC, acc=((255, 230, 140), (200, 150, 60), (180, 230, 255)))
 add("pendant", "king_pendant", "왕의 펜던트", "잃어버린 왕이 넘겨준 펜던트. 왕국을 지키던 생명의 힘이 깃들어 있다.", MYTHIC, acc=((255, 210, 90), (150, 100, 30), (220, 40, 60)))
 
+# ============================================================ 중하급 · 중상급 (새 상점 장비 80종)
+# (계열, 등급, 단계, 무기 속성, 이펙트 색)
+NEW_FAMILIES = [
+    ("militia", 0, 1, 0, (0.95, 0.9, 0.8)), ("mercenary", 0, 3, 0, (1, 0.75, 0.6)),
+    ("garrison", 1, 1, 0, (0.85, 0.95, 0.85)), ("royalguard", 1, 3, 3, (0.8, 0.85, 1)),
+    ("darksteel", 2, 1, 8, (0.8, 0.4, 0.5)), ("arcanum", 2, 3, 7, (0.8, 0.6, 1)),
+    ("hero", 3, 1, 6, (1, 0.9, 0.55)), ("dragonlord", 3, 3, 1, (1, 0.5, 0.3)),
+]
+NEW_TEXT = {
+    "militia": {
+        "sword": ("자경단의 검", "마을 자경단이 쓰는 투박한 검. 손에 잘 붙는다."),
+        "bow": ("자경단 활", "마을 사냥꾼에게 빌린 활. 화살이 두 마리를 꿰뚫는다.", dict(shots=1, pierce=2)),
+        "staff": ("자경단 마법봉", "마을 약초꾼이 깎은 마법봉. 마력 구슬 2발을 쏜다.", dict(spell=0, shots=2, spread=14, radius=34, projectile="orb", chant="모여라, 작은 마력이여!")),
+        "shield": ("자경단 방패", "판자에 쇠테를 두른 둥근 방패."),
+        "helmet": ("자경단 두건", "쇠판을 덧댄 두꺼운 두건."),
+        "armor": ("자경단 누비옷", "솜을 두껍게 누빈 옷. 생각보다 튼튼하다."),
+        "boots": ("자경단 장화", "순찰을 오래 돌아도 멀쩡한 장화."),
+        "bracelet": ("자경단 팔찌", "자경단원끼리 나눠 낀 쇠 팔찌."),
+        "ring": ("자경단 반지", "마을을 지키겠다는 맹세를 새긴 반지."),
+        "pendant": ("자경단 호부", "마을 사제가 축복한 작은 호부."),
+    },
+    "mercenary": {
+        "sword": ("용병의 대검", "전장을 떠도는 용병의 대검. 거칠지만 한 방이 크다."),
+        "bow": ("용병 석궁", "용병단의 표준 석궁. 볼트가 세 마리를 꿰뚫는다.", dict(shots=1, pierce=3, crossbow=True)),
+        "staff": ("용병 마법사의 지팡이", "돈만 주면 무엇이든 태운다는 용병 마법사의 지팡이. 작은 화염구를 쏜다.", dict(spell=3, shots=1, spread=0, radius=44, projectile="fireball", chant="불타라!", zone=1.6, zone_ratio=0.15)),
+        "shield": ("용병 방패", "흠집투성이 연꼴 방패. 그만큼 많이 막았다."),
+        "helmet": ("용병 투구", "코 보호대가 달린 쇠 투구."),
+        "armor": ("용병 미늘 갑옷", "쇳조각을 겹쳐 꿰맨 미늘 갑옷."),
+        "boots": ("용병 각반", "행군에 닳은 쇠 각반."),
+        "bracelet": ("용병 손목 보호대", "급소를 찌르는 손목을 받쳐 주는 보호대."),
+        "ring": ("용병단 인장 반지", "용병단의 계약 인장이 찍힌 반지."),
+        "pendant": ("용병의 행운 부적", "살아 돌아온 용병들이 지니던 부적."),
+    },
+    "garrison": {
+        "sword": ("수비대 장검", "성벽 수비대의 장검. 길고 곧다."),
+        "bow": ("수비대 장궁", "성벽 위에서 쏘는 큰 활. 화살이 멀리까지 꿰뚫는다.", dict(shots=1, pierce=3)),
+        "staff": ("수비대 마도봉", "성문을 지키는 마도사의 봉. 서리 구슬 2발이 터지며 적을 얼린다.", dict(spell=1, shots=2, spread=12, radius=36, projectile="ice_shard", chant="얼어붙어라!", slow=1.4)),
+        "shield": ("수비대 탑 방패", "몸을 다 가리는 커다란 탑 방패."),
+        "helmet": ("수비대 투구", "넓은 챙이 달린 쇠 투구."),
+        "armor": ("수비대 사슬 갑옷", "성벽 수비대의 두꺼운 사슬 갑옷."),
+        "boots": ("수비대 철화", "성벽 계단을 하루 종일 오르내린 철화."),
+        "bracelet": ("수비대 팔찌", "수비대 문장이 새겨진 쇠 팔찌."),
+        "ring": ("수비대 반지", "성문 열쇠를 녹여 만들었다는 반지."),
+        "pendant": ("수비대 휘장", "끝까지 성벽을 지킨 이에게 주는 휘장."),
+    },
+    "royalguard": {
+        "sword": ("근위대의 검", "왕의 근위대가 차는 금장식 검. 번개처럼 빠르다."),
+        "bow": ("근위대 쌍궁", "근위 궁수의 활. 화살 두 발이 나란히 꿰뚫는다.", dict(shots=2, pierce=2)),
+        "staff": ("근위 마법사의 홀", "왕궁 마법사의 홀. 번개 구슬 3발이 터진다.", dict(spell=0, shots=3, spread=18, radius=36, projectile="spark_orb", chant="왕의 이름으로!")),
+        "shield": ("근위대 방패", "왕실 문장이 새겨진 푸른 방패."),
+        "helmet": ("근위대 투구", "금테를 두른 푸른 면갑 투구."),
+        "armor": ("근위대 판금", "왕실의 푸른 칠을 한 판금 갑옷."),
+        "boots": ("근위대 각반", "의장 행진에도 쓰는 금장식 각반."),
+        "bracelet": ("근위대 팔찌", "근위대장만 찬다는 금 팔찌."),
+        "ring": ("근위대 인장 반지", "왕이 직접 내린 인장 반지."),
+        "pendant": ("근위대 훈장", "왕을 지켜 낸 근위병의 훈장."),
+    },
+    "darksteel": {
+        "sword": ("흑철 검", "빛을 삼키는 흑철로 벼린 검. 베인 자리에 어둠이 남는다."),
+        "bow": ("흑철 석궁", "흑철 활대를 단 무거운 석궁. 볼트가 다섯 마리를 꿰뚫는다.", dict(shots=1, pierce=5, crossbow=True)),
+        "staff": ("흑철 지팡이", "흑철 가시가 돋은 지팡이. 어둠 구슬 하나가 크게 터진다.", dict(spell=0, shots=1, spread=0, radius=52, projectile="void_orb", chant="어둠이여, 삼켜라!")),
+        "shield": ("흑철 방패", "검게 그을린 흑철 탑 방패."),
+        "helmet": ("흑철 투구", "뿔이 솟은 흑철 투구."),
+        "armor": ("흑철 판금", "비늘처럼 겹친 흑철 판금."),
+        "boots": ("흑철 각반", "무겁지만 단단한 흑철 각반."),
+        "bracelet": ("흑철 팔찌", "갑옷의 틈을 파고드는 흑철 팔찌."),
+        "ring": ("흑철 반지", "붉은 보석을 박은 흑철 반지."),
+        "pendant": ("흑철 펜던트", "흑철 속에 붉은 심장석을 넣은 펜던트."),
+    },
+    "arcanum": {
+        "sword": ("비전 마검", "비전 문자가 떠다니는 마검. 참격에 마력이 실린다."),
+        "bow": ("비전 활", "마력으로 된 시위. 마력 화살 세 발이 부채꼴로 퍼진다.", dict(shots=3, pierce=2)),
+        "staff": ("비전 지팡이", "비전 수정이 박힌 지팡이. 조준한 곳에 마력의 별 다섯 개가 떨어진다.", dict(spell=5, strikes=5, scatter=42, radius=30, projectile="orb", chant="비전의 별이여!")),
+        "shield": ("비전 방패", "마력 막이 겹쳐진 방패."),
+        "helmet": ("비전 투구", "면갑 틈으로 보랏빛이 새는 투구."),
+        "armor": ("비전 로브 갑옷", "룬을 수놓은 로브 위에 판금을 덧댄 갑옷."),
+        "boots": ("비전 장화", "발밑에 마법진이 떠오르는 장화."),
+        "bracelet": ("비전 팔찌", "비전 문자가 돌아가는 팔찌."),
+        "ring": ("비전 반지", "청록빛 마력석 반지."),
+        "pendant": ("비전 펜던트", "마력이 생명력으로 바뀌어 흐르는 펜던트."),
+    },
+    "hero": {
+        "sword": ("영웅의 검", "이름 없는 영웅이 남긴 검. 빛의 참격이 넓게 퍼진다."),
+        "bow": ("영웅의 활", "영웅이 마왕의 눈을 꿰뚫었다는 활. 빛의 화살 두 발이 꿰뚫는다.", dict(shots=2, pierce=4)),
+        "staff": ("영웅의 지팡이", "영웅과 함께 싸운 현자의 지팡이. 빛 구슬 4발이 터진다.", dict(spell=0, shots=4, spread=28, radius=36, projectile="holy_orb", chant="빛이여, 길을 밝혀라!")),
+        "shield": ("영웅의 방패", "태양 문장이 새겨진 금빛 방패."),
+        "helmet": ("영웅의 투구", "작은 날개 장식이 달린 금빛 투구."),
+        "armor": ("영웅의 갑옷", "수많은 전투를 견딘 금빛 갑옷."),
+        "boots": ("영웅의 장화", "끝없는 여정을 걸은 장화."),
+        "bracelet": ("영웅의 팔찌", "영웅의 결의가 깃든 팔찌."),
+        "ring": ("영웅의 반지", "푸른 보석이 박힌 영웅의 반지."),
+        "pendant": ("영웅의 펜던트", "쓰러져도 다시 일어서게 한다는 펜던트."),
+    },
+    "dragonlord": {
+        "sword": ("용왕의 검", "용들의 왕이 쥐던 검. 휘두를 때마다 업화가 일렁인다."),
+        "bow": ("용왕의 활", "용왕의 수염으로 시위를 건 활. 화살 세 발이 불꽃으로 터진다.", dict(shots=3, pierce=3, burst=18)),
+        "staff": ("용왕의 지팡이", "용왕의 숨결을 가둔 지팡이. 거대한 화염구가 땅을 오래 불태운다.", dict(spell=3, shots=1, spread=0, radius=62, projectile="fireball", chant="용왕이여, 포효하라!", zone=3.2, zone_ratio=0.24)),
+        "shield": ("용왕의 방패", "용왕의 붉은 비늘로 만든 탑 방패."),
+        "helmet": ("용왕의 투구", "용왕의 뿔이 솟은 투구."),
+        "armor": ("용왕의 갑옷", "용왕의 붉은 비늘을 겹친 갑옷."),
+        "boots": ("용왕의 장화", "용의 발톱이 달린 장화."),
+        "bracelet": ("용왕의 팔찌", "용왕의 이빨을 꿴 팔찌."),
+        "ring": ("용왕의 반지", "용왕의 눈처럼 타오르는 반지."),
+        "pendant": ("용왕의 심장석", "용왕의 심장에서 나온 붉은 돌."),
+    },
+}
+CAT_ORDER = ["sword", "bow", "staff", "shield", "helmet", "armor", "boots", "bracelet", "ring", "pendant"]
+for fam, rarity, tier, element, color in NEW_FAMILIES:
+    for cat in CAT_ORDER:
+        entry = NEW_TEXT[fam][cat]
+        extra = dict(entry[2]) if len(entry) > 2 else {}
+        if cat in ("sword", "bow", "staff"):
+            extra.setdefault("element", element)
+            extra.setdefault("color", color)
+        add_new(cat, "%s_%s" % (fam, cat), entry[0], entry[1], rarity, tier, fam, **extra)
+
+# ============================================================ 드랍 전용 (등급마다 종류별 하나씩 — 기존 고블린 단검 · 슬라임 지팡이 · 고블린 버클러 · 슬라임 왕의 홀 포함)
+DROP_TEXT = [
+    (0, "beast", (0.9, 0.8, 0.65), 0, {
+        "bow": ("goblin_bow", "고블린 사냥활", "고블린이 쓰던 작은 활. 화살 두 발을 대충 흩뿌린다.", dict(shots=2, pierce=1)),
+        "helmet": ("wolfhide_hood", "늑대 가죽 두건", "늑대 머리를 통째로 뒤집어쓴 두건."),
+        "armor": ("wolfhide_armor", "늑대 가죽 갑옷", "늑대 가죽을 겹쳐 꿰맨 갑옷."),
+        "boots": ("batwing_boots", "박쥐 날개 장화", "발목에 박쥐 날개를 단 장화. 발이 가볍다."),
+        "bracelet": ("bone_bracelet", "뼈 팔찌", "짐승 뼈를 꿴 팔찌."),
+        "ring": ("skull_ring", "해골 반지", "작은 해골이 새겨진 반지."),
+        "pendant": ("wolf_fang_pendant", "늑대 이빨 목걸이", "늑대 우두머리의 송곳니 목걸이."),
+    }),
+    (1, "grave", (0.7, 1, 0.8), 8, {
+        "sword": ("wraith_sword", "망령의 검", "망령이 쥐던 반투명한 검. 베인 자리가 차갑게 식는다."),
+        "bow": ("skeleton_bow", "해골 궁수의 활", "해골 궁수의 뼈 활. 화살 두 발이 나란히 꿰뚫는다.", dict(shots=2, pierce=2)),
+        "staff": ("necro_staff", "강령술사의 지팡이", "해골이 달린 지팡이. 저주 구슬 3발이 터진다.", dict(spell=0, shots=3, spread=20, radius=34, projectile="decay_orb", chant="망자여, 일어나라!")),
+        "shield": ("gravekeeper_shield", "묘지기 방패", "묘비를 깎아 만든 방패."),
+        "helmet": ("wraith_helmet", "망령 투구", "눈구멍에서 초록 불이 타는 투구."),
+        "armor": ("shroud_armor", "수의 갑옷", "수의 위에 녹슨 사슬을 걸친 갑옷."),
+        "boots": ("grave_boots", "망자의 장화", "흙이 묻은 채 발소리가 나지 않는 장화."),
+        "bracelet": ("soul_bracelet", "영혼 팔찌", "갇힌 영혼이 빛나는 팔찌."),
+        "ring": ("cursed_ring", "저주받은 반지", "끼면 손끝이 저려 오지만 힘이 솟는 반지."),
+        "pendant": ("grave_pendant", "망자의 부적", "죽음을 한 번 비껴가게 한다는 부적."),
+    }),
+    (2, "abyss", (0.9, 0.4, 0.8), 8, {
+        "sword": ("abyss_sword", "심연의 검", "심연에서 건져 올린 검. 칼날이 보랏빛으로 일렁인다."),
+        "bow": ("abyss_bow", "심연의 활", "심연의 화살 세 발이 꿰뚫고 작게 터진다.", dict(shots=3, pierce=3, burst=14)),
+        "staff": ("abyss_staff", "심연의 지팡이", "심연을 여는 지팡이. 어둠 구슬 3발이 크게 터진다.", dict(spell=0, shots=3, spread=22, radius=44, projectile="void_orb", chant="심연이여, 입을 열어라!")),
+        "shield": ("abyss_shield", "심연의 방패", "검보라빛 비늘이 덮인 방패."),
+        "helmet": ("abyss_helmet", "심연의 투구", "뒤틀린 뿔이 솟은 투구."),
+        "armor": ("abyss_armor", "심연의 갑옷", "룬이 어둡게 빛나는 갑옷."),
+        "boots": ("abyss_boots", "심연의 장화", "그림자 속을 걷는다는 장화."),
+        "bracelet": ("abyss_bracelet", "심연의 팔찌", "심연의 이빨을 꿴 팔찌."),
+        "ring": ("abyss_ring", "심연의 반지", "들여다보면 끝이 보이지 않는 반지."),
+        "pendant": ("abyss_pendant", "심연의 펜던트", "심연의 심장이 뛰는 펜던트."),
+    }),
+    (3, "ancient", (0.7, 1, 0.95), 7, {
+        "sword": ("ancient_sword", "고대 영웅의 검", "신화 이전 시대의 영웅이 쓰던 검. 룬이 넓게 휩쓴다."),
+        "bow": ("ancient_bow", "고대 신궁", "고대의 신궁. 화살 세 발이 모든 것을 꿰뚫는다.", dict(shots=3, pierce=5)),
+        "shield": ("ancient_shield", "고대 거인의 방패", "거인이 들던 방패를 깎아 만든 탑 방패."),
+        "helmet": ("ancient_helmet", "고대 왕의 투구", "잊힌 왕국의 왕관 투구."),
+        "armor": ("ancient_armor", "고대 용기사의 갑옷", "용을 탄 기사들의 갑옷."),
+        "boots": ("ancient_boots", "고대 바람의 장화", "고대의 바람이 발을 받쳐 주는 장화."),
+        "bracelet": ("ancient_bracelet", "고대 룬 팔찌", "고대 룬이 끝없이 돌아가는 팔찌."),
+        "ring": ("ancient_ring", "고대 왕가의 반지", "고대 왕가의 문장 반지."),
+        "pendant": ("ancient_pendant", "고대 생명석 펜던트", "고대의 생명석이 박힌 펜던트."),
+    }),
+]
+for rarity, fam, color, element, table in DROP_TEXT:
+    for cat in CAT_ORDER:
+        if cat not in table:
+            continue
+        entry = table[cat]
+        extra = dict(entry[3]) if len(entry) > 3 else {}
+        if cat in ("sword", "bow", "staff"):
+            extra.setdefault("element", element)
+            extra.setdefault("color", color)
+        add_drop(cat, entry[0], entry[1], entry[2], rarity, fam, **extra)
+
 MYTHIC_STAGE = {"king_pendant": 10, "archmage_staff": 20, "spirit_bracelet": 30, "hermes_boots": 40, "hephaestus_armor": 50,
                 "mars_shield": 60, "apollo_bow": 70, "athena_helmet": 80, "abaddon_sword": 90, "gabriel_ring": 100}
 
@@ -593,14 +860,14 @@ def color_str(col):
 
 # ============================================================ 수치 계산
 def weapon_props(item, old):
-    t = item["t"]
+    t = item["u"]
     tt = rep_t(t)
     cat = item["cat"]
     p = {}
     sword_dps = sword_raw_dps(t if t == MYTHIC else tt)
     if cat in ("sword", "dagger"):
         if cat == "sword":
-            dmg = sword_damage(t)
+            dmg = nice(sword_damage(t))
             p.update(weapon_type=0, damage=dmg, crit_chance=SW_CRIT[t], crit_multiplier=SW_MULT[t], attack_cooldown=SW_CD[t],
                      melee_range=SW_RANGE[t], melee_arc_degrees=SW_ARC[t], armor_pen=0)
         else:
@@ -613,8 +880,8 @@ def weapon_props(item, old):
         fast = item.get("fast", False)
         cd = (0.06 if fast else 0.12 - 0.003 * min(t, 11)) if t != MYTHIC else 0.08
         windup = (0.08 if fast else 0.18 - 0.003 * min(t, 11)) if t != MYTHIC else 0.12
-        crit = [.15, .15, .16, .16, .17, .18, .18, .19, .2, .2, .21, .22, .28][t]
-        mult = [1.8, 1.8, 1.8, 1.8, 1.85, 1.9, 1.9, 1.95, 2.0, 2.0, 2.05, 2.1, 2.4][t]
+        crit = Tab([.15, .15, .16, .16, .17, .18, .18, .19, .2, .2, .21, .22, .28])[t]
+        mult = Tab([1.8, 1.8, 1.8, 1.8, 1.85, 1.9, 1.9, 1.95, 2.0, 2.0, 2.05, 2.1, 2.4])[t]
         shots = item.get("shots", 1)
         target = sword_dps * (0.85 if t != MYTHIC else 0.9)
         dmg = nice(target * (cd + windup) / (shots * (1 + crit * (mult - 1))))
@@ -626,8 +893,8 @@ def weapon_props(item, old):
                  explosion_radius=float(item.get("burst", 0)), explosion_damage_ratio=0.5)
     else:  # staff
         spell = item.get("spell", int(old.get("spell", 0)))
-        crit = [.05, .06, .07, .08, .09, .1, .1, .11, .12, .15, .16, .17, .22][t]
-        mult = [1.5, 1.5, 1.55, 1.6, 1.62, 1.65, 1.7, 1.75, 1.8, 2.0, 2.0, 2.0, 2.3][t]
+        crit = Tab([.05, .06, .07, .08, .09, .1, .1, .11, .12, .15, .16, .17, .22])[t]
+        mult = Tab([1.5, 1.5, 1.55, 1.6, 1.62, 1.65, 1.7, 1.75, 1.8, 2.0, 2.0, 2.0, 2.3])[t]
         cd = float(old.get("attack_cooldown", 0.25)) if item.get("existing") else (0.22 if spell != 5 else 0.4)
         windup = float(old.get("windup_time", 0.5)) if item.get("existing") else ([0.4, 0.45, 0.5, 0.5, 0.55, 0.6][spell] if t != MYTHIC else 0.6)
         if item.get("existing"):
@@ -655,7 +922,7 @@ def weapon_props(item, old):
 
 
 def defense_props(item):
-    t = item["t"]
+    t = item["u"]
     cat = item["cat"]
     dt = total_defense(t)
     hb = hp_bonus(t)
@@ -696,27 +963,27 @@ WEIGHT = {"sword": .21, "dagger": .18, "bow": .21, "staff": .21, "shield": .12, 
 # ============================================================ 아이콘
 def paint(item):
     """새 장비의 아이콘(+ 착용 그림 · 활을 든 그림)을 그려서 저장. 텍스처 경로 dict 를 돌려줌"""
-    t = item["t"]
     cat = item["cat"]
     d = CAT_DIR[cat]
     out = {}
     if item.get("existing"):
         return out
-    fam = FAMILY.get(t)
-    style = FAMILY_STYLE.get(t, {})
+    fam = FAMILY.get(item.get("fam"))
+    st = FAMILY_STYLE.get(item.get("fam"), _S)
+    cross = item.get("crossbow", False)
     icon_path = f"res://assets/sprites/{d}/{item['id']}.png"
     if "icon" in item:
         img = item["icon"]()
     elif cat == "sword":
-        img = sword_painter(fam[1], fam[0], fam[2] if t not in (2, 7) else fam[1], (90, 58, 40), gem=fam[3] if t >= 4 else None, broad=t in (2, 7, 8, 11), glow=fam[3] if t in (8, 10, 11) else None)
+        img = sword_painter(fam[1], fam[0], fam[1] if st["guard_light"] else fam[2], (90, 58, 40), gem=fam[3] if st["gem"] else None, broad=st["broad"], glow=fam[3] if st["glow"] else None)
     elif cat == "bow":
-        img = bow_painter(fam[0] if t not in (10,) else fam[1], fam[1] if t != 10 else (255, 255, 255), accent=fam[3] if t >= 4 else None, crossbow=t == 4)
+        img = bow_painter(fam[1] if st["light"] else fam[0], (255, 255, 255) if st["light"] else fam[1], accent=fam[3] if st["gem"] else None, crossbow=cross)
     elif cat == "staff":
-        img = staff_painter(fam[3], fam[2] if t != 10 else fam[1], shape=style.get("staff", "square"), prong=fam[1] if t >= 7 else None)
+        img = staff_painter(fam[3], fam[1] if st["light"] else fam[2], shape=st["staff"], prong=fam[1] if st["prong"] else None)
     elif cat == "shield":
-        img = shield_painter(fam[0], fam[2] if t != 10 else fam[1], fam[3] if t >= 4 else fam[1], shape=style["shield"], emblem_kind=style["emblem"])
+        img = shield_painter(fam[0], fam[1] if st["light"] else fam[2], fam[3] if st["gem"] else fam[1], shape=st["shield"], emblem_kind=st["emblem"])
     elif cat == "helmet":
-        main, light, dark, gem, shape = item["helm"] if "helm" in item else fam + (style.get("helm"),)
+        main, light, dark, gem, shape = item["helm"] if "helm" in item else fam + (st["helm"],)
         worn = helm_worn_painter(main, light, dark, gem, shape)
         if item.get("helm"):
             worn_icon = gs.canvas(16)
@@ -727,29 +994,29 @@ def paint(item):
         gs.save(worn, d, f"{item['id']}_worn.png")
         out["worn"] = f"res://assets/sprites/{d}/{item['id']}_worn.png"
     elif cat == "armor":
-        main, light, dark, deco = item["armor"] if "armor" in item else (fam[0], fam[1], fam[2], style.get("deco"))
+        main, light, dark, deco = item["armor"] if "armor" in item else (fam[0], fam[1], fam[2], st["deco"])
         gs.save(armor_worn_painter(main, light, dark, deco), d, f"{item['id']}_worn.png")
         out["worn"] = f"res://assets/sprites/{d}/{item['id']}_worn.png"
         img = armor_icon_painter(main, light, dark, deco)
         if item.get("armor"):
             img = mythic_frame(img)
     elif cat == "boots":
-        main, light, dark, wings = item["boots"] if "boots" in item else (fam[0], fam[1], fam[2], style.get("wings", False))
+        main, light, dark, wings = item["boots"] if "boots" in item else (fam[0], fam[1], fam[2], st["wings"])
         gs.save(boots_worn_painter(main, light, dark, wings), d, f"{item['id']}_worn.png")
         out["worn"] = f"res://assets/sprites/{d}/{item['id']}_worn.png"
         img = boots_icon_painter(main, light, dark, wings)
         if item.get("boots"):
             img = mythic_frame(img)
     else:
-        metal, dark, gem = item["acc"] if "acc" in item else (fam[1] if t in (2, 5, 10, 11) else fam[0], fam[2], fam[3])
+        metal, dark, gem = item["acc"] if "acc" in item else (fam[1] if st["acc_light"] else fam[0], fam[2], fam[3])
         img = accessory_painter(cat, metal, dark, gem)
         if item.get("acc"):
             img = mythic_frame(img)
     gs.save(img, d, f"{item['id']}.png")
     out["icon"] = icon_path
     if cat == "bow":
-        wood, accent = item["held"] if "held" in item else ((fam[0] if t != 10 else fam[1]), fam[3])
-        gs.save(bow_held_painter(wood, accent, crossbow=t == 4), d, f"{item['id']}_held.png")
+        wood, accent = item["held"] if "held" in item else ((fam[1] if st["light"] else fam[0]), fam[3])
+        gs.save(bow_held_painter(wood, accent, crossbow=cross), d, f"{item['id']}_held.png")
         out["held"] = f"res://assets/sprites/{d}/{item['id']}_held.png"
     return out
 
@@ -758,7 +1025,10 @@ PROJECTILE = {"bow": "res://assets/sprites/projectiles/arrow.png"}
 
 
 # ============================================================ .tres 쓰기
-def write_item(item):
+INT_KEYS = {"damage", "armor_pen", "defense", "bonus_max_hp", "pierce", "projectiles_per_shot", "strike_count", "weapon_type", "spell", "element", "slot_type"}
+
+
+def write_item(item, pr):
     path = res_path(item)
     old, old_ext = read_tres(path)
     script_kind = CAT_SCRIPT[item["cat"]]
@@ -800,29 +1070,25 @@ def write_item(item):
     else:
         new = defense_props(item)
     for k, v in new.items():
+        if k in INT_KEYS:
+            v = int(round(v))
         props[k] = v if isinstance(v, str) else ("%g" % v if isinstance(v, float) else str(v))
-    t = item["t"]
-    rarity = 4 if t == MYTHIC else t // 3
-    tier = 0 if t == MYTHIC else t % 3
     props["id"] = '&"%s"' % item["id"]
     if item["name"]:
         props["display_name"] = gd_string(item["name"])
     if item["desc"]:
         props["description"] = gd_string(item["desc"])
-    props["rarity"] = str(rarity)
-    props["tier"] = str(tier)
-    set_id = "mythic" if t == MYTHIC else SETS.get(t, "")
-    if item.get("in_shop", True) is False:
-        set_id = ""
+    props["rarity"] = str(item["rarity"])
+    props["tier"] = str(item["tier"])
+    set_id = set_of(item)
     if set_id:
         props["set_id"] = '&"%s"' % set_id
     else:
         props.pop("set_id", None)
-    if item.get("in_shop", True) is False or t == MYTHIC:
+    if item.get("in_shop", True) is False or item["u"] == MYTHIC:
         props["in_shop"] = "false"
     else:
         props.pop("in_shop", None)
-    pr = price(t, WEIGHT[item["cat"]])
     if pr is not None:
         props["price"] = str(pr)
     elif "price" not in props:
@@ -843,6 +1109,22 @@ def write_item(item):
     return path
 
 
+def set_of(item):
+    if item["u"] == MYTHIC:
+        return "mythic"
+    if not item.get("in_shop", True):
+        return ""
+    return SETS.get(item.get("fam"), "")
+
+
+def old_price(item):
+    props, _ext = read_tres(res_path(item))
+    try:
+        return int(props.get("price", "50"))
+    except ValueError:
+        return 50
+
+
 def write_item_db(paths):
     db = os.path.join(REPO, "scripts", "data", "item_db.gd")
     text = open(db, encoding="utf-8").read()
@@ -853,8 +1135,8 @@ def write_item_db(paths):
     lines = ["const ITEM_PATHS: Array[String] = ["]
     for title, cats in groups:
         lines.append(f"\t# {title}")
-        for item in ITEMS:
-            if item["cat"] in cats:
+        for item in sorted((i for i in ITEMS if i["cat"] in cats), key=lambda i: (cats.index(i["cat"]), not i.get("in_shop", True) and i["u"] != MYTHIC, i["rarity"], i["tier"])):
+            if True:
                 lines.append('\t"res://%s",' % os.path.relpath(paths[item["id"]], REPO).replace(os.sep, "/"))
     lines.append("\t# 회복 포션 (소모품) — 고대 용의 피는 히든 보스 보상")
     for p in ("small_potion", "potion", "greater_potion", "elixir", "dragon_blood"):
@@ -880,7 +1162,7 @@ def balance_sheet():
         dps = hit / SW_CD[t]
         hp_total = 1000 + hp_bonus(t)
         taken = max(cdmg - total_defense(t), 1)
-        rows.append(dict(t=t, grade=("신화" if t == MYTHIC else "%s %s" % (RARITY_NAMES[t // 3], TIER_NAMES[t % 3])), stage=("최종장" if t == MYTHIC else r),
+        rows.append(dict(t=t, grade=("신화" if t == MYTHIC else "%s %s" % (RARITY_NAMES[t // 3], TIER_NAMES[[0, 2, 4][t % 3]])), stage=("최종장" if t == MYTHIC else r),
                          sword=sw, boss_hp=int(h), boss_def=int(d), boss_hit=int(cdmg), ttk=round(h / dps), hp=int(hp_total),
                          defense=int(total_defense(t)), hits=round(hp_total / taken, 1)))
     return rows
@@ -924,14 +1206,20 @@ def main():
     if "--sheet" in sys.argv:
         print(json.dumps(balance_sheet(), ensure_ascii=False, indent=1))
         return
+    prices = {}
+    for item in ITEMS:
+        pr = price(item, WEIGHT[item["cat"]])
+        if pr is None and os.path.exists(res_path(item)):
+            item["_old_price"] = old_price(item)
+        prices[item["id"]] = pr
+    fix_prices(prices)
     paths = {}
     for item in ITEMS:
-        paths[item["id"]] = write_item(item)
+        paths[item["id"]] = write_item(item, prices[item["id"]])
     write_item_db(paths)
     sets = {}
     for item in ITEMS:
-        t = item["t"]
-        s = "mythic" if t == MYTHIC else (SETS.get(t, "") if item.get("in_shop", True) else "")
+        s = set_of(item)
         if s:
             sets.setdefault(s, []).append(item["id"])
     json.dump({"mythic_stage": MYTHIC_STAGE, "sets": sets, "sheet": balance_sheet()},
@@ -999,22 +1287,24 @@ def readme_tables():
     for r in range(4):
         lines.append("#### %s (상점 %d스테이지부터)" % (RARITY_NAMES[r], [1, 11, 41, 71][r]))
         lines.append("")
-        lines.append("| 종류 | 하급 | 중급 | 상급 |")
-        lines.append("| --- | --- | --- | --- |")
+        lines.append("| 종류 | " + " | ".join(TIER_NAMES) + " | 드랍 전용 |")
+        lines.append("| --- |" + " --- |" * 6)
         for cat, title in cat_titles:
             cells = []
-            for tier in range(3):
-                t = r * 3 + tier
-                found = [i for i in ITEMS if i["cat"] == cat and i["t"] == t and i.get("in_shop", True)]
+            for tier in range(5):
+                found = [i for i in ITEMS if i["cat"] == cat and i["rarity"] == r and i["tier"] == tier and i.get("in_shop", True) and i["u"] != MYTHIC]
                 if not found:
                     cells.append("—")
                     continue
                 it = found[0]
-                set_id = SETS.get(t, "")
+                set_id = set_of(it)
                 cells.append("%s%s<br>%s · %sG" % (name_of(it), " (%s)" % set_names[set_id] if set_id else "", describe(it), format(price_of(it), ",")))
+            drops = [i for i in ITEMS if (i["cat"] == cat or (cat == "sword" and i["cat"] == "dagger")) and i["rarity"] == r and not i.get("in_shop", True) and i["u"] != MYTHIC]
+            cells.append("<br>".join("%s<br>%s" % (name_of(d), describe(d)) for d in drops) or "—")
             lines.append("| %s | %s |" % (title, " | ".join(cells)))
         lines.append("")
-    lines.append("드랍 전용: 고블린 단검 · 고블린 버클러 (고블린) · 슬라임 지팡이 (슬라임) · 슬라임 왕의 홀 (전설 등급 몬스터)")
+    lines.append("드랍 전용 장비는 상점에 없고 몬스터 · 보스 상자에서만 나옵니다 (그 등급 중급과 중상급 사이의 능력치). "
+                 "고블린 단검 · 고블린 버클러(고블린) · 슬라임 지팡이(슬라임) · 슬라임 왕의 홀(슬라임 킹)은 그 몬스터만 떨어뜨립니다.")
     lines.append("")
     lines.append("#### 신화 (10스테이지마다 보스가 하나씩 · 100스테이지 클리어 전에는 봉인)")
     lines.append("")

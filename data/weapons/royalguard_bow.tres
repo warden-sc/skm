@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/royalguard_bow.png" id="2_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/royalguard_bow_held.png" id="3_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/arrow.png" id="4_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+held_texture = ExtResource("3_res")
+projectile_texture = ExtResource("4_res")
+weapon_type = 1
+damage = 680
+crit_chance = 0.175
+crit_multiplier = 1.875
+attack_cooldown = 0.106
+windup_time = 0.166
+armor_pen = 153
+projectiles_per_shot = 2
+spread_degrees = 4
+pierce = 2
+projectile_speed = 504
+projectile_range = 307
+projectile_scale = 1.18
+knockback = 117
+explosion_radius = 0
+explosion_damage_ratio = 0.5
+element = 3
+effect_color = Color(0.8, 0.85, 1, 1)
+id = &"royalguard_bow"
+display_name = "근위대 쌍궁"
+description = "근위 궁수의 활. 화살 두 발이 나란히 꿰뚫는다."
+rarity = 1
+tier = 3
+price = 11400

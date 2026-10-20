@@ -13,6 +13,6 @@ id = &"knight_ring"
 display_name = "기사단 인장 반지"
 description = "기사단의 인장 반지. 맹세가 손끝에 힘을 준다."
 rarity = 1
-tier = 1
+tier = 2
 set_id = &"knight"
 price = 4820

@@ -13,6 +13,6 @@ id = &"knight_pendant"
 display_name = "기사단 휘장"
 description = "기사단의 휘장. 지친 몸을 일으켜 세운다."
 rarity = 1
-tier = 1
+tier = 2
 set_id = &"knight"
 price = 4130

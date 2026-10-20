@@ -14,6 +14,6 @@ id = &"knight_boots"
 display_name = "기사단 각반"
 description = "기사단의 무거운 각반."
 rarity = 1
-tier = 1
+tier = 2
 set_id = &"knight"
 price = 4130

@@ -13,6 +13,6 @@ id = &"bronze_ring"
 display_name = "청동 인장 반지"
 description = "청동 인장이 찍힌 반지."
 rarity = 0
-tier = 2
+tier = 4
 set_id = &"bronze"
 price = 2350

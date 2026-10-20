@@ -14,5 +14,5 @@ display_name = "지옥강 판금"
 description = "지옥의 불길로 단련한 검은 판금 갑옷."
 rarity = 2
 icon = ExtResource("3_res")
-price = 11100
+price = 10700
 tier = 0

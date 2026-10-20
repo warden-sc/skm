@@ -13,6 +13,6 @@ id = &"knight_bracelet"
 display_name = "기사단 팔찌"
 description = "기사단의 문장을 새긴 팔찌."
 rarity = 1
-tier = 1
+tier = 2
 set_id = &"knight"
 price = 4470

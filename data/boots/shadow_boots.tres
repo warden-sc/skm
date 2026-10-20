@@ -14,5 +14,5 @@ display_name = "그림자 장화"
 description = "어둠 속을 소리 없이 달리는 암살자의 장화."
 rarity = 2
 icon = ExtResource("3_res")
-price = 10300
+price = 9900
 tier = 0

@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/hero_sword.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+weapon_type = 0
+damage = 5690
+crit_chance = 0.185
+crit_multiplier = 1.925
+attack_cooldown = 0.295
+melee_range = 57
+melee_arc_degrees = 182.5
+armor_pen = 0
+knockback = 245
+element = 6
+effect_color = Color(1, 0.9, 0.55, 1)
+id = &"hero_sword"
+display_name = "영웅의 검"
+description = "이름 없는 영웅이 남긴 검. 빛의 참격이 넓게 퍼진다."
+rarity = 3
+tier = 1
+price = 34000

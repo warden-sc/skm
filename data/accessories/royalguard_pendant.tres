@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="AccessoryData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/accessory_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/accessories/royalguard_pendant.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+slot_type = 2
+bonus_max_hp = 460
+hp_regen = 14.2
+id = &"royalguard_pendant"
+display_name = "근위대 훈장"
+description = "왕을 지켜 낸 근위병의 훈장."
+rarity = 1
+tier = 3
+price = 6530

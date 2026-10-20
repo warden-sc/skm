@@ -97,8 +97,9 @@ theme_override_font_sizes/font_size = 11
 text = "― 지옥의 수문장과 원소의 거신 ―"
 horizontal_alignment = 1
 
-[node name="DifficultyPanel" type="PanelContainer" parent="."]
+[node name="NamePanel" type="PanelContainer" parent="."]
 unique_name_in_owner = true
+visible = false
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -106,7 +107,167 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -130.0
-offset_top = -138.0
+offset_top = -120.0
+offset_right = 130.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBox" type="VBoxContainer" parent="NamePanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="NameHeader" type="Label" parent="NamePanel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "용사의 이름을 정하세요"
+horizontal_alignment = 1
+
+[node name="NameDesc" type="Label" parent="NamePanel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 8
+text = "대사 속 「용사」가 이 이름으로 불립니다. 나중에 메뉴에서 바꿀 수 있어요."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="HeroNameEdit" type="LineEdit" parent="NamePanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+placeholder_text = "용사"
+max_length = 12
+alignment = 1
+
+[node name="NameConfirmButton" type="Button" parent="NamePanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "결정 ▶"
+
+[node name="MenuPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -130.0
+offset_top = -170.0
+offset_right = 130.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBox" type="VBoxContainer" parent="MenuPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="HeroLabel" type="Label" parent="MenuPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "용사"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(1, 0.85, 0.45, 1)
+
+[node name="SingleButton" type="Button" parent="MenuPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "싱글플레이"
+
+[node name="MultiButton" type="Button" parent="MenuPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "멀티플레이  (준비 중)"
+
+[node name="TutorialButton" type="Button" parent="MenuPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "튜토리얼 다시 하기"
+
+[node name="RenameButton" type="Button" parent="MenuPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "이름 바꾸기"
+
+[node name="QuitButton" type="Button" parent="MenuPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "게임 종료"
+
+[node name="MenuNote" type="Label" parent="MenuPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 8
+text = ""
+horizontal_alignment = 1
+custom_minimum_size = Vector2(0, 10)
+autowrap_mode = 3
+
+[node name="SinglePanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -130.0
+offset_top = -130.0
+offset_right = 130.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBox" type="VBoxContainer" parent="SinglePanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="SingleHeader" type="Label" parent="SinglePanel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "싱글플레이"
+horizontal_alignment = 1
+
+[node name="ContinueButton" type="Button" parent="SinglePanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "이어하기"
+
+[node name="SaveInfo" type="Label" parent="SinglePanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 8
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="NewGameButton" type="Button" parent="SinglePanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "새 게임"
+
+[node name="SingleBackButton" type="Button" parent="SinglePanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "← 뒤로"
+
+[node name="DifficultyPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -130.0
+offset_top = -160.0
 offset_right = 130.0
 offset_bottom = -10.0
 grow_horizontal = 2
@@ -145,6 +306,11 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 8
 horizontal_alignment = 1
 autowrap_mode = 3
+
+[node name="DifficultyBackButton" type="Button" parent="DifficultyPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "← 뒤로"
 
 [node name="HelpPanel" type="PanelContainer" parent="."]
 unique_name_in_owner = true
@@ -189,26 +355,6 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 9
 autowrap_mode = 3
-
-[node name="NameRow" type="HBoxContainer" parent="HelpPanel/VBox"]
-layout_mode = 2
-theme_override_constants/separation = 8
-alignment = 1
-
-[node name="NameLabel" type="Label" parent="HelpPanel/VBox/NameRow"]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.85, 0.45, 1)
-theme_override_font_sizes/font_size = 10
-text = "용사의 이름"
-
-[node name="HeroNameEdit" type="LineEdit" parent="HelpPanel/VBox/NameRow"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(140, 0)
-layout_mode = 2
-theme_override_font_sizes/font_size = 10
-placeholder_text = "용사"
-max_length = 12
-alignment = 1
 
 [node name="Buttons" type="HBoxContainer" parent="HelpPanel/VBox"]
 layout_mode = 2

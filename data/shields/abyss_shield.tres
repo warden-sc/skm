@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ShieldData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/shield_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/shields/abyss_shield.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+defense = 76
+block_ratio = 0.925
+block_arc_degrees = 166.25
+max_guard = 2650
+guard_regen = 930
+perfect_guard_window = 0.3925
+guard_move_multiplier = 0.6225
+guard_break_time = 0.7375
+id = &"abyss_shield"
+display_name = "심연의 방패"
+description = "검보라빛 비늘이 덮인 방패."
+rarity = 2
+tier = 2
+in_shop = false
+price = 13600

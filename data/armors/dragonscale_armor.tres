@@ -14,6 +14,6 @@ id = &"dragonscale_armor"
 display_name = "용비늘 갑옷"
 description = "용의 비늘을 겹겹이 단 갑옷."
 rarity = 2
-tier = 1
+tier = 2
 set_id = &"dragonscale"
 price = 14400

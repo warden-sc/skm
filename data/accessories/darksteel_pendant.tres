@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="AccessoryData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/accessory_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/accessories/darksteel_pendant.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+slot_type = 2
+bonus_max_hp = 620
+hp_regen = 17.4
+id = &"darksteel_pendant"
+display_name = "흑철 펜던트"
+description = "흑철 속에 붉은 심장석을 넣은 펜던트."
+rarity = 2
+tier = 1
+price = 10600

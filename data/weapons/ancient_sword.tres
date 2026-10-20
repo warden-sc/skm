@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/ancient_sword.png" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+icon = ExtResource("2_res")
+weapon_type = 0
+damage = 6360
+crit_chance = 0.1925
+crit_multiplier = 1.9625
+attack_cooldown = 0.2875
+melee_range = 58.5
+melee_arc_degrees = 186.25
+armor_pen = 0
+knockback = 252.5
+element = 7
+effect_color = Color(0.7, 1, 0.95, 1)
+id = &"ancient_sword"
+display_name = "고대 영웅의 검"
+description = "신화 이전 시대의 영웅이 쓰던 검. 룬이 넓게 휩쓴다."
+rarity = 3
+tier = 2
+in_shop = false
+price = 30200

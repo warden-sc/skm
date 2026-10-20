@@ -13,6 +13,6 @@ id = &"genesis_bracelet"
 display_name = "창세의 팔찌"
 description = "별 조각을 박은 팔찌. 모든 일격이 별처럼 터진다."
 rarity = 3
-tier = 2
+tier = 4
 set_id = &"genesis"
 price = 25100

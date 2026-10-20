@@ -32,6 +32,6 @@ id = &"dragonscale_bow"
 display_name = "용골 활"
 description = "용의 뼈로 만든 활. 불붙은 화살이 맞은 자리에서 작게 터진다."
 rarity = 2
-tier = 1
+tier = 2
 set_id = &"dragonscale"
 price = 23200
