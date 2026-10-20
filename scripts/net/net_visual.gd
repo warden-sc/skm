@@ -118,11 +118,11 @@ static func _write_node(node: CanvasItem, parent_ord: int, child_idx: int, buf: 
 			buf.put_float(n2.global_position.x)
 			buf.put_float(n2.global_position.y)
 		else:
-			buf.put_half(n2.position.x)
-			buf.put_half(n2.position.y)
-		buf.put_half(n2.rotation)
-		buf.put_half(n2.scale.x)
-		buf.put_half(n2.scale.y)
+			_pq(buf, n2.position.x, Q_POS)
+			_pq(buf, n2.position.y, Q_POS)
+		_pq(buf, wrapf(n2.rotation, -PI, PI), Q_ROT)
+		_pq(buf, n2.scale.x, Q_SCALE)
+		_pq(buf, n2.scale.y, Q_SCALE)
 		buf.put_16(n2.z_index)
 	else:
 		var c := node as Control
@@ -130,11 +130,11 @@ static func _write_node(node: CanvasItem, parent_ord: int, child_idx: int, buf: 
 			buf.put_float(c.position.x)
 			buf.put_float(c.position.y)
 		else:
-			buf.put_half(c.position.x)
-			buf.put_half(c.position.y)
-		buf.put_half(c.rotation)
-		buf.put_half(c.size.x)
-		buf.put_half(c.size.y)
+			_pq(buf, c.position.x, Q_POS)
+			_pq(buf, c.position.y, Q_POS)
+		_pq(buf, wrapf(c.rotation, -PI, PI), Q_ROT)
+		_pq(buf, c.size.x, Q_POS)
+		_pq(buf, c.size.y, Q_POS)
 		buf.put_16(0)
 	if not flags & F_MOD_WHITE:
 		_put_color(buf, node.modulate)
@@ -147,8 +147,8 @@ static func _write_node(node: CanvasItem, parent_ord: int, child_idx: int, buf: 
 			buf.put_u8(s.hframes)
 			buf.put_u8(s.vframes)
 			buf.put_u16(s.frame)
-			buf.put_half(s.offset.x)
-			buf.put_half(s.offset.y)
+			_pq(buf, s.offset.x, Q_POS)
+			_pq(buf, s.offset.y, Q_POS)
 			if s.region_enabled:
 				buf.put_float(s.region_rect.position.x)
 				buf.put_float(s.region_rect.position.y)
@@ -159,11 +159,11 @@ static func _write_node(node: CanvasItem, parent_ord: int, child_idx: int, buf: 
 			buf.put_u16(_res_id(a.sprite_frames, intern))
 			buf.put_u16(intern.call(String(a.animation)))
 			buf.put_u16(a.frame)
-			buf.put_half(a.offset.x)
-			buf.put_half(a.offset.y)
+			_pq(buf, a.offset.x, Q_POS)
+			_pq(buf, a.offset.y, Q_POS)
 		Cls.LINE:
 			var l := node as Line2D
-			buf.put_half(l.width)
+			_pq(buf, l.width, Q_POS)
 			_put_color(buf, l.default_color)
 			_put_points(buf, l.points)
 		Cls.POLYGON:
@@ -182,8 +182,8 @@ static func _write_node(node: CanvasItem, parent_ord: int, child_idx: int, buf: 
 			buf.put_u8(clampi(settings.font_size if settings != null else lb.get_theme_font_size(&"font_size"), 0, 255))
 			buf.put_u8(clampi(settings.outline_size if settings != null else lb.get_theme_constant(&"outline_size"), 0, 255))
 			buf.put_u8(lb.horizontal_alignment)
-			buf.put_half(lb.size.x)
-			buf.put_half(lb.size.y)
+			_pq(buf, lb.size.x, Q_POS)
+			_pq(buf, lb.size.y, Q_POS)
 		Cls.PARTICLES:
 			buf.put_u8(1 if (node as CPUParticles2D).emitting else 0)
 		Cls.CONTROL:
@@ -201,15 +201,30 @@ static func _res_id(res: Resource, intern: Callable) -> int:
 	return intern.call(res.resource_path)
 
 
+## 실수를 정해진 배율의 16비트 정수로 (Godot 4.3 에는 half 가 없어서). 범위: 위치 ±2048 · 크기 ±65 · 색 ±32
+const Q_POS := 16.0
+const Q_ROT := 10000.0
+const Q_SCALE := 500.0
+const Q_COLOR := 1000.0
+
+
+static func _pq(buf: StreamPeerBuffer, v: float, k: float) -> void:
+	buf.put_16(clampi(roundi(v * k), -32768, 32767))
+
+
+static func _gq(buf: StreamPeerBuffer, k: float) -> float:
+	return buf.get_16() / k
+
+
 static func _put_color(buf: StreamPeerBuffer, c: Color) -> void:
-	buf.put_half(c.r)
-	buf.put_half(c.g)
-	buf.put_half(c.b)
-	buf.put_half(c.a)
+	_pq(buf, c.r, Q_COLOR)
+	_pq(buf, c.g, Q_COLOR)
+	_pq(buf, c.b, Q_COLOR)
+	_pq(buf, c.a, Q_COLOR)
 
 
 static func _get_color(buf: StreamPeerBuffer) -> Color:
-	return Color(buf.get_half(), buf.get_half(), buf.get_half(), buf.get_half())
+	return Color(_gq(buf, Q_COLOR), _gq(buf, Q_COLOR), _gq(buf, Q_COLOR), _gq(buf, Q_COLOR))
 
 
 static func _put_points(buf: StreamPeerBuffer, points: PackedVector2Array) -> void:
@@ -384,11 +399,12 @@ static func _find_or_create(parent: Node, child_idx: int, cls: int, created: Dic
 
 
 static func _read_node(node: CanvasItem, cls: int, flags: int, buf: StreamPeerBuffer, lookup: Callable, is_root: bool, position_root: bool) -> void:
-	var x := buf.get_float() if is_root else buf.get_half()
-	var y := buf.get_float() if is_root else buf.get_half()
-	var rot := buf.get_half()
-	var sx := buf.get_half()
-	var sy := buf.get_half()
+	var x := buf.get_float() if is_root else _gq(buf, Q_POS)
+	var y := buf.get_float() if is_root else _gq(buf, Q_POS)
+	var rot := _gq(buf, Q_ROT)
+	var k_size := Q_POS if cls == Cls.CONTROL else Q_SCALE  # Control 은 크기(size)를 보냄
+	var sx := _gq(buf, k_size)
+	var sy := _gq(buf, k_size)
 	var z := buf.get_16()
 	var modulate := Color.WHITE if flags & F_MOD_WHITE else _get_color(buf)
 	var self_modulate := Color.WHITE if flags & F_SELF_WHITE else _get_color(buf)
@@ -418,7 +434,7 @@ static func _read_node(node: CanvasItem, cls: int, flags: int, buf: StreamPeerBu
 			var hf := buf.get_u8()
 			var vf := buf.get_u8()
 			var frame := buf.get_u16()
-			var off := Vector2(buf.get_half(), buf.get_half())
+			var off := Vector2(_gq(buf, Q_POS), _gq(buf, Q_POS))
 			var region := Rect2()
 			if flags & F_REGION:
 				region = Rect2(buf.get_float(), buf.get_float(), buf.get_float(), buf.get_float())
@@ -441,7 +457,7 @@ static func _read_node(node: CanvasItem, cls: int, flags: int, buf: StreamPeerBu
 			var frames_id := buf.get_u16()
 			var anim_id := buf.get_u16()
 			var frame := buf.get_u16()
-			var off := Vector2(buf.get_half(), buf.get_half())
+			var off := Vector2(_gq(buf, Q_POS), _gq(buf, Q_POS))
 			var a := node as AnimatedSprite2D
 			if a != null:
 				var frames := _load_res(frames_id, lookup) as SpriteFrames
@@ -455,7 +471,7 @@ static func _read_node(node: CanvasItem, cls: int, flags: int, buf: StreamPeerBu
 				a.flip_h = flags & F_FLIP_H != 0
 				a.flip_v = flags & F_FLIP_V != 0
 		Cls.LINE:
-			var width := buf.get_half()
+			var width := _gq(buf, Q_POS)
 			var color := _get_color(buf)
 			var points := _get_points(buf)
 			var l := node as Line2D
@@ -481,7 +497,7 @@ static func _read_node(node: CanvasItem, cls: int, flags: int, buf: StreamPeerBu
 			var font_size := buf.get_u8()
 			var outline_size := buf.get_u8()
 			var align := buf.get_u8()
-			var size := Vector2(buf.get_half(), buf.get_half())
+			var size := Vector2(_gq(buf, Q_POS), _gq(buf, Q_POS))
 			var lb := node as Label
 			if lb != null:
 				lb.text = text
