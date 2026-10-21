@@ -69,10 +69,26 @@ func _get_move_velocity(delta: float) -> Vector2:
 	return Vector2.ZERO
 
 
+const LATE_STAGE := 60
+const CAST_CIRCLE := preload("res://assets/sprites/effects/magic_circle.png")
+
+
 ## 패턴을 바로 실행 (테스트·기믹에서도 사용)
 func cast(pattern: int) -> void:
 	_bstate = BossState.CASTING
+	_cast_flourish()
 	_btimer = _run_pattern(pattern)
+
+
+## 패턴을 쓸 때의 연출: 보스 속성 색으로 번쩍임. 60스테이지 이후 보스는 발밑에 마법진이 깔리고 충격파 (신 · 마왕 · 천사의 위엄)
+func _cast_flourish() -> void:
+	if not is_inside_tree():
+		return
+	var color := Elements.color_of(aura_element) if aura_element != Elements.Type.NONE else Color(1.0, 0.85, 0.6)
+	Fx.flash(self, get_hit_center(), color, 18.0, 0.25)
+	if GameManager.stage >= LATE_STAGE:
+		Fx.sprite_pop(self, global_position, CAST_CIRCLE, Color(color, 0.75), 0.4, 1.1, 0.7, Vector2.ZERO, 1.2, true)
+		Fx.shockwave(self, global_position, color.lightened(0.2), 34.0, 0.35)
 
 
 ## 자식 클래스: 패턴 실행, 반환값 = 시전 시간(초)

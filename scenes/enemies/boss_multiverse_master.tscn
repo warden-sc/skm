@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/enemies/boss_multiverse_master.gd" id="1_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/merchant_boss.png" id="2_res"]
@@ -9,6 +9,7 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/projectiles/sun_orb.png" id="7_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/cut_stone.png" id="8_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/ark_plank.png" id="9_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/gold_coin.png" id="bp_coin_texture"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
 radius = 16.0
@@ -32,7 +33,7 @@ item_drop_chance = 1.0
 rift_scene = ExtResource("4_res")
 merchant_texture = ExtResource("5_res")
 true_texture = ExtResource("6_res")
-coin_texture = ExtResource("7_res")
+coin_texture = ExtResource("bp_coin_texture")
 stone_texture = ExtResource("8_res")
 plank_texture = ExtResource("9_res")
 item_drop_ids = Array[StringName]([&"holy_sword"])

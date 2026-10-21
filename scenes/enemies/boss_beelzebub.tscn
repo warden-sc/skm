@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/enemies/boss_beelzebub.gd" id="1_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/beelzebub.png" id="2_res"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://scenes/enemies/glutton_ghoul.tscn" id="4_res"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/maggot.tscn" id="5_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/projectiles/spore.png" id="6_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/fly.png" id="bp_maggot_texture"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
 radius = 16.0
@@ -30,7 +31,7 @@ burn_damage = 9
 burn_duration = 2.5
 burn_is_poison = true
 minion_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res")])
-maggot_texture = ExtResource("6_res")
+maggot_texture = ExtResource("bp_maggot_texture")
 item_drop_ids = Array[StringName]([&"dragonscale_bracelet"])
 
 [node name="Shadow" type="Sprite2D" parent="."]

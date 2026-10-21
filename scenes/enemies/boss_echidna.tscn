@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/enemies/boss_echidna.gd" id="1_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/echidna.png" id="2_res"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/enemies/hydra_spawn.tscn" id="6_res"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/baby_cerberus.tscn" id="7_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/projectiles/venom.png" id="8_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/venom_spit.png" id="bp_venom_texture"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
 radius = 16.0
@@ -30,7 +31,7 @@ gold_max = 9500
 item_drop_chance = 1.0
 egg_scene = ExtResource("4_res")
 baby_scenes = Array[PackedScene]([ExtResource("5_res"), ExtResource("6_res"), ExtResource("7_res")])
-venom_texture = ExtResource("8_res")
+venom_texture = ExtResource("bp_venom_texture")
 item_drop_ids = Array[StringName]([&"life_pendant"])
 
 [node name="Shadow" type="Sprite2D" parent="."]

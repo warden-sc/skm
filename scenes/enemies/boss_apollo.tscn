@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/enemies/boss_apollo.gd" id="1_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/apollo.png" id="2_res"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/enemies/light_wisp.tscn" id="6_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/projectiles/sun_orb.png" id="7_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/projectiles/plague_arrow.png" id="8_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/sun_lance.png" id="bp_sun_texture"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
 radius = 16.0
@@ -29,7 +30,7 @@ gold_min = 11000
 gold_max = 11500
 item_drop_chance = 1.0
 minion_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
-sun_texture = ExtResource("7_res")
+sun_texture = ExtResource("bp_sun_texture")
 plague_texture = ExtResource("8_res")
 item_drop_ids = Array[StringName]([&"holy_sword"])
 

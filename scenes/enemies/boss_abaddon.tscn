@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/enemies/boss_abaddon.gd" id="1_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/abaddon.png" id="2_res"]
@@ -9,6 +9,7 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/abaddon_throne.png" id="7_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/coin_pile.png" id="8_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/projectiles/void_orb.png" id="9_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/locust.png" id="bp_bolt_texture"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
 radius = 16.0
@@ -32,7 +33,7 @@ item_drop_chance = 1.0
 minion_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
 throne_texture = ExtResource("7_res")
 coin_texture = ExtResource("8_res")
-bolt_texture = ExtResource("9_res")
+bolt_texture = ExtResource("bp_bolt_texture")
 item_drop_ids = Array[StringName]([&"paladin_plate"])
 
 [node name="Shadow" type="Sprite2D" parent="."]

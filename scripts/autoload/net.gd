@@ -1327,6 +1327,13 @@ func _fx(fx_name: StringName, args: Array) -> void:
 			Fx.pillar(m, args[0], args[1], args[2], args[3], args[4])
 		&"cross_glint":
 			Fx.cross_glint(m, args[0], args[1], args[2], args[3])
+		&"sprite_pop":
+			var pop_texture: Texture2D = load(args[1]) if String(args[1]) != "" and ResourceLoader.exists(args[1]) else null
+			Fx.sprite_pop(m, args[0], pop_texture, args[2], args[3], args[4], args[5], args[6], args[7], args[8])
+		&"beam":
+			Fx.beam(m, args[0], args[1], args[2], args[3], args[4])
+		&"screen_tint":
+			Fx.screen_tint(m, args[0], args[1])
 
 
 @rpc("authority", "reliable")

@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/enemies/boss_prometheus.gd" id="1_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/prometheus.png" id="2_res"]
@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/enemies/caucasus_eagle.tscn" id="5_res"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/chain_warden.tscn" id="6_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/projectiles/fireball.png" id="7_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/breath_fire.png" id="bp_fire_texture"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
 radius = 16.0
@@ -29,7 +30,7 @@ gold_max = 10100
 item_drop_chance = 1.0
 chain_scene = ExtResource("4_res")
 minion_scenes = Array[PackedScene]([ExtResource("5_res"), ExtResource("6_res")])
-fire_texture = ExtResource("7_res")
+fire_texture = ExtResource("bp_fire_texture")
 item_drop_ids = Array[StringName]([&"solaris_bow"])
 
 [node name="Shadow" type="Sprite2D" parent="."]

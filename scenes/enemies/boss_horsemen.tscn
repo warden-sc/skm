@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/enemies/boss_horsemen.gd" id="1_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/horseman_conquest.png" id="2_res"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/enemies/war_hound.tscn" id="6_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/projectiles/arrow.png" id="7_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/projectiles/void_orb.png" id="8_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/soul_wisp.png" id="bp_soul_texture"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
 radius = 16.0
@@ -30,7 +31,7 @@ gold_max = 12500
 item_drop_chance = 1.0
 minion_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
 arrow_texture = ExtResource("7_res")
-soul_texture = ExtResource("8_res")
+soul_texture = ExtResource("bp_soul_texture")
 item_drop_ids = Array[StringName]([&"windwalker_boots"])
 
 [node name="Shadow" type="Sprite2D" parent="."]

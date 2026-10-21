@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/enemies/boss_false_prophet.gd" id="1_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/false_prophet.png" id="2_res"]
@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/enemies/prophet_acolyte.tscn" id="5_res"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/beast_image.tscn" id="6_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/projectiles/corrupt_orb.png" id="7_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/beast_sigil.png" id="bp_deceit_texture"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
 radius = 16.0
@@ -28,7 +29,7 @@ gold_min = 12000
 gold_max = 12500
 item_drop_chance = 1.0
 minion_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
-deceit_texture = ExtResource("7_res")
+deceit_texture = ExtResource("bp_deceit_texture")
 item_drop_ids = Array[StringName]([&"gatekeeper_horns"])
 
 [node name="Shadow" type="Sprite2D" parent="."]

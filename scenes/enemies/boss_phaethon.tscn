@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/enemies/boss_phaethon.gd" id="1_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/phaethon.png" id="2_res"]
@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/enemies/flame_horse.tscn" id="5_res"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/burning_charioteer.tscn" id="6_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/projectiles/sun_orb.png" id="7_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/solar_flare.png" id="bp_flare_texture"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
 radius = 16.0
@@ -31,7 +32,7 @@ burn_damage = 9
 burn_duration = 2.5
 pillar_scene = ExtResource("4_res")
 minion_scenes = Array[PackedScene]([ExtResource("5_res"), ExtResource("6_res")])
-flare_texture = ExtResource("7_res")
+flare_texture = ExtResource("bp_flare_texture")
 item_drop_ids = Array[StringName]([&"windwalker_boots"])
 
 [node name="Shadow" type="Sprite2D" parent="."]

@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=17 format=3]
 
 [ext_resource type="Script" path="res://scripts/enemies/boss_cerberus.gd" id="1_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/cerberus.png" id="2_res"]
@@ -12,6 +12,9 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/projectiles/ice_shard.png" id="10_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/projectiles/poison_orb.png" id="11_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/projectiles/void_orb.png" id="12_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/breath_fire.png" id="bp_fire_texture"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/venom_spit.png" id="bp_poison_texture"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/soul_wisp.png" id="bp_dark_texture"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
 radius = 16.0
@@ -34,10 +37,10 @@ gold_max = 8700
 item_drop_chance = 1.0
 head_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
 minion_scenes = Array[PackedScene]([ExtResource("7_res"), ExtResource("8_res")])
-fire_texture = ExtResource("9_res")
+fire_texture = ExtResource("bp_fire_texture")
 ice_texture = ExtResource("10_res")
-poison_texture = ExtResource("11_res")
-dark_texture = ExtResource("12_res")
+poison_texture = ExtResource("bp_poison_texture")
+dark_texture = ExtResource("bp_dark_texture")
 item_drop_ids = Array[StringName]([&"gatekeeper_horns"])
 
 [node name="Shadow" type="Sprite2D" parent="."]

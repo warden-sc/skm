@@ -284,3 +284,78 @@ static func cross_glint(context: Node, at_global: Vector2, color: Color, length:
 		tween.tween_property(s, "scale", Vector2(length / 32.0, 0.04), duration)
 		tween.tween_property(s, "modulate:a", 0.0, duration)
 		tween.chain().tween_callback(s.queue_free)
+
+
+## 그림 하나가 솟아오르며 커졌다가 사라짐 (마계의 손아귀 · 마법진 · 태양 원반)
+## rise: 그동안 움직이는 거리 · spin: 그동안 도는 각도 · additive: 빛나게(가산 합성)
+static func sprite_pop(context: Node, at_global: Vector2, texture: Texture2D, color: Color, from_scale: float, to_scale: float,
+		duration: float = 0.6, rise: Vector2 = Vector2.ZERO, spin: float = 0.0, additive: bool = false) -> void:
+	var root := _root_of(context)
+	if root == null or texture == null:
+		return
+	Net.fx_event(&"sprite_pop", [at_global, texture.resource_path, color, from_scale, to_scale, duration, rise, spin, additive])
+	var s := Sprite2D.new()
+	s.set_meta(&"net_local", true)
+	s.texture = texture
+	if additive:
+		s.material = additive_material()
+	s.modulate = color
+	s.z_index = 54
+	root.add_child(s)
+	s.global_position = at_global
+	s.scale = Vector2.ONE * from_scale
+	var tween := s.create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(s, "scale", Vector2.ONE * to_scale, duration * 0.35).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	if rise != Vector2.ZERO:
+		tween.tween_property(s, "global_position", at_global + rise, duration * 0.35).set_ease(Tween.EASE_OUT)
+	if spin != 0.0:
+		tween.tween_property(s, "rotation", spin, duration)
+	tween.tween_property(s, "modulate:a", 0.0, duration * 0.45).set_delay(duration * 0.55)
+	tween.chain().tween_callback(s.queue_free)
+
+
+## 두 점 사이를 잇는 빛줄기 (태양 광선 · 레이저)
+static func beam(context: Node, from: Vector2, to: Vector2, color: Color, width: float, duration: float = 0.35) -> void:
+	var root := _root_of(context)
+	if root == null:
+		return
+	Net.fx_event(&"beam", [from, to, color, width, duration])
+	var s := Sprite2D.new()
+	s.set_meta(&"net_local", true)
+	s.texture = GLOW_TEXTURE
+	s.material = additive_material()
+	s.modulate = color
+	s.z_index = 57
+	root.add_child(s)
+	s.global_position = (from + to) * 0.5
+	s.rotation = (to - from).angle()
+	var length := from.distance_to(to)
+	s.scale = Vector2(length / 20.0, width / 32.0)
+	var tween := s.create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(s, "scale:y", width / 32.0 * 0.15, duration).set_ease(Tween.EASE_IN)
+	tween.tween_property(s, "modulate:a", 0.0, duration)
+	tween.chain().tween_callback(s.queue_free)
+
+
+## 화면 전체에 색을 덮었다가 걷음 (마왕강림: 화면이 어두워짐). HUD 보다 아래 층
+static func screen_tint(context: Node, color: Color, duration: float = 1.5) -> void:
+	var root := _root_of(context)
+	if root == null:
+		return
+	Net.fx_event(&"screen_tint", [color, duration])
+	var layer := CanvasLayer.new()
+	layer.set_meta(&"net_local", true)
+	layer.layer = 5
+	var rect := ColorRect.new()
+	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rect.color = Color(color, 0.0)
+	layer.add_child(rect)
+	root.add_child(layer)
+	var tween := rect.create_tween()
+	tween.tween_property(rect, "color:a", color.a, duration * 0.2)
+	tween.tween_interval(duration * 0.5)
+	tween.tween_property(rect, "color:a", 0.0, duration * 0.3)
+	tween.tween_callback(layer.queue_free)

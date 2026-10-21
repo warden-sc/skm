@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/enemies/boss_fallen_star.gd" id="1_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/fallen_star.png" id="2_res"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/enemies/smoke_fiend.tscn" id="6_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/abyss_key.png" id="7_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/projectiles/void_orb.png" id="8_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/abyss_star.png" id="bp_smoke_texture"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
 radius = 16.0
@@ -31,7 +32,7 @@ item_drop_chance = 1.0
 key_scene = ExtResource("4_res")
 crawler_scenes = Array[PackedScene]([ExtResource("5_res"), ExtResource("6_res")])
 key_texture = ExtResource("7_res")
-smoke_texture = ExtResource("8_res")
+smoke_texture = ExtResource("bp_smoke_texture")
 item_drop_ids = Array[StringName]([&"colossus_bulwark"])
 
 [node name="Shadow" type="Sprite2D" parent="."]

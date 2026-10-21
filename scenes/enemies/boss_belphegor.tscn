@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/enemies/boss_belphegor.gd" id="1_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/belphegor.png" id="2_res"]
@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/enemies/drowsy_ghoul.tscn" id="5_res"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/snail_beast.tscn" id="6_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/projectiles/sleep_orb.png" id="7_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/sleep_z.png" id="bp_drowse_texture"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
 radius = 16.0
@@ -28,7 +29,7 @@ gold_min = 12000
 gold_max = 12500
 item_drop_chance = 1.0
 minion_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res"), ExtResource("6_res")])
-drowse_texture = ExtResource("7_res")
+drowse_texture = ExtResource("bp_drowse_texture")
 item_drop_ids = Array[StringName]([&"star_ring"])
 
 [node name="Shadow" type="Sprite2D" parent="."]
