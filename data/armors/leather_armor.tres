@@ -14,5 +14,5 @@ display_name = "가죽 갑옷"
 description = "질긴 가죽을 덧댄 가벼운 갑옷."
 rarity = 0
 icon = ExtResource("3_res")
-price = 70
+price = 110
 tier = 0

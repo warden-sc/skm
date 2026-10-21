@@ -11,6 +11,7 @@ worn_texture = ExtResource("3_res")
 defense = 58
 move_bonus = 0.085
 id = &"royalguard_boots"
+set_id = &"royalguard"
 display_name = "근위대 각반"
 description = "의장 행진에도 쓰는 금장식 각반."
 rarity = 1

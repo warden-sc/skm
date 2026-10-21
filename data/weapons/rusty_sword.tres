@@ -21,5 +21,5 @@ display_name = "녹슨 검"
 description = "오래된 훈련용 검. 짧지만 넓게 벤다."
 rarity = 0
 icon = ExtResource("2_res")
-price = 40
+price = 180
 tier = 0

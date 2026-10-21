@@ -14,5 +14,5 @@ display_name = "사슬 갑옷"
 description = "촘촘한 사슬을 엮은 갑옷. 베기에 강하다."
 rarity = 1
 icon = ExtResource("3_res")
-price = 2310
+price = 2770
 tier = 0

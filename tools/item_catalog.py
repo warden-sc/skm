@@ -174,13 +174,43 @@ def nice(v):
     return int(round(v))
 
 
+# 게임 안의 값은 scripts/core/balance.gd 의 Balance.item_price 로 계산 (.tres 의 price 는 덮어씀) — 여기도 같은 공식
+INCOME_BASE, INCOME_EXP = 220.0, 1.15
+PRICE_STAGES = {"sword": 1.4, "bow": 1.4, "staff": 1.4, "dagger": 1.2, "shield": 0.7, "helmet": 0.7, "armor": 0.8, "boots": 0.7,
+                "bracelet": 0.8, "ring": 0.8, "pendant": 0.8}
+UNLOCK = {0: 1, 1: 11, 2: 41, 3: 71}
+TIER_STEP = {0: 1.5, 1: 5.0, 2: 5.0, 3: 5.0}
+
+
+def godot_round(v):
+    return int(math.floor(abs(v) + 0.5)) * (1 if v >= 0 else -1)
+
+
+def fit_stage(item):
+    return UNLOCK[item["rarity"]] + godot_round(item["tier"] * TIER_STEP[item["rarity"]])
+
+
+def stage_income(stage):
+    return INCOME_BASE * max(stage, 1) ** INCOME_EXP
+
+
+def nice_price(v):
+    if v >= 10000:
+        return godot_round(v / 100.0) * 100
+    if v >= 100:
+        return godot_round(v / 10.0) * 10
+    return max(godot_round(v), 1)
+
+
 def price(item, weight):
-    u = item["u"]
-    if u == MYTHIC:
+    if item["u"] == MYTHIC:
         return 0
-    if u == 0:
-        return None  # 기존 값 유지
-    return nice(max(income5(u) * weight * TIER_PRICE[item["tier"]], 120 * (u + 1)))
+    v = stage_income(fit_stage(item)) * PRICE_STAGES[item["cat"]]
+    if item["rarity"] == 0:
+        v *= 0.6
+    if not item.get("in_shop", True):
+        v *= 1.15
+    return nice_price(v)
 
 
 def fix_prices(prices):
@@ -446,8 +476,9 @@ FAMILY_STYLE = {k: dict(_S, **v) for k, v in {
 # 등급마다 하급 · 중하급 · 중급 · 중상급 · 상급 (5단계). 수치는 u(능력치 단계, 0~11 · 신화 12)로 계산:
 #   하급 = 3r, 중하급 = 3r+0.5, 중급 = 3r+1, 중상급 = 3r+1.5, 상급 = 3r+2   (r = 등급 0 일반 ~ 3 전설)
 #   드랍 전용 = 3r+1.25 (그 등급 중급과 중상급 사이 — 상점에 없는 대신 같은 값의 상점 장비보다 조금 셈)
-# 세트 효과는 기존 계열(청동 · 기사단 · 미스릴 · 용비늘 · 룬 · 천상 · 창세 · 신화)에만
-SETS = {"bronze": "bronze", "knight": "knight", "mithril": "mithril", "dragonscale": "dragonscale", "rune": "rune", "seraph": "celestial", "genesis": "genesis"}
+# 세트 효과: 중하급(민병대 · 수비대 · 흑철 · 영웅) · 중급(기사단 · 용비늘 · 천상) · 중상급(용병 · 근위대 · 비전 · 용군주) · 상급(청동 · 미스릴 · 룬 · 창세) · 신화
+SETS = {"militia": "militia", "mercenary": "mercenary", "garrison": "garrison", "royalguard": "royalguard",
+        "darksteel": "darksteel", "arcanum": "arcanum", "hero": "hero", "dragonlord": "dragonlord", "bronze": "bronze", "knight": "knight", "mithril": "mithril", "dragonscale": "dragonscale", "rune": "rune", "seraph": "celestial", "genesis": "genesis"}
 OLD_FAMILY = {1: "traveler", 2: "bronze", 4: "knight", 5: "mithril", 7: "dragonscale", 8: "rune", 10: "seraph", 11: "genesis"}
 
 ITEMS = []
@@ -1248,7 +1279,8 @@ def readme_tables():
     lines = []
     cat_titles = [("sword", "검"), ("bow", "활"), ("staff", "지팡이"), ("shield", "방패"), ("helmet", "투구"), ("armor", "갑옷"),
                   ("boots", "신발"), ("bracelet", "팔찌"), ("ring", "반지"), ("pendant", "펜던트")]
-    set_names = {"bronze": "청동", "knight": "기사단", "mithril": "미스릴", "dragonscale": "용비늘", "rune": "룬", "celestial": "천상",
+    set_names = {"militia": "민병대", "mercenary": "용병", "garrison": "수비대", "royalguard": "근위대", "darksteel": "흑철", "arcanum": "비전",
+                 "hero": "영웅", "dragonlord": "용군주", "bronze": "청동", "knight": "기사단", "mithril": "미스릴", "dragonscale": "용비늘", "rune": "룬", "celestial": "천상",
                  "genesis": "창세", "mythic": "신화의 유산"}
 
     def describe(item):

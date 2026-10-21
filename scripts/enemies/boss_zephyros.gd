@@ -1,7 +1,7 @@
 class_name BossZephyros
 extends PatternBoss
 ## 31스테이지 보스: 바람의 드래곤 제피로스 — 폭풍의 협곡을 다스리는 비취빛 용.
-##   BLADES : 바람 칼날 부채꼴 (바람에 휨)
+##   BLADES : 폭풍 브레스 — 초승달 바람 덩어리를 넓게 뿜고 그 사이로 바람 칼날 (모두 바람에 휨)
 ##   GUST   : 돌풍 — 플레이어 쪽 일직선 장판
 ##   CLAW   : 할퀴기 — 앞쪽 장판 세 개
 ##   SUMMON : 실프 · 하피 호출
@@ -16,6 +16,7 @@ extends PatternBoss
 enum Pattern { BLADES, GUST, CLAW, SUMMON }
 
 const FLIGHT_HEIGHT := 34.0
+const BREATH_TEXTURE := preload("res://assets/sprites/projectiles/breath_gust.png")
 const DIRECTIONS := [Vector2.RIGHT, Vector2(1, 1), Vector2.DOWN, Vector2(-1, 1), Vector2.LEFT, Vector2(-1, -1), Vector2.UP, Vector2(1, -1)]
 
 @export var minion_scenes: Array[PackedScene] = []
@@ -190,13 +191,14 @@ func _run_pattern(pattern: int) -> float:
 	match pattern:
 		Pattern.BLADES:
 			var aim := direction_to_player()
-			for w in 2:
-				_after(0.3 * w, func() -> void:
-					if is_dead():
-						return
-					for i in 7:
-						shoot(aim.rotated((i - 3) * 0.18 + w * 0.09), 150.0, blade_damage, blade_texture, 0.0, Elements.Type.NATURE))
-			return 1.1
+			breathe(aim, {"texture": BREATH_TEXTURE, "damage": blade_damage, "element": Elements.Type.NATURE,
+				"speed": 165.0, "range": 170.0, "cone": 0.9, "duration": 0.8, "rate": 22.0, "grow": 2.2, "windup": 0.35})
+			_after(0.75, func() -> void:
+				if is_dead():
+					return
+				for i in 5:
+					shoot(aim.rotated((i - 2) * 0.22), 150.0, blade_damage, blade_texture, 0.0, Elements.Type.NATURE))
+			return 1.4
 		Pattern.GUST:
 			var dir := direction_to_player()
 			for i in 9:

@@ -19,6 +19,6 @@ description = "작고 가벼운 원형 방패. 퍼펙트 가드 판정이 넉넉
 (고블린 드랍 전용)"
 rarity = 0
 icon = ExtResource("2_res")
-price = 1340
+price = 520
 tier = 2
 in_shop = false

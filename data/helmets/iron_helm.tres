@@ -14,5 +14,5 @@ display_name = "강철 투구"
 description = "기사단의 표준 투구. 튼튼하다."
 rarity = 1
 icon = ExtResource("3_res")
-price = 2130
+price = 2430
 tier = 0

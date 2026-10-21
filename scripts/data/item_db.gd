@@ -385,3 +385,28 @@ static func _ensure_loaded() -> void:
 			push_error("ItemDB: '%s' 의 id 가 비어 있습니다." % path)
 			continue
 		_cache[item.id] = item
+		_apply_price(item)
+
+
+## 장비 값은 Balance 의 공식으로 (스테이지 수입 곡선 · 종류 · 등급 · 단계) — .tres 의 price 는 덮어씀. 포션 · 사용 아이템은 그대로
+static func _apply_price(item: ItemData) -> void:
+	var category := price_category(item)
+	if category != "":
+		item.price = Balance.item_price(category, item.rarity, item.get_fit_stage(), item.in_shop)
+
+
+## 값 계산용 장비 종류 (장비가 아니면 "")
+static func price_category(item: ItemData) -> String:
+	if item is WeaponData:
+		return ["sword", "bow", "staff", "dagger"][(item as WeaponData).weapon_type]
+	if item is ShieldData:
+		return "shield"
+	if item is HelmetData:
+		return "helmet"
+	if item is ArmorData:
+		return "armor"
+	if item is BootsData:
+		return "boots"
+	if item is AccessoryData:
+		return ["bracelet", "ring", "pendant"][clampi(int((item as AccessoryData).slot_type), 0, 2)]
+	return ""

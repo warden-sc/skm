@@ -6,7 +6,8 @@
 [resource]
 script = ExtResource("1_script")
 effect = 0
-cooldown = 60.0
+cooldown = 30.0
+charges = 10
 input_action = &"use_relic_flame"
 key_label = "Z"
 duration = 15.0

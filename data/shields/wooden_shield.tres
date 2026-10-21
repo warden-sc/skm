@@ -18,5 +18,5 @@ display_name = "나무 방패"
 description = "가볍지만 다 막아주지는 못하는 나무 방패."
 rarity = 0
 icon = ExtResource("2_res")
-price = 30
+price = 92
 tier = 0

@@ -13,5 +13,5 @@ display_name = "나무 펜던트"
 description = "부적이 새겨진 나무 펜던트. 몸이 튼튼해지고 상처가 조금씩 아문다."
 rarity = 0
 icon = ExtResource("2_res")
-price = 50
+price = 110
 tier = 0

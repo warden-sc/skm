@@ -545,7 +545,7 @@ func _on_chest_opened(chest: Chest, hidden_reward: bool = false) -> void:
 		_add_entity(drop, chest.global_position + Vector2(-12.0 * i + 6.0 * (picked.size() - 1), 14))
 		names.append("[%s] %s" % [item.get_grade_text(), item.display_name])
 	# 장비가 하나도 안 나오면 골드를 두 배로
-	var gold := roundi(60.0 * GameManager.stage * float(GameManager.get_difficulty_info()["gold"]) * (3.0 if hidden_reward else 1.0)
+	var gold := roundi(Balance.chest_gold(GameManager.stage) * get_gold_multiplier() * (3.0 if hidden_reward else 1.0)
 		* chest_rng.randf_range(0.8, 1.2) * (2.0 if picked.is_empty() else 1.0))
 	last_chest_gold = gold
 	last_chest_items = picked
@@ -590,12 +590,35 @@ func _spawn_regular_enemy() -> void:
 
 
 ## 모든 몬스터는 여기서 난이도 배율을 적용받고 트리에 들어갑니다.
-func _add_enemy(enemy: Enemy, at_global: Vector2, arena: Rect2) -> void:
+## summoned: 보스 · 몬스터가 부른 졸개 (골드가 적음)
+func _add_enemy(enemy: Enemy, at_global: Vector2, arena: Rect2, summoned: bool = false) -> void:
 	enemy.apply_difficulty(GameManager.get_difficulty_info())
+	_apply_gold(enemy, summoned)
 	enemy.arena_rect = arena
 	enemy.died.connect(_on_enemy_died)
 	enemy.summon_requested.connect(_on_summon_requested)
 	_add_entity(enemy, at_global)
+
+
+## 처치 골드: 스테이지 수입 곡선(Balance.stage_income)에서 — 사냥터 몬스터는 처치 목표 수로 나눠 45%, 보스 25%
+## 난이도 배율 · 같이 하는 사람 수 배율을 곱함. 씬에 골드 0 으로 적힌 것(분신 · 미끼 · 부서지는 부위 등)은 그대로 0
+func _apply_gold(enemy: Enemy, summoned: bool) -> void:
+	if enemy.gold_max <= 0:
+		return
+	var data := get_stage_data()
+	var center: float
+	if enemy.is_boss and not summoned:
+		center = Balance.boss_gold(GameManager.stage)
+	else:
+		center = Balance.mob_gold(GameManager.stage, data.kill_target if data != null else 12) * (Balance.SUMMON_RATIO if summoned else 1.0)
+	center *= get_gold_multiplier()
+	enemy.gold_min = maxi(1, roundi(center * (1.0 - Balance.GOLD_SPREAD)))
+	enemy.gold_max = maxi(enemy.gold_min, roundi(center * (1.0 + Balance.GOLD_SPREAD)))
+
+
+## 골드 배율 = 난이도 × 같이 하는 사람 수
+func get_gold_multiplier() -> float:
+	return float(GameManager.get_difficulty_info()["gold"]) * Balance.party_gold_multiplier(Net.get_player_count() if Net.is_online() else 1)
 
 
 ## 충돌 콜백 도중에도 안전하도록 항상 call_deferred 로 트리에 추가합니다.
@@ -634,7 +657,7 @@ func _on_summon_requested(scene: PackedScene, at_global: Vector2, summoner: Enem
 	# 소환된 졸개는 드랍이 적습니다
 	minion.item_drop_chance *= 0.3
 	var arena := boss_room.get_arena_rect() if _state == State.BOSS else field_room.get_arena_rect()
-	_add_enemy(minion, at_global.clamp(arena.position, arena.end), arena)
+	_add_enemy(minion, at_global.clamp(arena.position, arena.end), arena, true)
 	if summoner != null and is_instance_valid(summoner):
 		summoner.register_minion(minion)
 

@@ -13,5 +13,5 @@ display_name = "수호자의 펜던트"
 description = "옛 수호기사의 펜던트. 꺼지지 않는 치유의 가호가 깃들어 있다."
 rarity = 2
 icon = ExtResource("2_res")
-price = 9900
+price = 12600
 tier = 0

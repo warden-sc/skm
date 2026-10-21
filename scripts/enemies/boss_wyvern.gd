@@ -1,7 +1,7 @@
 class_name BossWyvern
 extends PatternBoss
 ## 8스테이지 보스: 와이번
-##   BREATH : 화염 숨결 (부채꼴 화염구, 맞으면 화상)
+##   BREATH : 화염 브레스 — 입에 불이 모였다가 플레이어 쪽으로 불길을 뿜으며 고개를 휘두름 (맞으면 화상)
 ##   TAIL   : 꼬리 휘두르기 (자기 주변 큰 장판)
 ##   BITE   : 물어뜯기 돌진
 ##
@@ -12,6 +12,8 @@ extends PatternBoss
 ## 체력 50% 이하: 더 자주, 더 오래 날아오름
 
 enum Pattern { BREATH, TAIL, BITE }
+
+const BREATH_TEXTURE := preload("res://assets/sprites/projectiles/breath_fire.png")
 
 const FLIGHT_HEIGHT := 46.0
 
@@ -60,9 +62,8 @@ func _get_move_velocity(delta: float) -> Vector2:
 func _run_pattern(pattern: int) -> float:
 	match pattern:
 		Pattern.BREATH:
-			for w in 3:
-				_after(0.2 * w, _breath.bind(w))
-			return 1.2
+			_breath()
+			return 1.5
 		Pattern.TAIL:
 			telegraph_strike(get_hit_center(), 58.0, 0.85, tail_damage, Elements.Type.EARTH)
 			return 1.3
@@ -81,13 +82,12 @@ func _casting_velocity(_delta: float) -> Vector2:
 	return _bite_dir * move_speed * 5.5 if _biting else Vector2.ZERO
 
 
-func _breath(wave: int) -> void:
+func _breath() -> void:
 	if is_dead() or not has_target():
 		return
-	var aim := direction_to_player()
-	for i in 5:
-		var t := float(i) / 4.0 - 0.5
-		shoot(aim.rotated(t * 0.8 + wave * 0.05), 150.0, breath_damage, fireball_texture, 0.0, Elements.Type.FIRE)
+	# 고개를 왼쪽 → 오른쪽으로 휘두르며 0.9초 동안 불길
+	breathe(direction_to_player(), {"texture": BREATH_TEXTURE, "damage": breath_damage, "element": Elements.Type.FIRE,
+		"speed": 150.0, "range": 140.0, "cone": 0.35, "sweep": 0.9, "duration": 0.9, "rate": 26.0, "grow": 2.6})
 
 
 # ============================================================ 기믹: 비행

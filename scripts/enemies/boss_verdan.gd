@@ -1,7 +1,7 @@
 class_name BossVerdan
 extends PatternBoss
 ## 34스테이지 보스: 화염의 드래곤 베르단 — 용암 화산의 심장에서 깨어난 붉은 용.
-##   BREATH  : 화염 숨결 — 바라보는 쪽으로 길게 뿜는 불꽃 (뿜는 동안 방향 고정) + 그 앞에 용암 웅덩이
+##   BREATH  : 업화 브레스 — 바라보는 쪽으로 길고 굵게 뿜는 불길 (뿜는 동안 방향 고정, 등 뒤가 빔) + 그 앞에 용암 웅덩이
 ##   METEOR  : 분화 — 화산탄이 떨어지고 떨어진 자리에 용암 웅덩이
 ##   TAIL    : 꼬리 후려치기 — 등 뒤쪽 넓은 장판 (역린을 노리는 플레이어 견제)
 ##   SUMMON  : 살라만더 · 불꽃 술사 호출
@@ -12,6 +12,8 @@ extends PatternBoss
 ## 체력 50% 이하: 용암 웅덩이가 더 크고, 분노까지 필요한 역린 타격이 줄어듦
 
 enum Pattern { BREATH, METEOR, TAIL, SUMMON }
+
+const BREATH_TEXTURE := preload("res://assets/sprites/projectiles/breath_inferno.png")
 
 const MAX_POOLS := 12
 
@@ -137,12 +139,8 @@ func _run_pattern(pattern: int) -> float:
 			# 바라보는 방향으로 뿜음 → 뿜는 동안 등 뒤가 빈다
 			var aim := Vector2.RIGHT if _facing_right else Vector2.LEFT
 			aim = aim.rotated(clampf(aim.angle_to(direction_to_player()), -0.6, 0.6))
-			for w in 6:
-				_after(0.2 * w, func() -> void:
-					if is_dead():
-						return
-					for i in 5:
-						shoot(aim.rotated((i - 2) * 0.14 + randf_range(-0.05, 0.05)), 160.0, breath_damage, fire_texture, 0.0, Elements.Type.FIRE))
+			breathe(aim, {"texture": BREATH_TEXTURE, "damage": breath_damage, "element": Elements.Type.FIRE,
+				"speed": 175.0, "range": 210.0, "cone": 0.45, "duration": 1.3, "rate": 30.0, "grow": 3.0, "scale": 1.1, "windup": 0.4, "mouth": 14.0})
 			for i in 3:
 				leave_lava(get_hit_center() + aim * (70.0 + 50.0 * i), 22.0)
 			return 1.8

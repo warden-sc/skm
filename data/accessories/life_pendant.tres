@@ -13,5 +13,5 @@ display_name = "생명의 펜던트"
 description = "생명의 나무 수액을 담은 전설의 펜던트. 상처가 눈에 띄게 아문다."
 rarity = 3
 icon = ExtResource("2_res")
-price = 18300
+price = 23700
 tier = 0

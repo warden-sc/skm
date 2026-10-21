@@ -95,6 +95,8 @@ func _physics_process(delta: float) -> void:
 
 	# 사거리 끝부분에서 서서히 사라짐
 	var remain := 1.0 - _travelled / maxf(_spec.max_distance, 1.0)
+	if _spec.grow != 1.0:
+		scale = Vector2.ONE * _spec.scale * lerpf(1.0, _spec.grow, clampf(_travelled / maxf(_spec.max_distance, 1.0), 0.0, 1.0))
 	_sprite.modulate.a = clampf(remain * 4.0, 0.0, 1.0) * _spec.color.a
 
 	if _travelled >= _spec.max_distance:

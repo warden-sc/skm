@@ -2,9 +2,9 @@ class_name BossArche
 extends PatternBoss
 ## 히든 보스: 고대 드래곤 아르케 — 다섯 용보다 먼저 태어난, 모든 원소의 근원인 용.
 ## (30~35스테이지 사냥터에 숨겨진 「고대 용의 비늘」 6개를 모두 모으면 헬리시온 토벌 뒤 히든 던전이 열림)
-##   ASPECT  : 지금 두른 원소의 공격 (바람 칼날 / 대지 낙석 / 얼음 조각 / 화염구)
-##   ANCIENT : 고대의 고리 — 사방으로 퍼지는 고대 구체 두 겹
-##   BREATH  : 원소 숨결 — 지금 원소의 탄 부채꼴
+##   ASPECT  : 지금 두른 원소의 공격 (바람 칼날 / 대지 낙석 / 얼음 조각 / 화염 브레스)
+##   ANCIENT : 고대의 고리 — 사방으로 퍼지는 고대 룬 조각 두 겹
+##   BREATH  : 원소 브레스 — 지금 원소의 숨결 (바람 = 돌풍 · 대지 = 모래 · 얼음 = 서리 · 화염 = 불길)을 뿜다가 금빛 고대의 숨결로 마무리
 ##
 ## [기믹 1] 원소 순환: aspect_time 초마다 바람 → 대지 → 얼음 → 화염 순으로 원소를 바꿔 두름
 ##   바람 = 보스방에 바람 (투사체가 휨) / 대지 = 방어력 +earth_armor / 얼음 = 플레이어 발밑에 빙판 / 화염 = 공격에 화상 + 발밑에 용암
@@ -13,6 +13,11 @@ extends PatternBoss
 ## 체력 50% 이하: 원소가 더 빨리 바뀌고 용언이 더 자주, 더 빨리
 
 enum Pattern { ASPECT, ANCIENT, BREATH }
+
+const BREATH_TEXTURES := [preload("res://assets/sprites/projectiles/breath_gust.png"), preload("res://assets/sprites/projectiles/breath_sand.png"),
+	preload("res://assets/sprites/projectiles/breath_frost.png"), preload("res://assets/sprites/projectiles/breath_fire.png")]
+const HOLY_BREATH := preload("res://assets/sprites/projectiles/breath_holy.png")
+const RUNE_TEXTURE := preload("res://assets/sprites/projectiles/rune_shard.png")
 enum Aspect { WIND, EARTH, ICE, FIRE }
 
 const ASPECT_NAMES := ["바람", "대지", "얼음", "화염"]
@@ -233,12 +238,8 @@ func _run_pattern(pattern: int) -> float:
 					for i in 16:
 						shoot(Vector2.from_angle(TAU * i / 16.0), 105.0, bullet_damage, ice_texture, 0.8, Elements.Type.ICE)
 				Aspect.FIRE:
-					var aim2 := direction_to_player()
-					for w in 3:
-						_after(0.2 * w, func() -> void:
-							if not is_dead():
-								for i in 5:
-									shoot(aim2.rotated((i - 2) * 0.15), 165.0, bullet_damage, fire_texture, 0.0, Elements.Type.FIRE))
+					breathe(direction_to_player(), {"texture": BREATH_TEXTURES[Aspect.FIRE], "damage": bullet_damage, "element": Elements.Type.FIRE,
+						"speed": 165.0, "range": 150.0, "cone": 0.4, "sweep": 0.8, "duration": 0.7, "rate": 26.0, "grow": 2.6, "windup": 0.25})
 			return 1.2
 		Pattern.ANCIENT:
 			for w in 2:
@@ -246,18 +247,19 @@ func _run_pattern(pattern: int) -> float:
 					if is_dead():
 						return
 					for i in 18:
-						shoot(Vector2.from_angle(TAU * i / 18.0 + w * 0.17), 110.0, bullet_damage, ancient_texture, 0.0, Elements.Type.HOLY))
+						shoot(Vector2.from_angle(TAU * i / 18.0 + w * 0.17), 110.0, bullet_damage, RUNE_TEXTURE, 0.0, Elements.Type.HOLY))
 			return 1.1
 		Pattern.BREATH:
-			var aim3 := direction_to_player()
-			var tex := _aspect_texture()
 			var element := _aspect_element()
-			for w in 4:
-				_after(0.18 * w, func() -> void:
-					if not is_dead():
-						for i in 7:
-							shoot(aim3.rotated((i - 3) * 0.12 + randf_range(-0.04, 0.04)), 170.0, bullet_damage, tex, 0.0, element))
-			return 1.3
+			breathe(direction_to_player(), {"texture": BREATH_TEXTURES[aspect], "damage": bullet_damage, "element": element,
+				"slow": 0.8 if aspect == Aspect.ICE else 0.0, "speed": 165.0, "range": 175.0, "cone": 0.5, "duration": 0.9, "rate": 26.0,
+				"grow": 2.8, "track": 0.025, "windup": 0.35})
+			# 마무리: 금빛 고대의 숨결 (굵고 곧게)
+			_after(1.3, func() -> void:
+				if not is_dead() and has_target():
+					breathe(direction_to_player(), {"texture": HOLY_BREATH, "damage": bullet_damage, "element": Elements.Type.HOLY,
+						"speed": 190.0, "range": 200.0, "cone": 0.25, "duration": 0.6, "rate": 30.0, "grow": 3.2, "scale": 1.2, "windup": 0.3}))
+			return 2.4
 	return 1.0
 
 

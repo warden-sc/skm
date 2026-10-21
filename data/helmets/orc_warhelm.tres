@@ -14,5 +14,5 @@ display_name = "오크 전쟁 투구"
 description = "뿔 달린 오크 전사의 투구. 묵직하고 단단하다."
 rarity = 2
 icon = ExtResource("3_res")
-price = 9900
+price = 11000
 tier = 0

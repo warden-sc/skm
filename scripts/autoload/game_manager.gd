@@ -73,13 +73,13 @@ const DIFFICULTY_INFO := {
 	},
 	Difficulty.HARD: {
 		"name": "하드", "color": Color(1.0, 0.75, 0.35),
-		"enemy_hp": 1.5, "enemy_defense": 1, "enemy_damage": 1.4, "enemy_speed": 1.1, "gold": 1.25, "max_alive_bonus": 2,
-		"desc": "몬스터 체력 x1.5 · 공격력 x1.4 · 방어력 +1 · 골드 x1.25",
+		"enemy_hp": 1.5, "enemy_defense": 1, "enemy_damage": 1.4, "enemy_speed": 1.1, "gold": 1.3, "max_alive_bonus": 2,
+		"desc": "몬스터 체력 x1.5 · 공격력 x1.4 · 방어력 +1 · 골드 x1.3",
 	},
 	Difficulty.VERY_HARD: {
 		"name": "베리하드", "color": Color(1.0, 0.35, 0.4),
-		"enemy_hp": 2.2, "enemy_defense": 3, "enemy_damage": 1.9, "enemy_speed": 1.2, "gold": 1.6, "max_alive_bonus": 4,
-		"desc": "몬스터 체력 x2.2 · 공격력 x1.9 · 방어력 +3 · 더 많고 빠름 · 골드 x1.6",
+		"enemy_hp": 2.2, "enemy_defense": 3, "enemy_damage": 1.9, "enemy_speed": 1.2, "gold": 1.7, "max_alive_bonus": 4,
+		"desc": "몬스터 체력 x2.2 · 공격력 x1.9 · 방어력 +3 · 더 많고 빠름 · 골드 x1.7",
 	},
 }
 const WEAPON_SLOT_NAMES := ["검", "활", "지팡이"]
@@ -151,6 +151,8 @@ var _set_bonus: Dictionary = {}
 ## 신화 사용 아이템 (원초의 불꽃 · 최후의 나팔)과 남은 대기시간 { id: 초 }
 var relics: Array[RelicData] = []
 var relic_cooldowns: Dictionary = {}
+## 개수가 있는 사용 아이템(원초의 불꽃)의 남은 개수 { id: 개 }
+var relic_charges: Dictionary = {}
 ## 무기 액티브 스킬(Q) 남은 대기시간 { 무기 id: 초 }
 var skill_cooldowns: Dictionary = {}
 ## 잠시 붙는 효과 (포션 · 원초의 불꽃) { 이름: {"effects": {...}, "left": 초, "total": 초} }
@@ -214,6 +216,7 @@ func reset_game() -> void:
 	_set_bonus = {}
 	relics.clear()
 	relic_cooldowns.clear()
+	relic_charges.clear()
 	skill_cooldowns.clear()
 	_buffs.clear()
 	_buff_regen_carry = 0.0
@@ -298,6 +301,7 @@ func to_save_data() -> Dictionary:
 		"boots": String(equipped_boots.id) if equipped_boots else "",
 		"potions": potion_counts,
 		"relics": relics.map(func(r: RelicData) -> String: return String(r.id)),
+		"relic_charges": relic_charges.duplicate(),
 		"dragon_scales": dragon_scales.duplicate(),
 		"hidden_cleared": hidden_cleared,
 		"mythic_unlocked": mythic_unlocked,
@@ -342,6 +346,11 @@ func apply_save_data(data: Dictionary) -> bool:
 		var relic := ItemDB.get_relic(StringName(relic_id)) if ItemDB.has_item(StringName(relic_id)) else null
 		if relic != null:
 			relics.append(relic)
+	relic_charges.clear()
+	var saved_charges: Dictionary = data.get("relic_charges", {})
+	for relic in relics:
+		if relic.charges > 0:
+			relic_charges[relic.id] = int(saved_charges.get(String(relic.id), saved_charges.get(relic.id, relic.charges)))
 	for list_key in ["weapon_slots", "accessory_slots"]:
 		for item_id in data.get(list_key, []):
 			_equip_saved(String(item_id))
@@ -926,12 +935,28 @@ func tick_buffs(delta: float) -> void:
 
 
 # ============================================================ 신화 사용 아이템
+## 사용 아이템 얻기. 개수가 있는 것(원초의 불꽃)은 이미 있으면 개수를 다시 채움
 func add_relic(relic: RelicData) -> bool:
-	if relic == null or has_relic(relic.id):
+	if relic == null:
 		return false
+	if has_relic(relic.id):
+		if relic.charges <= 0 or get_relic_charges(relic) >= relic.charges:
+			return false
+		relic_charges[relic.id] = relic.charges
+		inventory_changed.emit()
+		return true
 	relics.append(relic)
+	if relic.charges > 0:
+		relic_charges[relic.id] = relic.charges
 	inventory_changed.emit()
 	return true
+
+
+## 남은 개수 (소모되지 않는 것은 -1)
+func get_relic_charges(relic: RelicData) -> int:
+	if relic == null or relic.charges <= 0:
+		return -1
+	return int(relic_charges.get(relic.id, 0))
 
 
 func has_relic(relic_id: StringName) -> bool:
@@ -962,6 +987,13 @@ func use_relic(relic: RelicData) -> bool:
 		show_notice("%s — %.0f초 뒤에 다시 쓸 수 있다" % [relic.display_name, ceilf(get_relic_cooldown(relic))], Color(0.8, 0.8, 0.9))
 		return false
 	relic_cooldowns[relic.id] = relic.cooldown
+	if relic.charges > 0:
+		relic_charges[relic.id] = get_relic_charges(relic) - 1
+		if get_relic_charges(relic) <= 0:
+			# 마지막 하나를 쓰면 사라짐 (효과는 그대로 남)
+			relics.erase(relic)
+			relic_charges.erase(relic.id)
+			show_notice("%s — 마지막 하나를 썼다" % relic.display_name, relic.get_rarity_color())
 	if relic.effect == RelicData.Effect.PRIMAL_FLAME:
 		add_buff(relic.display_name, {"attack": relic.attack_bonus, "move": relic.move_bonus, "burn_on_hit": relic.burn_ratio, "burn_immune": 1.0}, relic.duration)
 	relic_used.emit(relic)

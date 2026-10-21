@@ -1,7 +1,7 @@
 class_name BossCoquiros
 extends PatternBoss
 ## 33스테이지 보스: 얼음의 드래곤 코퀴로스 — 얼어붙은 호수 밑에서 잠들어 있던 서리의 용.
-##   BREATH  : 서리 숨결 — 얼음 조각 부채꼴 + 그 앞에 빙판
+##   BREATH  : 서리 브레스 — 얼음 안개를 원뿔로 뿜고(맞으면 감속) 사이사이 얼음 조각 + 그 앞에 빙판
 ##   ICICLE  : 고드름 낙하 — 플레이어 주변 장판 (맞으면 감속)
 ##   TAIL    : 꼬리 휩쓸기 — 몸 주위 고리 장판
 ##   SUMMON  : 서리 정령 · 얼음 비룡 호출
@@ -13,6 +13,8 @@ extends PatternBoss
 ## 체력 50% 이하: 결정 4개, 빙판이 더 넓게
 
 enum Pattern { BREATH, ICICLE, TAIL, SUMMON }
+
+const BREATH_TEXTURE := preload("res://assets/sprites/projectiles/breath_frost.png")
 
 const MAX_ICE := 9
 
@@ -155,15 +157,17 @@ func _run_pattern(pattern: int) -> float:
 	match pattern:
 		Pattern.BREATH:
 			var aim := direction_to_player()
+			breathe(aim, {"texture": BREATH_TEXTURE, "damage": breath_damage, "element": Elements.Type.ICE, "slow": 0.8,
+				"speed": 130.0, "range": 165.0, "cone": 0.55, "sweep": 0.6, "duration": 1.0, "rate": 24.0, "grow": 2.8, "windup": 0.35})
 			for w in 3:
-				_after(0.25 * w, func() -> void:
+				_after(0.4 + 0.25 * w, func() -> void:
 					if is_dead():
 						return
-					for i in 6:
-						shoot(aim.rotated((i - 2.5) * 0.17), 135.0, breath_damage, shard_texture, 0.8, Elements.Type.ICE))
+					for i in 2:
+						shoot(aim.rotated((i - 0.5) * 0.35 + randf_range(-0.1, 0.1)), 150.0, breath_damage, shard_texture, 0.8, Elements.Type.ICE))
 			for i in 3:
 				freeze_floor(get_hit_center() + aim * (60.0 + 55.0 * i), 30.0 + 6.0 * i)
-			return 1.3
+			return 1.5
 		Pattern.ICICLE:
 			for i in (8 if phase_two else 6):
 				var at := _player.global_position + (Vector2.ZERO if i == 0 else Vector2.from_angle(randf() * TAU) * randf_range(28.0, 95.0))

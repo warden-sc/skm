@@ -1,7 +1,7 @@
 class_name BossHelicion
 extends PatternBoss
 ## 35스테이지 보스: 언데드 드래곤 헬리시온 — 용의 묘지에서 되살아난 뼈의 용.
-##   DECAY  : 부패의 숨결 — 부패탄 부채꼴 (맞으면 「부패」: 포션 회복 불가)
+##   DECAY  : 죽음의 브레스 — 보라빛 망령 연기를 뿜고 영혼 불꽃이 날아듦 (맞으면 「부패」: 포션 회복 불가)
 ##   BONES  : 뼈 창 — 사방으로 퍼지는 뼈 창 두 겹
 ##   CURSE  : 저주의 땅 — 플레이어 주변 장판 (맞으면 부패)
 ##   SUMMON : 해골 용병 · 구울 · 원혼 호출 (망자 부활)
@@ -11,6 +11,9 @@ extends PatternBoss
 ##   돌아가면 최대 체력의 revive_ratio 로 되살아남 (영혼은 되살아날 때마다 더 단단해짐)
 ## [기믹 2] 부패: 부패탄·저주의 땅에 맞으면 decay_time 초 동안 포션으로 회복할 수 없음
 ## 체력 50% 이하: 숨결이 더 넓고 망자를 더 많이 부름
+
+const BREATH_TEXTURE := preload("res://assets/sprites/projectiles/breath_necro.png")
+const WISP_TEXTURE := preload("res://assets/sprites/projectiles/soul_wisp.png")
 
 enum Pattern { DECAY, BONES, CURSE, SUMMON }
 
@@ -152,7 +155,7 @@ func _shoot_decay(dir: Vector2, speed: float) -> void:
 	var pool := ProjectilePool.find(get_tree())
 	if pool == null:
 		return
-	var spec := ProjectileSpec.enemy_bullet(get_hit_center(), dir, speed, roundi(decay_damage * power), decay_texture, 0.0, Elements.Type.DARK)
+	var spec := ProjectileSpec.enemy_bullet(get_hit_center(), dir, speed, roundi(decay_damage * power), WISP_TEXTURE, 0.0, Elements.Type.DARK)
 	spec.decay_duration = decay_time
 	pool.spawn(spec)
 
@@ -163,14 +166,15 @@ func _run_pattern(pattern: int) -> float:
 	match pattern:
 		Pattern.DECAY:
 			var aim := direction_to_player()
-			var count := 9 if phase_two else 7
-			for w in 2:
-				_after(0.3 * w, func() -> void:
-					if is_dead() or _fallen:
-						return
-					for i in count:
-						_shoot_decay(aim.rotated((i - (count - 1) * 0.5) * 0.16 + w * 0.08), 125.0))
-			return 1.1
+			breathe(aim, {"texture": BREATH_TEXTURE, "damage": decay_damage, "element": Elements.Type.DARK, "decay": decay_time,
+				"speed": 125.0, "range": 160.0, "cone": 0.6, "sweep": 0.7 if phase_two else 0.4, "duration": 1.0, "rate": 22.0, "grow": 2.6, "windup": 0.35})
+			var count := 5 if phase_two else 3
+			_after(0.5, func() -> void:
+				if is_dead() or _fallen:
+					return
+				for i in count:
+					_shoot_decay(aim.rotated((i - (count - 1) * 0.5) * 0.35), 115.0))
+			return 1.5
 		Pattern.BONES:
 			for w in 2:
 				_after(0.35 * w, func() -> void:

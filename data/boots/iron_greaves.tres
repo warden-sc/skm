@@ -14,5 +14,5 @@ display_name = "강철 각반"
 description = "강철판을 덧댄 각반. 튼튼하면서도 움직임을 방해하지 않는다."
 rarity = 1
 icon = ExtResource("3_res")
-price = 2130
+price = 2430
 tier = 0

@@ -14,5 +14,5 @@ display_name = "수문장의 뿔"
 description = "지옥의 수문장이 쓰던 불타는 뿔투구. 엄청난 생명력을 불어넣는다."
 rarity = 3
 icon = ExtResource("3_res")
-price = 18300
+price = 20700
 tier = 0

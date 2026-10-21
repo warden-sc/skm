@@ -8,7 +8,25 @@ class_name ItemSets
 ##   regen        초당 체력 재생 + reduction  받는 피해 -%
 ##   master_damage 멀티버스의 주인에게 주는 피해 +%
 
+## 일반 · 희귀 · 레어 · 전설마다 중하급 · 중급 · 중상급 · 상급 단계에 세트가 하나씩 (하급 · 드랍 전용은 세트 없음)
+##   일반 중급(여행자)만 예외 — 첫 세트는 청동(일반 상급)부터 고르기 쉽게 중하급 · 중상급에 둠
 const SETS := {
+	&"militia": {"name": "민병대 세트", "bonuses": [
+		[2, {"defense": 15}], [4, {"max_hp": 150}], [6, {"move": 0.05}]]},
+	&"mercenary": {"name": "용병 세트", "bonuses": [
+		[2, {"attack": 0.04}], [4, {"crit_chance": 0.03}], [6, {"max_hp": 250, "crit_damage": 0.1}]]},
+	&"garrison": {"name": "수비대 세트", "bonuses": [
+		[2, {"defense": 45}], [4, {"reduction": 0.03}], [6, {"max_hp_pct": 0.06}]]},
+	&"royalguard": {"name": "근위대 세트", "bonuses": [
+		[2, {"attack": 0.05}], [4, {"defense": 80}], [6, {"crit_chance": 0.04, "crit_damage": 0.15}]]},
+	&"darksteel": {"name": "흑철 세트", "bonuses": [
+		[2, {"armor_pen": 40}], [4, {"attack": 0.06}], [6, {"crit_damage": 0.25}]]},
+	&"arcanum": {"name": "비전 세트", "bonuses": [
+		[2, {"attack": 0.07}], [4, {"crit_chance": 0.05}], [6, {"armor_pen": 50, "regen": 15.0}]]},
+	&"hero": {"name": "영웅 세트", "bonuses": [
+		[2, {"defense": 120}], [4, {"max_hp_pct": 0.1}], [6, {"reduction": 0.08, "attack": 0.05}]]},
+	&"dragonlord": {"name": "용군주 세트", "bonuses": [
+		[2, {"attack": 0.09}], [4, {"armor_pen": 80}], [6, {"crit_damage": 0.35, "max_hp_pct": 0.08}]]},
 	&"bronze": {"name": "청동 세트", "bonuses": [
 		[2, {"defense": 30}], [4, {"attack": 0.05}], [6, {"max_hp": 300}]]},
 	&"knight": {"name": "기사단 세트", "bonuses": [

@@ -1258,6 +1258,18 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 				verd.cast(BossVerdan.Pattern.BREATH)
 				await _frames(3)
 				_check(verd.get_pools().size() >= 3, "[기믹] 화염 숨결이 지나간 자리에 용암 웅덩이 (%d곳)" % verd.get_pools().size())
+				await _survive(45)
+				var puffs := pool.get_children().filter(func(c: Node) -> bool: return (c as Projectile).is_active and (c as Projectile)._spec.texture == BossVerdan.BREATH_TEXTURE)
+				var grown := puffs.filter(func(c: Node) -> bool: return (c as Projectile).scale.x > (c as Projectile)._spec.scale * 1.3)
+				_check(puffs.size() >= 8 and not grown.is_empty() and puffs.all(func(c: Node) -> bool: return (c as Projectile)._spec.grow > 2.0),
+					"[브레스] 베르단: 둥근 탄 대신 업화 숨결 덩어리 %d개가 원뿔로 — 날아가며 커짐 (%d개가 1.3배 넘게)" % [puffs.size(), grown.size()])
+				var dragons_ok := true
+				for dragon in ["wyvern", "zephyros", "terragon", "coquiros", "verdan", "helicion", "colchian", "arche"]:
+					var src := FileAccess.get_file_as_string("res://scripts/enemies/boss_%s.gd" % dragon)
+					if not src.contains("breathe(") or not src.contains("res://assets/sprites/projectiles/breath_"):
+						dragons_ok = false
+						print("    브레스 없음: %s" % dragon)
+				_check(dragons_ok, "용 8마리 모두 고유 브레스 (와이번 불길 · 제피로스 돌풍 · 테라곤 모래 · 코퀴로스 서리 · 베르단 업화 · 헬리시온 망령 · 콜키스 독가스 · 아르케 원소+금빛)")
 				verd.set_physics_process(false)
 				verd._facing_right = true
 				player.global_position = verd.global_position + Vector2(50, 10)
@@ -3903,7 +3915,7 @@ func _test_hidden_dungeon(main: Node2D, heli_end: BossHelicion) -> void:
 	stage.hidden_chest_item_chances = [1.0, 1.0, 0.0]
 	stage.get_chest()._interact()
 	await _frames(4)
-	_check(_item_pickups(main.get_node("Entities")).size() == items_before + 2 and stage.last_chest_gold >= roundi(60.0 * 35 * 3 * 0.8 * float(_gm.get_difficulty_info()["gold"])) - 1,
+	_check(_item_pickups(main.get_node("Entities")).size() == items_before + 2 and stage.last_chest_gold >= roundi(Balance.chest_gold(_gm.stage) * 3 * 0.8 * stage.get_gold_multiplier()) - 1,
 		"고대 용의 보물상자: 골드 %d (보통 상자의 3배) + 장비 (100%% · 60%% · 30%% 확률 → 이번엔 2개로 고정)" % stage.last_chest_gold)
 
 
@@ -4509,6 +4521,62 @@ func _test_gear(main: Node2D) -> void:
 		_gm.add_item(ItemDB.get_item(id))
 		_gm.equip_item(ItemDB.get_item(id))
 	_check(is_equal_approx(_gm.damage_multiplier, atk0 + 0.05) and ItemSets.describe(&"bronze").contains("청동 세트 4/10"), "청동 4개 → 공격력 +5%% (%s)" % ItemSets.describe(&"bronze"))
+	var set_tiers_ok := true
+	for r in 4:
+		for t in [ItemData.Tier.MID_LOW, ItemData.Tier.MID, ItemData.Tier.MID_HIGH, ItemData.Tier.HIGH]:
+			if r == ItemData.Rarity.COMMON and t == ItemData.Tier.MID:
+				continue
+			var tier_items := ItemDB.get_all().filter(func(it: ItemData) -> bool: return it.rarity == r and it.tier == t and it.in_shop and not (it is PotionData))
+			var ids := {}
+			for it in tier_items:
+				ids[(it as ItemData).set_id] = true
+			if ids.size() != 1 or ids.has(&"") or not ItemSets.SETS.has(ids.keys()[0]) or ItemSets.get_piece_count(ids.keys()[0]) != 10:
+				set_tiers_ok = false
+				print("    세트 없음/섞임: %s %s → %s" % [ItemData.RARITY_NAMES[r], ItemData.TIER_NAMES[t], str(ids.keys())])
+	_check(set_tiers_ok and ItemSets.SETS.size() == 16, "중하급 · 중상급에도 세트 (등급마다 4세트 · 일반은 중급 대신 3세트 · 세트마다 10부위, 모두 %d세트)" % ItemSets.SETS.size())
+	for id in [&"militia_helmet", &"militia_armor"]:
+		_gm.add_item(ItemDB.get_item(id))
+	var counts_before: Dictionary = _gm.get_set_counts()
+	_check(not counts_before.has(&"militia"), "민병대 장비는 가방에 있을 땐 세트로 안 셈")
+	# 경제: 스테이지 수입 곡선 · 처치 골드 · 장비 값
+	var income_ok := true
+	for st in range(2, 101):
+		if Balance.stage_income(st) <= Balance.stage_income(st - 1):
+			income_ok = false
+	_check(income_ok and is_equal_approx(Balance.MOB_SHARE + Balance.BOSS_SHARE + Balance.CHEST_SHARE, 1.0) and roundi(Balance.stage_income(1)) == 220 and Balance.stage_income(100) > 40000.0,
+		"골드 수입 곡선: 스테이지마다 늘어남 (1스테이지 %d · 50스테이지 %d · 100스테이지 %d) = 몬스터 45%% + 보스 25%% + 상자 30%%" % [roundi(Balance.stage_income(1)), roundi(Balance.stage_income(50)), roundi(Balance.stage_income(100))])
+	var price_ok := true
+	for item in ItemDB.get_all():
+		var cat := ItemDB.price_category(item)
+		if cat == "" or item.is_mythic():
+			continue
+		var stages_worth := float(item.price) / Balance.stage_income(item.get_fit_stage())
+		var want := float(Balance.PRICE_STAGES[cat]) * (Balance.COMMON_PRICE_MULT if item.rarity == ItemData.Rarity.COMMON else 1.0) * (1.0 if item.in_shop else Balance.DROP_ONLY_PRICE_MULT)
+		if absf(stages_worth - want) > 0.05 * want + 0.02:
+			price_ok = false
+			print("    값 어긋남: %s %d (%.2f스테이지 수입, 목표 %.2f)" % [item.display_name, item.price, stages_worth, want])
+	_check(price_ok, "장비 값 = 그 장비가 쓰일 스테이지 수입 × 비중 (무기 %.1f · 갑옷 %.1f스테이지)" % [Balance.PRICE_STAGES["sword"], Balance.PRICE_STAGES["armor"]])
+	var genesis_sword := ItemDB.get_item(&"genesis_sword")
+	var holy_sword := ItemDB.get_item(&"holy_sword")
+	_check(genesis_sword.price > holy_sword.price and genesis_sword.price > roundi(Balance.stage_income(90)) and ItemDB.get_item(&"ancient_sword").price > ItemDB.get_item(&"seraph_sword").price,
+		"전설 무기도 후반 수입에 맞춰 비쌈 (성검 %d · 창세의 검 %d) · 드랍 전용은 같은 단계 상점 장비보다 비쌈" % [holy_sword.price, genesis_sword.price])
+	var easy_mob := (load("res://scenes/enemies/slime.tscn") as PackedScene).instantiate() as Enemy
+	stage._apply_gold(easy_mob, false)
+	var mob_center := Balance.mob_gold(_gm.stage, stage.get_stage_data().kill_target) * stage.get_gold_multiplier()
+	_check(absf((easy_mob.gold_min + easy_mob.gold_max) * 0.5 - mob_center) <= 1.0 and easy_mob.gold_max > easy_mob.gold_min, "사냥터 몬스터 골드 = 스테이지 수입 × 45%% ÷ 처치 목표 (%d~%d)" % [easy_mob.gold_min, easy_mob.gold_max])
+	var minion_gold := easy_mob.duplicate() as Enemy
+	stage._apply_gold(minion_gold, true)
+	_check(minion_gold.gold_max < easy_mob.gold_max, "보스가 부른 졸개는 골드가 적음 (%d)" % minion_gold.gold_max)
+	var decoy := (load("res://scenes/enemies/slime.tscn") as PackedScene).instantiate() as Enemy
+	decoy.gold_min = 0
+	decoy.gold_max = 0
+	stage._apply_gold(decoy, false)
+	_check(decoy.gold_max == 0, "골드 0 으로 정해 둔 것(분신 · 미끼)은 그대로 0")
+	easy_mob.free()
+	minion_gold.free()
+	decoy.free()
+	_check(_gm.DIFFICULTY_INFO[_gm.Difficulty.HARD]["gold"] == 1.3 and _gm.DIFFICULTY_INFO[_gm.Difficulty.VERY_HARD]["gold"] == 1.7 and is_equal_approx(Balance.party_gold_multiplier(4), 2.8),
+		"골드 배율: 하드 x1.3 · 베리하드 x1.7 · 4명이면 총량 x2.8 (먼저 줍는 사람이)")
 	# 피해 ×10
 	var hp0: int = _gm.hp
 	player._invincible_left = 0.0
@@ -4589,6 +4657,7 @@ func _test_gear(main: Node2D) -> void:
 	await _frames(2)
 	var atk_mult: float = 1.0 + _gm.faith_damage_bonus + _gm.get_buff_value("attack")
 	_check(_gm.use_relic(flame) and _gm.get_buff_value("attack") > atk_mult - 1.0 and _gm.get_buff_value("burn_immune") > 0.0 and not _gm.use_relic(flame), "원초의 불꽃 [Z]: 공격력 +%d%% · 화상 면역 · 다시 쓰려면 %d초" % [roundi(flame.attack_bonus * 100.0), roundi(flame.cooldown)])
+	_check(flame.charges == 10 and _gm.get_relic_charges(flame) == 9, "원초의 불꽃: 10개 — 쓰면 하나씩 줄어듦 (남은 %d개)" % _gm.get_relic_charges(flame))
 	player.apply_burn(10, 3.0)
 	_check(not player.is_burning(), "원초의 불꽃: 화상에 걸리지 않음")
 	var dummy_hp := dummy.hp
@@ -4597,6 +4666,11 @@ func _test_gear(main: Node2D) -> void:
 	_check(dummy.is_ignited() and dummy.hp < dummy_hp, "원초의 불꽃: 맞힌 적이 불탐 (0.5초마다 일격의 %d%%)" % roundi(flame.burn_ratio * 100.0))
 	var mob_hp := dummy.hp
 	_check(_gm.use_relic(trumpet) and dummy.is_stunned() and mob_hp - dummy.hp >= roundi(dummy.max_hp * trumpet.normal_damage_ratio) and player._invincible_left > 2.0, "최후의 나팔 [X]: 모든 적 기절 · 일반 몬스터 최대 체력의 %d%% · 용사 무적" % roundi(trumpet.normal_damage_ratio * 100.0))
+	_gm.relic_charges[flame.id] = 1
+	_gm.relic_cooldowns.clear()
+	_check(_gm.use_relic(flame) and not _gm.has_relic(flame.id) and _gm.get_relic_charges(flame) == 0, "원초의 불꽃: 마지막 하나를 쓰면 사라짐")
+	_check(_gm.add_relic(flame) and _gm.get_relic_charges(flame) == 10, "다시 얻으면 10개")
+	_check(int((_gm.to_save_data()["relic_charges"] as Dictionary).get(flame.id, 0)) == 10, "남은 개수는 저장 파일에도")
 	dummy.despawn()
 	print("[신화 장비 스테이지 보상]")
 	stage.go_to_stage(20)
@@ -5437,7 +5511,7 @@ func _run() -> void:
 	stage.chest_item_chances = [0.0, 0.0]
 	stage.get_chest()._interact()
 	await _frames(3)
-	var base_gold := 60.0 * 2 * float(_gm.get_difficulty_info()["gold"])
+	var base_gold := Balance.chest_gold(_gm.stage) * stage.get_gold_multiplier()
 	_check(_item_pickups(entities).size() == items_before2 and stage.last_chest_items.is_empty() and stage.last_chest_gold >= roundi(base_gold * 1.6) - 1 and stage.last_chest_gold <= roundi(base_gold * 2.4) + 1,
 		"보스 상자 장비는 확률 — 장비가 안 나오면 골드 두 배 (%d)" % stage.last_chest_gold)
 	stage.chest_item_chances = [0.7, 0.3]

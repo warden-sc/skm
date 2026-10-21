@@ -32,6 +32,6 @@ display_name = "견습 지팡이"
 description = "마력 구슬 3발을 부채꼴로 발사한다. 구슬은 조준한 곳에서 보랏빛으로 터진다."
 rarity = 0
 icon = ExtResource("3_res")
-price = 110
+price = 180
 armor_pen = 6
 tier = 0

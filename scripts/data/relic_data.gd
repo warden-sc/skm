@@ -1,6 +1,7 @@
 class_name RelicData
 extends ItemData
-## 신화 사용 아이템 — 장착하지 않고 키를 눌러 사용, 쓰고 나면 cooldown 초 뒤에 다시 쓸 수 있음 (소모되지 않음)
+## 신화 사용 아이템 — 장착하지 않고 키를 눌러 사용, 쓰고 나면 cooldown 초 뒤에 다시 쓸 수 있음
+## charges > 0 이면 그 횟수만큼만 쓸 수 있음 (원초의 불꽃 10개 — 다 쓰면 사라짐). 0 이면 소모되지 않음 (최후의 나팔)
 ## 신화 장비처럼 100스테이지를 클리어하기 전에는 봉인 (가지고만 있고 사용 불가)
 ##   원초의 불꽃 [Z]: 49스테이지 프로메테우스의 불씨를 50스테이지 헤파이스토스가 제련 (헤파이스토스 토벌 때)
 ##     duration 초 동안 공격력 +attack_bonus · 이동 속도 +move_bonus · 화상 면역
@@ -13,6 +14,8 @@ enum Effect { PRIMAL_FLAME, LAST_TRUMPET }
 
 @export var effect: Effect = Effect.PRIMAL_FLAME
 @export var cooldown: float = 60.0
+## 처음 얻을 때 개수 (0 = 소모되지 않음)
+@export var charges: int = 0
 ## 입력 액션 이름과 화면에 보일 키
 @export var input_action: StringName = &""
 @export var key_label: String = ""
@@ -34,12 +37,15 @@ enum Effect { PRIMAL_FLAME, LAST_TRUMPET }
 
 func get_summary() -> String:
 	if effect == Effect.PRIMAL_FLAME:
-		return "사용 [%s] · 공격 +%d%% · 적 화상 · 대기 %d초" % [key_label, roundi(attack_bonus * 100.0), roundi(cooldown)]
+		return "사용 [%s] · 공격 +%d%% · 적 화상 · 대기 %d초 · %d개" % [key_label, roundi(attack_bonus * 100.0), roundi(cooldown), GameManager.get_relic_charges(self)]
 	return "사용 [%s] · 하늘의 심판 · 대기 %d초" % [key_label, roundi(cooldown)]
 
 
 func get_stat_text() -> String:
-	var lines := PackedStringArray(["[%s] 사용 아이템  ([%s] 키 · 소모되지 않고 %d초마다 다시 사용)" % [get_grade_text(), key_label, roundi(cooldown)]])
+	var use_text := "한 번에 하나씩 소모 · 처음 %d개" % charges if charges > 0 else "소모되지 않고 %d초마다 다시 사용" % roundi(cooldown)
+	if charges > 0:
+		use_text += " · %d초마다" % roundi(cooldown)
+	var lines := PackedStringArray(["[%s] 사용 아이템  ([%s] 키 · %s)" % [get_grade_text(), key_label, use_text]])
 	if effect == Effect.PRIMAL_FLAME:
 		lines.append("%d초 동안 공격력 +%d%% · 이동 속도 +%d%% · 화상 면역" % [roundi(duration), roundi(attack_bonus * 100.0), roundi(move_bonus * 100.0)])
 		lines.append("내 공격에 맞은 적이 불탐: 0.5초마다 그 일격의 %d%% (%.0f초, 방어력 무시)" % [roundi(burn_ratio * 100.0), burn_duration])

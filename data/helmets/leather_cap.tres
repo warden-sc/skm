@@ -14,5 +14,5 @@ display_name = "가죽 모자"
 description = "질긴 가죽으로 만든 두건. 가볍게 머리를 보호한다."
 rarity = 0
 icon = ExtResource("3_res")
-price = 60
+price = 92
 tier = 0

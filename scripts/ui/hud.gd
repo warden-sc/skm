@@ -38,6 +38,8 @@ var _relic_labels: Dictionary = {}
 ## 무기 칸의 액티브 스킬[Q] 대기시간 글자 [[무기, Label], …]
 var _skill_labels: Array = []
 var _status_label: Label
+## 멀티플레이 음성 채팅: 오른쪽 위 「말하는 중」 목록
+var _voice_label: Label
 
 
 func _ready() -> void:
@@ -68,6 +70,18 @@ func _ready() -> void:
 	_status_label.add_theme_constant_override(&"outline_size", 3)
 	add_child(_status_label)
 	_on_player_status_changed(GameManager.player_status)
+	_voice_label = Label.new()
+	_voice_label.name = "VoiceLabel"
+	_voice_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_voice_label.offset_left = -220.0
+	_voice_label.offset_right = -8.0
+	_voice_label.offset_top = 22.0
+	_voice_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_voice_label.add_theme_font_size_override(&"font_size", 9)
+	_voice_label.add_theme_color_override(&"font_color", Color(0.6, 1.0, 0.7))
+	_voice_label.add_theme_color_override(&"font_outline_color", Color(0.05, 0.1, 0.05))
+	_voice_label.add_theme_constant_override(&"outline_size", 3)
+	add_child(_voice_label)
 
 	_boss_box.hide()
 	_game_over.hide()
@@ -262,8 +276,9 @@ func _corner_label(text: String, color: Color) -> Label:
 	return label
 
 
-## 사용 아이템 · 무기 스킬 대기시간 (매 프레임)
+## 사용 아이템 · 무기 스킬 대기시간 · 말하는 사람 (매 프레임)
 func _process(_delta: float) -> void:
+	_update_voice_label()
 	for entry in _skill_labels:
 		var skill_label := entry[1] as Label
 		if skill_label != null and is_instance_valid(skill_label):
@@ -274,8 +289,28 @@ func _process(_delta: float) -> void:
 		var label := _relic_labels.get(relic.id) as Label
 		if label != null and is_instance_valid(label):
 			var cd := GameManager.get_relic_cooldown(relic)
-			label.text = "봉인" if relic.is_sealed() else ("%d" % ceili(cd) if cd > 0.0 else "")
+			var count := GameManager.get_relic_charges(relic)
+			label.text = "봉인" if relic.is_sealed() else ("%d" % ceili(cd) if cd > 0.0 else ("x%d" % count if count >= 0 else ""))
 			(label.get_parent() as CanvasItem).modulate = Color(0.45, 0.45, 0.5) if relic.is_sealed() else (Color(0.55, 0.55, 0.6) if cd > 0.0 else Color.WHITE)
+
+
+## 「♪ 아서 · 랜슬롯 말하는 중」 + 내 마이크 상태 (혼자 할 때는 비움)
+func _update_voice_label() -> void:
+	if not Net.is_online() or Net.voice == null:
+		_voice_label.text = ""
+		return
+	var names := PackedStringArray()
+	for peer in Net.voice.get_speakers():
+		names.append(Net.get_player_name(peer))
+	var lines := PackedStringArray()
+	if not names.is_empty():
+		lines.append("말하는 중: %s" % " · ".join(names))
+	match VoiceChat.get_mode():
+		VoiceChat.Mode.PUSH_TO_TALK:
+			lines.append("[V] 누르고 말하기" if not Net.voice.talking else "마이크 켜짐")
+		VoiceChat.Mode.OPEN:
+			lines.append("마이크 항상 켜짐")
+	_voice_label.text = "\n".join(lines)
 
 
 ## 포션 칸: [H] 로 마실 포션 아이콘 + 총 개수

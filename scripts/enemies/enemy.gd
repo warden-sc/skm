@@ -267,6 +267,67 @@ func shoot(dir: Vector2, speed: float, damage: int, texture: Texture2D, slow: fl
 	pool.spawn(spec)
 
 
+## 용의 브레스: duration 초 동안 입(get_hit_center)에서 숨결 덩어리를 원뿔로 뿜음 — 덩어리는 날아가며 커지고 끝에서 흐려짐
+## info: texture · damage · element · speed(150) · range(150) · cone(라디안, 0.5) · rate(초당 덩어리, 26) · duration(0.9)
+##       sweep(뿜는 동안 휘두르는 각도, 0) · grow(끝에서 몇 배, 2.6) · slow(감속 초, 0) · scale(1.0) · track(플레이어를 따라 돌기, 0)
+##       decay(부패 초 — 헬리시온, 0) · windup(뿜기 전 입에 기운이 모이는 시간, 0.3)
+## 덩어리 하나하나가 보통 적 탄이라 가드 · 퍼펙트 가드 · 멀티플레이 복제가 그대로 됨
+func breathe(aim: Vector2, info: Dictionary) -> void:
+	var duration := float(info.get("duration", 0.9))
+	var rate := float(info.get("rate", 26.0))
+	var count := maxi(1, roundi(duration * rate))
+	var state := {"dir": aim.normalized(), "i": 0}
+	var sweep := float(info.get("sweep", 0.0))
+	var track := float(info.get("track", 0.0))
+	var puff := func() -> void:
+		if _dead or not is_inside_tree():
+			return
+		var t := float(state["i"]) / maxf(count - 1, 1)
+		state["i"] = int(state["i"]) + 1
+		var dir: Vector2 = state["dir"]
+		if track > 0.0 and has_target():
+			# 플레이어 쪽으로 천천히 고개를 돌림 (한 덩어리마다 최대 track 라디안)
+			var want := direction_to_player()
+			dir = dir.rotated(clampf(dir.angle_to(want), -track, track))
+			state["dir"] = dir
+		var center := dir.rotated(sweep * (t - 0.5))
+		var cone := float(info.get("cone", 0.5))
+		_breath_puff(center.rotated(randf_range(-cone, cone) * 0.5), info)
+	var tween := create_tween()
+	var windup := float(info.get("windup", 0.3))
+	if windup > 0.0:
+		# 예고: 입에 기운이 모임 (피할 틈)
+		var glow := Elements.color_of(info.get("element", Elements.Type.NONE)).lightened(0.3)
+		Fx.flash(self, get_hit_center() + aim.normalized() * float(info.get("mouth", 10.0)), glow, 12.0, windup)
+		Fx.burst(self, get_hit_center() + aim.normalized() * float(info.get("mouth", 10.0)), glow, 8, 30.0, windup, Vector2.ZERO, 0.8)
+		tween.tween_interval(windup)
+	for i in count:
+		tween.tween_callback(puff)
+		tween.tween_interval(1.0 / rate)
+
+
+func _breath_puff(dir: Vector2, info: Dictionary) -> void:
+	var pool := ProjectilePool.find(get_tree())
+	if pool == null:
+		return
+	var element: Elements.Type = info.get("element", Elements.Type.NONE)
+	var origin := get_hit_center() + dir * float(info.get("mouth", 10.0))
+	var speed := float(info.get("speed", 150.0)) * randf_range(0.85, 1.15)
+	var spec := ProjectileSpec.enemy_bullet(origin, dir, speed, roundi(int(info.get("damage", 30)) * power), info.get("texture") as Texture2D,
+		float(info.get("slow", 0.0)), element)
+	spec.max_distance = float(info.get("range", 150.0)) * randf_range(0.85, 1.1)
+	spec.grow = float(info.get("grow", 2.6))
+	spec.scale = float(info.get("scale", 1.0)) * randf_range(0.85, 1.15)
+	spec.color = Color.WHITE  # 그림 색을 그대로 (속성 색을 덧칠하지 않음)
+	spec.fx_level = 1
+	spec.burn_damage = burn_damage
+	spec.burn_duration = burn_duration
+	spec.burn_poison = burn_is_poison
+	spec.death_mark = death_mark_on_hit
+	spec.decay_duration = float(info.get("decay", 0.0))
+	pool.spawn(spec)
+
+
 ## 예고 후 폭발하는 장판 공격 (난이도 배율 적용)
 func telegraph_strike(at_global: Vector2, radius: float, delay: float, damage: int,
 		element: Elements.Type = Elements.Type.FIRE, slow: float = 0.0) -> AoeStrike:

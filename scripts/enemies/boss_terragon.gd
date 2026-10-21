@@ -4,7 +4,7 @@ extends PatternBoss
 ##   CHARGE : 돌진 — 예고선을 따라 일직선으로 들이받음 (기믹의 핵심)
 ##   QUAKE  : 낙석 — 플레이어 주변에 바위가 떨어짐
 ##   SPIKES : 대지의 가시 — 네 방향으로 뻗는 가시 장판
-##   RAISE  : 돌기둥 솟구치기 (보스방에 돌기둥 2개)
+##   RAISE  : 돌기둥 솟구치기 (보스방에 돌기둥 2개) + 대지의 숨결 — 모래 · 자갈 브레스 (맞으면 잠깐 느려짐)
 ##   SUMMON : 바위 도마뱀 · 대지 골렘 호출
 ##
 ## [기믹 1] 암석 비늘: 평소 방어력 +scale_armor → 거의 피해가 들어가지 않음
@@ -14,6 +14,8 @@ extends PatternBoss
 ## 체력 50% 이하: 돌진이 더 빠르고 두 번 연달아 함
 
 enum Pattern { CHARGE, QUAKE, SPIKES, RAISE, SUMMON }
+
+const BREATH_TEXTURE := preload("res://assets/sprites/projectiles/breath_sand.png")
 
 const MAX_PILLARS := 5
 
@@ -193,9 +195,12 @@ func _run_pattern(pattern: int) -> float:
 		Pattern.RAISE:
 			for i in 2:
 				raise_pillar()
-			for i in 8:
-				shoot(Vector2.from_angle(TAU * i / 8.0), 110.0, quake_damage - 20, rock_texture, 0.0, Elements.Type.EARTH)
-			return 1.0
+			if has_target():
+				breathe(direction_to_player(), {"texture": BREATH_TEXTURE, "damage": quake_damage - 20, "element": Elements.Type.EARTH,
+					"speed": 120.0, "range": 150.0, "cone": 0.6, "sweep": 0.5, "duration": 1.0, "rate": 22.0, "grow": 2.8, "slow": 0.5, "windup": 0.4})
+				for i in 4:
+					shoot(direction_to_player().rotated((i - 1.5) * 0.3), 110.0, quake_damage - 20, rock_texture, 0.0, Elements.Type.EARTH)
+			return 1.6
 		Pattern.SUMMON:
 			if not minion_scenes.is_empty():
 				for i in 2:

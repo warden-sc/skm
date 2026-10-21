@@ -2,7 +2,7 @@ class_name BossColchian
 extends PatternBoss
 ## 53스테이지 보스: 콜키스의 잠들지 않는 용 — 아레스의 숲에서 황금 양털을 지키는 용.
 ##   BITE   : 덮쳐 물기 (앞쪽 장판)
-##   VENOM  : 독액 탄막
+##   VENOM  : 독 브레스 — 초록 독가스를 뿜으며 고개를 플레이어 쪽으로 돌림 + 독침 (맞으면 중독)
 ##   COIL   : 몸을 휘감아 주위를 휩쓰는 고리
 ##   SUMMON : 콜키스 청동 황소 · 콜키스 전사 호출
 ##
@@ -11,6 +11,9 @@ extends PatternBoss
 ##   양털을 든 채 피해를 입으면 떨어뜨리고, 양털은 참나무로 돌아감. 양털을 든 플레이어를 용이 더 빨리 쫓음
 ## [기믹] 잠들지 않는 용: 기절 시간이 크게 줄어듦
 ## 체력 50% 이하: 회복량이 늘어남
+
+const BREATH_TEXTURE := preload("res://assets/sprites/projectiles/breath_poison.png")
+const SPIT_TEXTURE := preload("res://assets/sprites/projectiles/venom_spit.png")
 
 enum Pattern { BITE, VENOM, COIL, SUMMON }
 
@@ -148,14 +151,16 @@ func _run_pattern(pattern: int) -> float:
 				telegraph_strike(get_hit_center() + dir * (40.0 + 30.0 * i), 26.0, 0.7 + 0.08 * i, bite_damage, Elements.Type.NONE)
 			return 1.1
 		Pattern.VENOM:
+			breathe(dir, {"texture": BREATH_TEXTURE, "damage": venom_damage, "element": Elements.Type.NATURE,
+				"speed": 120.0, "range": 160.0, "cone": 0.7, "duration": 1.0, "rate": 22.0, "grow": 3.0, "track": 0.03, "windup": 0.35})
 			for w in 2:
-				_after(0.3 * w, func() -> void:
+				_after(0.5 + 0.3 * w, func() -> void:
 					if is_dead() or not has_target():
 						return
 					var aim := direction_to_player()
-					for i in 7:
-						shoot(aim.rotated((i - 3) * 0.18), 140.0, venom_damage, venom_texture, 0.0, Elements.Type.NATURE))
-			return 1.1
+					for i in 3:
+						shoot(aim.rotated((i - 1) * 0.25), 165.0, venom_damage, SPIT_TEXTURE, 0.0, Elements.Type.NATURE))
+			return 1.5
 		Pattern.COIL:
 			for i in 10:
 				telegraph_strike(get_hit_center() + Vector2.from_angle(TAU * i / 10.0) * 56.0, 22.0, 0.9, coil_damage, Elements.Type.NATURE)

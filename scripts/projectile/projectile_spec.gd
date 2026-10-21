@@ -19,6 +19,8 @@ var knockback: float = 0.0
 var texture: Texture2D
 var color: Color = Color.WHITE
 var scale: float = 1.0
+## 날아가며 커지는 배율 (사거리 끝에서 scale × grow) — 용의 브레스: 숨결 덩어리가 퍼지며 원뿔 모양이 됨
+var grow: float = 1.0
 var element: Elements.Type = Elements.Type.NONE
 ## 이펙트 화려함 0(일반) ~ 3(전설): 꼬리 잔상 / 빛 / 명중 파티클 양
 var fx_level: int = 0

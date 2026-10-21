@@ -13,5 +13,5 @@ display_name = "구리 반지"
 description = "소박한 구리 반지. 손끝이 조금 더 예리해진다."
 rarity = 0
 icon = ExtResource("2_res")
-price = 60
+price = 110
 tier = 0

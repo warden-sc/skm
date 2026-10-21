@@ -68,6 +68,8 @@ var _end_reason: String = ""
 var port: int = PORT
 
 var _peer: ENetMultiplayerPeer
+## 음성 채팅 ([V] 눌러서 말하기 · 설정에서 끄기 / 항상 켜기)
+var voice: VoiceChat
 var _main: Node
 var _entities: Node2D
 var _stage: Node
@@ -99,6 +101,9 @@ var _proj_root: Node2D
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	voice = VoiceChat.new()
+	voice.name = "Voice"
+	add_child(voice)
 	multiplayer.peer_connected.connect(_on_peer_connected)
 	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
 	multiplayer.connected_to_server.connect(_on_connected_to_server)
@@ -277,6 +282,8 @@ func _reset_runtime() -> void:
 	_my_puppet_id = 0
 	_last_snap_seq = -1
 	_wipe_left = -1.0
+	if voice != null:
+		voice.reset()
 
 
 func _on_connected_to_server() -> void:
@@ -304,6 +311,7 @@ func _on_peer_connected(_id: int) -> void:
 
 
 func _on_peer_disconnected(id: int) -> void:
+	voice.forget(id)
 	if not multiplayer.is_server():
 		return
 	var who := get_player_name(id)

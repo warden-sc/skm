@@ -14,5 +14,5 @@ display_name = "가죽 장화"
 description = "발목까지 감싸는 질긴 가죽 장화. 발걸음이 가벼워진다."
 rarity = 0
 icon = ExtResource("3_res")
-price = 60
+price = 92
 tier = 0

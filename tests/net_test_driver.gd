@@ -129,6 +129,25 @@ func _run_host() -> void:
 		await frames(10)
 	check(names.get("self", "") == "랜슬롯" and names.get("host", "") == "아서", "참가자 화면: 내 머리 위 「%s」 · 방장 머리 위 「%s」" % [names.get("self", ""), names.get("host", "")])
 
+	# 음성 채팅: 방장이 말하면 참가자가 듣고, 참가자가 말하면 방장이 들음
+	var tone := PackedVector2Array()
+	var mix := 48000.0
+	for i in int(mix * 0.5):
+		var v := 0.4 * sin(TAU * 440.0 * i / mix)
+		tone.append(Vector2(v, v))
+	Net.voice.feed(tone, mix)
+	check(Net.voice.is_speaking(Net.my_id()) and Net.voice.get_sent_chunks() >= 12, "음성 채팅: 방장 쪽 「말하는 중」 · 40ms 묶음 %d개 보냄" % Net.voice.get_sent_chunks())
+	var heard := {}
+	for attempt in 20:
+		heard = await ask("voice")
+		if int(heard.get("from_host", 0)) >= 7000:
+			break
+		await frames(5)
+	check(int(heard.get("from_host", 0)) >= 7000 and heard.get("playing", false), "음성 채팅: 방장 목소리 0.5초 → 참가자가 들음 (%d샘플)" % int(heard.get("from_host", 0)))
+	check(float(heard.get("peak", 0.0)) > 0.3 and float(heard.get("peak", 0.0)) < 0.5, "음성 채팅: 소리 크기가 그대로 전달 (최대 %.2f)" % float(heard.get("peak", 0.0)))
+	await ask("talk")
+	check(await wait_until(func() -> bool: return Net.voice.get_received_samples(peer) >= 7000, 5.0), "음성 채팅: 참가자 목소리 → 방장이 들음 (%d샘플)" % Net.voice.get_received_samples(peer))
+
 	# 맞음 전달
 	var hp0 := int((await ask("hp")).get("hp", 0))
 	puppet.net_status["invincible"] = false
@@ -378,6 +397,17 @@ func _do(command: String, args: Array = []) -> Dictionary:
 		"spectate":
 			var spec := Net.spectator
 			return {"spectating": Net.is_spectating(), "target": spec.target_name if spec != null else "", "alpha": player.modulate.a}
+		"voice":
+			var gen_player := Net.voice._players.get(1) as AudioStreamPlayer
+			return {"from_host": Net.voice.get_received_samples(1), "speaking": Net.voice.is_speaking(1), "peak": Net.voice.last_peak.get(1, 0.0),
+				"playing": gen_player != null and gen_player.playing}
+		"talk":
+			var tone := PackedVector2Array()
+			for i in 24000:
+				var v := 0.3 * sin(TAU * 300.0 * i / 48000.0)
+				tone.append(Vector2(v, v))
+			Net.voice.feed(tone, 48000.0)
+			return {}
 		"wiped":
 			return {"wiped": Net.party_wiped}
 		"errors":

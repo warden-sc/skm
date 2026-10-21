@@ -15,6 +15,7 @@ perfect_guard_window = 0.34
 guard_move_multiplier = 0.6
 guard_break_time = 0.925
 id = &"royalguard_shield"
+set_id = &"royalguard"
 display_name = "근위대 방패"
 description = "왕실 문장이 새겨진 푸른 방패."
 rarity = 1

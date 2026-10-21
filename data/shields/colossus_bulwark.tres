@@ -18,5 +18,5 @@ display_name = "거신의 성벽"
 description = "원소의 거신 아르케온의 핵으로 만든 전설의 방패. 어떤 공격도 꿰뚫지 못한다."
 rarity = 3
 icon = ExtResource("2_res")
-price = 18300
+price = 20700
 tier = 0

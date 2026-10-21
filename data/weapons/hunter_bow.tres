@@ -33,6 +33,6 @@ display_name = "사냥꾼의 활"
 description = "시위를 당겨 멀리 있는 적을 정확하게 꿰뚫는 활."
 rarity = 0
 icon = ExtResource("4_res")
-price = 90
+price = 180
 explosion_damage_ratio = 0.5
 tier = 0

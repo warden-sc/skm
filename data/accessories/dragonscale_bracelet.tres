@@ -13,5 +13,5 @@ display_name = "용린 팔찌"
 description = "용의 비늘로 엮은 전설의 팔찌. 어떤 갑주도 무의미하다."
 rarity = 3
 icon = ExtResource("2_res")
-price = 19900
+price = 23700
 tier = 0
