@@ -23,7 +23,7 @@ const GATE := 0.02
 const MAX_BUFFER_SEC := 0.35
 ## 말소리가 끊긴 뒤 「말하는 중」 표시가 꺼질 때까지
 const SPEAKING_HOLD := 0.4
-## 네트워크 채널 (화면 복제와 섞이지 않게)
+## 네트워크 채널 (따로 둬서 화면 복제와 섞이지 않게 — 신뢰 전송이라 끊김 없이 오고, 밀리면 MAX_BUFFER_SEC 에서 버림)
 const CHANNEL := 3
 
 var talking: bool = false  # 이 컴퓨터가 지금 보내는 중인지
@@ -131,7 +131,7 @@ func get_received_samples(peer_id: int) -> int:
 	return int(_received.get(peer_id, 0))
 
 
-@rpc("any_peer", "unreliable_ordered", "call_remote", CHANNEL)
+@rpc("any_peer", "reliable", "call_remote", CHANNEL)
 func _voice(data: PackedByteArray) -> void:
 	var sender := multiplayer.get_remote_sender_id()
 	if sender == 0 or data.is_empty() or data.size() > CHUNK * 2:

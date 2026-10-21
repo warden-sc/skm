@@ -135,8 +135,12 @@ func _run_host() -> void:
 	for i in int(mix * 0.5):
 		var v := 0.4 * sin(TAU * 440.0 * i / mix)
 		tone.append(Vector2(v, v))
-	Net.voice.feed(tone, mix)
-	check(Net.voice.is_speaking(Net.my_id()) and Net.voice.get_sent_chunks() >= 12, "음성 채팅: 방장 쪽 「말하는 중」 · 40ms 묶음 %d개 보냄" % Net.voice.get_sent_chunks())
+	# 실제 마이크처럼 40ms 씩 나눠 보냄 (한꺼번에 쏟으면 ENet 이 비신뢰 패킷을 버림)
+	var slice := int(mix * 0.04)
+	for start in range(0, tone.size(), slice):
+		Net.voice.feed(tone.slice(start, start + slice), mix)
+		await frames(2)
+	check(Net.voice.get_sent_chunks() >= 12, "음성 채팅: 40ms 묶음 %d개 보냄" % Net.voice.get_sent_chunks())
 	var heard := {}
 	for attempt in 20:
 		heard = await ask("voice")
@@ -145,7 +149,7 @@ func _run_host() -> void:
 		await frames(5)
 	check(int(heard.get("from_host", 0)) >= 7000 and heard.get("playing", false), "음성 채팅: 방장 목소리 0.5초 → 참가자가 들음 (%d샘플)" % int(heard.get("from_host", 0)))
 	check(float(heard.get("peak", 0.0)) > 0.3 and float(heard.get("peak", 0.0)) < 0.5, "음성 채팅: 소리 크기가 그대로 전달 (최대 %.2f)" % float(heard.get("peak", 0.0)))
-	await ask("talk")
+	check((await ask("talk")).get("speaking", false), "음성 채팅: 말하는 동안 「말하는 중」 표시")
 	check(await wait_until(func() -> bool: return Net.voice.get_received_samples(peer) >= 7000, 5.0), "음성 채팅: 참가자 목소리 → 방장이 들음 (%d샘플)" % Net.voice.get_received_samples(peer))
 
 	# 맞음 전달
@@ -406,8 +410,10 @@ func _do(command: String, args: Array = []) -> Dictionary:
 			for i in 24000:
 				var v := 0.3 * sin(TAU * 300.0 * i / 48000.0)
 				tone.append(Vector2(v, v))
-			Net.voice.feed(tone, 48000.0)
-			return {}
+			for start in range(0, tone.size(), 1920):
+				Net.voice.feed(tone.slice(start, start + 1920), 48000.0)
+				await frames(2)
+			return {"speaking": Net.voice.is_speaking(Net.my_id())}
 		"wiped":
 			return {"wiped": Net.party_wiped}
 		"errors":
