@@ -5029,7 +5029,7 @@ func _run() -> void:
 	# 실제 Q 키 · HUD 단축칸 대기시간 표시
 	var skill_sword: WeaponData = skill_weapons[WeaponData.WeaponType.SWORD]
 	_gm.skill_cooldowns.clear()
-	var keep_sword := _gm.weapon_slots[0]
+	var keep_sword: WeaponData = _gm.weapon_slots[0]
 	_gm.add_item(skill_sword)
 	_gm.equip_item(skill_sword)
 	await _frames(12)
