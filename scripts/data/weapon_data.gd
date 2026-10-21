@@ -41,19 +41,33 @@ const TYPE_NAMES := {
 	WeaponType.DAGGER: "단검",
 }
 
-## 액티브 스킬 (레어 등급 이상 무기만, Q) — 종류별 기술 · 대기시간(초) · 공격력 배율(레어 기준)
-##   검     : 회전 베기   — 주위 360° 의 모든 적을 크게 벰
-##   단검   : 그림자 난무 — 주위의 적을 다섯 번 연달아 벰
-##   활     : 화살비      — 꿰뚫는 화살 9발을 부채꼴로 쏨
-##   지팡이 : 대폭발      — 조준한 곳에 거대한 마력 폭발
+## 액티브 스킬 (레어 등급 이상 무기만, Q) — 등급이 오를수록 모양 · 성능 · 이펙트가 완전히 다른 기술로 진화
+##   레어   : 기본형 — 회전 베기 / 그림자 난무 / 화살비 / 대폭발
+##   전설   : 진화형 광역 · 특수 — 성검 폭풍 / 그림자 무도 / 유성 화살비 / 원소 붕괴
+##   신화   : 무기마다 원전에 맞는 전용 기술 — 아바돈의 검 「마왕강림」 · 아폴론의 활 「헬리오스의 심판」 · 대마법사의 지팡이 「메테오 스웜」
+## mult = 한 타 배율, hits = 한 적이 맞을 수 있는 타수(대략), 실제 연출 · 판정은 WeaponSkills
 const SKILLS := {
-	WeaponType.SWORD: {"name": "회전 베기", "desc": "주위 360°의 모든 적을 크게 벰", "cooldown": 8.0, "mult": 3.0, "hits": 1},
-	WeaponType.DAGGER: {"name": "그림자 난무", "desc": "주위의 적을 다섯 번 연달아 벰", "cooldown": 7.0, "mult": 0.9, "hits": 5},
-	WeaponType.BOW: {"name": "화살비", "desc": "꿰뚫는 화살 9발을 부채꼴로 쏨", "cooldown": 9.0, "mult": 1.6, "hits": 9},
-	WeaponType.STAFF: {"name": "대폭발", "desc": "조준한 곳에 거대한 마력 폭발", "cooldown": 10.0, "mult": 4.0, "hits": 1},
+	&"whirlwind": {"name": "회전 베기", "desc": "주위 360°의 모든 적을 크게 벰", "cooldown": 8.0, "mult": 3.0, "hits": 1},
+	&"holy_tempest": {"name": "성검 폭풍", "desc": "두 바퀴 회전 베기 후 빛의 초승달 참격 8개가 사방으로 날아가 꿰뚫음", "cooldown": 9.0, "mult": 2.6, "hits": 3},
+	&"abyss_descent": {"name": "마왕강림", "desc": "화면이 어두워지며 핏빛 암흑 참격이 사방으로 터지고, 땅에서 마계의 손아귀가 적을 붙잡아(기절) 암흑 기둥이 솟구침", "cooldown": 12.0, "mult": 3.2, "hits": 5},
+	&"flurry": {"name": "그림자 난무", "desc": "주위의 적을 다섯 번 연달아 벰", "cooldown": 7.0, "mult": 0.9, "hits": 5},
+	&"shadow_dance": {"name": "그림자 무도", "desc": "가까운 적들 사이를 그림자처럼 옮겨 다니며 여덟 번 벰", "cooldown": 8.0, "mult": 1.3, "hits": 8},
+	&"volley": {"name": "화살비", "desc": "꿰뚫는 화살 9발을 부채꼴로 쏨", "cooldown": 9.0, "mult": 1.6, "hits": 2},
+	&"meteor_rain": {"name": "유성 화살비", "desc": "조준한 곳 하늘에서 불붙은 화살 14발이 쏟아져 터짐", "cooldown": 10.0, "mult": 1.8, "hits": 5},
+	&"helios": {"name": "헬리오스의 심판", "desc": "모든 것을 꿰뚫는 태양의 창을 쏘고, 끝에서 태양이 떠올라 사방으로 햇살이 내리꽂힘", "cooldown": 12.0, "mult": 4.0, "hits": 4},
+	&"blast": {"name": "대폭발", "desc": "조준한 곳에 거대한 마력 폭발", "cooldown": 10.0, "mult": 4.0, "hits": 1},
+	&"cataclysm": {"name": "원소 붕괴", "desc": "조준한 곳까지 화염 · 냉기 · 번개 · 비전 폭발이 차례로 이어지고 마지막에 거대한 붕괴", "cooldown": 11.0, "mult": 2.4, "hits": 4},
+	&"meteor_swarm": {"name": "메테오 스웜", "desc": "하늘에 거대한 마법진이 열려 별 열여섯 개가 쏟아지고, 마지막에 거대한 운석이 떨어짐", "cooldown": 13.0, "mult": 2.6, "hits": 6},
 }
-## 등급이 오를수록 스킬도 세짐 (레어 x1 · 전설 x1.4 · 신화 x2)
-const SKILL_RARITY_MULT := {ItemData.Rarity.EPIC: 1.0, ItemData.Rarity.LEGENDARY: 1.4, ItemData.Rarity.MYTHIC: 2.0}
+## 종류 × 등급 → 스킬 (신화 무기는 MYTHIC_SKILLS 에서 무기마다)
+const SKILL_BY_RARITY := {
+	WeaponType.SWORD: [&"whirlwind", &"holy_tempest"],
+	WeaponType.DAGGER: [&"flurry", &"shadow_dance"],
+	WeaponType.BOW: [&"volley", &"meteor_rain"],
+	WeaponType.STAFF: [&"blast", &"cataclysm"],
+}
+const MYTHIC_SKILLS := {&"abaddon_sword": &"abyss_descent", &"apollo_bow": &"helios", &"archmage_staff": &"meteor_swarm"}
+const SKILL_ICON_DIR := "res://assets/sprites/skills/"
 
 @export var weapon_type: WeaponType = WeaponType.SWORD
 @export var element: Elements.Type = Elements.Type.NONE
@@ -141,28 +155,51 @@ func has_skill() -> bool:
 	return rarity >= ItemData.Rarity.EPIC
 
 
+## 이 무기의 스킬 id (없으면 &"") — 레어 = 기본형, 전설 = 진화형, 신화 = 무기 전용 (전용이 없으면 진화형)
+func get_skill_id() -> StringName:
+	if not has_skill():
+		return &""
+	if rarity >= ItemData.Rarity.MYTHIC and MYTHIC_SKILLS.has(id):
+		return MYTHIC_SKILLS[id]
+	return SKILL_BY_RARITY[weapon_type][0 if rarity == ItemData.Rarity.EPIC else 1]
+
+
+func get_skill_info() -> Dictionary:
+	return SKILLS.get(get_skill_id(), {})
+
+
 func get_skill_name() -> String:
-	return String(SKILLS[weapon_type]["name"]) if has_skill() else ""
+	return String(get_skill_info().get("name", ""))
 
 
 func get_skill_cooldown() -> float:
-	return float(SKILLS[weapon_type]["cooldown"])
+	return float(get_skill_info().get("cooldown", 0.0))
 
 
-## 스킬 한 타의 공격력 배율 (등급 반영)
+## 스킬 한 타의 공격력 배율
 func get_skill_multiplier() -> float:
-	if not has_skill():
-		return 0.0
-	return float(SKILLS[weapon_type]["mult"]) * float(SKILL_RARITY_MULT.get(rarity, 1.0))
+	return float(get_skill_info().get("mult", 0.0))
 
 
-## 「[Q] 회전 베기 — 주위 360°의 모든 적을 크게 벰 (공격력 x3.0 · 대기 8초)」
+## 한 적에게 들어가는 대략의 총 배율 (한 타 × 타수) — 등급 비교용
+func get_skill_power() -> float:
+	return get_skill_multiplier() * float(get_skill_info().get("hits", 1))
+
+
+## HUD 스킬 칸 아이콘
+func get_skill_icon() -> Texture2D:
+	var path := SKILL_ICON_DIR + String(get_skill_id()) + ".png"
+	return load(path) as Texture2D if has_skill() and ResourceLoader.exists(path) else null
+
+
+## 「[Q] 스킬 회전 베기 — 주위 360°의 모든 적을 크게 벰 (한 타 공격력 x3.0 · 대기 8초)」
 func get_skill_text() -> String:
 	if not has_skill():
 		return ""
-	var info: Dictionary = SKILLS[weapon_type]
+	var info := get_skill_info()
 	var hits := int(info["hits"])
-	return "[Q] 스킬 %s — %s (공격력 x%.1f%s · 대기 %d초)" % [info["name"], info["desc"], get_skill_multiplier(), " x%d" % hits if hits > 1 else "", roundi(get_skill_cooldown())]
+	var grade := "신화 전용" if rarity >= ItemData.Rarity.MYTHIC and MYTHIC_SKILLS.has(id) else ("진화" if rarity >= ItemData.Rarity.LEGENDARY else "기본")
+	return "[Q] %s 스킬 %s — %s (한 타 x%.1f%s · 대기 %d초)" % [grade, info["name"], info["desc"], get_skill_multiplier(), " · 최대 %d타" % hits if hits > 1 else "", roundi(get_skill_cooldown())]
 
 
 ## 실제 1타의 데미지를 굴립니다. (치명타 포함)

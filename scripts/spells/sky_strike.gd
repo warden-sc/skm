@@ -1,17 +1,21 @@
 class_name SkyStrike
 extends Node2D
-## 하늘에서 떨어지는 지팡이 마법 (아르카나의 별똥별 / 슬라임 왕의 홀의 거대 슬라임).
+## 하늘에서 떨어지는 지팡이 마법 (아르카나의 별똥별 / 슬라임 왕의 홀의 거대 슬라임)
+## + 무기 스킬: 유성 화살비의 불화살(ARROW) · 메테오 스웜의 거대 운석(METEOR).
 ##
 ## 1) start_delay 만큼 기다렸다가
 ## 2) 착지 지점에 조준 원이 차오르고 그림자가 커지는 동안 하늘에서 떨어짐 (fall_time)
 ## 3) 착지: 반경 안의 적에게 범위 피해 (중심부 100% / 바깥 explosion_damage_ratio) + 종류별 이펙트
 ##    거대 슬라임은 점액 웅덩이(GroundZone)를 남깁니다.
 
-enum Kind { STAR, SLIME }
+enum Kind { STAR, SLIME, ARROW, METEOR }
 
 const STAR_FALL_OFFSET := Vector2(-90.0, -190.0)
 const SLIME_FALL_OFFSET := Vector2(0.0, -230.0)
 const SLIME_TEXTURE: Texture2D = preload("res://assets/sprites/characters/slime_king.png")
+const ARROW_TEXTURE: Texture2D = preload("res://assets/sprites/projectiles/sky_arrow.png")
+const ARROW_FALL_OFFSET := Vector2(-30.0, -220.0)
+const METEOR_FALL_OFFSET := Vector2(-140.0, -260.0)
 const SHADOW_TEXTURE: Texture2D = preload("res://assets/sprites/characters/shadow.png")
 
 var kind: Kind = Kind.STAR
@@ -74,6 +78,15 @@ func _ready() -> void:
 		_body.texture = Fx.STAR_TEXTURE
 		_body.scale = Vector2.ONE * 1.3
 		_trail = Fx.make_aura(Color(1.0, 0.85, 0.5), 24, 3.0, Vector2.ZERO, 0.35)
+	elif kind == Kind.ARROW:
+		_body.texture = ARROW_TEXTURE
+		_body.rotation = Vector2(-ARROW_FALL_OFFSET).angle() - PI / 2.0
+		_trail = Fx.make_aura(Color(1.0, 0.6, 0.25), 14, 2.0, Vector2(0, -30), 0.3)
+	elif kind == Kind.METEOR:
+		_body.texture = Fx.STAR_TEXTURE
+		_body.scale = Vector2.ONE * 4.0
+		_body.modulate = Color(1.0, 0.7, 1.0)
+		_trail = Fx.make_aura(Color(0.85, 0.55, 1.0), 60, 14.0, Vector2.ZERO, 0.6)
 	else:
 		_body.texture = SLIME_TEXTURE
 		_body.scale = Vector2.ONE * 1.6
@@ -100,9 +113,16 @@ func _physics_process(delta: float) -> void:
 		_body.show()
 		_trail.emitting = true
 	t = minf(t, 1.0)
-	var offset := STAR_FALL_OFFSET if kind == Kind.STAR else SLIME_FALL_OFFSET
+	var offset := STAR_FALL_OFFSET
+	match kind:
+		Kind.SLIME:
+			offset = SLIME_FALL_OFFSET
+		Kind.ARROW:
+			offset = ARROW_FALL_OFFSET
+		Kind.METEOR:
+			offset = METEOR_FALL_OFFSET
 	_body.position = offset * (1.0 - t * t)
-	if kind == Kind.STAR:
+	if kind == Kind.STAR or kind == Kind.METEOR:
 		_body.rotation += delta * 14.0
 	var shadow_size := (radius / 12.0) * (0.3 + 0.7 * t)
 	_shadow.scale = Vector2(shadow_size, shadow_size * 0.6)
@@ -132,6 +152,14 @@ func _land() -> void:
 	if kind == Kind.STAR:
 		Fx.star_burst(self, global_position, radius)
 		Spells.shake(self, 1.5)
+	elif kind == Kind.ARROW:
+		Fx.burst(self, global_position, Color(1.0, 0.6, 0.25), 10, 70.0, 0.35)
+		Fx.flash(self, global_position, Color(1.0, 0.7, 0.3), radius, 0.2)
+	elif kind == Kind.METEOR:
+		Fx.explosion(self, global_position, color, radius, 3)
+		Fx.shockwave(self, global_position, Color(1.0, 0.85, 1.0), radius * 1.6, 0.5)
+		Fx.burst(self, global_position, Color(0.85, 0.6, 1.0), 40, radius * 3.0, 0.7)
+		Spells.shake(self, 7.0)
 	else:
 		Fx.slime_splash(self, global_position, radius, 3)
 		Fx.shockwave(self, global_position, Color(0.7, 1.0, 0.6), radius * 1.3, 0.4)

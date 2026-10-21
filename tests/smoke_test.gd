@@ -4826,7 +4826,7 @@ func _run() -> void:
 	_check(_gm.equipped_shield != null and _gm.equipped_shield.id == &"wooden_shield", "방패 칸: 나무 방패")
 	_check(stage.get_state() == StageManager.State.CAMP and _gm.location_name == "야영지", "야영지에서 시작")
 	_check(stage.camp_room.get_bounds().has_point(player.global_position), "플레이어가 야영지 안에 있음")
-	_check(hud.get_node("%Hotbar").get_child_count() == 14, "HUD 단축바 (무기 3 + 방어구 4 + 장신구 3 + 포션)")
+	_check(hud.get_node("%Hotbar").get_child_count() == 16, "HUD 단축바 (스킬 칸 + 무기 3 + 방어구 4 + 장신구 3 + 포션)")
 	_check(_gm.get_potion_count(&"small_potion") == 2, "시작 포션: 작은 회복 포션 2개")
 	_check(_gm.gold == 100, "시작 골드 100G")
 
@@ -5029,103 +5029,150 @@ func _run() -> void:
 		await _frames(5)
 	_check(ratios_ok, "지팡이 6종 주변 피해 모두 80%")
 
-	print("[액티브 스킬 Q - 레어 등급 이상 무기]")
-	var skill_weapons: Dictionary = {}
+	print("[액티브 스킬 Q - 레어 기본형 · 전설 진화형 · 신화 전용]")
+	var skill_weapons: Dictionary = {}  # 스킬 id → 무기
 	var low_weapon: WeaponData = null
 	var skill_flags_ok := true
+	var icons_ok := true
 	for item in ItemDB.get_all():
 		var sw := item as WeaponData
 		if sw == null:
 			continue
-		if sw.has_skill() != (sw.rarity >= ItemData.Rarity.EPIC) or sw.has_skill() != sw.get_stat_text().contains("[Q] 스킬"):
+		if sw.has_skill() != (sw.rarity >= ItemData.Rarity.EPIC) or sw.has_skill() != sw.get_stat_text().contains("[Q]"):
 			skill_flags_ok = false
-		if sw.rarity == ItemData.Rarity.EPIC and not skill_weapons.has(sw.weapon_type):
-			skill_weapons[sw.weapon_type] = sw
+		if sw.has_skill():
+			if sw.get_skill_icon() == null or sw.get_skill_name() == "":
+				icons_ok = false
+			if not skill_weapons.has(sw.get_skill_id()):
+				skill_weapons[sw.get_skill_id()] = sw
 		if sw.rarity == ItemData.Rarity.RARE and low_weapon == null:
 			low_weapon = sw
-	_check(skill_flags_ok, "레어 · 전설 · 신화 무기에만 스킬 (장비 설명에 [Q] 스킬 줄)")
-	# 단검은 지금 일반 등급뿐 — 레어 단검이 생겼을 때를 위해 복사본으로 시험
-	if not skill_weapons.has(WeaponData.WeaponType.DAGGER):
+	_check(skill_flags_ok and icons_ok, "레어 · 전설 · 신화 무기에만 스킬 (장비 설명에 [Q] 줄 · 스킬마다 아이콘)")
+	# 단검은 지금 일반 등급뿐 — 레어 · 전설 단검이 생겼을 때를 위해 복사본으로 시험
+	for dagger_rarity in [ItemData.Rarity.EPIC, ItemData.Rarity.LEGENDARY]:
 		var test_dagger := ItemDB.get_weapon(&"goblin_dagger").duplicate() as WeaponData
-		test_dagger.id = &"_test_epic_dagger"
-		test_dagger.rarity = ItemData.Rarity.EPIC
-		skill_weapons[WeaponData.WeaponType.DAGGER] = test_dagger
-	_check(skill_weapons.size() == 4 and low_weapon != null, "레어 등급 검 · 활 · 지팡이 (+ 시험용 레어 단검)")
-	var legend_sword: WeaponData = null
-	var mythic_sword: WeaponData = null
-	for item in ItemDB.get_all():
-		var lw := item as WeaponData
-		if lw != null and lw.weapon_type == WeaponData.WeaponType.SWORD:
-			if lw.rarity == ItemData.Rarity.LEGENDARY:
-				legend_sword = lw
-			elif lw.rarity == ItemData.Rarity.MYTHIC:
-				mythic_sword = lw
-	_check(legend_sword != null and mythic_sword != null and skill_weapons[WeaponData.WeaponType.SWORD].get_skill_multiplier() < legend_sword.get_skill_multiplier()
-		and legend_sword.get_skill_multiplier() < mythic_sword.get_skill_multiplier(), "등급이 높을수록 스킬이 셈 (레어 < 전설 < 신화)")
+		test_dagger.id = StringName("_test_dagger_%d" % dagger_rarity)
+		test_dagger.rarity = dagger_rarity
+		skill_weapons[test_dagger.get_skill_id()] = test_dagger
+	_check(skill_weapons.size() == WeaponData.SKILLS.size(), "스킬 %d종이 모두 쓰임 (%s)" % [WeaponData.SKILLS.size(), ", ".join(skill_weapons.keys().map(func(k: StringName) -> String: return WeaponData.SKILLS[k]["name"]))])
+	var abaddon := ItemDB.get_weapon(&"abaddon_sword")
+	var apollo := ItemDB.get_weapon(&"apollo_bow")
+	var archmage := ItemDB.get_weapon(&"archmage_staff")
+	_check(abaddon.get_skill_id() == &"abyss_descent" and apollo.get_skill_id() == &"helios" and archmage.get_skill_id() == &"meteor_swarm",
+		"신화 무기마다 전용 스킬: 아바돈의 검 「%s」 · 아폴론의 활 「%s」 · 대마법사의 지팡이 「%s」" % [abaddon.get_skill_name(), apollo.get_skill_name(), archmage.get_skill_name()])
+	var tier_ok := true
+	for chain in [[&"whirlwind", &"holy_tempest", &"abyss_descent"], [&"volley", &"meteor_rain", &"helios"], [&"blast", &"cataclysm", &"meteor_swarm"], [&"flurry", &"shadow_dance"]]:
+		for i in range(1, chain.size()):
+			var lo: WeaponData = skill_weapons[chain[i - 1]]
+			var hi: WeaponData = skill_weapons[chain[i]]
+			if hi.get_skill_power() <= lo.get_skill_power() or WeaponData.SKILLS[chain[i]]["desc"] == WeaponData.SKILLS[chain[i - 1]]["desc"]:
+				tier_ok = false
+	_check(tier_ok, "등급이 오를수록 다른 기술로 진화하고 더 셈 (회전 베기 → 성검 폭풍 → 마왕강림 …)")
 	_check(InputMap.action_get_events(&"skill").size() == 1 and (InputMap.action_get_events(&"skill")[0] as InputEventKey).physical_keycode == KEY_Q, "스킬 키는 Q")
 	_check(not attack.use_skill(low_weapon) and _gm.get_skill_cooldown(low_weapon) == 0.0, "희귀 이하 무기는 Q 를 눌러도 스킬 없음")
 	var skill_aim := player.get_aim_direction()
 	var skill_origin := player.get_attack_origin()
-	for skill_type in [WeaponData.WeaponType.SWORD, WeaponData.WeaponType.DAGGER, WeaponData.WeaponType.BOW, WeaponData.WeaponType.STAFF]:
-		var sw: WeaponData = skill_weapons[skill_type]
+	var muzzle := player.get_muzzle_position()
+	for skill_id in WeaponData.SKILLS.keys():
+		var sw: WeaponData = skill_weapons[skill_id]
 		_gm.skill_cooldowns.clear()
+		seed(7)
 		var spots: Array[Vector2] = []
-		match skill_type:
-			WeaponData.WeaponType.SWORD, WeaponData.WeaponType.DAGGER:
+		var need := 0  # 맞아야 하는 최소 수 (0 = 모두)
+		match skill_id:
+			&"whirlwind", &"holy_tempest", &"flurry", &"shadow_dance", &"abyss_descent":
 				# 앞 · 뒤 · 옆 — 360° 모두
 				for dir in [skill_aim, -skill_aim, skill_aim.orthogonal()]:
 					spots.append(skill_origin + dir * 30.0)
-			WeaponData.WeaponType.BOW:
-				# 한 줄로 선 셋 — 화살이 꿰뚫음
+			&"volley", &"helios":
+				# 한 줄로 선 셋 — 꿰뚫음
 				for dist in [40.0, 60.0, 80.0]:
-					spots.append(player.get_muzzle_position() + skill_aim * dist)
-			WeaponData.WeaponType.STAFF:
+					spots.append(muzzle + skill_aim * dist)
+			&"blast":
 				var blast_at := player.get_aim_point(sw.projectile_range)
 				spots.append(blast_at)
 				spots.append(blast_at + skill_aim.orthogonal() * 30.0)
+			&"meteor_rain", &"meteor_swarm":
+				need = 2  # 하늘에서 떨어지는 자리를 보고 나서 그 자리에 세움 (아래)
+			&"cataclysm":
+				var cata_at := player.get_aim_point(sw.projectile_range * 1.2)
+				spots.append(cata_at)
+				spots.append(muzzle.lerp(cata_at, 0.5))
 		var targets: Array[Enemy] = []
 		for spot in spots:
 			var target := slime_scene.instantiate() as Enemy
 			target.move_speed = 0.0
-			target.max_hp = 99999999
+			target.max_hp = 999999999
 			stage._add_enemy(target, _enemy_pos_for_hit_center(spot), camp_arena)
 			targets.append(target)
 		await _frames(3)
 		var used: bool = attack.use_skill(sw)
+		if skill_id == &"meteor_rain" or skill_id == &"meteor_swarm":
+			# 떨어질 자리(하늘에서 오는 화살 · 별 · 운석) 셋에 적을 세움
+			var falling := get_tree().get_nodes_in_group(&"sky_strikes")
+			for k in mini(3, falling.size()):
+				var target := slime_scene.instantiate() as Enemy
+				target.move_speed = 0.0
+				target.max_hp = 999999999
+				var drop_at: Vector2 = (falling[falling.size() - 1 - k] as Node2D).global_position
+				stage._add_enemy(target, _enemy_pos_for_hit_center(drop_at), Rect2(drop_at - Vector2(500, 500), Vector2(1000, 1000)))
+				targets.append(target)
+			await _frames(2)
 		var after_first: Array[int] = []
 		for t in targets:
 			after_first.append(t.hp)
-		for f in 40:
+		for f in 170:
 			await get_tree().physics_frame
-		var all_hit := true
+		var hit_count := 0
 		for t in targets:
-			all_hit = all_hit and is_instance_valid(t) and t.hp < t.max_hp
-		_check(used and all_hit, "%s(%s) [Q] %s: 맞힌 적 %d명 모두 피해" % [sw.display_name, sw.get_rarity_name(), sw.get_skill_name(), targets.size()])
-		if skill_type == WeaponData.WeaponType.DAGGER:
+			if is_instance_valid(t) and t.hp < t.max_hp:
+				hit_count += 1
+		_check(used and hit_count >= (need if need > 0 else targets.size()), "%s(%s) [Q] %s: 적 %d명 중 %d명 피해" % [sw.display_name, sw.get_rarity_name(), sw.get_skill_name(), targets.size(), hit_count])
+		if skill_id == &"flurry":
 			_check(targets[0].hp < after_first[0], "그림자 난무: 첫 베기 뒤에도 연달아 벰")
-		_check(is_equal_approx(_gm.get_skill_cooldown(sw), sw.get_skill_cooldown()) or _gm.get_skill_cooldown(sw) > sw.get_skill_cooldown() - 1.0, "스킬을 쓰면 대기시간 %d초" % roundi(sw.get_skill_cooldown()))
-		_check(not attack.use_skill(sw), "대기시간 동안은 다시 못 씀")
+		if skill_id == &"abyss_descent":
+			_check(targets.any(func(t: Enemy) -> bool: return is_instance_valid(t) and t.hp < after_first[targets.find(t)]), "마왕강림: 암흑 참격 뒤 마계의 손아귀 · 암흑 기둥이 이어서 때림")
+		_check(_gm.get_skill_cooldown(sw) > 0.0 and not attack.use_skill(sw), "%s: 쓰면 대기시간 %d초 — 그동안 다시 못 씀" % [sw.get_skill_name(), roundi(sw.get_skill_cooldown())])
 		for t in targets:
 			if is_instance_valid(t):
 				t.despawn()
 		await _frames(5)
-	# 실제 Q 키 · HUD 단축칸 대기시간 표시
-	var skill_sword: WeaponData = skill_weapons[WeaponData.WeaponType.SWORD]
+	_gm.heal_full()
+	# 실제 Q 키 · HUD 스킬 칸 (무기 단축바 왼쪽)
+	var skill_sword: WeaponData = skill_weapons[&"whirlwind"]
+	var legend_bow: WeaponData = skill_weapons[&"meteor_rain"]
 	_gm.skill_cooldowns.clear()
 	var keep_sword: WeaponData = _gm.weapon_slots[0]
 	_gm.add_item(skill_sword)
 	_gm.equip_item(skill_sword)
 	await _frames(12)
-	var skill_label := hud.get_node("%Hotbar").get_child(0).get_node_or_null("SkillLabel") as Label
-	_check(skill_label != null and skill_label.text == "Q", "HUD: 레어 이상 무기 칸에 「Q」(스킬 준비됨)")
+	var skill_slot := hud.get_node("%Hotbar").get_child(0)
+	var skill_icon := skill_slot.find_child("SkillIcon", true, false) as TextureRect
+	var skill_time := skill_slot.find_child("SkillTime", true, false) as Label
+	_check(skill_slot.name == "SkillSlot" and skill_icon != null and skill_icon.texture == skill_sword.get_skill_icon(), "HUD: 무기 단축바 왼쪽에 손에 든 무기의 스킬 아이콘 (%s)" % skill_sword.get_skill_name())
+	_check(skill_time != null and skill_time.text == "Q", "스킬 준비됨 → 「Q」")
 	await _press_action(&"skill")
 	await _frames(3)
 	_check(_gm.get_skill_cooldown(skill_sword) > 0.0, "Q 키 → 손에 든 무기의 스킬 (%s)" % skill_sword.get_skill_name())
-	_check(skill_label != null and skill_label.text.is_valid_int(), "HUD: 스킬 대기시간 남은 초 표시 (%s)" % (skill_label.text if skill_label != null else "?"))
+	var shade := skill_slot.find_child("SkillShade", true, false) as Control
+	_check(skill_time.text.is_valid_int() and shade != null and shade.visible and shade.size.y > 1.0, "대기시간: 아이콘 위에 어두운 게이지 + 남은 초 (%s초)" % skill_time.text)
+	_gm.add_item(legend_bow)
+	_gm.equip_item(legend_bow)
+	await _frames(6)
+	skill_icon = hud.get_node("%Hotbar").get_child(0).find_child("SkillIcon", true, false) as TextureRect
+	_check(skill_icon != null and skill_icon.texture == legend_bow.get_skill_icon(), "무기를 바꾸면 스킬 아이콘도 바뀜 (%s)" % legend_bow.get_skill_name())
+	_gm.select_weapon_slot(0)
+	await _frames(4)
+	skill_icon = hud.get_node("%Hotbar").get_child(0).find_child("SkillIcon", true, false) as TextureRect
+	_check(skill_icon != null and skill_icon.texture == skill_sword.get_skill_icon(), "1 키로 검을 들면 다시 회전 베기 아이콘")
 	_gm.skill_cooldowns.clear()
 	if keep_sword != null:
 		_gm.equip_item(keep_sword)
 	await _frames(70)
+	if OS.get_environment("SMOKE_STOP") == "skills":  # 빠른 확인용: 여기까지만
+		print("FAILURES: %d" % _failures)
+		get_tree().quit(1 if _failures > 0 else 0)
+		return
 	# 영창 중 조준한 곳에 범위 원 표시
 	_gm.add_item(ItemDB.get_item(&"ignis_staff"))
 	_gm.equip_item(ItemDB.get_item(&"ignis_staff"))

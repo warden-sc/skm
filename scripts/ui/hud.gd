@@ -4,7 +4,7 @@ extends CanvasLayer
 ##
 ## - 왼쪽 위: HP / DASH / GUARD 게이지(TextureProgressBar), 골드
 ## - 위 가운데: 스테이지·난이도, 현재 위치(야영지/사냥터/보스방), 보스방 해방 진행도, 보스 체력
-## - 아래 가운데 단축바: 무기 3칸(1/2/3, 손에 든 무기 강조) + 방어구 4칸(방패/투구/갑옷/신발) + 장신구 3칸(팔찌/반지/펜던트) + 회복 포션(H)
+## - 아래 가운데 단축바: 스킬 칸(손에 든 무기의 [Q] 스킬 · 대기시간) + 무기 3칸(1/2/3, 손에 든 무기 강조) + 방어구 4칸(방패/투구/갑옷/신발) + 장신구 3칸(팔찌/반지/펜던트) + 회복 포션(H)
 ##
 ## hud.tscn 의 노드들은 "고유 이름(%)" 으로 접근하므로 레이아웃을 바꿔도 경로가 깨지지 않습니다.
 
@@ -35,8 +35,10 @@ var _notice_tween: Tween
 var _shown_potion: PotionData
 ## 신화 사용 아이템 칸의 대기시간 글자 { id: Label }
 var _relic_labels: Dictionary = {}
-## 무기 칸의 액티브 스킬[Q] 대기시간 글자 [[무기, Label], …]
-var _skill_labels: Array = []
+## 무기 단축바 왼쪽 스킬 칸: 손에 든 무기의 스킬 아이콘 · 대기시간 (어두운 게이지 + 남은 초)
+var _skill_weapon: WeaponData
+var _skill_shade: ColorRect
+var _skill_time: Label
 var _status_label: Label
 ## 멀티플레이 음성 채팅: 오른쪽 위 「말하는 중」 목록
 var _voice_label: Label
@@ -223,18 +225,13 @@ func show_party_game_over(is_host: bool) -> void:
 # ============================================================ 단축바
 func _rebuild_hotbar() -> void:
 	for child in _hotbar.get_children():
+		_hotbar.remove_child(child)  # 바로 빼야 새 칸이 같은 이름 · 같은 순서로 들어감
 		child.queue_free()
-	_skill_labels.clear()
+	_hotbar.add_child(_make_skill_slot())
+	_hotbar.add_child(_make_spacer())
 	for i in GameManager.weapon_slots.size():
 		var weapon := GameManager.weapon_slots[i]
-		var weapon_slot := _make_slot(weapon, WEAPON_SLOT_SIZE, str(i + 1), i == GameManager.active_weapon_slot)
-		if weapon != null and weapon.has_skill():
-			# 레어 이상 무기: 오른쪽 아래에 「Q」(준비됨) 또는 남은 초
-			var skill_label := _corner_label("Q", Color(1.0, 0.85, 0.4))
-			skill_label.name = "SkillLabel"
-			weapon_slot.add_child(skill_label)
-			_skill_labels.append([weapon, skill_label])
-		_hotbar.add_child(weapon_slot)
+		_hotbar.add_child(_make_slot(weapon, WEAPON_SLOT_SIZE, str(i + 1), i == GameManager.active_weapon_slot))
 	_hotbar.add_child(_make_spacer())
 	for item in [GameManager.equipped_shield, GameManager.equipped_helmet, GameManager.equipped_armor, GameManager.equipped_boots]:
 		_hotbar.add_child(_make_slot(item, SMALL_SLOT_SIZE, "", false))
@@ -279,12 +276,7 @@ func _corner_label(text: String, color: Color) -> Label:
 ## 사용 아이템 · 무기 스킬 대기시간 · 말하는 사람 (매 프레임)
 func _process(_delta: float) -> void:
 	_update_voice_label()
-	for entry in _skill_labels:
-		var skill_label := entry[1] as Label
-		if skill_label != null and is_instance_valid(skill_label):
-			var left := GameManager.get_skill_cooldown(entry[0])
-			skill_label.text = "%d" % ceili(left) if left > 0.0 else "Q"
-			skill_label.add_theme_color_override(&"font_color", Color(0.7, 0.75, 0.85) if left > 0.0 else Color(1.0, 0.85, 0.4))
+	_update_skill_slot()
 	for relic in GameManager.relics:
 		var label := _relic_labels.get(relic.id) as Label
 		if label != null and is_instance_valid(label):
@@ -311,6 +303,89 @@ func _update_voice_label() -> void:
 		VoiceChat.Mode.OPEN:
 			lines.append("마이크 항상 켜짐")
 	_voice_label.text = "\n".join(lines)
+
+
+## 스킬 칸 (무기 단축바 맨 왼쪽): 손에 든 무기의 스킬 아이콘 + 대기시간 게이지 · 남은 초. 스킬이 없는 무기면 빈 칸
+func _make_skill_slot() -> Control:
+	var weapon := GameManager.equipped_weapon
+	_skill_weapon = weapon if weapon != null and weapon.has_skill() else null
+	var panel := PanelContainer.new()
+	panel.name = "SkillSlot"
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.size_flags_vertical = Control.SIZE_SHRINK_END
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.08, 0.07, 0.12, 0.85)
+	style.border_color = _skill_weapon.get_rarity_color() if _skill_weapon != null else Color(0.35, 0.35, 0.42)
+	style.set_border_width_all(2 if _skill_weapon != null else 1)
+	style.set_corner_radius_all(3)
+	style.set_content_margin_all(1)
+	panel.add_theme_stylebox_override(&"panel", style)
+	var inner := Control.new()
+	inner.custom_minimum_size = WEAPON_SLOT_SIZE
+	inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	inner.clip_contents = true
+	panel.add_child(inner)
+	var icon := TextureRect.new()
+	icon.name = "SkillIcon"
+	icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	icon.texture = _skill_weapon.get_skill_icon() if _skill_weapon != null else null
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	inner.add_child(icon)
+	# 대기 중: 아래에서부터 남은 비율만큼 어둡게 덮음
+	_skill_shade = ColorRect.new()
+	_skill_shade.name = "SkillShade"
+	_skill_shade.color = Color(0.02, 0.02, 0.05, 0.72)
+	_skill_shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_skill_shade.hide()
+	inner.add_child(_skill_shade)
+	_skill_time = Label.new()
+	_skill_time.name = "SkillTime"
+	_skill_time.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_skill_time.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_skill_time.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_skill_time.add_theme_font_size_override(&"font_size", 10)
+	_skill_time.add_theme_constant_override(&"outline_size", 4)
+	_skill_time.add_theme_color_override(&"font_outline_color", Color(0.03, 0.03, 0.08))
+	_skill_time.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	inner.add_child(_skill_time)
+	_update_skill_slot()
+	return panel
+
+
+func _update_skill_slot() -> void:
+	if _skill_time == null or not is_instance_valid(_skill_time):
+		return
+	# 손에 든 무기가 바뀌었으면 다시 그림 (1 · 2 · 3 전환)
+	var held := GameManager.equipped_weapon
+	if (held if held != null and held.has_skill() else null) != _skill_weapon:
+		_rebuild_hotbar()
+		return
+	if _skill_weapon == null:
+		_skill_time.text = "-"
+		_skill_time.add_theme_color_override(&"font_color", Color(0.5, 0.5, 0.58))
+		_skill_shade.hide()
+		return
+	var left := GameManager.get_skill_cooldown(_skill_weapon)
+	var total := maxf(_skill_weapon.get_skill_cooldown(), 0.01)
+	if left > 0.0:
+		var h := WEAPON_SLOT_SIZE.y * clampf(left / total, 0.0, 1.0)
+		_skill_shade.position = Vector2(0.0, WEAPON_SLOT_SIZE.y - h)
+		_skill_shade.size = Vector2(WEAPON_SLOT_SIZE.x, h)
+		_skill_shade.show()
+		_skill_time.text = "%d" % ceili(left)
+		_skill_time.add_theme_color_override(&"font_color", Color(0.85, 0.9, 1.0))
+	else:
+		_skill_shade.hide()
+		_skill_time.text = "Q"
+		_skill_time.add_theme_color_override(&"font_color", Color(1.0, 0.88, 0.4))
+		_skill_time.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+		_skill_time.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		return
+	_skill_time.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_skill_time.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 
 ## 포션 칸: [H] 로 마실 포션 아이콘 + 총 개수
