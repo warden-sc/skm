@@ -35,6 +35,8 @@ var _notice_tween: Tween
 var _shown_potion: PotionData
 ## 신화 사용 아이템 칸의 대기시간 글자 { id: Label }
 var _relic_labels: Dictionary = {}
+## 무기 칸의 액티브 스킬[Q] 대기시간 글자 [[무기, Label], …]
+var _skill_labels: Array = []
 var _status_label: Label
 
 
@@ -208,9 +210,17 @@ func show_party_game_over(is_host: bool) -> void:
 func _rebuild_hotbar() -> void:
 	for child in _hotbar.get_children():
 		child.queue_free()
+	_skill_labels.clear()
 	for i in GameManager.weapon_slots.size():
 		var weapon := GameManager.weapon_slots[i]
-		_hotbar.add_child(_make_slot(weapon, WEAPON_SLOT_SIZE, str(i + 1), i == GameManager.active_weapon_slot))
+		var weapon_slot := _make_slot(weapon, WEAPON_SLOT_SIZE, str(i + 1), i == GameManager.active_weapon_slot)
+		if weapon != null and weapon.has_skill():
+			# 레어 이상 무기: 오른쪽 아래에 「Q」(준비됨) 또는 남은 초
+			var skill_label := _corner_label("Q", Color(1.0, 0.85, 0.4))
+			skill_label.name = "SkillLabel"
+			weapon_slot.add_child(skill_label)
+			_skill_labels.append([weapon, skill_label])
+		_hotbar.add_child(weapon_slot)
 	_hotbar.add_child(_make_spacer())
 	for item in [GameManager.equipped_shield, GameManager.equipped_helmet, GameManager.equipped_armor, GameManager.equipped_boots]:
 		_hotbar.add_child(_make_slot(item, SMALL_SLOT_SIZE, "", false))
@@ -252,8 +262,14 @@ func _corner_label(text: String, color: Color) -> Label:
 	return label
 
 
-## 사용 아이템 대기시간 (매 프레임)
+## 사용 아이템 · 무기 스킬 대기시간 (매 프레임)
 func _process(_delta: float) -> void:
+	for entry in _skill_labels:
+		var skill_label := entry[1] as Label
+		if skill_label != null and is_instance_valid(skill_label):
+			var left := GameManager.get_skill_cooldown(entry[0])
+			skill_label.text = "%d" % ceili(left) if left > 0.0 else "Q"
+			skill_label.add_theme_color_override(&"font_color", Color(0.7, 0.75, 0.85) if left > 0.0 else Color(1.0, 0.85, 0.4))
 	for relic in GameManager.relics:
 		var label := _relic_labels.get(relic.id) as Label
 		if label != null and is_instance_valid(label):

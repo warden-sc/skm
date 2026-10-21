@@ -4225,6 +4225,64 @@ func _test_dialogue(main: Node2D) -> void:
 	Story.cue.disconnect(on_cue)
 	await get_tree().create_timer(StoryCues.GLOW_TIME + 0.2).timeout
 	_check((main.get_node("Entities/Player") as Node).get_children().filter(func(c: Node) -> bool: return c is StoryCues.EquipmentGlow).is_empty() and (main.get_node("Entities/Player") as CanvasItem).modulate == Color.WHITE, "장면이 끝나면 사라지고 용사의 빛도 원래대로")
+	# 키 고정: 가드 = 우클릭 · 대시 = Shift · 인벤토리 = Tab · 무기 = 1/2/3 · 스킬 = Q · 대화 = Enter
+	var binds := func(action: StringName) -> Array:
+		var out := []
+		for e in InputMap.action_get_events(action):
+			if e is InputEventKey:
+				out.append("key:%d" % (e as InputEventKey).physical_keycode)
+			elif e is InputEventMouseButton:
+				out.append("mouse:%d" % (e as InputEventMouseButton).button_index)
+			else:
+				out.append("other")
+		return out
+	_check(binds.call(&"guard") == ["mouse:%d" % MOUSE_BUTTON_RIGHT], "방어 가드: 마우스 오른쪽 버튼만 %s" % str(binds.call(&"guard")))
+	_check(binds.call(&"dash") == ["key:%d" % KEY_SHIFT], "대시: Shift 만 %s" % str(binds.call(&"dash")))
+	_check(binds.call(&"inventory") == ["key:%d" % KEY_TAB], "인벤토리: Tab 만 %s" % str(binds.call(&"inventory")))
+	_check(binds.call(&"weapon_slot_1") == ["key:%d" % KEY_1] and binds.call(&"weapon_slot_2") == ["key:%d" % KEY_2] and binds.call(&"weapon_slot_3") == ["key:%d" % KEY_3], "무기 칸: 1 · 2 · 3 키만")
+	_check(binds.call(&"skill") == ["key:%d" % KEY_Q], "액티브 스킬: Q")
+	_check(binds.call(&"dialogue_next") == ["key:%d" % KEY_ENTER, "key:%d" % KEY_KP_ENTER], "대화 넘기기: Enter (숫자패드 Enter 포함)")
+	# 대화는 Enter 로만 넘어감 + 오른쪽 위 [스킵] 버튼
+	Story.load_text("[키 테스트]\n성기사: 하나\n성기사: 둘 — 이 줄은 일부러 길게 써서 글자가 한 자씩 나오는 동안 Enter 를 눌러 보는 대사입니다\n성기사: 셋\n@연출: 장비빛남\n성기사: 넷\n")
+	cue_seen.clear()
+	Story.cue.connect(on_cue)
+	_check(Story.play("키 테스트"), "키 테스트 대화 시작")
+	box = Story.get_box()
+	box.advance()  # 글자를 다 보이게
+	for other in [&"interact", &"attack", &"ui_accept", &"dash", &"skill"]:
+		await _press_action(other)
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.position = Vector2(4, 4)
+	click.pressed = true
+	Input.parse_input_event(click)
+	await get_tree().process_frame
+	click = click.duplicate() as InputEventMouseButton
+	click.pressed = false
+	Input.parse_input_event(click)
+	await get_tree().process_frame
+	_check(Story.is_playing() and box.current_line()["text"] == "하나", "E · 클릭 · Space · Shift · Q 로는 대사가 넘어가지 않음")
+	await _press_action(&"dialogue_next")
+	_check(box.current_line()["text"].begins_with("둘") and box.is_typing(), "Enter → 다음 대사")
+	var enter := InputEventKey.new()
+	enter.physical_keycode = KEY_ENTER
+	enter.keycode = KEY_ENTER
+	enter.pressed = true
+	Input.parse_input_event(enter)
+	await get_tree().process_frame
+	enter = enter.duplicate() as InputEventKey
+	enter.pressed = false
+	Input.parse_input_event(enter)
+	await get_tree().process_frame
+	_check(box.current_line()["text"].begins_with("둘") and not box.is_typing(), "실제 Enter 키: 글자가 나오는 중이면 먼저 다 보여 줌")
+	var skip_rect := box.skip_button.get_global_rect()
+	var view_size := box.skip_button.get_viewport_rect().size
+	_check(box.skip_button.visible and box.skip_button.is_visible_in_tree() and skip_rect.end.x > view_size.x * 0.75 and skip_rect.position.y < view_size.y - 96.0 and skip_rect.position.y > view_size.y * 0.5, "대화창 오른쪽 위에 [스킵] 버튼 (%s)" % str(skip_rect))
+	_check(box.skip_button.text.contains("스킵"), "버튼 글자 「스킵」")
+	box.skip_button.pressed.emit()
+	_check(not Story.is_playing() and not get_tree().paused and cue_seen == ["장비빛남"], "[스킵] → 남은 대사를 건너뛰고 닫힘 (연출 장면은 그대로 · 게임 다시 움직임)")
+	Story.cue.disconnect(on_cue)
+	await get_tree().create_timer(StoryCues.GLOW_TIME + 0.2).timeout
 	# 실제 대본
 	Story.load_file(Story.STORY_PATH)
 	var speakers_ok := true
@@ -4814,8 +4872,9 @@ func _run() -> void:
 	_check(not _gm.is_equipped(ItemDB.get_item(&"rusty_sword")) and _gm.owns_item(&"rusty_sword"), "교체된 녹슨 검은 가방으로")
 	await _press_action(&"weapon_slot_2")
 	_check(_gm.equipped_weapon == bow and _gm.active_weapon_slot == 1, "2 키 → 활")
-	await _press_action(&"weapon_next")
-	_check(_gm.equipped_weapon == staff, "Q → 다음 칸(지팡이)")
+	await _press_action(&"weapon_slot_3")
+	_check(_gm.equipped_weapon == staff, "3 키 → 지팡이")
+	_check(not InputMap.has_action(&"weapon_next") and not InputMap.has_action(&"weapon_prev"), "무기 전환은 1 · 2 · 3 키로만 (Q · 휠 순환 없음)")
 	_check(player.get_node("WeaponPivot/SwingPivot/WeaponSprite").texture == staff.icon, "손에 든 무기 스프라이트 교체")
 
 	print("[활 - 시위를 당긴 뒤 발사]")
@@ -4892,6 +4951,98 @@ func _run() -> void:
 		side.despawn()
 		await _frames(5)
 	_check(ratios_ok, "지팡이 6종 주변 피해 모두 80%")
+
+	print("[액티브 스킬 Q - 레어 등급 이상 무기]")
+	var skill_weapons: Dictionary = {}
+	var low_weapon: WeaponData = null
+	var skill_flags_ok := true
+	for item in ItemDB.get_all():
+		var sw := item as WeaponData
+		if sw == null:
+			continue
+		if sw.has_skill() != (sw.rarity >= ItemData.Rarity.EPIC) or sw.has_skill() != sw.get_stat_text().contains("[Q] 스킬"):
+			skill_flags_ok = false
+		if sw.rarity == ItemData.Rarity.EPIC and not skill_weapons.has(sw.weapon_type):
+			skill_weapons[sw.weapon_type] = sw
+		if sw.rarity == ItemData.Rarity.RARE and low_weapon == null:
+			low_weapon = sw
+	_check(skill_flags_ok, "레어 · 전설 · 신화 무기에만 스킬 (장비 설명에 [Q] 스킬 줄)")
+	_check(skill_weapons.size() == 4 and low_weapon != null, "레어 등급 검 · 단검 · 활 · 지팡이가 모두 있음")
+	var legend_sword: WeaponData = null
+	var mythic_sword: WeaponData = null
+	for item in ItemDB.get_all():
+		var lw := item as WeaponData
+		if lw != null and lw.weapon_type == WeaponData.WeaponType.SWORD:
+			if lw.rarity == ItemData.Rarity.LEGENDARY:
+				legend_sword = lw
+			elif lw.rarity == ItemData.Rarity.MYTHIC:
+				mythic_sword = lw
+	_check(legend_sword != null and mythic_sword != null and skill_weapons[WeaponData.WeaponType.SWORD].get_skill_multiplier() < legend_sword.get_skill_multiplier()
+		and legend_sword.get_skill_multiplier() < mythic_sword.get_skill_multiplier(), "등급이 높을수록 스킬이 셈 (레어 < 전설 < 신화)")
+	_check(InputMap.action_get_events(&"skill").size() == 1 and (InputMap.action_get_events(&"skill")[0] as InputEventKey).physical_keycode == KEY_Q, "스킬 키는 Q")
+	_check(not attack.use_skill(low_weapon) and _gm.get_skill_cooldown(low_weapon) == 0.0, "희귀 이하 무기는 Q 를 눌러도 스킬 없음")
+	var skill_aim := player.get_aim_direction()
+	var skill_origin := player.get_attack_origin()
+	for skill_type in [WeaponData.WeaponType.SWORD, WeaponData.WeaponType.DAGGER, WeaponData.WeaponType.BOW, WeaponData.WeaponType.STAFF]:
+		var sw: WeaponData = skill_weapons[skill_type]
+		_gm.skill_cooldowns.clear()
+		var spots: Array[Vector2] = []
+		match skill_type:
+			WeaponData.WeaponType.SWORD, WeaponData.WeaponType.DAGGER:
+				# 앞 · 뒤 · 옆 — 360° 모두
+				for dir in [skill_aim, -skill_aim, skill_aim.orthogonal()]:
+					spots.append(skill_origin + dir * 30.0)
+			WeaponData.WeaponType.BOW:
+				# 한 줄로 선 셋 — 화살이 꿰뚫음
+				for dist in [40.0, 60.0, 80.0]:
+					spots.append(player.get_muzzle_position() + skill_aim * dist)
+			WeaponData.WeaponType.STAFF:
+				var blast_at := player.get_aim_point(sw.projectile_range)
+				spots.append(blast_at)
+				spots.append(blast_at + skill_aim.orthogonal() * 30.0)
+		var targets: Array[Enemy] = []
+		for spot in spots:
+			var target := slime_scene.instantiate() as Enemy
+			target.move_speed = 0.0
+			target.max_hp = 99999999
+			stage._add_enemy(target, _enemy_pos_for_hit_center(spot), camp_arena)
+			targets.append(target)
+		await _frames(3)
+		var used: bool = attack.use_skill(sw)
+		var after_first: Array[int] = []
+		for t in targets:
+			after_first.append(t.hp)
+		for f in 40:
+			await get_tree().physics_frame
+		var all_hit := true
+		for t in targets:
+			all_hit = all_hit and is_instance_valid(t) and t.hp < t.max_hp
+		_check(used and all_hit, "%s(%s) [Q] %s: 맞힌 적 %d명 모두 피해" % [sw.display_name, sw.get_rarity_name(), sw.get_skill_name(), targets.size()])
+		if skill_type == WeaponData.WeaponType.DAGGER:
+			_check(targets[0].hp < after_first[0], "그림자 난무: 첫 베기 뒤에도 연달아 벰")
+		_check(is_equal_approx(_gm.get_skill_cooldown(sw), sw.get_skill_cooldown()) or _gm.get_skill_cooldown(sw) > sw.get_skill_cooldown() - 1.0, "스킬을 쓰면 대기시간 %d초" % roundi(sw.get_skill_cooldown()))
+		_check(not attack.use_skill(sw), "대기시간 동안은 다시 못 씀")
+		for t in targets:
+			if is_instance_valid(t):
+				t.despawn()
+		await _frames(5)
+	# 실제 Q 키 · HUD 단축칸 대기시간 표시
+	var skill_sword: WeaponData = skill_weapons[WeaponData.WeaponType.SWORD]
+	_gm.skill_cooldowns.clear()
+	var keep_sword := _gm.weapon_slots[0]
+	_gm.add_item(skill_sword)
+	_gm.equip_item(skill_sword)
+	await _frames(12)
+	var skill_label := hud.get_node("%Hotbar").get_child(0).get_node_or_null("SkillLabel") as Label
+	_check(skill_label != null and skill_label.text == "Q", "HUD: 레어 이상 무기 칸에 「Q」(스킬 준비됨)")
+	await _press_action(&"skill")
+	await _frames(3)
+	_check(_gm.get_skill_cooldown(skill_sword) > 0.0, "Q 키 → 손에 든 무기의 스킬 (%s)" % skill_sword.get_skill_name())
+	_check(skill_label != null and skill_label.text.is_valid_int(), "HUD: 스킬 대기시간 남은 초 표시 (%s)" % (skill_label.text if skill_label != null else "?"))
+	_gm.skill_cooldowns.clear()
+	if keep_sword != null:
+		_gm.equip_item(keep_sword)
+	await _frames(70)
 	# 영창 중 조준한 곳에 범위 원 표시
 	_gm.add_item(ItemDB.get_item(&"ignis_staff"))
 	_gm.equip_item(ItemDB.get_item(&"ignis_staff"))

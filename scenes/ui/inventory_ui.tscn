@@ -162,7 +162,7 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 8
-text = "[I] / [Tab] / [ESC] 닫기  ·  장착 칸을 클릭하면 해제  ·  판매는 야영지 상인에게서"
+text = "[Tab] / [ESC] 닫기  ·  장착 칸을 클릭하면 해제  ·  판매는 야영지 상인에게서"
 
 [node name="InvCloseButton" type="Button" parent="Panel/Margin/VBox/Footer"]
 unique_name_in_owner = true

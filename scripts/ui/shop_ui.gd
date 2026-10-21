@@ -90,7 +90,7 @@ func open(shop_name: String, stock_ids: Array) -> void:
 		if item != null:
 			_stock.append(item)
 	_title.text = shop_name
-	_detail.text = "장비에 마우스를 올리면 상세 정보가 표시됩니다.  장착 중인 장비는 인벤토리[I]에서 해제한 뒤 팔 수 있습니다."
+	_detail.text = "장비에 마우스를 올리면 상세 정보가 표시됩니다.  장착 중인 장비는 인벤토리[Tab]에서 해제한 뒤 팔 수 있습니다."
 	_refresh()
 	show()
 	Net.pause_tree(get_tree(), true)

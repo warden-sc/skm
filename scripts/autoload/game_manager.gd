@@ -5,7 +5,8 @@ extends Node
 ## - 값이 바뀌면 항상 시그널을 발행하므로 HUD/상점/인벤토리 UI 는 시그널만 구독하면 실시간으로 갱신됩니다.
 ##
 ## 장비 칸
-##   무기 3칸   : 검(단검 포함) / 활 / 지팡이 — 종류별로 1개씩. 1/2/3·Q 로 사용할 무기를 고릅니다.
+##   무기 3칸   : 검(단검 포함) / 활 / 지팡이 — 종류별로 1개씩. 1/2/3 으로 사용할 무기를 고릅니다.
+##              레어 등급 이상 무기에는 액티브 스킬이 있어 Q 로 씀 (무기마다 대기시간 따로 — skill_cooldowns)
 ##   방어구 4칸 : 방패 / 투구 / 갑옷 / 신발(방어력 + 이동 속도)
 ##   장신구 3칸 : 팔찌(치명타 피해·방어력 관통) / 반지(치명타 확률·공격력) / 펜던트(최대 체력·체력 재생)
 ##
@@ -150,6 +151,8 @@ var _set_bonus: Dictionary = {}
 ## 신화 사용 아이템 (원초의 불꽃 · 최후의 나팔)과 남은 대기시간 { id: 초 }
 var relics: Array[RelicData] = []
 var relic_cooldowns: Dictionary = {}
+## 무기 액티브 스킬(Q) 남은 대기시간 { 무기 id: 초 }
+var skill_cooldowns: Dictionary = {}
 ## 잠시 붙는 효과 (포션 · 원초의 불꽃) { 이름: {"effects": {...}, "left": 초, "total": 초} }
 ##   effects: attack(공격력 +%) · reduction(받는 피해 -%) · regen_pct(초당 최대 체력 %) · move(이속 +%) · burn_on_hit(맞힌 적 화상 비율) · burn_immune
 var _buffs: Dictionary = {}
@@ -211,6 +214,7 @@ func reset_game() -> void:
 	_set_bonus = {}
 	relics.clear()
 	relic_cooldowns.clear()
+	skill_cooldowns.clear()
 	_buffs.clear()
 	_buff_regen_carry = 0.0
 	stolen_weapon = null
@@ -900,6 +904,8 @@ func get_buff_text() -> String:
 func tick_buffs(delta: float) -> void:
 	for id in relic_cooldowns.keys():
 		relic_cooldowns[id] = maxf(float(relic_cooldowns[id]) - delta, 0.0)
+	for id in skill_cooldowns.keys():
+		skill_cooldowns[id] = maxf(float(skill_cooldowns[id]) - delta, 0.0)
 	if _buffs.is_empty():
 		return
 	var regen := get_buff_value("regen_pct")
@@ -930,6 +936,15 @@ func add_relic(relic: RelicData) -> bool:
 
 func has_relic(relic_id: StringName) -> bool:
 	return relics.any(func(r: RelicData) -> bool: return r.id == relic_id)
+
+
+## 무기 액티브 스킬(Q)의 남은 대기시간
+func get_skill_cooldown(weapon: WeaponData) -> float:
+	return float(skill_cooldowns.get(weapon.id, 0.0)) if weapon != null else 0.0
+
+
+func start_skill_cooldown(weapon: WeaponData) -> void:
+	skill_cooldowns[weapon.id] = weapon.get_skill_cooldown()
 
 
 func get_relic_cooldown(relic: RelicData) -> float:
@@ -1049,7 +1064,7 @@ func select_weapon_slot(slot: int) -> bool:
 	return true
 
 
-## Q / 마우스 휠: 장착된 무기 칸을 순서대로 순환
+## 장착된 무기 칸을 순서대로 순환 (키는 1/2/3 직접 선택만 — 테스트 · 내부용)
 func cycle_weapon(step: int) -> void:
 	for i in range(1, weapon_slots.size() + 1):
 		var slot := wrapi(active_weapon_slot + step * i, 0, weapon_slots.size())

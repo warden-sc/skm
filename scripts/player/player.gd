@@ -389,10 +389,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			GameManager.show_notice("고대 용의 피가 없습니다", Color(1.0, 0.6, 0.5))
 		else:
 			GameManager.use_potion(blood)
-	elif event.is_action_pressed(&"weapon_next"):
-		GameManager.cycle_weapon(1)
-	elif event.is_action_pressed(&"weapon_prev"):
-		GameManager.cycle_weapon(-1)
 	else:
 		for slot in 3:
 			if event.is_action_pressed(StringName("weapon_slot_%d" % (slot + 1))):
@@ -793,6 +789,11 @@ func is_invincible() -> bool:
 	if net_mode != NetMode.LOCAL:
 		return bool(_ns("invincible", false))
 	return _invincible_left > 0.0 or _dash_time_left > 0.0
+
+
+## 액티브 스킬[Q]을 쓰면 머리 위에 기술 이름
+func show_skill_name(weapon: WeaponData) -> void:
+	FloatingText.spawn(self, global_position + Vector2(0, -26), weapon.get_skill_name() + "!", weapon.get_rarity_color(), true)
 
 
 ## 원거리 공격 시 무기를 살짝 튕기는 연출

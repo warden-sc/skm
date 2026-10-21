@@ -1,7 +1,7 @@
 class_name Spectator
 extends Camera2D
 ## 멀티플레이에서 쓰러진 용사의 관전 카메라 (유령 모드).
-## 살아 있는 동료를 따라다니며 보여 주고, [Q] / 마우스 휠 / 좌클릭으로 다른 동료로 바꿉니다.
+## 살아 있는 동료를 따라다니며 보여 주고, 좌클릭 · [Q] → 다음 동료, 우클릭 → 이전 동료.
 ## 동료가 보스를 쓰러뜨리고 다음 스테이지 야영지에 도착하면 부활 → 이 카메라는 사라지고 내 카메라로 돌아감.
 ## 모두 쓰러지면(전멸) 게임 오버 — 그대로 남아 마지막 장면을 보여 줌.
 
@@ -86,13 +86,13 @@ func _process(_delta: float) -> void:
 	if Net.party_wiped:
 		_label.text = ""
 	elif target != null:
-		_label.text = "유령 — 관전 중: %s   ([Q] · 휠 · 클릭: 다른 동료)\n동료가 보스를 쓰러뜨리면 다음 스테이지 야영지에서 장비 · 골드 그대로 부활합니다" % target_name
+		_label.text = "유령 — 관전 중: %s   (좌클릭 · Q: 다음 동료 · 우클릭: 이전)\n동료가 보스를 쓰러뜨리면 다음 스테이지 야영지에서 장비 · 골드 그대로 부활합니다" % target_name
 	else:
 		_label.text = "유령 — 살아 있는 동료가 없습니다"
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(&"weapon_next") or event.is_action_pressed(&"attack"):
+	if event.is_action_pressed(&"skill") or event.is_action_pressed(&"attack"):
 		cycle(1)
-	elif event.is_action_pressed(&"weapon_prev"):
+	elif event.is_action_pressed(&"guard"):
 		cycle(-1)

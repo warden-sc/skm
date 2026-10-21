@@ -1,7 +1,8 @@
 class_name DialogueBox
 extends CanvasLayer
 ## 대화창: 화면 아래 패널에 초상화 · 이름 · 대사를 한 줄씩 보여 줌 (글자가 한 자씩 나옴).
-## [E] · 공격 · Enter · 마우스 클릭 → 글자가 다 나오지 않았으면 한 번에 보여 주고, 다 나왔으면 다음 줄.
+## Enter 키로만 넘김 → 글자가 다 나오지 않았으면 한 번에 보여 주고, 다 나왔으면 다음 줄.
+## 오른쪽 위 [스킵] 버튼 → 이 대화를 끝까지 건너뜀 (@연출 장면은 그대로 틀어짐).
 ## 일시정지 중에도 움직이도록 PROCESS_MODE_ALWAYS. 마지막 줄을 넘기면 done.
 
 signal done
@@ -19,6 +20,7 @@ var _portrait: TextureRect
 var _name: Label
 var _text: Label
 var _hint: Label
+var skip_button: Button
 var _face: String = ""
 var _face_left: float = 0.0
 var _face_texture: Texture2D
@@ -49,6 +51,33 @@ func _ready() -> void:
 	style.set_content_margin_all(8)
 	panel.add_theme_stylebox_override(&"panel", style)
 	root.add_child(panel)
+	# 대화창 오른쪽 위 모서리에 걸친 [스킵] 버튼
+	skip_button = Button.new()
+	skip_button.text = "스킵 ▶▶"
+	skip_button.focus_mode = Control.FOCUS_NONE
+	skip_button.anchor_left = 1.0
+	skip_button.anchor_right = 1.0
+	skip_button.anchor_top = 1.0
+	skip_button.anchor_bottom = 1.0
+	skip_button.offset_left = -96.0
+	skip_button.offset_right = -30.0
+	skip_button.offset_top = -112.0
+	skip_button.offset_bottom = -92.0
+	skip_button.add_theme_font_size_override(&"font_size", 9)
+	var skip_style := StyleBoxFlat.new()
+	skip_style.bg_color = Color(0.14, 0.11, 0.2, 0.97)
+	skip_style.border_color = Color(0.95, 0.8, 0.45)
+	skip_style.set_border_width_all(1)
+	skip_style.set_corner_radius_all(3)
+	skip_style.set_content_margin_all(2)
+	var skip_hover := skip_style.duplicate() as StyleBoxFlat
+	skip_hover.bg_color = Color(0.3, 0.24, 0.4, 0.97)
+	skip_button.add_theme_stylebox_override(&"normal", skip_style)
+	skip_button.add_theme_stylebox_override(&"hover", skip_hover)
+	skip_button.add_theme_stylebox_override(&"pressed", skip_hover)
+	skip_button.add_theme_color_override(&"font_color", Color(1.0, 0.88, 0.55))
+	skip_button.pressed.connect(skip_all)
+	root.add_child(skip_button)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override(&"separation", 10)
 	panel.add_child(row)
@@ -82,7 +111,7 @@ func _ready() -> void:
 	_text.add_theme_font_size_override(&"font_size", 11)
 	column.add_child(_text)
 	_hint = Label.new()
-	_hint.text = "▼ [E] 다음"
+	_hint.text = "▼ [Enter] 다음"
 	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_hint.add_theme_font_size_override(&"font_size", 8)
 	_hint.add_theme_color_override(&"font_color", Color(0.8, 0.78, 0.7))
@@ -149,18 +178,17 @@ func _process(delta: float) -> void:
 		_text.visible_characters = mini(int(_typed), _text.text.length())
 	else:
 		_hint.visible = true
-		_hint.text = "▼ [E] 다음" if _index < _lines.size() - 1 else "■ [E] 닫기"
+		_hint.text = "▼ [Enter] 다음" if _index < _lines.size() - 1 else "■ [Enter] 닫기"
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
-	var pressed := event.is_action_pressed(&"interact") or event.is_action_pressed(&"attack") or event.is_action_pressed(&"ui_accept")
-	if not pressed and event is InputEventMouseButton:
-		pressed = (event as InputEventMouseButton).pressed
-	if pressed:
+	if event.is_action_pressed(&"dialogue_next"):
 		get_viewport().set_input_as_handled()
 		advance()
+	elif event is InputEventMouseButton or event.is_action_pressed(&"interact") or event.is_action_pressed(&"attack"):
+		get_viewport().set_input_as_handled()  # 다른 키 · 클릭은 넘기지 않음 (뒤의 게임으로도 새지 않게)
 
 
 ## 다음으로 (테스트에서도 직접 호출)
@@ -175,6 +203,12 @@ func advance() -> void:
 		_finish()
 	else:
 		_show_line()
+
+
+## [스킵] — 남은 대사를 모두 건너뛰고 닫음
+func skip_all() -> void:
+	while visible:
+		advance()
 
 
 func _finish() -> void:

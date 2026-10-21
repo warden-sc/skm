@@ -19,11 +19,21 @@ extends Node
 ##   - 지팡이: 좌클릭 유지 → windup_time 동안 영창, 구슬에 마력이 모이고 조준한 곳에 범위 원 표시 → 시전
 ##             (지팡이마다 마법이 다름: 마력 폭발 / 서리 폭발 / 점액 웅덩이 / 업화 / 거대 슬라임 / 별똥별)
 ##   - 등급(fx level 0~3)이 높을수록 베기 잔상 / 파티클 / 폭발 이펙트가 화려해집니다.
+##   - 액티브 스킬 [Q]: 레어 등급 이상 무기만 (WeaponData.SKILLS). 무기마다 대기시간이 따로 (GameManager.skill_cooldowns)
+##       검 = 회전 베기 / 단검 = 그림자 난무 / 활 = 화살비 / 지팡이 = 대폭발
 
 ## 근접 판정 시 적의 몸 크기를 감안해 사거리에 더해 주는 여유(px)
 const MELEE_BODY_MARGIN := 6.0
 ## 이 거리 안에 붙은 적은 각도와 상관없이 맞습니다 (몸에 겹친 적이 빗나가지 않도록)
 const MELEE_POINT_BLANK := 14.0
+## 회전 베기 · 그림자 난무가 닿는 거리 (무기 리치에 곱함, 최소 SKILL_MIN_REACH)
+const SKILL_REACH_MULTIPLIER := 1.8
+const SKILL_MIN_REACH := 44.0
+## 대폭발 반경 (무기 폭발 반경에 곱함, 최소 SKILL_MIN_BLAST)
+const SKILL_BLAST_MULTIPLIER := 2.2
+const SKILL_MIN_BLAST := 48.0
+## 그림자 난무 한 번 베는 간격(초)
+const SKILL_FLURRY_INTERVAL := 0.08
 ## 시위 당기기 / 영창 중 이동속도 배율
 const WINDUP_MOVE_MULTIPLIER := 0.6
 ## 등급별(0~3) 근접 명중 파티클 수
@@ -51,6 +61,9 @@ func _physics_process(delta: float) -> void:
 		_update_windup(delta)
 		return
 	if player == null or not player.can_attack():
+		return
+	if Input.is_action_just_pressed(&"skill"):
+		use_skill()
 		return
 	if Input.is_action_pressed(&"attack") and _cooldown_left <= 0.0:
 		var weapon := GameManager.equipped_weapon
@@ -81,6 +94,37 @@ func perform_attack(weapon: WeaponData = null) -> bool:
 		_cooldown_left = weapon.attack_cooldown
 		GameManager.report_player_attacked(weapon, player.get_aim_direction())
 	return did_attack
+
+
+## 손에 든 무기의 액티브 스킬 [Q]. 실제로 썼으면 true (스킬이 없거나 대기 중이면 안내만)
+func use_skill(weapon: WeaponData = null) -> bool:
+	if weapon == null:
+		weapon = GameManager.equipped_weapon
+	if weapon == null:
+		return false
+	if not weapon.has_skill():
+		GameManager.show_notice("레어 등급 이상 무기만 스킬[Q]이 있습니다", Color(0.8, 0.8, 0.9))
+		return false
+	var left := GameManager.get_skill_cooldown(weapon)
+	if left > 0.0:
+		GameManager.show_notice("%s — %.0f초 뒤에 다시 쓸 수 있다" % [weapon.get_skill_name(), ceilf(left)], Color(0.8, 0.8, 0.9))
+		return false
+	cancel_windup()
+	match weapon.weapon_type:
+		WeaponData.WeaponType.SWORD:
+			_skill_whirlwind(weapon)
+		WeaponData.WeaponType.DAGGER:
+			_skill_flurry(weapon)
+		WeaponData.WeaponType.BOW:
+			if not _skill_volley(weapon):
+				return false
+		WeaponData.WeaponType.STAFF:
+			_skill_blast(weapon)
+	GameManager.start_skill_cooldown(weapon)
+	_cooldown_left = maxf(_cooldown_left, weapon.attack_cooldown)
+	player.show_skill_name(weapon)
+	GameManager.report_player_attacked(weapon, player.get_aim_direction())
+	return true
 
 
 ## 진행 중인 시위 당기기 / 영창 취소
@@ -177,6 +221,107 @@ func _play_swing_fx(weapon: WeaponData, origin: Vector2, aim: Vector2, half_arc:
 	if level >= 3:
 		Fx.shockwave(player, origin, color, weapon.melee_range * 1.2, 0.25)
 		player.shake_camera(2.0)
+
+
+# ============================================================ 액티브 스킬
+func _skill_reach(weapon: WeaponData) -> float:
+	return maxf(weapon.melee_range * SKILL_REACH_MULTIPLIER, SKILL_MIN_REACH)
+
+
+## 스킬 한 타 — 무기 공격력(장비 · 버프 포함) x 스킬 배율
+func _skill_roll(weapon: WeaponData) -> Dictionary:
+	var roll := GameManager.roll_weapon_damage(weapon)
+	roll["amount"] = maxi(1, roundi(float(roll["amount"]) * weapon.get_skill_multiplier()))
+	return roll
+
+
+## 주위(원) 안의 적을 한 번씩 벰. 맞힌 적 수
+func _hit_around(weapon: WeaponData, origin: Vector2, reach: float, kind: Enemy.HitKind) -> int:
+	var hits := 0
+	for node in player.get_tree().get_nodes_in_group(&"enemies"):
+		var enemy := node as Enemy
+		if enemy == null or enemy.is_dead():
+			continue
+		var to_enemy := enemy.get_hit_center() - origin
+		if to_enemy.length() > reach + MELEE_BODY_MARGIN:
+			continue
+		if not enemy.can_be_hit_by(kind):
+			enemy.show_immune()
+			continue
+		var roll := _skill_roll(weapon)
+		var push := to_enemy.normalized() if to_enemy != Vector2.ZERO else player.get_aim_direction()
+		Enemy.hit(enemy, roll["amount"], push * weapon.knockback * 1.5, roll["crit"], roll["armor_pen"])
+		Enemy.on_player_hit(enemy, roll["amount"])
+		Fx.burst(player, enemy.get_hit_center(), weapon.effect_color, 12, 90.0, 0.4, Elements.gravity_of(weapon.element))
+		hits += 1
+	return hits
+
+
+## 검: 회전 베기 — 몸을 한 바퀴 돌리며 주위 360° 를 벰
+func _skill_whirlwind(weapon: WeaponData) -> void:
+	var origin := player.get_attack_origin()
+	var reach := _skill_reach(weapon)
+	player.play_melee_swing(weapon)
+	var color := weapon.effect_color
+	for i in 12:
+		var pos := origin + Vector2.RIGHT.rotated(TAU * i / 12.0) * reach * 0.8
+		Fx.burst(player, pos, color, 4, 50.0, 0.4, Elements.gravity_of(weapon.element))
+	Fx.shockwave(player, origin, color, reach * 1.1, 0.35)
+	Fx.flash(player, origin, color, reach * 0.7, 0.2)
+	var hits := _hit_around(weapon, origin, reach, Enemy.HitKind.MELEE)
+	player.shake_camera(3.0 + 0.5 * hits)
+
+
+## 단검: 그림자 난무 — 짧은 간격으로 다섯 번 주위를 벰
+func _skill_flurry(weapon: WeaponData) -> void:
+	var count := int(WeaponData.SKILLS[WeaponData.WeaponType.DAGGER]["hits"])
+	var reach := _skill_reach(weapon)
+	for i in count:
+		if i > 0:
+			await player.get_tree().create_timer(SKILL_FLURRY_INTERVAL, false).timeout
+			if not is_instance_valid(player) or GameManager.is_player_dead:
+				return
+		var origin := player.get_attack_origin()
+		player.play_melee_swing(weapon)
+		var angle := TAU * i / float(count)
+		Fx.cross_glint(player, origin + Vector2.RIGHT.rotated(angle) * reach * 0.5, weapon.effect_color, reach * 0.8, 0.2)
+		_hit_around(weapon, origin, reach, Enemy.HitKind.MELEE)
+	player.shake_camera(3.0)
+
+
+## 활: 화살비 — 꿰뚫는 화살 9발을 부채꼴로
+func _skill_volley(weapon: WeaponData) -> bool:
+	var pool := _get_pool()
+	if pool == null:
+		return false
+	var origin := player.get_muzzle_position()
+	var base_dir := player.get_aim_direction()
+	var count := int(WeaponData.SKILLS[WeaponData.WeaponType.BOW]["hits"])
+	var spread := deg_to_rad(60.0)
+	for i in count:
+		var t := float(i) / float(count - 1) - 0.5
+		var spec := ProjectileSpec.from_weapon(weapon, origin, base_dir.rotated(spread * t), _skill_roll(weapon))
+		spec.pierce = weapon.pierce + 3
+		spec.max_distance = weapon.projectile_range * 1.3
+		spec.fx_level = 3
+		pool.spawn(spec)
+	Fx.flash(player, origin, weapon.effect_color, 18.0, 0.2)
+	player.play_attack_feedback()
+	player.shake_camera(2.0)
+	return true
+
+
+## 지팡이: 대폭발 — 조준한 곳에 거대한 마력 폭발
+func _skill_blast(weapon: WeaponData) -> void:
+	var radius := maxf(weapon.explosion_radius * SKILL_BLAST_MULTIPLIER, SKILL_MIN_BLAST)
+	var at := player.get_aim_point(weapon.projectile_range)
+	var roll := _skill_roll(weapon)
+	Fx.explosion(player, at, weapon.effect_color, radius, 3, Elements.gravity_of(weapon.element))
+	Fx.shockwave(player, at, weapon.effect_color, radius * 1.15, 0.4)
+	Fx.pillar(player, at, weapon.effect_color, radius * 0.5, radius * 2.0, 0.45)
+	Spells.damage_area(player, at, radius, roll["amount"], roll["amount"], roll["armor_pen"], weapon.knockback, null, weapon.slow_duration, roll["crit"])
+	player.play_attack_feedback()
+	player.shake_camera(5.0)
 
 
 # ============================================================ 원거리

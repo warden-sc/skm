@@ -41,6 +41,20 @@ const TYPE_NAMES := {
 	WeaponType.DAGGER: "단검",
 }
 
+## 액티브 스킬 (레어 등급 이상 무기만, Q) — 종류별 기술 · 대기시간(초) · 공격력 배율(레어 기준)
+##   검     : 회전 베기   — 주위 360° 의 모든 적을 크게 벰
+##   단검   : 그림자 난무 — 주위의 적을 다섯 번 연달아 벰
+##   활     : 화살비      — 꿰뚫는 화살 9발을 부채꼴로 쏨
+##   지팡이 : 대폭발      — 조준한 곳에 거대한 마력 폭발
+const SKILLS := {
+	WeaponType.SWORD: {"name": "회전 베기", "desc": "주위 360°의 모든 적을 크게 벰", "cooldown": 8.0, "mult": 3.0, "hits": 1},
+	WeaponType.DAGGER: {"name": "그림자 난무", "desc": "주위의 적을 다섯 번 연달아 벰", "cooldown": 7.0, "mult": 0.9, "hits": 5},
+	WeaponType.BOW: {"name": "화살비", "desc": "꿰뚫는 화살 9발을 부채꼴로 쏨", "cooldown": 9.0, "mult": 1.6, "hits": 9},
+	WeaponType.STAFF: {"name": "대폭발", "desc": "조준한 곳에 거대한 마력 폭발", "cooldown": 10.0, "mult": 4.0, "hits": 1},
+}
+## 등급이 오를수록 스킬도 세짐 (레어 x1 · 전설 x1.4 · 신화 x2)
+const SKILL_RARITY_MULT := {ItemData.Rarity.EPIC: 1.0, ItemData.Rarity.LEGENDARY: 1.4, ItemData.Rarity.MYTHIC: 2.0}
+
 @export var weapon_type: WeaponType = WeaponType.SWORD
 @export var element: Elements.Type = Elements.Type.NONE
 ## 휘두르기 이펙트 / 투사체 색
@@ -122,6 +136,35 @@ func get_target_radius() -> float:
 	return explosion_radius
 
 
+## 액티브 스킬이 있는지 (레어 등급 이상)
+func has_skill() -> bool:
+	return rarity >= ItemData.Rarity.EPIC
+
+
+func get_skill_name() -> String:
+	return String(SKILLS[weapon_type]["name"]) if has_skill() else ""
+
+
+func get_skill_cooldown() -> float:
+	return float(SKILLS[weapon_type]["cooldown"])
+
+
+## 스킬 한 타의 공격력 배율 (등급 반영)
+func get_skill_multiplier() -> float:
+	if not has_skill():
+		return 0.0
+	return float(SKILLS[weapon_type]["mult"]) * float(SKILL_RARITY_MULT.get(rarity, 1.0))
+
+
+## 「[Q] 회전 베기 — 주위 360°의 모든 적을 크게 벰 (공격력 x3.0 · 대기 8초)」
+func get_skill_text() -> String:
+	if not has_skill():
+		return ""
+	var info: Dictionary = SKILLS[weapon_type]
+	var hits := int(info["hits"])
+	return "[Q] 스킬 %s — %s (공격력 x%.1f%s · 대기 %d초)" % [info["name"], info["desc"], get_skill_multiplier(), " x%d" % hits if hits > 1 else "", roundi(get_skill_cooldown())]
+
+
 ## 실제 1타의 데미지를 굴립니다. (치명타 포함)
 ## crit_bonus / crit_damage_bonus: 반지·팔찌 등으로 더해지는 치명타 확률 / 치명타 배율
 func roll_damage(multiplier: float = 1.0, crit_bonus: float = 0.0, crit_damage_bonus: float = 0.0) -> Dictionary:
@@ -178,4 +221,6 @@ func get_stat_text() -> String:
 		if slow_duration > 0.0:
 			lines.append("적 감속 %.1f초" % slow_duration)
 	lines.append("DPS 약 %.1f" % get_dps())
+	if has_skill():
+		lines.append(get_skill_text())
 	return "\n".join(lines)

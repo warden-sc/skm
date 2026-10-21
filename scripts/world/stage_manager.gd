@@ -467,7 +467,7 @@ func _grant_mythic(stage: int) -> void:
 		_notice_later("[신화] 최후의 나팔을 받았다 — [X] 하늘의 심판", ItemData.RARITY_COLORS[ItemData.Rarity.MYTHIC], 1.9)
 	if is_final_stage(stage) and not GameManager.mythic_unlocked:
 		GameManager.unlock_mythic()
-		_notice_later("신화 장비 %d개의 봉인이 풀렸다! [I] 인벤토리에서 장착하세요" % GameManager.get_mythic_items().size(), ItemData.RARITY_COLORS[ItemData.Rarity.MYTHIC], 2.6)
+		_notice_later("신화 장비 %d개의 봉인이 풀렸다! [Tab] 인벤토리에서 장착하세요" % GameManager.get_mythic_items().size(), ItemData.RARITY_COLORS[ItemData.Rarity.MYTHIC], 2.6)
 
 
 ## 보스가 쓰러진 자리에서 장비 그림이 떠올라 용사에게 날아감

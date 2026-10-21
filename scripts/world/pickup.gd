@@ -165,7 +165,7 @@ static func receive(pickup_kind: Kind, gold: int, picked: ItemData) -> void:
 			if picked == null:
 				pass
 			elif GameManager.add_item(picked):
-				GameManager.show_notice("획득: %s  (I: 인벤토리에서 장착)" % picked.display_name, picked.get_rarity_color())
+				GameManager.show_notice("획득: %s  (Tab: 인벤토리에서 장착)" % picked.display_name, picked.get_rarity_color())
 			else:
 				var value := picked.get_sell_value()
 				GameManager.add_gold(value)

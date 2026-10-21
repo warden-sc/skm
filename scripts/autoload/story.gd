@@ -233,10 +233,10 @@ func boss_name_for(key: String) -> String:
 	return BOSS_WORD
 
 
-## 지금 대화창을 끝까지 넘김 (테스트용)
+## 지금 대화창을 끝까지 넘김 (대화창의 [스킵] 버튼 · 멀티플레이 방장의 대화가 끝났을 때)
 func skip() -> void:
-	while is_playing():
-		_box.advance()
+	if is_playing():
+		_box.skip_all()
 
 
 func get_box() -> DialogueBox:
