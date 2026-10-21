@@ -4967,7 +4967,13 @@ func _run() -> void:
 		if sw.rarity == ItemData.Rarity.RARE and low_weapon == null:
 			low_weapon = sw
 	_check(skill_flags_ok, "레어 · 전설 · 신화 무기에만 스킬 (장비 설명에 [Q] 스킬 줄)")
-	_check(skill_weapons.size() == 4 and low_weapon != null, "레어 등급 검 · 단검 · 활 · 지팡이가 모두 있음")
+	# 단검은 지금 일반 등급뿐 — 레어 단검이 생겼을 때를 위해 복사본으로 시험
+	if not skill_weapons.has(WeaponData.WeaponType.DAGGER):
+		var test_dagger := ItemDB.get_weapon(&"goblin_dagger").duplicate() as WeaponData
+		test_dagger.id = &"_test_epic_dagger"
+		test_dagger.rarity = ItemData.Rarity.EPIC
+		skill_weapons[WeaponData.WeaponType.DAGGER] = test_dagger
+	_check(skill_weapons.size() == 4 and low_weapon != null, "레어 등급 검 · 활 · 지팡이 (+ 시험용 레어 단검)")
 	var legend_sword: WeaponData = null
 	var mythic_sword: WeaponData = null
 	for item in ItemDB.get_all():
