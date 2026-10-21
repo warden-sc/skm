@@ -189,7 +189,7 @@ static func holy_tempest(player: Player, weapon: WeaponData) -> void:
 ## 땅에서 마계의 손아귀가 솟아 적을 붙잡고(기절) → 암흑 기둥이 솟구침 → 무저갱의 폭발로 마무리
 static func abyss_descent(player: Player, weapon: WeaponData) -> void:
 	var center := player.get_attack_origin()
-	Fx.screen_tint(player, Color(0.12, 0.0, 0.04, 0.6), 2.2)
+	Fx.screen_tint(player, Color(0.1, 0.0, 0.03, 0.72), 2.2)
 	Fx.flash(player, center, ABYSS_COLOR, 60.0, 0.4)
 	Fx.shockwave(player, center, Color(0.9, 0.1, 0.25), 90.0, 0.45)
 	Fx.burst(player, center, Color(0.5, 0.0, 0.1), 40, 160.0, 0.6, Vector2(0, -40), 1.3)
@@ -311,14 +311,17 @@ static func meteor_rain(player: Player, weapon: WeaponData) -> void:
 ## 신화(아폴론의 활) — 헬리오스의 심판: 모든 것을 꿰뚫는 태양의 창 → 그 끝에 태양이 떠올라 사방으로 햇살이 내리꽂힘
 static func helios(player: Player, weapon: WeaponData) -> void:
 	var origin := player.get_muzzle_position()
-	var dir := player.get_aim_direction()
-	var length := weapon.projectile_range * 1.6
-	var end := origin + dir * length
+	# 태양은 조준한 곳(마우스)에서 떠오름 — 너무 가까우면 최소 80 앞
+	var end := player.get_aim_point(weapon.projectile_range * 1.4)
+	if end.distance_to(origin) < 80.0:
+		end = origin + player.get_aim_direction() * 80.0
+	var dir := origin.direction_to(end)
+	var length := origin.distance_to(end)
 	player.play_attack_feedback()
 	Fx.screen_tint(player, Color(1.0, 0.85, 0.4, 0.28), 1.6)
 	Fx.beam(player, origin, end, SUN_COLOR, 22.0, 0.5)
 	Fx.beam(player, origin, end, Color(1.0, 1.0, 0.9), 8.0, 0.4)
-	shoot(player, weapon, origin, dir, SUN_ARROW, 1.0, 380.0, length, 999, 1.5, 1.0, Enemy.HitKind.BOW)
+	shoot(player, weapon, origin, dir, SUN_ARROW, 1.0, 380.0, length + 60.0, 999, 1.5, 1.0, Enemy.HitKind.BOW)
 	hit_line(player, weapon, origin, end, 12.0, 0.6)
 	player.shake_camera(4.0)
 	await wait(player, 0.45)
