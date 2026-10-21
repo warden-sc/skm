@@ -121,7 +121,12 @@ func _run_host() -> void:
 	await frames(20)
 	check(puppet.global_position.x - before.x > 20.0, "참가자가 움직이면 방장 화면의 분신도 움직임 (%+.0f)" % (puppet.global_position.x - before.x))
 	check(String(puppet.get_node("NetName").text) == "랜슬롯", "분신 머리 위 이름표 = 참가자가 지은 이름 (랜슬롯)")
-	var names := await ask("names")
+	var names := {}
+	for attempt in 10:  # 이름표 글자가 화면 복제로 도착할 때까지
+		names = await ask("names")
+		if names.get("host", "") == "아서":
+			break
+		await frames(10)
 	check(names.get("self", "") == "랜슬롯" and names.get("host", "") == "아서", "참가자 화면: 내 머리 위 「%s」 · 방장 머리 위 「%s」" % [names.get("self", ""), names.get("host", "")])
 
 	# 맞음 전달
@@ -361,8 +366,11 @@ func _do(command: String, args: Array = []) -> Dictionary:
 			var host_name := ""
 			for id in Net._mirrors:
 				var node := Net._mirrors[id]["node"] as Player
-				if node != null and node.get_node_or_null("NetName") != null:
-					host_name = (node.get_node("NetName") as Label).text
+				if node == null:
+					continue
+				for child in node.get_children():  # 이름표 (복제 중 새로 만든 것일 수도 있어 글자로 찾음)
+					if child is Label and (child as Label).text != "" and host_name == "":
+						host_name = (child as Label).text
 			return {"self": (player.get_node("NetName") as Label).text, "host": host_name}
 		"snap":
 			await snap(String(args[0]))
