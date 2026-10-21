@@ -22,7 +22,7 @@ extends Node
 ##
 ## 드랍 등급
 ##   일반 몬스터: 그 스테이지 등급(1~10 일반 · 11~40 희귀 · 41~70 레어 · 71~100 전설)에서 이미 풀린 단계 + 드랍 전용 장비 (ItemDB.get_drop_pool)
-##   보물상자   : 골드 + 칸마다 확률로 장비 (chest_item_chances 70% · 30%, 히든 100% · 60% · 30%) — 다음 스테이지 등급에서
+##   보물상자   : 골드 + 칸마다 확률로 장비 (chest_item_chances 35% · 10% — 대개는 골드만, 히든 100% · 60% · 30%) — 다음 스테이지 등급에서
 ##                조금 앞선 단계까지, 드랍 전용 포함, 아직 없는 것 우선. 장비가 하나도 안 나오면 골드 두 배
 ##   신화       : 10스테이지마다 보스가 하나씩 바로 가방으로 (_grant_mythic) — 100스테이지 보스를 쓰러뜨리면 봉인 해제
 ##
@@ -79,7 +79,7 @@ const HIDDEN_GATE_STAGE := 35
 ## 마지막 스테이지 보스를 쓰러뜨린 뒤 최종 보스가 나타나기까지의 시간(초)
 @export var finale_delay: float = 3.0
 ## 보스 상자의 장비 칸별 확률 (칸마다 따로 굴림). 장비가 하나도 안 나오면 골드 두 배
-@export var chest_item_chances: Array[float] = [0.7, 0.3]
+@export var chest_item_chances: Array[float] = [0.35, 0.1]
 ## 히든 보스(고대 용의 보물) 상자
 @export var hidden_chest_item_chances: Array[float] = [1.0, 0.6, 0.3]
 

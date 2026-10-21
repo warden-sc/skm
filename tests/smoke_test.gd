@@ -5514,7 +5514,12 @@ func _run() -> void:
 	var base_gold := Balance.chest_gold(_gm.stage) * stage.get_gold_multiplier()
 	_check(_item_pickups(entities).size() == items_before2 and stage.last_chest_items.is_empty() and stage.last_chest_gold >= roundi(base_gold * 1.6) - 1 and stage.last_chest_gold <= roundi(base_gold * 2.4) + 1,
 		"보스 상자 장비는 확률 — 장비가 안 나오면 골드 두 배 (%d)" % stage.last_chest_gold)
-	stage.chest_item_chances = [0.7, 0.3]
+	stage.chest_item_chances = [0.35, 0.1]
+	var fresh_stage := (load("res://scenes/main/main.tscn") as PackedScene).instantiate().get_node("StageManager") as StageManager
+	_check(fresh_stage.chest_item_chances == [0.35, 0.1] and ItemData.max_rarity_for_stage(10) == ItemData.Rarity.COMMON and ItemData.max_rarity_for_stage(11) == ItemData.Rarity.RARE
+		and ItemData.max_rarity_for_stage(40) == ItemData.Rarity.RARE and ItemData.max_rarity_for_stage(41) == ItemData.Rarity.EPIC and ItemData.max_rarity_for_stage(70) == ItemData.Rarity.EPIC
+		and ItemData.max_rarity_for_stage(71) == ItemData.Rarity.LEGENDARY, "보상 등급: 1~10 일반 · 11~40 희귀 · 41~70 레어 · 71~100 전설, 상자 장비 확률 35% · 10%")
+	fresh_stage.get_parent().free()
 	var rolls := {0: 0, 1: 0, 2: 0}
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 7
@@ -5524,7 +5529,7 @@ func _run() -> void:
 			if rng.randf() < chance:
 				n += 1
 		rolls[n] += 1
-	_check(rolls[0] > 120 and rolls[0] < 300 and rolls[2] > 120 and rolls[2] < 300, "보스 상자 기본 확률: 장비 0개 %d · 1개 %d · 2개 %d (1000번)" % [rolls[0], rolls[1], rolls[2]])
+	_check(rolls[0] > 500 and rolls[0] < 670 and rolls[2] < 80 and rolls[0] > rolls[1] and rolls[1] > rolls[2], "보스 상자 기본 확률: 대개는 골드만 — 장비 0개 %d · 1개 %d · 2개 %d (1000번)" % [rolls[0], rolls[1], rolls[2]])
 	next_portal.interacted.emit()
 	await _frames(3)
 
