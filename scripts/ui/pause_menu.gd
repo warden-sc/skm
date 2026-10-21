@@ -156,7 +156,7 @@ func _build() -> void:
 	_settings_box.add_child(_story_check)
 	_speed_button = _add_button(_settings_box, "", cycle_text_speed)
 	_voice_button = _add_button(_settings_box, "", cycle_voice_mode)
-	_voice_button.tooltip_text = "멀티플레이 음성 채팅 — 눌러서 말하기는 [V] 를 누르는 동안만 마이크가 켜짐"
+	_voice_button.tooltip_text = "멀티플레이 음성 채팅 — 눌러서 말하기는 [T] 를 누르는 동안만 마이크가 켜짐"
 	_add_button(_settings_box, "← 돌아가기", _show_main)
 	_settings_box.hide()
 
@@ -172,7 +172,7 @@ func cycle_text_speed() -> void:
 	_sync_settings()
 
 
-## 음성 채팅: 끄기 → 눌러서 말하기 [V] → 항상 켜기 → …
+## 음성 채팅: 끄기 → 눌러서 말하기 [T] → 항상 켜기 → …
 func cycle_voice_mode() -> void:
 	Profile.set_setting("voice", (VoiceChat.get_mode() + 1) % VoiceChat.MODE_NAMES.size())
 	_sync_settings()

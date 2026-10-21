@@ -28,11 +28,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		return
 	if Net.is_online():
-		# 멀티플레이: 쓰러지면 유령으로 관전, 전멸하면 방장이 [R] 다시 · [T] 끝내기 (참가자는 [T] 나가기)
+		# 멀티플레이: 쓰러지면 유령으로 관전, 전멸하면 방장이 [R] 다시 · [F] 끝내기 (참가자는 [F] 나가기) — T 는 음성 채팅
 		if Net.party_wiped:
 			if event.is_action_pressed(&"restart") and Net.is_host():
 				Net.restart_party()
-			elif event.is_action_pressed(&"to_title"):
+			elif event.is_action_pressed(&"party_quit"):
 				if Net.is_host():
 					Net.end_party()
 				else:

@@ -68,7 +68,7 @@ var _end_reason: String = ""
 var port: int = PORT
 
 var _peer: ENetMultiplayerPeer
-## 음성 채팅 ([V] 눌러서 말하기 · 설정에서 끄기 / 항상 켜기)
+## 음성 채팅 ([T] 눌러서 말하기 · 설정에서 끄기 / 항상 켜기)
 var voice: VoiceChat
 var _main: Node
 var _entities: Node2D

@@ -4254,6 +4254,9 @@ func _test_dialogue(main: Node2D) -> void:
 	_check(binds.call(&"weapon_slot_1") == ["key:%d" % KEY_1] and binds.call(&"weapon_slot_2") == ["key:%d" % KEY_2] and binds.call(&"weapon_slot_3") == ["key:%d" % KEY_3], "무기 칸: 1 · 2 · 3 키만")
 	_check(binds.call(&"skill") == ["key:%d" % KEY_Q], "액티브 스킬: Q")
 	_check(binds.call(&"dialogue_next") == ["key:%d" % KEY_ENTER, "key:%d" % KEY_KP_ENTER], "대화 넘기기: Enter (숫자패드 Enter 포함)")
+	_check(binds.call(&"voice_talk") == ["key:%d" % KEY_T] and binds.call(&"party_quit") == ["key:%d" % KEY_F], "음성 채팅 눌러서 말하기: T (멀티 전멸 화면의 끝내기는 F)")
+	_check(VoiceChat.MODE_NAMES.size() == 3 and VoiceChat.MODE_NAMES[VoiceChat.Mode.OFF] == "끄기" and VoiceChat.MODE_NAMES[VoiceChat.Mode.OPEN] == "항상 켜기" and VoiceChat.MODE_NAMES[VoiceChat.Mode.PUSH_TO_TALK].contains("[T]"),
+		"음성 채팅 3가지: %s" % " / ".join(VoiceChat.MODE_NAMES))
 	# 대화는 Enter 로만 넘어감 + 오른쪽 위 [스킵] 버튼
 	Story.load_text("[키 테스트]\n성기사: 하나\n성기사: 둘 — 이 줄은 일부러 길게 써서 글자가 한 자씩 나오는 동안 Enter 를 눌러 보는 대사입니다\n성기사: 셋\n@연출: 장비빛남\n성기사: 넷\n")
 	cue_seen.clear()

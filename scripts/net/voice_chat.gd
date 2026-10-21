@@ -5,14 +5,14 @@ extends Node
 ## 말하기 : 마이크(AudioStreamMicrophone) → 「VoiceMic」 버스의 AudioEffectCapture 로 소리를 떠 옴
 ##          → 16kHz 한 줄(모노)로 줄이고 μ-law 8비트로 눌러 40ms 마다 한 묶음씩 보냄 (한 사람당 약 16KB/초)
 ## 듣기   : 보낸 사람마다 AudioStreamGenerator 하나 — 받은 묶음을 풀어 이어 붙여 재생
-## 방식   : 설정 「음성 채팅」 = 끄기 / 눌러서 말하기([V] 누르는 동안) / 항상 켜기(소리가 클 때만 보냄)
+## 방식   : 설정 「음성 채팅」 = 끄기 / 눌러서 말하기([T] 누르는 동안) / 항상 켜기(소리가 클 때만 보냄)
 ## 방장을 거쳐 다른 참가자에게 전달됨 (SceneMultiplayer 의 서버 중계). 웹 버전은 멀티플레이가 없어 쓰지 않음.
 
 signal speaking_changed(peer_id: int, speaking: bool)
 
 enum Mode { OFF, PUSH_TO_TALK, OPEN }
 
-const MODE_NAMES := ["끄기", "눌러서 말하기 [V]", "항상 켜기"]
+const MODE_NAMES := ["끄기", "눌러서 말하기 [T]", "항상 켜기"]
 const RATE := 16000
 ## 한 번에 보내는 양 (샘플 수 — 40ms)
 const CHUNK := 640
@@ -228,7 +228,7 @@ func _stop_mic() -> void:
 	_set_talking(false)
 
 
-## 글자를 입력하는 칸에 있으면 [V] 를 말하기로 쓰지 않음
+## 글자를 입력하는 칸에 있으면 [T] 를 말하기로 쓰지 않음
 func _typing() -> bool:
 	var focus := get_viewport().gui_get_focus_owner()
 	return focus is LineEdit or focus is TextEdit

@@ -214,9 +214,9 @@ func _on_player_died() -> void:
 func show_party_game_over(is_host: bool) -> void:
 	var label := _game_over.get_node(^"GameOverLabel") as Label
 	if is_host:
-		label.text = "전멸 — GAME OVER\n[R] 1스테이지부터 다 함께 다시   [T] 끝내기 (타이틀로)"
+		label.text = "전멸 — GAME OVER\n[R] 1스테이지부터 다 함께 다시   [F] 끝내기 (타이틀로)"
 	else:
-		label.text = "전멸 — GAME OVER\n방장이 다시 할지 고르는 중…   [T] 나가기 (타이틀로)"
+		label.text = "전멸 — GAME OVER\n방장이 다시 할지 고르는 중…   [F] 나가기 (타이틀로)"
 	_game_over.show()
 
 
@@ -307,7 +307,7 @@ func _update_voice_label() -> void:
 		lines.append("말하는 중: %s" % " · ".join(names))
 	match VoiceChat.get_mode():
 		VoiceChat.Mode.PUSH_TO_TALK:
-			lines.append("[V] 누르고 말하기" if not Net.voice.talking else "마이크 켜짐")
+			lines.append("[T] 누르고 말하기" if not Net.voice.talking else "마이크 켜짐")
 		VoiceChat.Mode.OPEN:
 			lines.append("마이크 항상 켜짐")
 	_voice_label.text = "\n".join(lines)
