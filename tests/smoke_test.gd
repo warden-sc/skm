@@ -5142,7 +5142,9 @@ func _run() -> void:
 	var skill_sword: WeaponData = skill_weapons[&"whirlwind"]
 	var legend_bow: WeaponData = skill_weapons[&"meteor_rain"]
 	_gm.skill_cooldowns.clear()
-	var keep_sword: WeaponData = _gm.weapon_slots[0]
+	var keep_slots: Array[WeaponData] = _gm.weapon_slots.duplicate()
+	var keep_active: int = _gm.active_weapon_slot
+	var keep_items: Array[ItemData] = _gm.items.duplicate()
 	_gm.add_item(skill_sword)
 	_gm.equip_item(skill_sword)
 	await _frames(12)
@@ -5166,8 +5168,12 @@ func _run() -> void:
 	skill_icon = hud.get_node("%Hotbar").get_child(0).find_child("SkillIcon", true, false) as TextureRect
 	_check(skill_icon != null and skill_icon.texture == skill_sword.get_skill_icon(), "1 키로 검을 들면 다시 회전 베기 아이콘")
 	_gm.skill_cooldowns.clear()
-	if keep_sword != null:
-		_gm.equip_item(keep_sword)
+	# 뒤 테스트를 위해 무기 칸 · 가방을 스킬 시험 전으로 되돌림
+	for i in 3:
+		_gm.weapon_slots[i] = keep_slots[i]
+	_gm.items = keep_items
+	_gm.select_weapon_slot(keep_active)
+	_gm.inventory_changed.emit()
 	await _frames(70)
 	print("[시인성 - 내 공격 · 적 탄 · 예고 장판]")
 	var vis_pool := ProjectilePool.find(get_tree())
