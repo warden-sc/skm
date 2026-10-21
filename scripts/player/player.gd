@@ -818,8 +818,10 @@ func play_melee_swing(weapon: WeaponData) -> void:
 
 	var reach_scale := weapon.melee_range / SWING_FX_RADIUS
 	var arc_scale := clampf(weapon.melee_arc_degrees / SWING_FX_ARC, 0.5, 1.4)
-	_swing_fx.scale = Vector2(reach_scale, reach_scale * arc_scale * _swing_sign)
-	_swing_fx.modulate = weapon.effect_color
+	_swing_fx.scale = Vector2(reach_scale, reach_scale * arc_scale * _swing_sign) * 1.1
+	# 베기 궤적: 무기 색을 밝게 + 가산 합성으로 빛나게 (어두운 바닥 · 많은 이펙트 속에서도 잘 보이게)
+	_swing_fx.material = Fx.additive_material()
+	_swing_fx.modulate = weapon.effect_color.lightened(0.3)
 	_swing_fx.modulate.a = 1.0
 	var fx := create_tween()
 	fx.tween_property(_swing_fx, "modulate:a", 0.0, duration + 0.08)

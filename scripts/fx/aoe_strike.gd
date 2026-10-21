@@ -56,11 +56,19 @@ func _physics_process(delta: float) -> void:
 		_detonate()
 
 
+## 예고 장판: 바깥 검은 테두리 + 밝은 테두리(터질 때가 가까울수록 빨리 깜빡임) + 안쪽에서 차오르는 원 + 십자 조준선
 func _draw() -> void:
 	var t := clampf(_elapsed / maxf(delay, 0.01), 0.0, 1.0)
-	draw_circle(Vector2.ZERO, radius, Color(color, 0.12))
-	draw_circle(Vector2.ZERO, radius * t, Color(color, 0.28))
-	draw_arc(Vector2.ZERO, radius, 0.0, TAU, 32, Color(color, 0.8), 1.0)
+	var blink := 0.5 + 0.5 * sin(_elapsed * (10.0 + 30.0 * t))
+	var edge := color.lightened(0.35)
+	draw_circle(Vector2.ZERO, radius, Color(color, 0.14 + 0.1 * t))
+	draw_circle(Vector2.ZERO, radius * t, Color(color, 0.3 + 0.15 * t))
+	draw_arc(Vector2.ZERO, radius + 1.0, 0.0, TAU, 40, Color(0.0, 0.0, 0.0, 0.55), 2.0)
+	draw_arc(Vector2.ZERO, radius, 0.0, TAU, 40, Color(edge, 0.65 + 0.35 * blink), 1.5)
+	if radius >= 14.0:
+		var arm := radius * 0.25
+		draw_line(Vector2(-arm, 0), Vector2(arm, 0), Color(edge, 0.5 + 0.4 * t), 1.0)
+		draw_line(Vector2(0, -arm), Vector2(0, arm), Color(edge, 0.5 + 0.4 * t), 1.0)
 
 
 func _detonate() -> void:

@@ -32,6 +32,9 @@ var _hit_ids: Dictionary = {}
 var _default_texture: Texture2D
 var _trail: CPUParticles2D
 var _glow: Sprite2D
+## 적 탄 뒤에 깔리는 검은 그림자 실루엣 (어떤 바닥 위에서도 탄 모양이 또렷하게)
+var _back: Sprite2D
+var _pulse: float = 0.0
 
 
 func _ready() -> void:
@@ -95,6 +98,9 @@ func _physics_process(delta: float) -> void:
 
 	# 사거리 끝부분에서 서서히 사라짐
 	var remain := 1.0 - _travelled / maxf(_spec.max_distance, 1.0)
+	if _spec.team == ProjectileSpec.Team.ENEMY:
+		_pulse += delta * 12.0
+		_glow.modulate.a = 0.45 + 0.2 * sin(_pulse)
 	if _spec.grow != 1.0:
 		scale = Vector2.ONE * _spec.scale * lerpf(1.0, _spec.grow, clampf(_travelled / maxf(_spec.max_distance, 1.0), 0.0, 1.0))
 	_sprite.modulate.a = clampf(remain * 4.0, 0.0, 1.0) * _spec.color.a
@@ -172,6 +178,7 @@ func _on_body_entered(body: Node2D) -> void:
 ## 퍼펙트 가드: 진행 방향을 뒤집고 플레이어 편 탄으로 전환
 func _reflect() -> void:
 	_spec.team = ProjectileSpec.Team.PLAYER
+	_configure_fx(_spec)  # 내 편 탄 모양으로 (검은 실루엣 · 붉은 빛을 걷음)
 	_spec.damage = roundi(Balance.scale(_spec.damage) * REFLECT_DAMAGE_MULTIPLIER)  # 적 탄 피해는 예전 단위
 	_spec.knockback = maxf(_spec.knockback, 120.0)
 	_spec.pierce = 1
@@ -230,6 +237,11 @@ func _create_fx_nodes() -> void:
 	_glow.visible = false
 	add_child(_glow)
 
+	_back = Sprite2D.new()
+	_back.show_behind_parent = true
+	_back.visible = false
+	add_child(_back)
+
 
 func _configure_fx(spec: ProjectileSpec) -> void:
 	var level := clampi(spec.fx_level, 0, 3)
@@ -242,10 +254,33 @@ func _configure_fx(spec: ProjectileSpec) -> void:
 		_trail.scale_amount_max = 0.8 + 0.25 * level
 		_trail.restart()
 		_trail.emitting = true
-	_glow.visible = level >= 2
-	if _glow.visible:
-		_glow.modulate = Color(spec.color, 0.55 + 0.15 * level)
-		_glow.scale = Vector2.ONE * (0.35 + 0.15 * level)
+	_back.visible = false
+	if spec.team == ProjectileSpec.Team.ENEMY:
+		# 적 탄: 붉은 위험 빛 + 검은 실루엣 테두리 → 화려한 바닥 · 이펙트 사이에서도 잘 보이게
+		_glow.visible = true
+		_glow.modulate = Color(Color(1.0, 0.25, 0.2).lerp(spec.color, 0.35), 0.55)
+		_glow.scale = Vector2.ONE * 0.5
+		_back.texture = _sprite.texture
+		_back.modulate = Color(0.0, 0.0, 0.0, 0.6)
+		_back.scale = _sprite.scale * 1.3
+		_back.rotation = _sprite.rotation
+		_back.position = _sprite.position
+		_back.visible = true
+		if trail_amount == 0:
+			_trail.amount = 6
+			_trail.color_ramp = Fx.fade_ramp(Color(1.0, 0.45, 0.35))
+			_trail.restart()
+			_trail.emitting = true
+	else:
+		# 내 탄: 등급과 상관없이 은은한 빛 + 꼬리 (등급이 높을수록 더 화려)
+		_glow.visible = true
+		_glow.modulate = Color(spec.color, 0.35 + 0.15 * level)
+		_glow.scale = Vector2.ONE * (0.3 + 0.15 * level)
+		if trail_amount == 0:
+			_trail.amount = 5
+			_trail.color_ramp = Fx.fade_ramp(spec.color)
+			_trail.restart()
+			_trail.emitting = true
 
 
 func _apply_team_layers(deferred: bool) -> void:

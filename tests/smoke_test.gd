@@ -5169,6 +5169,20 @@ func _run() -> void:
 	if keep_sword != null:
 		_gm.equip_item(keep_sword)
 	await _frames(70)
+	print("[시인성 - 내 공격 · 적 탄 · 예고 장판]")
+	var vis_pool := ProjectilePool.find(get_tree())
+	var enemy_shot := vis_pool.spawn(ProjectileSpec.enemy_bullet(player.global_position + Vector2(200, 0), Vector2.RIGHT, 10.0, 1, load("res://assets/sprites/projectiles/orb.png")))
+	var my_shot := vis_pool.spawn(ProjectileSpec.from_weapon(ItemDB.get_weapon(&"hunter_bow"), player.global_position + Vector2(-200, 0), Vector2.LEFT, {"amount": 1, "crit": false}))
+	_check(enemy_shot != null and enemy_shot._back.visible and enemy_shot._glow.visible and enemy_shot._back.modulate.r == 0.0,
+		"적 탄: 검은 실루엣 테두리 + 붉은 위험 빛 (어느 바닥에서도 또렷)")
+	_check(my_shot != null and my_shot._glow.visible and not my_shot._back.visible and my_shot._trail.emitting, "내 탄: 일반 등급도 빛 + 꼬리")
+	enemy_shot.release()
+	my_shot.release()
+	var warn := AoeStrike.spawn(player, player.global_position + Vector2(150, 0), 24.0, 0.8, 1, Color(1.0, 0.3, 0.2))
+	_check(warn != null, "예고 장판: 검은 바깥 테두리 + 깜빡이는 밝은 테두리 + 십자 조준선")
+	if warn != null:
+		warn.harmless = true
+	await _frames(60)
 	if OS.get_environment("SMOKE_STOP") == "skills":  # 빠른 확인용: 여기까지만
 		print("FAILURES: %d" % _failures)
 		get_tree().quit(1 if _failures > 0 else 0)

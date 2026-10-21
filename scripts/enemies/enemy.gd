@@ -515,7 +515,7 @@ func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool =
 	amount = calc_damage(amount, armor_pen)
 	hp = maxi(hp - amount, 0)
 	_knockback += knockback * (1.0 - knockback_resistance)
-	_hit_flash = 0.08
+	_hit_flash = 0.12
 	health_changed.emit(hp, max_hp)
 
 	var color := Color(1.0, 0.85, 0.3) if is_crit else Color.WHITE
