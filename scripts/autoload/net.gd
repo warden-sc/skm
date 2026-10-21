@@ -10,6 +10,12 @@ extends Node
 ##   - 줍는 아이템: 가장 먼저 닿은 사람이 가짐. 인벤토리에서 「버리기」한 장비는 동료가 주울 수 있음
 ##
 ## 포트: PORT (UDP). 인터넷으로 하려면 방장 공유기에서 이 포트를 열어야(포트 포워딩) 함. 같은 와이파이면 그대로.
+##
+## 들어가기: 방장이 「초대 코드」(NetInvite — 주소 · 포트 · 방 열쇠를 13글자로)를 친구에게 알려 주면 코드로 참가.
+##   - 비공개 방: 코드(열쇠)를 아는 사람만
+##   - 공개 방: 같은 네트워크에 1초마다 방 정보를 뿌려 「공개 방 목록」(RoomFinder)에 보이고, 코드 없이 목록에서 바로 참가
+## 쓰러지면: 유령이 되어 살아 있는 동료를 관전(Spectator) → 남은 동료가 보스를 쓰러뜨리고 다음 스테이지 야영지에 도착하면
+##   장비 · 골드 그대로 부활. 모두 쓰러지면(전멸) 게임 오버 — 방장이 1스테이지부터 다시 하거나 끝냄
 
 signal lobby_changed
 signal join_failed(reason: String)
@@ -17,7 +23,7 @@ signal session_closed(reason: String)
 
 const PORT := 24570
 const MAX_PLAYERS := 4
-const PROTOCOL := 1
+const PROTOCOL := 2
 const MAIN_SCENE := "res://scenes/main/main.tscn"
 const TITLE_SCENE := "res://scenes/title/title.tscn"
 ## 몇 물리 프레임마다 화면 · 상태를 보내는지 (60fps 기준 3 → 1초에 20번)
@@ -42,6 +48,22 @@ var players: Dictionary = {}
 var in_game: bool = false
 var difficulty: int = 0
 var last_error: String = ""
+## 방 설정: 공개 방이면 같은 네트워크의 방 목록에 보임. 방 열쇠는 초대 코드에 들어감 (비공개 방은 열쇠가 맞아야 들어옴)
+var room_public: bool = false
+var room_key: int = 0
+var host_port: int = PORT
+## 공개 방 소식을 뿌릴 주소 (테스트에서 127.0.0.1 로 바꿈)
+var discovery_targets: PackedStringArray = ["255.255.255.255"]
+## 모두 쓰러짐(전멸) → 게임 오버
+var party_wiped: bool = false
+## 같이 하는 사람들의 생사 { peer: [쓰러졌는지, 방장 컴퓨터의 용사 노드 id] } — 방장이 바뀔 때마다 보내 줌
+var party: Dictionary = {}
+var spectator: Spectator
+var _join_key: int = 0
+var _broadcast: PacketPeerUDP
+var _broadcast_left: float = 0.0
+var _party_sent: Dictionary = {}
+var _end_reason: String = ""
 ## 방을 열거나 접속할 포트 (테스트에서 바꿀 수 있음)
 var port: int = PORT
 
@@ -85,6 +107,7 @@ func _ready() -> void:
 	# 방장일 때 화면 위 정보(스테이지 · 위치 · 처치 수 · 보스 체력)를 참가자에게 그대로 전함
 	for signal_name in [&"stage_changed", &"location_changed", &"kill_progress_changed", &"boss_spawned", &"boss_hp_changed", &"boss_defeated"]:
 		GameManager.connect(signal_name, _hud_relay(signal_name))
+	GameManager.player_died.connect(_on_local_died)
 
 
 # ============================================================ 상태
@@ -154,7 +177,8 @@ func pause_tree(tree: SceneTree, paused: bool) -> void:
 
 
 # ============================================================ 방 만들기 / 참가 / 나가기
-func host_game(hero_name: String, use_port: int = 0) -> Error:
+## 방 만들기. public 이면 같은 네트워크의 공개 방 목록에 보임
+func host_game(hero_name: String, use_port: int = 0, public: bool = false) -> Error:
 	leave()
 	if use_port <= 0:
 		use_port = port
@@ -168,14 +192,40 @@ func host_game(hero_name: String, use_port: int = 0) -> Error:
 	multiplayer.multiplayer_peer = _peer
 	players = {1: {"name": hero_name}}
 	in_game = false
+	host_port = use_port
+	room_public = public
+	room_key = 1 + randi() % 65535
+	_broadcast_left = 0.0
 	lobby_changed.emit()
 	return OK
 
 
-func join_game(address: String, hero_name: String, use_port: int = 0) -> Error:
+## 초대 코드 (ip 를 비우면 이 컴퓨터의 내부 IP) — 방장만
+func get_invite_code(ip: String = "") -> String:
+	if not is_host():
+		return ""
+	if ip == "":
+		var addresses := get_local_addresses()
+		ip = addresses[0] if not addresses.is_empty() else "127.0.0.1"
+	return NetInvite.encode(ip, host_port, room_key)
+
+
+## 초대 코드로 참가 (IP 를 넣어도 됨 — 그때는 공개 방만)
+func join_by_code(code: String, hero_name: String) -> Error:
+	if not NetInvite.looks_like_code(code):
+		return join_game(code, hero_name)
+	var info := NetInvite.decode(code)
+	if info.is_empty():
+		last_error = "초대 코드가 올바르지 않습니다 (13글자 · 예: 6R4K-02M8-1ZQ7P)"
+		return ERR_INVALID_PARAMETER
+	return join_game(info["ip"], hero_name, info["port"], info["key"])
+
+
+func join_game(address: String, hero_name: String, use_port: int = 0, key: int = 0) -> Error:
 	leave()
 	if use_port <= 0:
 		use_port = port
+	_join_key = key
 	_peer = ENetMultiplayerPeer.new()
 	var err := _peer.create_client(address.strip_edges(), use_port)
 	if err != OK:
@@ -198,10 +248,18 @@ func leave() -> void:
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	players = {}
 	in_game = false
+	room_public = false
+	room_key = 0
 	_reset_runtime()
 
 
 func _reset_runtime() -> void:
+	if spectator != null and is_instance_valid(spectator):
+		spectator.queue_free()
+	spectator = null
+	party_wiped = false
+	party.clear()
+	_party_sent.clear()
 	_main = null
 	_entities = null
 	_stage = null
@@ -222,7 +280,7 @@ func _reset_runtime() -> void:
 
 
 func _on_connected_to_server() -> void:
-	_register.rpc_id(1, String(get_meta(&"join_name", "용사")), PROTOCOL)
+	_register.rpc_id(1, String(get_meta(&"join_name", "용사")), PROTOCOL, _join_key)
 
 
 func _on_connection_failed() -> void:
@@ -233,10 +291,12 @@ func _on_connection_failed() -> void:
 
 func _on_server_disconnected() -> void:
 	var was_in_game := in_game
+	var reason := _end_reason if _end_reason != "" else "방장과 연결이 끊겼습니다"
+	_end_reason = ""
 	leave()
-	session_closed.emit("방장과 연결이 끊겼습니다")
+	session_closed.emit(reason)
 	if was_in_game:
-		_back_to_title("방장과 연결이 끊겼습니다")
+		_back_to_title(reason)
 
 
 func _on_peer_connected(_id: int) -> void:
@@ -262,13 +322,15 @@ func _on_peer_disconnected(id: int) -> void:
 
 
 @rpc("any_peer", "reliable")
-func _register(hero_name: String, protocol: int) -> void:
+func _register(hero_name: String, protocol: int, key: int = 0) -> void:
 	if not multiplayer.is_server():
 		return
 	var id := multiplayer.get_remote_sender_id()
 	var reason := ""
 	if protocol != PROTOCOL:
 		reason = "게임 버전이 다릅니다"
+	elif not room_public and key != room_key:
+		reason = "초대 코드가 맞지 않습니다 (비공개 방)"
 	elif in_game:
 		reason = "이미 게임이 시작된 방입니다"
 	elif players.size() >= MAX_PLAYERS:
@@ -276,7 +338,7 @@ func _register(hero_name: String, protocol: int) -> void:
 	if reason != "":
 		_rejected.rpc_id(id, reason)
 		get_tree().create_timer(0.5).timeout.connect(func() -> void:
-			if _peer != null:
+			if _peer != null and multiplayer.get_peers().has(id):
 				_peer.disconnect_peer(id))
 		return
 	hero_name = hero_name.strip_edges().left(GameManager.HERO_NAME_MAX)
@@ -357,6 +419,7 @@ func _physics_process(delta: float) -> void:
 		_flush_calls()
 		if _frame % SEND_INTERVAL == 0:
 			_send_snapshot()
+		_update_party()
 		_check_wipe(delta)
 	elif _frame % SEND_INTERVAL == 0:
 		_send_state()
@@ -366,6 +429,7 @@ var _prompt: Label
 
 
 func _process(delta: float) -> void:
+	_tick_broadcast(delta)
 	if not in_game or not is_client() or not _bound():
 		return
 	_update_prompt()
@@ -740,30 +804,149 @@ func broadcast_ending() -> void:
 		_ending.rpc()
 
 
-## 모두 쓰러지면 3초 뒤 그 스테이지 야영지에서 다 같이 부활
-func _check_wipe(delta: float) -> void:
-	var everyone := Player.get_all(get_tree())
-	if everyone.is_empty():
+# ============================================================ 쓰러짐 · 관전 · 부활 · 전멸
+## 공개 방: 1초마다 같은 네트워크에 방 정보를 뿌림 (RoomFinder 가 받음)
+func _tick_broadcast(delta: float) -> void:
+	if not is_host() or not room_public or OS.has_feature("web"):
 		return
-	var all_dead := true
-	for p in everyone:
-		if not p.is_net_dead():
-			all_dead = false
-	if not all_dead:
+	_broadcast_left -= delta
+	if _broadcast_left > 0.0:
+		return
+	_broadcast_left = 1.0
+	if _broadcast == null:
+		_broadcast = PacketPeerUDP.new()
+		_broadcast.set_broadcast_enabled(true)
+	var packet := RoomFinder.make_packet(host_port, get_player_name(1), players.size(), MAX_PLAYERS, difficulty, in_game).to_utf8_buffer()
+	for target in discovery_targets:
+		_broadcast.set_dest_address(target, RoomFinder.DISCOVERY_PORT)
+		_broadcast.put_packet(packet)
+
+
+## 방장: 모두의 생사를 모아 바뀌면 알려 줌
+func _update_party() -> void:
+	var state := {}
+	var local := _main.get_node_or_null(^"Entities/Player") as Player
+	state[1] = [GameManager.is_player_dead, local.get_instance_id() if local != null else 0]
+	for id in _puppets:
+		var puppet: Player = _puppets[id]
+		if is_instance_valid(puppet):
+			state[id] = [puppet.is_net_dead(), puppet.get_instance_id()]
+	if state != _party_sent:
+		_party_sent = state
+		_party_state.rpc(state)
+
+
+@rpc("authority", "call_local", "reliable")
+func _party_state(state: Dictionary) -> void:
+	party = state
+
+
+## 모두 쓰러졌는지 (혼자면 내 용사)
+func is_party_dead() -> bool:
+	if not is_online() or not in_game:
+		return GameManager.is_player_dead
+	if party.is_empty():
+		return GameManager.is_player_dead
+	for id in party:
+		if not bool(party[id][0]):
+			return false
+	return true
+
+
+## 모두 쓰러지면 잠시 뒤 게임 오버 (방장이 1스테이지부터 다시 하거나 끝냄)
+func _check_wipe(delta: float) -> void:
+	if party_wiped or party.size() < 1 or not is_party_dead():
 		_wipe_left = -1.0
 		return
 	if _wipe_left < 0.0:
-		_wipe_left = 3.0
-		announce("전멸! 잠시 뒤 야영지에서 다시 일어납니다", Color(1.0, 0.45, 0.4))
+		_wipe_left = 1.5
 	_wipe_left -= delta
 	if _wipe_left <= 0.0:
 		_wipe_left = -1.0
-		revive_all()
-		if _stage.has_method(&"go_to_stage"):
-			_stage.go_to_stage(GameManager.stage)
+		_game_over.rpc()
 
 
-## 쓰러진 사람을 모두 일으킴 (야영지에 도착할 때마다)
+@rpc("authority", "call_local", "reliable")
+func _game_over() -> void:
+	party_wiped = true
+	if not _bound():
+		return
+	if is_host() and _stage.has_method(&"on_party_wiped"):
+		_stage.on_party_wiped()
+	var hud := _main.get_node_or_null(^"HUD")
+	if hud != null and hud.has_method(&"show_party_game_over"):
+		hud.show_party_game_over(is_host())
+
+
+## 방장: 전멸 뒤 다 함께 1스테이지부터 다시
+func restart_party() -> void:
+	if is_host() and party_wiped:
+		_start.rpc(difficulty)
+
+
+## 방장: 게임을 끝내고 모두 타이틀로
+func end_party() -> void:
+	if not is_host():
+		return
+	_session_end.rpc("방장이 게임을 끝냈습니다")
+	get_tree().create_timer(0.3).timeout.connect(func() -> void:
+		leave()
+		_back_to_title(""))
+
+
+## 참가자: 나가기
+func quit_party() -> void:
+	leave()
+	_back_to_title("")
+
+
+@rpc("authority", "reliable")
+func _session_end(reason: String) -> void:
+	_end_reason = reason
+
+
+## 내 용사가 쓰러짐 → 유령이 되어 살아 있는 동료를 관전
+func _on_local_died() -> void:
+	if not is_online() or not in_game or not _bound():
+		return
+	get_tree().create_timer(0.8, false).timeout.connect(start_spectating)
+
+
+func start_spectating() -> void:
+	if not _bound() or not GameManager.is_player_dead or (spectator != null and is_instance_valid(spectator)):
+		return
+	spectator = Spectator.new()
+	spectator.name = "Spectator"
+	spectator.candidates = spectate_candidates
+	var local := _local_player()
+	if local != null:
+		spectator.limits_from = local.get_node_or_null(^"Camera2D") as Camera2D
+		spectator.global_position = local.global_position
+	_main.add_child(spectator)
+
+
+func is_spectating() -> bool:
+	return spectator != null and is_instance_valid(spectator)
+
+
+## 관전할 수 있는 살아 있는 동료 [[이름, 노드], …]
+func spectate_candidates() -> Array:
+	var list: Array = []
+	for id in party:
+		if id == my_id() or bool(party[id][0]):
+			continue
+		var node: Node2D = null
+		if is_host():
+			node = _puppets.get(id)
+		else:
+			var entry: Dictionary = _mirrors.get(int(party[id][1]), {})
+			node = entry.get("node") if not entry.is_empty() else null
+		if node != null and is_instance_valid(node):
+			list.append([get_player_name(id), node])
+	return list
+
+
+## 쓰러진 사람을 모두 일으킴 — 남은 동료가 보스를 쓰러뜨리고 다음 스테이지 야영지에 도착했을 때 (장비 · 골드는 그대로)
 func revive_all() -> void:
 	if not is_host() or not in_game:
 		return
@@ -772,13 +955,19 @@ func revive_all() -> void:
 
 
 func _revive_local() -> void:
+	if spectator != null and is_instance_valid(spectator):
+		spectator.queue_free()
+	spectator = null
 	if not GameManager.is_player_dead:
 		return
 	GameManager.revive_player()
 	for p in Player.get_all(get_tree()):
 		if p.is_local():
 			p.revive()
-	GameManager.show_notice("다시 일어났습니다!", Color(0.6, 1.0, 0.7))
+			var cam := p.get_node_or_null(^"Camera2D") as Camera2D
+			if cam != null:
+				cam.make_current()
+	GameManager.show_notice("다시 일어났습니다! (장비 · 골드 그대로)", Color(0.6, 1.0, 0.7))
 
 
 # ============================================================ 참가자

@@ -50,6 +50,13 @@ var _lobby_list: Label
 var _lobby_info: Label
 var _lobby_difficulty: Button
 var _lobby_start: Button
+var _lobby_code: Label
+var _copy_button: Button
+var _internet_button: Button
+var _internet_code: String = ""
+var _room_list: VBoxContainer
+var _finder: RoomFinder
+var _http: HTTPRequest
 
 ## false 면 씬을 바꾸지 않고 last_scene_request 에만 남김 (자동 테스트용)
 var scene_changes: bool = true
@@ -249,10 +256,10 @@ func _build_multi_panel() -> void:
 	_multi_panel.name = "MultiPanel"
 	_multi_panel.add_theme_stylebox_override(&"panel", _menu_panel.get_theme_stylebox(&"panel"))
 	_multi_panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	_multi_panel.offset_left = -150.0
-	_multi_panel.offset_right = 150.0
-	_multi_panel.offset_top = -190.0
-	_multi_panel.offset_bottom = -10.0
+	_multi_panel.offset_left = -160.0
+	_multi_panel.offset_right = 160.0
+	_multi_panel.offset_top = -8.0  # 내용만큼 위로 자람
+	_multi_panel.offset_bottom = -8.0
 	_multi_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_multi_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	_multi_panel.visible = false
@@ -262,25 +269,54 @@ func _build_multi_panel() -> void:
 	_multi_panel.add_child(box)
 	box.add_child(_make_label("멀티플레이 — 협동 (최대 4명)", 12, Color(1.0, 0.86, 0.45)))
 
+	# ---- 접속 전: 방 만들기 · 초대 코드로 참가 · 공개 방 목록
 	_multi_connect = VBoxContainer.new()
 	_multi_connect.add_theme_constant_override(&"separation", 4)
 	box.add_child(_multi_connect)
-	_multi_connect.add_child(_make_button("방 만들기 (내가 방장)", host_room))
+	var host_row := HBoxContainer.new()
+	host_row.name = "HostRow"
+	host_row.add_theme_constant_override(&"separation", 4)
+	var public_button := _make_button("공개 방 만들기", func() -> void: host_room(true))
+	public_button.tooltip_text = "같은 네트워크(와이파이)의 공개 방 목록에 보이고, 초대 코드로도 들어올 수 있음"
+	public_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var private_button := _make_button("비공개 방 만들기", func() -> void: host_room(false))
+	private_button.tooltip_text = "초대 코드를 아는 사람만 들어올 수 있음"
+	private_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	host_row.add_child(public_button)
+	host_row.add_child(private_button)
+	_multi_connect.add_child(host_row)
 	var row := HBoxContainer.new()
+	row.name = "JoinRow"
 	row.add_theme_constant_override(&"separation", 4)
 	_ip_edit = LineEdit.new()
-	_ip_edit.placeholder_text = "방장 IP (예: 192.168.0.10)"
+	_ip_edit.placeholder_text = "초대 코드 (예: 6R4K-02M8-1ZQ7P)"
 	_ip_edit.add_theme_font_size_override(&"font_size", 10)
 	_ip_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_ip_edit.text_submitted.connect(func(_t: String) -> void: join_room(_ip_edit.text))
 	row.add_child(_ip_edit)
 	row.add_child(_make_button("참가", func() -> void: join_room(_ip_edit.text)))
 	_multi_connect.add_child(row)
+	_multi_connect.add_child(_make_label("같은 네트워크의 공개 방", 9, Color(1.0, 0.86, 0.45)))
+	_room_list = VBoxContainer.new()
+	_room_list.add_theme_constant_override(&"separation", 2)
+	_multi_connect.add_child(_room_list)
 	_multi_connect.add_child(_make_button("← 뒤로", open_menu))
 
+	# ---- 대기실
 	_multi_lobby = VBoxContainer.new()
 	_multi_lobby.add_theme_constant_override(&"separation", 4)
 	box.add_child(_multi_lobby)
+	_lobby_code = _make_label("", 13, Color(1.0, 0.95, 0.6))
+	_multi_lobby.add_child(_lobby_code)
+	var code_row := HBoxContainer.new()
+	code_row.add_theme_constant_override(&"separation", 4)
+	code_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_copy_button = _make_button("코드 복사", copy_invite_code)
+	code_row.add_child(_copy_button)
+	_internet_button = _make_button("인터넷용 코드", make_internet_code)
+	_internet_button.tooltip_text = "다른 동네 친구용: 방장의 공인 IP 로 코드를 만듦 (공유기 포트 포워딩 필요)"
+	code_row.add_child(_internet_button)
+	_multi_lobby.add_child(code_row)
 	_lobby_info = _make_label("", 8, Color(0.75, 0.9, 1.0))
 	_multi_lobby.add_child(_lobby_info)
 	_lobby_list = _make_label("", 10, Color(1, 1, 1))
@@ -294,6 +330,11 @@ func _build_multi_panel() -> void:
 	_multi_status = _make_label("", 8, Color(1.0, 0.75, 0.5))
 	box.add_child(_multi_status)
 
+	_finder = RoomFinder.new()
+	_finder.name = "RoomFinder"
+	add_child(_finder)
+	_finder.rooms_changed.connect(_refresh_room_list)
+
 
 func _make_label(text: String, size: int, color: Color) -> Label:
 	var label := Label.new()
@@ -302,7 +343,7 @@ func _make_label(text: String, size: int, color: Color) -> Label:
 	label.add_theme_color_override(&"font_color", color)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.custom_minimum_size = Vector2(280, 0)
+	label.custom_minimum_size = Vector2(300, 0)
 	return label
 
 
@@ -320,31 +361,48 @@ func open_multi() -> void:
 	_refresh_lobby()
 	if OS.has_feature("web"):
 		# 브라우저에서는 이 방식(ENet · UDP)의 네트워크를 쓸 수 없음
-		for child in _multi_connect.get_children():
-			if child is HBoxContainer or (child is Button and (child as Button).text.begins_with("방 만들기")):
-				child.hide()
+		_multi_connect.get_node(^"HostRow").hide()
+		_multi_connect.get_node(^"JoinRow").hide()
 		_multi_status.text = "웹 버전에서는 멀티플레이를 할 수 없습니다 — 윈도우 버전으로 하세요"
+		return
+	if not Net.is_online() and not _finder.start():
+		_multi_status.text = "공개 방 목록을 열 수 없습니다 (이미 다른 창이 쓰는 중?) — 초대 코드로는 참가할 수 있어요"
+	_refresh_room_list()
 
 
-## 방 만들기: 이 컴퓨터가 방장(서버)이 됨
-func host_room() -> bool:
-	if Net.host_game(GameManager.hero_name) != OK:
+## 방 만들기: 이 컴퓨터가 방장(서버)이 됨. public 이면 같은 네트워크의 공개 방 목록에 보임
+func host_room(public: bool = false) -> bool:
+	_finder.stop()
+	if Net.host_game(GameManager.hero_name, 0, public) != OK:
 		_multi_status.text = Net.last_error
 		return false
-	_multi_status.text = "방을 만들었습니다. 친구에게 아래 IP 를 알려 주세요"
+	_internet_code = ""
+	_multi_status.text = "%s 방을 만들었습니다. 친구에게 초대 코드를 알려 주세요" % ("공개" if public else "비공개")
 	_refresh_lobby()
 	return true
 
 
-## 방장 IP 로 참가
-func join_room(address: String) -> bool:
-	if address.strip_edges() == "":
-		_multi_status.text = "방장의 IP 주소를 입력하세요"
+## 초대 코드(또는 방장 IP)로 참가
+func join_room(code: String) -> bool:
+	if code.strip_edges() == "":
+		_multi_status.text = "방장에게 받은 초대 코드를 입력하세요"
 		return false
-	if Net.join_game(address, GameManager.hero_name) != OK:
+	_finder.stop()
+	if Net.join_by_code(code, GameManager.hero_name) != OK:
 		_multi_status.text = Net.last_error
 		return false
-	_multi_status.text = "%s 에 접속하는 중…" % address.strip_edges()
+	_multi_status.text = "접속하는 중…"
+	_refresh_lobby()
+	return true
+
+
+## 공개 방 목록에서 바로 참가
+func join_listed_room(room: Dictionary) -> bool:
+	_finder.stop()
+	if Net.join_game(String(room["ip"]), GameManager.hero_name, int(room["port"])) != OK:
+		_multi_status.text = Net.last_error
+		return false
+	_multi_status.text = "%s 님의 방에 접속하는 중…" % room["name"]
 	_refresh_lobby()
 	return true
 
@@ -353,16 +411,72 @@ func leave_room() -> void:
 	Net.leave()
 	_multi_status.text = "방에서 나왔습니다"
 	_refresh_lobby()
+	if _multi_panel.visible and not OS.has_feature("web"):
+		_finder.start()
 
 
 func _on_join_failed(reason: String) -> void:
 	_multi_status.text = reason
 	_refresh_lobby()
+	if _multi_panel.visible:
+		_finder.start()
 
 
 func _cycle_lobby_difficulty() -> void:
 	if Net.is_host():
 		Net.set_difficulty((Net.difficulty + 1) % GameManager.Difficulty.size())
+
+
+## 초대 코드를 클립보드에 (인터넷용 코드를 만들었으면 그것을)
+func copy_invite_code() -> String:
+	var code := _internet_code if _internet_code != "" else Net.get_invite_code()
+	if code != "":
+		DisplayServer.clipboard_set(code)
+		_multi_status.text = "초대 코드를 복사했습니다: %s" % code
+	return code
+
+
+## 인터넷용 초대 코드: 방장의 공인 IP 를 알아내서 코드를 만듦
+func make_internet_code() -> void:
+	if _http != null:
+		return
+	_multi_status.text = "공인 IP 를 알아보는 중…"
+	_http = HTTPRequest.new()
+	_http.timeout = 6.0
+	add_child(_http)
+	_http.request_completed.connect(func(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+		var ip := body.get_string_from_utf8().strip_edges()
+		_http.queue_free()
+		_http = null
+		if result != HTTPRequest.RESULT_SUCCESS or code != 200 or NetInvite.encode(ip, Net.host_port, 1) == "":
+			_multi_status.text = "공인 IP 를 알 수 없습니다 (인터넷 연결 확인) — 같은 네트워크용 코드는 그대로 쓸 수 있어요"
+			return
+		_internet_code = Net.get_invite_code(ip)
+		_multi_status.text = "인터넷용 코드를 만들었습니다 — 방장 공유기에서 UDP %d 포트를 이 컴퓨터로 포트 포워딩해야 합니다" % Net.host_port
+		_refresh_lobby())
+	if _http.request("https://api.ipify.org") != OK:
+		_http.queue_free()
+		_http = null
+		_multi_status.text = "공인 IP 를 알 수 없습니다"
+
+
+func _refresh_room_list() -> void:
+	if _room_list == null:
+		return
+	for child in _room_list.get_children():
+		_room_list.remove_child(child)
+		child.queue_free()
+	var rooms := _finder.get_room_list()
+	if rooms.is_empty():
+		_room_list.add_child(_make_label("찾는 중… (같은 와이파이의 공개 방이 여기에 나옵니다)" if _finder.is_listening() else "—", 8, Color(0.7, 0.7, 0.8)))
+		return
+	for room in rooms:
+		var info: Dictionary = GameManager.DIFFICULTY_INFO[clampi(int(room["difficulty"]), 0, GameManager.Difficulty.size() - 1)]
+		var full := int(room["count"]) >= int(room["max"]) or bool(room["in_game"])
+		var text := "%s 님의 방 · %d/%d · %s%s" % [room["name"], room["count"], room["max"], info["name"], " · 게임 중" if room["in_game"] else ""]
+		var button := _make_button(text, join_listed_room.bind(room))
+		button.disabled = full
+		_room_list.add_child(button)
 
 
 func _refresh_lobby() -> void:
@@ -381,8 +495,16 @@ func _refresh_lobby() -> void:
 	_lobby_difficulty.text = "난이도: %s%s" % [info["name"], "  (눌러서 바꾸기)" if Net.is_host() else ""]
 	_lobby_difficulty.disabled = not Net.is_host()
 	_lobby_start.visible = Net.is_host()
+	_lobby_code.visible = Net.is_host()
+	_copy_button.get_parent().visible = Net.is_host()
 	if Net.is_host():
-		var addresses := Net.get_local_addresses()
-		_lobby_info.text = "내 IP: %s  (포트 %d)\n같은 와이파이는 이 주소로, 인터넷은 공유기에서 포트 포워딩한 뒤 공인 IP 로 접속" % [", ".join(addresses) if not addresses.is_empty() else "알 수 없음", Net.port]
+		var local_code := Net.get_invite_code()
+		_lobby_code.text = "초대 코드  %s" % local_code
+		var lines := PackedStringArray()
+		lines.append(("공개 방 — 같은 네트워크의 방 목록에도 보입니다" if Net.room_public else "비공개 방 — 초대 코드를 아는 사람만 들어옵니다"))
+		lines.append("같은 와이파이 친구는 위 코드로 참가")
+		if _internet_code != "":
+			lines.append("인터넷용 코드  %s  (UDP %d 포트 포워딩 필요)" % [_internet_code, Net.host_port])
+		_lobby_info.text = "\n".join(lines)
 	else:
 		_lobby_info.text = "방장이 게임을 시작하길 기다리는 중…" if not Net.players.is_empty() else "접속하는 중…"

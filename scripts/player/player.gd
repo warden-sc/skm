@@ -267,6 +267,7 @@ func _add_name_label() -> void:
 ## 멀티플레이 부활 (동료가 살아남아 야영지에 도착했을 때 등)
 func revive() -> void:
 	_is_dead = false
+	modulate = Color.WHITE
 	_weapon_pivot.show()
 	_body_sprite.rotation = 0.0
 	_body_sprite.modulate = Color.WHITE
@@ -1446,6 +1447,11 @@ func _on_guard_broken() -> void:
 func _on_player_died() -> void:
 	_is_dead = true
 	_weapon_pivot.hide()
+	if Net.is_online():
+		# 멀티플레이: 쓰러지면 반투명한 유령 (동료 화면에도 그대로 보임)
+		velocity = Vector2.ZERO
+		create_tween().tween_property(self, "modulate", Color(0.6, 0.82, 1.0, 0.42), 0.4)
+		return
 	var tween := create_tween()
 	tween.tween_property(_body_sprite, "rotation", PI * 0.5, 0.3)
 	tween.parallel().tween_property(_body_sprite, "modulate", Color(0.5, 0.5, 0.5, 1.0), 0.3)

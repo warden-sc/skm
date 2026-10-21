@@ -4,6 +4,8 @@ extends Node
 signal replied(command: String, data: Dictionary)
 
 const TIMEOUT := 40.0
+## 방장이 만든 초대 코드를 참가자 프로세스에 넘기는 파일 (사람이라면 메신저로 보내는 부분)
+const CODE_FILE := "user://_net_invite_code.txt"
 
 var role: String = "client"
 var failures: int = 0
@@ -81,7 +83,13 @@ func _client_peer() -> int:
 func _run_host() -> void:
 	print("[멀티플레이 — 방장]")
 	GameManager.set_hero_name("아서")
-	check(Net.host_game("아서") == OK and Net.is_host(), "방 만들기 (포트 %d)" % Net.PORT)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(CODE_FILE))
+	check(Net.host_game("아서") == OK and Net.is_host() and not Net.room_public, "비공개 방 만들기 (포트 %d)" % Net.PORT)
+	var code := Net.get_invite_code("127.0.0.1")
+	var file := FileAccess.open(CODE_FILE, FileAccess.WRITE)
+	file.store_string(code)
+	file.close()
+	check(NetInvite.decode(code)["key"] == Net.room_key, "초대 코드 %s → 참가자에게 (파일로 전달)" % code)
 	check(await wait_until(func() -> bool: return Net.players.size() == 2), "참가자 접속 → 대기실 2명")
 	var peer := _client_peer()
 	check(Net.get_player_name(peer) == "랜슬롯", "참가자 이름: %s" % Net.get_player_name(peer))
@@ -177,13 +185,26 @@ func _run_host() -> void:
 	check(int((await ask("projectiles")).get("count", 0)) >= 1, "적의 탄이 참가자 화면에도 보임")
 	slime.despawn()
 
-	# 쓰러짐 · 부활
+	# 쓰러짐 → 유령 관전 → 다음 스테이지에서 부활 (장비 · 골드 그대로)
+	var gold_before := int((await ask("gold")).get("gold", 0))
 	await ask("die")
+	await frames(70)
+	check(puppet.is_net_dead() and Net.party.has(peer) and bool(Net.party[peer][0]), "참가자가 쓰러지면 방장 화면의 분신도 쓰러짐 (적이 노리지 않음)")
+	var ghost := await ask("spectate")
+	check(ghost.get("spectating", false) and ghost.get("target", "") == "아서" and float(ghost.get("alpha", 1.0)) < 0.8,
+		"참가자는 유령이 되어 살아 있는 동료(%s)를 관전" % ghost.get("target", ""))
+	check(puppet.modulate.a < 0.8, "방장 화면에서도 반투명한 유령으로 보임")
+	await snap("ghost")
+	await ask("snap", ["ghost"])
+	stage._do_return_to_camp()
 	await frames(20)
-	check(puppet.is_net_dead(), "참가자가 쓰러지면 방장 화면의 분신도 쓰러짐 (적이 노리지 않음)")
-	Net.revive_all()
-	await frames(20)
-	check(not (await ask("status")).get("dead", true), "야영지 도착 등으로 부활 → 참가자 용사가 다시 일어남")
+	check((await ask("status")).get("dead", false), "야영지로 돌아가는 것만으로는 부활하지 않음")
+	stage._do_go_to_next_stage()
+	await frames(30)
+	var revived := await ask("status")
+	check(not revived.get("dead", true) and not revived.get("spectating", true) and int((await ask("gold")).get("gold", -1)) == gold_before and GameManager.stage == 2,
+		"동료가 보스를 깨고 다음 스테이지(2) 야영지에 오면 부활 — 골드 · 장비 그대로 (%dG)" % gold_before)
+	check(not puppet.is_net_dead() and puppet.modulate.a > 0.9, "분신도 다시 일어남")
 
 	# 1 ~ 100스테이지 보스방을 차례로 열어 참가자 화면에 복제 (복제본 오류 확인)
 	var tour := OS.get_cmdline_user_args().has("--tour")
@@ -197,6 +218,28 @@ func _run_host() -> void:
 	var tour_status := await ask("status")
 	check(tour_status.get("location", "") == "보스방", "보스방 %d곳을 돌며 참가자 화면에 복제 (마지막 %d스테이지)" % [stages.size(), stages.back()])
 	check(int((await ask("errors")).get("count", -1)) == 0, "참가자 쪽 복제 중 오류 없음")
+
+	# 전멸 → 게임 오버 → 방장이 1스테이지부터 다시
+	_hold_players()
+	await ask("die")
+	await frames(10)
+	me._invincible_left = 0.0
+	GameManager.damage_player(99999999)
+	check(await wait_until(func() -> bool: return Net.party_wiped, 5.0), "모두 쓰러지면 게임 오버 (방장)")
+	await frames(10)
+	check((await ask("wiped")).get("wiped", false), "참가자 화면도 게임 오버")
+	await snap("gameover")
+	await ask("snap", ["gameover"])
+	Net.restart_party()
+	check(await wait_until(func() -> bool: return Net._bound() and not Net.party_wiped and not GameManager.is_player_dead and GameManager.stage == 1 and not Net._puppets.is_empty(), 15.0),
+		"방장 [R] → 다 함께 1스테이지부터 다시")
+	var again := {}
+	for attempt in 20:
+		again = await ask("status")
+		if again.get("location", "") == "야영지" and not again.get("dead", true):
+			break
+		await frames(15)
+	check(not again.get("dead", true) and again.get("location", "") == "야영지" and not again.get("spectating", true), "참가자도 1스테이지 야영지에서 다시 시작")
 
 	# 나가기
 	await ask("leave")
@@ -222,13 +265,24 @@ func _run_client() -> void:
 	print("[멀티플레이 — 참가자]")
 	GameManager.set_hero_name("랜슬롯")
 	await frames(30)  # 방장이 먼저 방을 열 시간
+	check(await wait_until(func() -> bool: return FileAccess.file_exists(CODE_FILE), 20.0), "방장에게 초대 코드를 받음")
+	var code := FileAccess.get_file_as_string(CODE_FILE).strip_edges()
+	var info := NetInvite.decode(code)
+	# 열쇠가 틀린 코드 → 비공개 방이라 거절
+	var rejected := {"reason": ""}
+	var on_fail := func(reason: String) -> void: rejected["reason"] = reason
+	Net.join_failed.connect(on_fail)
+	Net.join_by_code(NetInvite.encode("127.0.0.1", int(info["port"]), (int(info["key"]) + 1) % 65536), "랜슬롯")
+	await wait_until(func() -> bool: return String(rejected["reason"]) != "", 10.0)
+	check(String(rejected["reason"]).contains("초대 코드가 맞지 않습니다") and not Net.is_online(), "틀린 초대 코드 → 「%s」" % rejected["reason"])
+	Net.join_failed.disconnect(on_fail)
 	var joined := false
 	for attempt in 10:
-		Net.join_game("127.0.0.1", "랜슬롯")
+		Net.join_by_code(code, "랜슬롯")
 		if await wait_until(func() -> bool: return Net.players.size() >= 2, 3.0):
 			joined = true
 			break
-	check(joined and Net.is_client(), "방장 IP(127.0.0.1)로 참가 → 대기실")
+	check(joined and Net.is_client(), "초대 코드로 참가 → 대기실")
 	check(Net.get_player_name(1) == "아서", "대기실에 방장 이름")
 	check(await wait_until(func() -> bool: return Net.in_game and Net._bound()), "방장이 시작 → 메인 씬")
 	# 방장이 명령을 다 보낼 때까지 (나가기 명령이 오면 끝)
@@ -267,7 +321,8 @@ func _do(command: String, args: Array = []) -> Dictionary:
 				if node is ShopKeeper:
 					shop_mirror = true
 			return {"mirrors": Net._mirrors.size(), "host_mirror": host_mirror, "shop_mirror": shop_mirror,
-				"location": GameManager.location_name, "pos": player.global_position if player != null else Vector2.ZERO, "dead": GameManager.is_player_dead}
+				"location": GameManager.location_name, "pos": player.global_position if player != null else Vector2.ZERO, "dead": GameManager.is_player_dead,
+				"spectating": Net.is_spectating()}
 		"move":
 			Input.action_press(&"move_right")
 			await frames(40)
@@ -312,6 +367,11 @@ func _do(command: String, args: Array = []) -> Dictionary:
 		"snap":
 			await snap(String(args[0]))
 			return {}
+		"spectate":
+			var spec := Net.spectator
+			return {"spectating": Net.is_spectating(), "target": spec.target_name if spec != null else "", "alpha": player.modulate.a}
+		"wiped":
+			return {"wiped": Net.party_wiped}
 		"errors":
 			return {"count": 0}
 		"die":

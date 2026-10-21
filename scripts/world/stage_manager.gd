@@ -241,7 +241,7 @@ func go_to_next_stage() -> void:
 
 ## 모든 스테이지 클리어 → 엔딩 화면 (엔딩에서 난이도 선택 화면으로 돌아감)
 func go_to_ending() -> void:
-	if not GameManager.is_game_cleared or GameManager.is_player_dead:
+	if not GameManager.is_game_cleared or Net.is_party_dead():
 		return
 	_ending_timer.stop()
 	_travel(_do_go_to_ending)
@@ -309,6 +309,7 @@ func _do_go_to_next_stage() -> void:
 	var next_stage := GameManager.stage + 1
 	_setup_stage(next_stage)
 	_arrive_at_camp()
+	Net.revive_all()  # 멀티플레이: 남은 동료가 보스를 쓰러뜨려 다음 스테이지에 왔으니 쓰러졌던 동료가 장비 · 골드 그대로 부활
 	Net.announce("STAGE %d 「%s」 도착!" % [next_stage, GameManager.stage_name], Color(0.6, 1.0, 0.7))
 	Story.queue("%d스테이지 도착" % next_stage)
 	var unlocked := _rarity_unlocked_at(next_stage)
@@ -321,7 +322,6 @@ func _arrive_at_camp() -> void:
 	player.teleport_to(camp_spawn.global_position, camp_room.get_bounds())
 	_state = State.CAMP
 	GameManager.set_location(LOCATION_CAMP)
-	Net.revive_all()  # 멀티플레이: 쓰러졌던 동료는 야영지에서 다시 일어남
 
 
 # ============================================================ 스테이지 준비
@@ -498,7 +498,7 @@ func _begin_finale() -> void:
 
 ## 최종 보스 등장 (테스트에서도 직접 호출)
 func start_finale() -> void:
-	if _state != State.CLEARED or _finale_done or _finale_active or GameManager.is_player_dead or finale_stage == null:
+	if _state != State.CLEARED or _finale_done or _finale_active or Net.is_party_dead() or finale_stage == null:
 		return
 	_finale_active = true
 	_state = State.BOSS
@@ -569,7 +569,12 @@ func _on_boss_health_changed(current: int, max_hp: int) -> void:
 
 func _on_player_died() -> void:
 	if Net.is_online():
-		return  # 멀티플레이: 동료가 살아 있으면 계속 (모두 쓰러지면 Net 이 야영지에서 다 같이 부활)
+		return  # 멀티플레이: 동료가 살아 있으면 계속 (모두 쓰러지면 Net 이 게임 오버 → on_party_wiped)
+	_state = State.GAME_OVER
+
+
+## 멀티플레이 전멸 → 게임 오버 (몬스터는 더 나오지 않음)
+func on_party_wiped() -> void:
 	_state = State.GAME_OVER
 
 

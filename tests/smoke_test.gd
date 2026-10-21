@@ -4601,15 +4601,44 @@ func _run() -> void:
 	_check(title.get_screen() == "menu" and (title.get_node("%HeroLabel") as Label).text.contains("랜슬롯"), "다시 켜면 이름 · 튜토리얼 없이 메뉴 (싱글 / 멀티)")
 	(title.get_node("%MultiButton") as Button).pressed.emit()
 	_check(title.get_screen() == "multi" and not Net.is_online(), "멀티플레이 → 방 만들기 / IP 로 참가 화면")
+	# 초대 코드 (주소 · 포트 · 방 열쇠를 13글자로)
+	var code := NetInvite.encode("192.168.0.10", 24570, 4321)
+	var decoded := NetInvite.decode(code)
+	_check(code.length() == 15 and decoded == {"ip": "192.168.0.10", "port": 24570, "key": 4321}, "초대 코드 만들기 · 풀기: %s" % code)
+	_check(NetInvite.decode(code.to_lower().replace("0", "o")) == decoded and NetInvite.decode("ABCD") == {} and NetInvite.encode("not an ip", 1, 1) == ""
+		and NetInvite.looks_like_code(code) and not NetInvite.looks_like_code("192.168.0.10"), "소문자 · 헷갈리는 글자(O→0)도 읽음, 잘못된 코드는 거절")
+	_check(NetInvite.decode(NetInvite.encode("10.0.0.255", 24570, 65535))["ip"] == "10.0.0.255" and NetInvite.decode(NetInvite.encode("255.255.255.254", 65000, 1))["port"] == 65000, "주소 끝까지 (255 · 65535)")
 	Net.port = 24600 + randi() % 900
-	_check(title.host_room() and Net.is_host() and Net.players.size() == 1 and title._multi_lobby.visible and title._lobby_start.visible,
-		"방 만들기 → 대기실 (방장 1명 · 난이도 · 시작 버튼, 포트 %d)" % Net.port)
+	_check(title.host_room(false) and Net.is_host() and Net.players.size() == 1 and title._multi_lobby.visible and title._lobby_start.visible and not Net.room_public,
+		"비공개 방 만들기 → 대기실 (방장 1명 · 난이도 · 시작 버튼, 포트 %d)" % Net.port)
+	var room_code := Net.get_invite_code("127.0.0.1")
+	_check(NetInvite.decode(room_code)["key"] == Net.room_key and Net.room_key > 0 and title._lobby_code.text.contains("초대 코드") and title._lobby_info.text.contains("비공개"),
+		"대기실에 초대 코드 (방 열쇠 포함) · 「비공개 방」 안내")
+	_check(title.copy_invite_code() == Net.get_invite_code(), "코드 복사")
 	title._cycle_lobby_difficulty()
 	_check(Net.difficulty == 1 and title._lobby_difficulty.text.contains("하드"), "방장이 대기실에서 난이도 바꾸기")
 	title.leave_room()
 	_check(not Net.is_online() and title._multi_connect.visible, "방 나가기")
 	Net.difficulty = 0
-	_check(not title.join_room("") and title._multi_status.text.contains("IP"), "IP 를 비우면 안내")
+	_check(not title.join_room("") and title._multi_status.text.contains("초대 코드"), "코드를 비우면 안내")
+	_check(not title.join_room("ZZZZ-ZZZZ-ZZZZZ") and title._multi_status.text.contains("올바르지"), "잘못된 초대 코드는 안내")
+	# 공개 방: 같은 네트워크에 방 정보를 뿌림 → 공개 방 목록
+	title._finder.stop()
+	var finder := RoomFinder.new()
+	get_tree().root.add_child(finder)
+	var listening := finder.start()
+	Net.discovery_targets = ["127.0.0.1"]
+	_check(title.host_room(true) and Net.room_public and title._lobby_info.text.contains("공개 방"), "공개 방 만들기")
+	for i in 90:
+		await get_tree().process_frame
+		if not finder.rooms.is_empty():
+			break
+	var found: Array = finder.get_room_list()
+	_check(listening and found.size() == 1 and String(found[0]["name"]) == _gm.hero_name and int(found[0]["port"]) == Net.host_port and int(found[0]["count"]) == 1,
+		"공개 방이 같은 네트워크의 방 목록에 보임 (%s)" % str(found))
+	title.leave_room()
+	finder.queue_free()
+	Net.discovery_targets = ["255.255.255.255"]
 	title.open_menu()
 	(title.get_node("%SingleButton") as Button).pressed.emit()
 	_check(title.get_screen() == "single" and (title.get_node("%ContinueButton") as Button).disabled, "싱글플레이 → 이어하기(저장 없음 → 비활성) / 새 게임")

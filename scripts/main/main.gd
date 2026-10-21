@@ -27,8 +27,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		if Net.client_interact():
 			get_viewport().set_input_as_handled()
 		return
-	if not GameManager.is_player_dead or Net.is_online():
-		return  # 멀티플레이: 쓰러지면 동료를 기다림 (모두 쓰러지면 야영지에서 다 같이 부활)
+	if Net.is_online():
+		# 멀티플레이: 쓰러지면 유령으로 관전, 전멸하면 방장이 [R] 다시 · [T] 끝내기 (참가자는 [T] 나가기)
+		if Net.party_wiped:
+			if event.is_action_pressed(&"restart") and Net.is_host():
+				Net.restart_party()
+			elif event.is_action_pressed(&"to_title"):
+				if Net.is_host():
+					Net.end_party()
+				else:
+					Net.quit_party()
+		return
+	if not GameManager.is_player_dead:
+		return
 	if event.is_action_pressed(&"restart"):
 		GameManager.reset_game()  # 같은 난이도로 1스테이지부터 (튜토리얼이면 튜토리얼 처음부터)
 		get_tree().reload_current_scene()

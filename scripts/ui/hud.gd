@@ -190,8 +190,17 @@ func _hide_game_over_on_revive(current: int, _max_hp: int) -> void:
 
 func _on_player_died() -> void:
 	if Net.is_online():
-		# 멀티플레이: 동료가 살아 있으면 야영지에 도착할 때 다시 일어남
-		(_game_over.get_node(^"GameOverLabel") as Label).text = "쓰러졌습니다…\n동료가 야영지에 도착하면 다시 일어납니다 (모두 쓰러지면 다 같이 야영지에서)"
+		return  # 멀티플레이: 유령이 되어 동료를 관전 (Spectator) — 모두 쓰러지면 show_party_game_over
+	_game_over.show()
+
+
+## 멀티플레이 전멸 → 게임 오버 화면 (방장이 다시 할지 끝낼지 고름)
+func show_party_game_over(is_host: bool) -> void:
+	var label := _game_over.get_node(^"GameOverLabel") as Label
+	if is_host:
+		label.text = "전멸 — GAME OVER\n[R] 1스테이지부터 다 함께 다시   [T] 끝내기 (타이틀로)"
+	else:
+		label.text = "전멸 — GAME OVER\n방장이 다시 할지 고르는 중…   [T] 나가기 (타이틀로)"
 	_game_over.show()
 
 
