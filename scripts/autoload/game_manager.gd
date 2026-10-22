@@ -68,18 +68,18 @@ enum WeaponSlot { MELEE, BOW, STAFF }
 const DIFFICULTY_INFO := {
 	Difficulty.NORMAL: {
 		"name": "노멀", "color": Color(0.55, 1.0, 0.6),
-		"enemy_hp": 1.0, "enemy_defense": 0, "enemy_damage": 1.0, "enemy_speed": 1.0, "gold": 1.0, "max_alive_bonus": 0,
-		"desc": "처음 모험을 떠나는 분께 추천합니다.",
+		"enemy_hp": 1.0, "enemy_defense": 0, "enemy_damage": 0.7, "enemy_speed": 1.0, "gold": 1.0, "max_alive_bonus": 0, "hit_cap": 0.35,
+		"desc": "처음 모험을 떠나는 분께 추천합니다. 몬스터 공격력 x0.7 · 한 번에 최대 체력의 35% 넘게 잃지 않음",
 	},
 	Difficulty.HARD: {
 		"name": "하드", "color": Color(1.0, 0.75, 0.35),
-		"enemy_hp": 1.5, "enemy_defense": 1, "enemy_damage": 1.4, "enemy_speed": 1.1, "gold": 1.3, "max_alive_bonus": 2,
-		"desc": "몬스터 체력 x1.5 · 공격력 x1.4 · 방어력 +1 · 골드 x1.3",
+		"enemy_hp": 1.3, "enemy_defense": 1, "enemy_damage": 1.1, "enemy_speed": 1.1, "gold": 1.3, "max_alive_bonus": 2, "hit_cap": 0.5,
+		"desc": "몬스터 체력 x1.3 · 공격력 x1.1 · 방어력 +1 · 골드 x1.3 · 한 번에 최대 체력의 50%까지",
 	},
 	Difficulty.VERY_HARD: {
 		"name": "베리하드", "color": Color(1.0, 0.35, 0.4),
-		"enemy_hp": 2.2, "enemy_defense": 3, "enemy_damage": 1.9, "enemy_speed": 1.2, "gold": 1.7, "max_alive_bonus": 4,
-		"desc": "몬스터 체력 x2.2 · 공격력 x1.9 · 방어력 +3 · 더 많고 빠름 · 골드 x1.7",
+		"enemy_hp": 1.8, "enemy_defense": 3, "enemy_damage": 1.5, "enemy_speed": 1.2, "gold": 1.7, "max_alive_bonus": 4, "hit_cap": 0.75,
+		"desc": "몬스터 체력 x1.8 · 공격력 x1.5 · 방어력 +3 · 더 많고 빠름 · 골드 x1.7 · 한 번에 최대 체력의 75%까지",
 	},
 }
 const WEAPON_SLOT_NAMES := ["검", "활", "지팡이"]
@@ -401,6 +401,12 @@ func get_difficulty_name() -> String:
 
 
 # ============================================================ 체력
+## 몬스터의 공격 한 번으로 잃을 수 있는 최대 체력 (난이도별 — 노멀 35% · 하드 50% · 베리하드 75%). 한 방에 쓰러지지 않게
+## 보스 기믹의 「최대 체력 비율 피해」(take_unblockable_hit 등)는 이 상한과 상관없이 그대로
+func get_hit_cap() -> int:
+	return maxi(1, roundi(max_hp * float(get_difficulty_info().get("hit_cap", 1.0))))
+
+
 func damage_player(amount: int) -> void:
 	if is_player_dead or amount <= 0:
 		return

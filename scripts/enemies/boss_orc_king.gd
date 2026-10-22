@@ -8,7 +8,7 @@ extends PatternBoss
 ##
 ## [기믹] 족장의 함성: "전군, 돌격!" 오크 전사 · 홉고블린을 부르고, 오크킹이 부른 부하 전원을 강화
 ##   (공격력 x1.4 · 이동 속도 x1.3 · 방어력 +8, 붉게 빛남) → 부하를 먼저 정리하면 효과가 사라짐
-## [기믹] 광폭화: 잃은 체력에 비례해 오크킹의 공격력·이동 속도가 오름 (빈사 직전 공격력 최대 +80%)
+## [기믹] 광폭화: 잃은 체력에 비례해 오크킹의 공격력·이동 속도가 오름 (빈사 직전에도 공격력 최대 +35% 까지 — 예전 +80% 는 너무 셌음)
 ## 체력 50% 이하: 도끼 수 증가
 
 enum Pattern { SLAM, AXE, CHARGE, WAR_CRY }
@@ -22,8 +22,10 @@ enum Pattern { SLAM, AXE, CHARGE, WAR_CRY }
 const WAR_CRY_POWER := 1.4
 const WAR_CRY_SPEED := 1.3
 const WAR_CRY_DEFENSE := 8
-## 광폭화: 체력이 0 에 가까울 때의 최대 공격력 증가율
-const BERSERK_MAX := 0.8
+## 광폭화: 체력이 0 에 가까울 때의 최대 공격력 증가율 (상한)
+const BERSERK_MAX := 0.35
+## 광폭화: 최대 이동 속도 증가율
+const BERSERK_SPEED := 0.25
 
 var _charge_dir: Vector2 = Vector2.ZERO
 var _charging: bool = false
@@ -50,7 +52,7 @@ func get_rage() -> float:
 func _update_berserk() -> void:
 	var rage := get_rage()
 	power = _base_power * (1.0 + BERSERK_MAX * rage)
-	move_speed = _base_speed * (1.0 + 0.4 * rage)
+	move_speed = _base_speed * (1.0 + BERSERK_SPEED * rage)
 	chase_time = _base_chase * (1.0 - 0.4 * rage)
 	base_tint = Color(1.0, 1.0 - 0.45 * rage, 1.0 - 0.45 * rage)
 	if rage >= 0.1 and (get_status_text().is_empty() or get_status_text().begins_with("광폭화")):

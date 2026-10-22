@@ -1192,8 +1192,8 @@ func get_net_status() -> Dictionary:
 func _apply_damage(amount: int) -> void:
 	if amount <= 0:
 		return
-	# 방패 + 투구 방어력 (최소 1은 들어감)
-	GameManager.damage_player(maxi(1, amount - get_effective_defense()))
+	# 방패 + 투구 방어력 (최소 1은 들어감) · 한 방 상한 (난이도별 최대 체력의 35~75%)
+	GameManager.damage_player(mini(maxi(1, amount - get_effective_defense()), GameManager.get_hit_cap()))
 
 
 func _on_blocked(leftover_damage: int, hit_dir: Vector2, attacker: Enemy) -> void:

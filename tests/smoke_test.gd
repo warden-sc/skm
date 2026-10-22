@@ -4587,7 +4587,15 @@ func _test_gear(main: Node2D) -> void:
 	var hp0: int = _gm.hp
 	player._invincible_left = 0.0
 	player.take_hit(50, player.global_position + Vector2(20, 0))
-	_check(hp0 - _gm.hp == maxi(1, 50 * Balance.K - player.get_effective_defense()), "몬스터 공격 50 → 실제 %d 피해 (×%d − 방어력 %d)" % [hp0 - _gm.hp, Balance.K, player.get_effective_defense()])
+	_check(hp0 - _gm.hp == mini(maxi(1, 50 * Balance.K - player.get_effective_defense()), _gm.get_hit_cap()), "몬스터 공격 50 → 실제 %d 피해 (×%d − 방어력 %d, 한 방 상한 %d)" % [hp0 - _gm.hp, Balance.K, player.get_effective_defense(), _gm.get_hit_cap()])
+	_gm.heal_full()
+	player._invincible_left = 0.0
+	var hp_cap0: int = _gm.hp
+	player.take_hit(5000, player.global_position + Vector2(20, 0))
+	_check(hp_cap0 - _gm.hp == _gm.get_hit_cap() and _gm.hp > 0 and _gm.get_hit_cap() == roundi(_gm.max_hp * 0.35),
+		"한 방 상한: 아무리 센 공격도 노멀에선 최대 체력의 35%%까지 (%d) — 한 대에 쓰러지지 않음" % (hp_cap0 - _gm.hp))
+	_check(_gm.DIFFICULTY_INFO[_gm.Difficulty.NORMAL]["enemy_damage"] < 1.0 and _gm.DIFFICULTY_INFO[_gm.Difficulty.HARD]["hit_cap"] == 0.5 and _gm.DIFFICULTY_INFO[_gm.Difficulty.VERY_HARD]["hit_cap"] == 0.75,
+		"난이도 완화: 노멀 몬스터 공격력 x0.7 · 한 방 상한 노멀 35%% / 하드 50%% / 베리하드 75%%")
 	_gm.heal_full()
 	var slime := (load("res://scenes/enemies/slime.tscn") as PackedScene).instantiate() as Enemy
 	var slime_hp: int = slime.max_hp
@@ -5910,7 +5918,7 @@ func _run() -> void:
 					orc_king.take_damage(roundi(orc_king.hp * 0.7), Vector2.ZERO, false, 999)
 					orc_king.set_physics_process(true)
 					await _survive(100)
-					_check(orc_king.power > calm_power * 1.3 and orc_king.get_status_text().contains("광폭화"), "[기믹] 광폭화: 체력이 줄수록 공격력 증가 (x%.2f · %s)" % [orc_king.power / calm_power, orc_king.get_status_text()])
+					_check(orc_king.power > calm_power * 1.1 and orc_king.power <= calm_power * (1.0 + BossOrcKing.BERSERK_MAX) + 0.001 and orc_king.get_status_text().contains("광폭화"), "[기믹] 광폭화: 체력이 줄수록 공격력 증가 — 최대 +%d%% 상한 (지금 x%.2f · %s)" % [roundi(BossOrcKing.BERSERK_MAX * 100.0), orc_king.power / calm_power, orc_king.get_status_text()])
 					orc_king.set_physics_process(true)
 				if n == 7:
 					var reaper := boss as BossReaper
