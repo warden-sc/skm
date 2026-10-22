@@ -8,7 +8,7 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 83
+defense = 110
 move_bonus = 0.14
 id = &"seraph_boots"
 display_name = "세라핌의 장화"

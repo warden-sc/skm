@@ -8,12 +8,12 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 59
-bonus_max_hp = 390
+defense = 81
+bonus_max_hp = 670
 id = &"garrison_helmet"
-set_id = &"garrison"
 display_name = "수비대 투구"
 description = "넓은 챙이 달린 쇠 투구."
 rarity = 1
 tier = 1
+set_id = &"garrison"
 price = 3730

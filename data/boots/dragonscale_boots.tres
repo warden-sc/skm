@@ -8,7 +8,7 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 75
+defense = 100
 move_bonus = 0.11
 id = &"dragonscale_boots"
 display_name = "용비늘 장화"

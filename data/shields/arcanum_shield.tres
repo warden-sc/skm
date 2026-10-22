@@ -6,7 +6,7 @@
 [resource]
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
-defense = 78
+defense = 110
 block_ratio = 0.93
 block_arc_degrees = 167.5
 max_guard = 2710
@@ -15,9 +15,9 @@ perfect_guard_window = 0.395
 guard_move_multiplier = 0.625
 guard_break_time = 0.725
 id = &"arcanum_shield"
-set_id = &"arcanum"
 display_name = "비전 방패"
 description = "마력 막이 겹쳐진 방패."
 rarity = 2
 tier = 3
+set_id = &"arcanum"
 price = 15800

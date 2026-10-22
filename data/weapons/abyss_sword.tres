@@ -7,7 +7,7 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 weapon_type = 0
-damage = 3990
+damage = 10500
 crit_chance = 0.1525
 crit_multiplier = 1.8125
 attack_cooldown = 0.3075

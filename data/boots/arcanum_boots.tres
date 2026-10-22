@@ -8,12 +8,12 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 78
+defense = 110
 move_bonus = 0.115
 id = &"arcanum_boots"
-set_id = &"arcanum"
 display_name = "비전 장화"
 description = "발밑에 마법진이 떠오르는 장화."
 rarity = 2
 tier = 3
+set_id = &"arcanum"
 price = 15800

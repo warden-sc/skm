@@ -8,8 +8,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 160
-bonus_max_hp = 1540
+defense = 220
+bonus_max_hp = 2370
 id = &"athena_helmet"
 display_name = "아테나의 투구"
 description = "지혜의 여신 아테나가 넘겨준 투구. 높은 깃장식 아래 모든 공격의 길이 보인다."

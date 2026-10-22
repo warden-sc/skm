@@ -8,8 +8,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 97
-bonus_max_hp = 770
+defense = 130
+bonus_max_hp = 1270
 id = &"shroud_armor"
 display_name = "수의 갑옷"
 description = "수의 위에 녹슨 사슬을 걸친 갑옷."

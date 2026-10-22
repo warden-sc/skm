@@ -8,8 +8,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 130
-bonus_max_hp = 1200
+defense = 180
+bonus_max_hp = 1880
 id = &"dragonscale_armor"
 display_name = "용비늘 갑옷"
 description = "용의 비늘을 겹겹이 단 갑옷."

@@ -5,7 +5,7 @@
 
 [resource]
 script = ExtResource("1_script")
-defense = 67
+defense = 92
 block_ratio = 0.9
 block_arc_degrees = 160
 max_guard = 2270

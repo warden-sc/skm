@@ -7,8 +7,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 slot_type = 2
-bonus_max_hp = 130
-hp_regen = 7.6
+bonus_max_hp = 290
+hp_regen = 10.7
 id = &"wolf_fang_pendant"
 display_name = "늑대 이빨 목걸이"
 description = "늑대 우두머리의 송곳니 목걸이."

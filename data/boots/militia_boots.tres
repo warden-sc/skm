@@ -8,12 +8,12 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 22
+defense = 30
 move_bonus = 0.045
 id = &"militia_boots"
-set_id = &"militia"
 display_name = "자경단 장화"
 description = "순찰을 오래 돌아도 멀쩡한 장화."
 rarity = 0
 tier = 1
+set_id = &"militia"
 price = 330

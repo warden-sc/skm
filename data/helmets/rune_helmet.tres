@@ -8,8 +8,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 100
-bonus_max_hp = 870
+defense = 140
+bonus_max_hp = 1350
 id = &"rune_helmet"
 display_name = "룬 투구"
 description = "면갑의 틈으로 룬 빛이 새어 나오는 투구."

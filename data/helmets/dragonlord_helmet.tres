@@ -8,12 +8,12 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 110
-bonus_max_hp = 940
+defense = 150
+bonus_max_hp = 1450
 id = &"dragonlord_helmet"
-set_id = &"dragonlord"
 display_name = "용왕의 투구"
 description = "용왕의 뿔이 솟은 투구."
 rarity = 3
 tier = 3
+set_id = &"dragonlord"
 price = 25800

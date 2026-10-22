@@ -7,12 +7,12 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 slot_type = 2
-bonus_max_hp = 780
-hp_regen = 20.7
+bonus_max_hp = 1210
+hp_regen = 29.2
 id = &"dragonlord_pendant"
-set_id = &"dragonlord"
 display_name = "용왕의 심장석"
 description = "용왕의 심장에서 나온 붉은 돌."
 rarity = 3
 tier = 3
+set_id = &"dragonlord"
 price = 29500

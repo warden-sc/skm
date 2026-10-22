@@ -8,12 +8,12 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 140
-bonus_max_hp = 1340
+defense = 200
+bonus_max_hp = 2070
 id = &"hero_armor"
-set_id = &"hero"
 display_name = "영웅의 갑옷"
 description = "수많은 전투를 견딘 금빛 갑옷."
 rarity = 3
 tier = 1
+set_id = &"hero"
 price = 25600

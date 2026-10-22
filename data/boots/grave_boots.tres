@@ -8,7 +8,7 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 56
+defense = 76
 move_bonus = 0.0825
 id = &"grave_boots"
 display_name = "망자의 장화"

@@ -8,12 +8,12 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 38
-bonus_max_hp = 100
+defense = 52
+bonus_max_hp = 250
 id = &"militia_armor"
-set_id = &"militia"
 display_name = "자경단 누비옷"
 description = "솜을 두껍게 누빈 옷. 생각보다 튼튼하다."
 rarity = 0
 tier = 1
+set_id = &"militia"
 price = 370

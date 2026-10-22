@@ -6,7 +6,7 @@
 [resource]
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
-defense = 85
+defense = 120
 block_ratio = 0.985
 block_arc_degrees = 187.5
 max_guard = 3130
@@ -15,9 +15,9 @@ perfect_guard_window = 0.435
 guard_move_multiplier = 0.685
 guard_break_time = 0.525
 id = &"dragonlord_shield"
-set_id = &"dragonlord"
 display_name = "용왕의 방패"
 description = "용왕의 붉은 비늘로 만든 탑 방패."
 rarity = 3
 tier = 3
+set_id = &"dragonlord"
 price = 25800

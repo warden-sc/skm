@@ -6,8 +6,8 @@
 
 [resource]
 script = ExtResource("1_script")
-defense = 140
-bonus_max_hp = 1300
+defense = 190
+bonus_max_hp = 2020
 worn_texture = ExtResource("2_res")
 id = &"paladin_plate"
 display_name = "성기사의 판금"

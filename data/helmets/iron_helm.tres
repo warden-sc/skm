@@ -6,8 +6,8 @@
 
 [resource]
 script = ExtResource("1_script")
-defense = 52
-bonus_max_hp = 310
+defense = 72
+bonus_max_hp = 560
 worn_texture = ExtResource("2_res")
 id = &"iron_helm"
 display_name = "강철 투구"

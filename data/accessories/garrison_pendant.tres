@@ -7,12 +7,12 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 slot_type = 2
-bonus_max_hp = 330
-hp_regen = 11.5
+bonus_max_hp = 560
+hp_regen = 16.2
 id = &"garrison_pendant"
-set_id = &"garrison"
 display_name = "수비대 휘장"
 description = "끝까지 성벽을 지킨 이에게 주는 휘장."
 rarity = 1
 tier = 1
+set_id = &"garrison"
 price = 4270

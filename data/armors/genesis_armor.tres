@@ -8,8 +8,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 150
-bonus_max_hp = 1450
+defense = 210
+bonus_max_hp = 2220
 id = &"genesis_armor"
 display_name = "창세의 갑옷"
 description = "별빛 룬이 흐르는 보랏빛 갑옷."

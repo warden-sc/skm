@@ -8,12 +8,12 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 85
+defense = 120
 move_bonus = 0.15
 id = &"dragonlord_boots"
-set_id = &"dragonlord"
 display_name = "용왕의 장화"
 description = "용의 발톱이 달린 장화."
 rarity = 3
 tier = 3
+set_id = &"dragonlord"
 price = 25800

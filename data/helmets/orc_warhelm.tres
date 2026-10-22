@@ -6,8 +6,8 @@
 
 [resource]
 script = ExtResource("1_script")
-defense = 84
-bonus_max_hp = 680
+defense = 120
+bonus_max_hp = 1090
 worn_texture = ExtResource("2_res")
 id = &"orc_warhelm"
 display_name = "오크 전쟁 투구"

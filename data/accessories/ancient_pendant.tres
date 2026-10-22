@@ -7,8 +7,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 slot_type = 2
-bonus_max_hp = 770
-hp_regen = 20.5
+bonus_max_hp = 1190
+hp_regen = 28.9
 id = &"ancient_pendant"
 display_name = "고대 생명석 펜던트"
 description = "고대의 생명석이 박힌 펜던트."

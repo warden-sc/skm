@@ -6,8 +6,8 @@
 [resource]
 script = ExtResource("1_script")
 slot_type = 2
-bonus_max_hp = 260
-hp_regen = 10.1
+bonus_max_hp = 460
+hp_regen = 14.3
 id = &"sapphire_pendant"
 display_name = "사파이어 펜던트"
 description = "푸른 사파이어 펜던트. 생명력을 북돋우고 상처를 천천히 치유한다."

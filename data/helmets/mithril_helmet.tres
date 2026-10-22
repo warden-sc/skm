@@ -8,8 +8,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 80
-bonus_max_hp = 640
+defense = 110
+bonus_max_hp = 1020
 id = &"mithril_helmet"
 display_name = "미스릴 투구"
 description = "가볍게 빛나는 미스릴 투구."

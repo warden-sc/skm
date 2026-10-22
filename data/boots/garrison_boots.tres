@@ -8,12 +8,12 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 47
+defense = 65
 move_bonus = 0.075
 id = &"garrison_boots"
-set_id = &"garrison"
 display_name = "수비대 철화"
 description = "성벽 계단을 하루 종일 오르내린 철화."
 rarity = 1
 tier = 1
+set_id = &"garrison"
 price = 3730

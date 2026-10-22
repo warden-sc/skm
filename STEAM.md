@@ -9,8 +9,8 @@
 | --- | --- | --- |
 | 업적 11개 | `scripts/autoload/achievements.gd` | 달성 시 화면 알림 + `user://profile.cfg` 기록. `Engine.has_singleton("Steam")` 이면 `Steam.setAchievement(id)` · `storeStats()` 도 호출 |
 | 버전 표기 | `project.godot` `config/version` · 타이틀 오른쪽 아래 · `export_presets.cfg` file/product_version | 스팀 빌드를 올릴 때마다 함께 올림 |
-| 효과음 · 음량 설정 | `scripts/autoload/sfx.gd` · ESC → 설정 → 효과음 | 지금은 보스문 · 시련 효과음 5개 (임시 WAV) |
-| 설정 저장 | `user://profile.cfg` | 화면 흔들림 · 전체 화면 · 대사 · 효과음 · 음성 채팅 |
+| 효과음 자리 | `scripts/autoload/sfx.gd` | 지금은 소리 없음 — 파일을 넣으면 그 자리에서 나오고 설정에 음량도 나타남 |
+| 설정 저장 | `user://profile.cfg` | 화면 흔들림 · 전체 화면 · 대사 · 음성 채팅 (효과음 음량은 소리를 넣으면) |
 | 난이도 3단계 + 한 방 상한 | `GameManager.DIFFICULTY_INFO` | 처음 하는 사람도 끝까지 갈 수 있게 노멀을 낮춤 |
 | Windows 빌드 | `export_presets.cfg` "Windows Desktop" | 스팀 기본 대상 — **이 설정으로만 업로드** |
 | 운영자 모드 분리 | `scripts/autoload/admin.gd` · "Windows (운영자)" 설정 | 개발자용 빌드(`admin_build`)에서만, 그것도 운영자 키 · 개발자 스팀 ID 가 맞을 때만. 켜져 있으면 업적 없음 |

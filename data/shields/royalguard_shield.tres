@@ -6,7 +6,7 @@
 [resource]
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
-defense = 58
+defense = 80
 block_ratio = 0.86
 block_arc_degrees = 132
 max_guard = 1880
@@ -15,9 +15,9 @@ perfect_guard_window = 0.34
 guard_move_multiplier = 0.6
 guard_break_time = 0.925
 id = &"royalguard_shield"
-set_id = &"royalguard"
 display_name = "근위대 방패"
 description = "왕실 문장이 새겨진 푸른 방패."
 rarity = 1
 tier = 3
+set_id = &"royalguard"
 price = 6530

@@ -6,8 +6,8 @@
 
 [resource]
 script = ExtResource("1_script")
-defense = 100
-bonus_max_hp = 870
+defense = 140
+bonus_max_hp = 1350
 worn_texture = ExtResource("2_res")
 id = &"gatekeeper_horns"
 display_name = "수문장의 뿔"

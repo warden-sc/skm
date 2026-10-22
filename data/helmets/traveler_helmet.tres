@@ -8,8 +8,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 36
-bonus_max_hp = 120
+defense = 50
+bonus_max_hp = 290
 id = &"traveler_helmet"
 display_name = "여행자의 두건"
 description = "먼지를 막아 주는 두건. 가벼운 가죽을 덧댔다."

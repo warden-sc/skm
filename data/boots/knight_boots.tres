@@ -8,7 +8,7 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 53
+defense = 73
 move_bonus = 0.08
 id = &"knight_boots"
 display_name = "기사단 각반"

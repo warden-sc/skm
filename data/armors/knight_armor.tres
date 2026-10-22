@@ -8,8 +8,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 92
-bonus_max_hp = 710
+defense = 130
+bonus_max_hp = 1180
 id = &"knight_armor"
 display_name = "기사단 판금"
 description = "기사단의 십자가 새겨진 판금 갑옷."

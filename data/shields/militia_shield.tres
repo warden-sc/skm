@@ -6,7 +6,7 @@
 [resource]
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
-defense = 22
+defense = 30
 block_ratio = 0.72
 block_arc_degrees = 111.5
 max_guard = 580
@@ -15,9 +15,9 @@ perfect_guard_window = 0.3
 guard_move_multiplier = 0.55
 guard_break_time = 1.175
 id = &"militia_shield"
-set_id = &"militia"
 display_name = "자경단 방패"
 description = "판자에 쇠테를 두른 둥근 방패."
 rarity = 0
 tier = 1
+set_id = &"militia"
 price = 330

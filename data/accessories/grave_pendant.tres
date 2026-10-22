@@ -7,8 +7,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 slot_type = 2
-bonus_max_hp = 430
-hp_regen = 13.6
+bonus_max_hp = 710
+hp_regen = 19.1
 id = &"grave_pendant"
 display_name = "망자의 부적"
 description = "죽음을 한 번 비껴가게 한다는 부적."

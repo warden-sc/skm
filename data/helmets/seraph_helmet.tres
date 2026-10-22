@@ -8,8 +8,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 100
-bonus_max_hp = 920
+defense = 140
+bonus_max_hp = 1420
 id = &"seraph_helmet"
 display_name = "세라핌의 투구"
 description = "양옆에 작은 날개가 달린 천상의 투구."

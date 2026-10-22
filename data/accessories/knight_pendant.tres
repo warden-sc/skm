@@ -7,8 +7,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 slot_type = 2
-bonus_max_hp = 390
-hp_regen = 12.9
+bonus_max_hp = 660
+hp_regen = 18.2
 id = &"knight_pendant"
 display_name = "기사단 휘장"
 description = "기사단의 휘장. 지친 몸을 일으켜 세운다."

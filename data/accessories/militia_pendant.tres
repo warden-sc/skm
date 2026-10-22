@@ -7,12 +7,12 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 slot_type = 2
-bonus_max_hp = 57
-hp_regen = 6.1
+bonus_max_hp = 140
+hp_regen = 7.8
 id = &"militia_pendant"
-set_id = &"militia"
 display_name = "자경단 호부"
 description = "마을 사제가 축복한 작은 호부."
 rarity = 0
 tier = 1
+set_id = &"militia"
 price = 370

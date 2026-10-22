@@ -7,8 +7,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 slot_type = 2
-bonus_max_hp = 100
-hp_regen = 7
+bonus_max_hp = 240
+hp_regen = 9.9
 id = &"traveler_pendant"
 display_name = "여행자의 부적"
 description = "길 떠나는 이에게 주는 부적."

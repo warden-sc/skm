@@ -8,12 +8,12 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 73
-bonus_max_hp = 550
+defense = 100
+bonus_max_hp = 900
 id = &"royalguard_helmet"
-set_id = &"royalguard"
 display_name = "근위대 투구"
 description = "금테를 두른 푸른 면갑 투구."
 rarity = 1
 tier = 3
+set_id = &"royalguard"
 price = 6530

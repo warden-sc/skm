@@ -8,12 +8,12 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 140
-bonus_max_hp = 1250
+defense = 190
+bonus_max_hp = 1950
 id = &"arcanum_armor"
-set_id = &"arcanum"
 display_name = "비전 로브 갑옷"
 description = "룬을 수놓은 로브 위에 판금을 덧댄 갑옷."
 rarity = 2
 tier = 3
+set_id = &"arcanum"
 price = 18000

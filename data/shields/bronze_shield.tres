@@ -6,7 +6,7 @@
 [resource]
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
-defense = 38
+defense = 53
 block_ratio = 0.78
 block_arc_degrees = 116
 max_guard = 1120

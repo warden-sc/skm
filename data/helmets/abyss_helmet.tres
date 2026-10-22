@@ -8,8 +8,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 96
-bonus_max_hp = 820
+defense = 130
+bonus_max_hp = 1280
 id = &"abyss_helmet"
 display_name = "심연의 투구"
 description = "뒤틀린 뿔이 솟은 투구."

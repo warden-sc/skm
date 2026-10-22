@@ -8,12 +8,12 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 42
-bonus_max_hp = 190
+defense = 58
+bonus_max_hp = 390
 id = &"mercenary_helmet"
-set_id = &"mercenary"
 display_name = "용병 투구"
 description = "코 보호대가 달린 쇠 투구."
 rarity = 0
 tier = 3
+set_id = &"mercenary"
 price = 730

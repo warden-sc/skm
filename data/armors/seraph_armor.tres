@@ -8,8 +8,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 150
-bonus_max_hp = 1380
+defense = 200
+bonus_max_hp = 2120
 id = &"seraph_armor"
 display_name = "세라핌의 갑옷"
 description = "금빛 십자가 빛나는 천상의 갑옷."

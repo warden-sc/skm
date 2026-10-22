@@ -8,8 +8,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 70
-bonus_max_hp = 510
+defense = 96
+bonus_max_hp = 850
 id = &"wraith_helmet"
 display_name = "망령 투구"
 description = "눈구멍에서 초록 불이 타는 투구."

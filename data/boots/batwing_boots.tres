@@ -8,7 +8,7 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 31
+defense = 43
 move_bonus = 0.0525
 id = &"batwing_boots"
 display_name = "박쥐 날개 장화"

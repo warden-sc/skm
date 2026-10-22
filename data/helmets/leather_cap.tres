@@ -6,8 +6,8 @@
 
 [resource]
 script = ExtResource("1_script")
-defense = 18
-bonus_max_hp = 15
+defense = 25
+bonus_max_hp = 36
 worn_texture = ExtResource("2_res")
 id = &"leather_cap"
 display_name = "가죽 모자"

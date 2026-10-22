@@ -8,7 +8,7 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 130
+defense = 170
 move_bonus = 0.3
 dash_cooldown_reduction = 0.4
 id = &"hermes_boots"

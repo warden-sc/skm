@@ -8,12 +8,12 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 34
+defense = 46
 move_bonus = 0.055
 id = &"mercenary_boots"
-set_id = &"mercenary"
 display_name = "용병 각반"
 description = "행군에 닳은 쇠 각반."
 rarity = 0
 tier = 3
+set_id = &"mercenary"
 price = 730

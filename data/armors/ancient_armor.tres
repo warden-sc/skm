@@ -8,8 +8,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 150
-bonus_max_hp = 1390
+defense = 200
+bonus_max_hp = 2150
 id = &"ancient_armor"
 display_name = "고대 용기사의 갑옷"
 description = "용을 탄 기사들의 갑옷."

@@ -7,8 +7,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 slot_type = 2
-bonus_max_hp = 220
-hp_regen = 9.4
+bonus_max_hp = 410
+hp_regen = 13.2
 id = &"bronze_pendant"
 display_name = "청동 펜던트"
 description = "청동 펜던트. 몸을 단단하게 해 준다."

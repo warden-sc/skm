@@ -8,8 +8,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 130
-bonus_max_hp = 1230
+defense = 180
+bonus_max_hp = 1910
 id = &"abyss_armor"
 display_name = "심연의 갑옷"
 description = "룬이 어둡게 빛나는 갑옷."

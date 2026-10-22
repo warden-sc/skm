@@ -8,12 +8,12 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 27
-bonus_max_hp = 68
+defense = 37
+bonus_max_hp = 160
 id = &"militia_helmet"
-set_id = &"militia"
 display_name = "자경단 두건"
 description = "쇠판을 덧댄 두꺼운 두건."
 rarity = 0
 tier = 1
+set_id = &"militia"
 price = 330

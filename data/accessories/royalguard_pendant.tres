@@ -7,12 +7,12 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 slot_type = 2
-bonus_max_hp = 460
-hp_regen = 14.2
+bonus_max_hp = 750
+hp_regen = 20.1
 id = &"royalguard_pendant"
-set_id = &"royalguard"
 display_name = "근위대 훈장"
 description = "왕을 지켜 낸 근위병의 훈장."
 rarity = 1
 tier = 3
+set_id = &"royalguard"
 price = 7460

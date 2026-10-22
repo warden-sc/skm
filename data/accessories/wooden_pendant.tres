@@ -6,8 +6,8 @@
 [resource]
 script = ExtResource("1_script")
 slot_type = 2
-bonus_max_hp = 12
-hp_regen = 5.2
+bonus_max_hp = 30
+hp_regen = 5.6
 id = &"wooden_pendant"
 display_name = "나무 펜던트"
 description = "부적이 새겨진 나무 펜던트. 몸이 튼튼해지고 상처가 조금씩 아문다."

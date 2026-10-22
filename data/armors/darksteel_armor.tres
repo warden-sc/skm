@@ -8,12 +8,12 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 120
-bonus_max_hp = 1110
+defense = 170
+bonus_max_hp = 1750
 id = &"darksteel_armor"
-set_id = &"darksteel"
 display_name = "흑철 판금"
 description = "비늘처럼 겹친 흑철 판금."
 rarity = 2
 tier = 1
+set_id = &"darksteel"
 price = 14400

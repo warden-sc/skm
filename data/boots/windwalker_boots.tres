@@ -6,7 +6,7 @@
 
 [resource]
 script = ExtResource("1_script")
-defense = 80
+defense = 110
 move_bonus = 0.13
 worn_texture = ExtResource("2_res")
 id = &"windwalker_boots"

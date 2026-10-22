@@ -8,12 +8,12 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 59
-bonus_max_hp = 290
+defense = 81
+bonus_max_hp = 590
 id = &"mercenary_armor"
-set_id = &"mercenary"
 display_name = "용병 미늘 갑옷"
 description = "쇳조각을 겹쳐 꿰맨 미늘 갑옷."
 rarity = 0
 tier = 3
+set_id = &"mercenary"
 price = 830

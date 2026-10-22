@@ -7,8 +7,9 @@
   + 종류 × 등급마다 몬스터 드랍 전용 장비 1개 (중과 중상 사이 세기, 상점에 없음)
 - 수치 계산은 예전 12단계 축(u = 0 ~ 11, 신화 12)을 그대로 쓰고, 새 단계는 그 사이 값(u = 3 × 등급 + 0 · 0.5 · 1 · 1.5 · 2)
 - 수치는 스테이지 데이터(보스 · 몬스터의 체력 · 방어력 · 공격력, 예전 단위 × Balance.K)에서 계산
-  · 무기: 그 단계가 쓰이는 스테이지의 보스를 같은 단계 장비로 약 55초에 잡도록
-  · 방어구: 보스 몸통 박치기를 약 6~7번 버티도록 (방어력 = 보스 공격의 40%)
+  · 무기: 그 단계가 쓰이는 스테이지의 보스를 같은 단계 장비로 쉬지 않고 때리면 약 TTK_SECONDS(20)초에 잡도록
+    (실제로는 피하고 · 가드하고 · 자리 잡느라 그 두세 배 — 예전 55초 기준은 실제 플레이에서 너무 길었음)
+  · 방어구: 보스 몸통 박치기를 약 12번 버티도록 (방어력 = 보스 공격의 DEFENSE_SHARE(55%), 체력 = 보스 공격 × HP_PER_HIT)
   · 값: 그 단계가 쓰이기 시작하는 스테이지부터 5스테이지 동안 버는 골드 기준
 - 신화: 10스테이지마다 보스가 하나씩 떨어뜨림 (상점 없음). 전설 상급보다 한참 강함
 """
@@ -120,6 +121,10 @@ GUARD_MOVE = Tab([.55, .55, .56, .58, .60, .60, .60, .62, .63, .65, .67, .70, .8
 GUARD_BREAK = Tab([1.2, 1.15, 1.1, 1.0, .95, .9, .8, .75, .7, .6, .55, .5, .4])
 TIER_PRICE = [1.0, 1.12, 1.25, 1.37, 1.5]
 MYTHIC = 12
+## 장비 성능 기준 (실제 플레이 반영 — 청동 풀셋으로 6스테이지를 못 깨던 문제)
+TTK_SECONDS = 20.0
+DEFENSE_SHARE = 0.55
+HP_PER_HIT = 5.5
 
 
 def rep_t(t):
@@ -141,7 +146,7 @@ def sword_damage(t):
     if t == MYTHIC:
         return round(sword_damage(11) * 1.7, -1)
     rate = 1.0 / SW_CD[t]
-    eff = at(t, "boss_hp") / (55.0 * rate)
+    eff = at(t, "boss_hp") / (TTK_SECONDS * rate)
     raw = (eff + max(at(t, "boss_def") - bracelet_pen(t), 0)) / accessory_mult(t)
     if t == 0:
         raw = max(raw, 150)
@@ -156,14 +161,14 @@ def sword_raw_dps(t):
 def total_defense(t):
     if t == MYTHIC:
         return round(total_defense(11) * 1.45)
-    return 0.40 * at(t, "boss_cd")
+    return DEFENSE_SHARE * at(t, "boss_cd")
 
 
 @lerped
 def hp_bonus(t):
     if t == MYTHIC:
         return round(hp_bonus(11) * 1.6)
-    return max(3.9 * at(t, "boss_cd") - 1000, 50 + 60 * t)
+    return max(HP_PER_HIT * at(t, "boss_cd") - 1000, 120 + 90 * t)
 
 
 def nice(v):

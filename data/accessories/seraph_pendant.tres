@@ -7,8 +7,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 slot_type = 2
-bonus_max_hp = 760
-hp_regen = 20.3
+bonus_max_hp = 1180
+hp_regen = 28.6
 id = &"seraph_pendant"
 display_name = "세라핌의 펜던트"
 description = "천상의 빛이 상처를 감싸는 펜던트."

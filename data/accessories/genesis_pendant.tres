@@ -7,8 +7,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 slot_type = 2
-bonus_max_hp = 800
-hp_regen = 21.1
+bonus_max_hp = 1240
+hp_regen = 29.7
 id = &"genesis_pendant"
 display_name = "창세의 펜던트"
 description = "창세의 생명력이 흐르는 펜던트."

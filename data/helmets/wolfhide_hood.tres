@@ -8,8 +8,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 39
-bonus_max_hp = 160
+defense = 54
+bonus_max_hp = 340
 id = &"wolfhide_hood"
 display_name = "늑대 가죽 두건"
 description = "늑대 머리를 통째로 뒤집어쓴 두건."

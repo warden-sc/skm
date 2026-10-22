@@ -8,12 +8,12 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 97
-bonus_max_hp = 830
+defense = 130
+bonus_max_hp = 1300
 id = &"arcanum_helmet"
-set_id = &"arcanum"
 display_name = "비전 투구"
 description = "면갑 틈으로 보랏빛이 새는 투구."
 rarity = 2
 tier = 3
+set_id = &"arcanum"
 price = 15800

@@ -8,8 +8,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 220
-bonus_max_hp = 2310
+defense = 300
+bonus_max_hp = 3560
 id = &"hephaestus_armor"
 display_name = "헤파이스토스의 갑옷"
 description = "대장장이 신 헤파이스토스가 프로메테우스의 불꽃으로 벼려 준 갑옷."

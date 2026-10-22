@@ -8,8 +8,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 100
-bonus_max_hp = 930
+defense = 140
+bonus_max_hp = 1430
 id = &"ancient_helmet"
 display_name = "고대 왕의 투구"
 description = "잊힌 왕국의 왕관 투구."

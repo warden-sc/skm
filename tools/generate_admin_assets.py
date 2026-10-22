@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""운영자 모드(개발자 강림)의 그림 + 효과음.
+"""운영자 모드(개발자 강림) · 운영자 장비의 그림.
 
   assets/sprites/characters/developer.png      개발자 (흰 망토 · 금빛 테두리 · 머리 위 빛의 고리 · 빛나는 석판) 32x32
   assets/sprites/weapons/admin_sword.png        운영자의 검
@@ -10,17 +10,14 @@
   assets/sprites/effects/seraph.png             날개를 펼친 용사 (스킬로 하늘에 오를 때)
   assets/sprites/effects/divine_sword.png       하늘에서 내리꽂히는 거대한 빛의 검 · light_sword.png 작은 빛의 검
   assets/sprites/skills/{seraph_dive,heaven_judgement,genesis_light}.png  운영자 무기 스킬 아이콘
-  assets/audio/sfx/descent.wav                  빛기둥이 내리꽂히는 소리
-  assets/audio/sfx/ascend.wav                   빛기둥을 타고 올라가는 소리
 실행: python3 tools/generate_admin_assets.py   (Pillow 필요)
 """
 import math
 import os
-import random
 
 from PIL import Image
 
-from generate_trial_assets import RATE, canvas, env, lerp, outline, put, write_wav
+from generate_trial_assets import canvas, lerp, outline, put
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SPRITES = os.path.join(HERE, "..", "assets", "sprites")
@@ -334,36 +331,6 @@ def skill_icon(kind):
     return img
 
 
-def descent():
-    """하늘에서 빛기둥이 내리꽂힘: 올라가는 반짝임 → 쾅 → 길게 울리는 화음"""
-    rnd = random.Random(7)
-    n = int(RATE * 2.4)
-    out = []
-    for i in range(n):
-        t = i / RATE
-        sweep = 0.0
-        if t < 0.7:
-            f = 400 + 2400 * (t / 0.7) ** 2
-            sweep = math.sin(2 * math.pi * f * t) * (t / 0.7) * 0.5
-        boom = (math.sin(2 * math.pi * 55 * t) + rnd.uniform(-1, 1) * 0.6) * env(max(t - 0.7, 0), 0.005, 0.6) * (t > 0.7)
-        choir = sum(math.sin(2 * math.pi * f * t) * a for f, a in ((523, 1.0), (659, 0.7), (784, 0.6), (1046, 0.4))) * env(max(t - 0.72, 0), 0.08, 1.6) * (t > 0.72)
-        out.append(sweep + boom * 0.9 + choir * 0.35)
-    return out
-
-
-def ascend():
-    """빛기둥을 타고 올라감: 화음이 위로 미끄러지며 사라짐"""
-    n = int(RATE * 1.8)
-    out = []
-    for i in range(n):
-        t = i / RATE
-        rise = 1.0 + t * 0.8
-        s = sum(math.sin(2 * math.pi * f * rise * t) for f in (523, 659, 784)) * env(t, 0.1, 1.7)
-        sparkle = math.sin(2 * math.pi * (1500 + 1800 * t) * t) * env(t, 0.02, 1.2) * 0.3
-        out.append(s * 0.4 + sparkle)
-    return out
-
-
 def main():
     developer().save(os.path.join(SPRITES, "characters", "developer.png"))
     admin_sword().save(os.path.join(SPRITES, "weapons", "admin_sword.png"))
@@ -383,8 +350,6 @@ def main():
         ("skills", "genesis_light", skill_icon("genesis_light")),
     ):
         img.save(os.path.join(SPRITES, folder, name + ".png"))
-    write_wav("descent.wav", descent())
-    write_wav("ascend.wav", ascend())
     print("ok")
 
 

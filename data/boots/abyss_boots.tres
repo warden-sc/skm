@@ -8,7 +8,7 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 76
+defense = 110
 move_bonus = 0.1125
 id = &"abyss_boots"
 display_name = "심연의 장화"

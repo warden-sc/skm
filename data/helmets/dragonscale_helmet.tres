@@ -8,8 +8,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 94
-bonus_max_hp = 800
+defense = 130
+bonus_max_hp = 1250
 id = &"dragonscale_helmet"
 display_name = "용뿔 투구"
 description = "용의 뿔을 그대로 붙인 투구."

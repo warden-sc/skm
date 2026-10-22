@@ -8,7 +8,7 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 84
+defense = 120
 move_bonus = 0.145
 id = &"ancient_boots"
 display_name = "고대 바람의 장화"

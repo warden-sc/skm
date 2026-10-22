@@ -8,12 +8,12 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 100
-bonus_max_hp = 890
+defense = 140
+bonus_max_hp = 1380
 id = &"hero_helmet"
-set_id = &"hero"
 display_name = "영웅의 투구"
 description = "작은 날개 장식이 달린 금빛 투구."
 rarity = 3
 tier = 1
+set_id = &"hero"
 price = 22400

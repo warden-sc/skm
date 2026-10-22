@@ -7,8 +7,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 slot_type = 2
-bonus_max_hp = 530
-hp_regen = 15.6
+bonus_max_hp = 850
+hp_regen = 22
 id = &"mithril_pendant"
 display_name = "미스릴 펜던트"
 description = "미스릴 펜던트. 상처가 빨리 아문다."

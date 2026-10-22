@@ -8,12 +8,12 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 worn_texture = ExtResource("3_res")
-defense = 71
+defense = 98
 move_bonus = 0.105
 id = &"darksteel_boots"
-set_id = &"darksteel"
 display_name = "흑철 각반"
 description = "무겁지만 단단한 흑철 각반."
 rarity = 2
 tier = 1
+set_id = &"darksteel"
 price = 12600

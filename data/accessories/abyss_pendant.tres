@@ -7,8 +7,8 @@
 script = ExtResource("1_script")
 icon = ExtResource("2_res")
 slot_type = 2
-bonus_max_hp = 680
-hp_regen = 18.6
+bonus_max_hp = 1060
+hp_regen = 26.3
 id = &"abyss_pendant"
 display_name = "심연의 펜던트"
 description = "심연의 심장이 뛰는 펜던트."

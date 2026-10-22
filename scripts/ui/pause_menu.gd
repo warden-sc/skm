@@ -157,6 +157,7 @@ func _build() -> void:
 	_settings_box.add_child(_story_check)
 	_speed_button = _add_button(_settings_box, "", cycle_text_speed)
 	_sfx_button = _add_button(_settings_box, "", cycle_sfx_volume)
+	_sfx_button.visible = Sfx.has_sounds()  # 지금은 효과음 파일이 없어서 숨김
 	_voice_button = _add_button(_settings_box, "", cycle_voice_mode)
 	_voice_button.tooltip_text = "멀티플레이 음성 채팅 — 눌러서 말하기는 [T] 를 누르는 동안만 마이크가 켜짐"
 	_add_button(_settings_box, "← 돌아가기", _show_main)
