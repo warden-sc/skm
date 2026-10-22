@@ -21,6 +21,7 @@ var _fullscreen_check: CheckButton
 var _story_check: CheckButton
 var _voice_button: Button
 var _sfx_button: Button
+var _bgm_button: Button
 var _speed_button: Button
 var _confirm_title: bool = false
 var _title_button: Button
@@ -156,6 +157,7 @@ func _build() -> void:
 	_story_check.toggled.connect(func(on: bool) -> void: Profile.set_setting("story", on))
 	_settings_box.add_child(_story_check)
 	_speed_button = _add_button(_settings_box, "", cycle_text_speed)
+	_bgm_button = _add_button(_settings_box, "", cycle_bgm_volume)
 	_sfx_button = _add_button(_settings_box, "", cycle_sfx_volume)
 	_sfx_button.visible = Sfx.has_sounds()  # 지금은 효과음 파일이 없어서 숨김
 	_voice_button = _add_button(_settings_box, "", cycle_voice_mode)
@@ -190,6 +192,20 @@ func cycle_sfx_volume() -> void:
 	_sync_settings()
 
 
+## 배경음 크기: 0% → 25% → 50% → 70% → 100% → …
+const BGM_STEPS := [0.0, 0.25, 0.5, 0.7, 1.0]
+
+
+func cycle_bgm_volume() -> void:
+	var current := float(Profile.get_setting("bgm_volume"))
+	var index := 0
+	for i in BGM_STEPS.size():
+		if is_equal_approx(BGM_STEPS[i], current):
+			index = i
+	Profile.set_setting("bgm_volume", BGM_STEPS[(index + 1) % BGM_STEPS.size()])
+	_sync_settings()
+
+
 ## 음성 채팅: 끄기 → 눌러서 말하기 [T] → 항상 켜기 → …
 func cycle_voice_mode() -> void:
 	Profile.set_setting("voice", (VoiceChat.get_mode() + 1) % VoiceChat.MODE_NAMES.size())
@@ -206,6 +222,7 @@ func _sync_settings() -> void:
 		if is_equal_approx(TEXT_SPEEDS[i], speed):
 			speed_name = TEXT_SPEED_NAMES[i]
 	_speed_button.text = "대사 속도: %s" % speed_name
+	_bgm_button.text = "배경음: %d%%" % roundi(float(Profile.get_setting("bgm_volume")) * 100.0)
 	_sfx_button.text = "효과음: %d%%" % roundi(float(Profile.get_setting("sfx_volume")) * 100.0)
 	_voice_button.text = "음성 채팅: %s" % VoiceChat.MODE_NAMES[VoiceChat.get_mode()]
 	_voice_button.visible = VoiceChat.is_supported()

@@ -242,6 +242,44 @@ func _test_admin(main: Node2D) -> void:
 	_gm._recalculate_stats()
 
 
+## 배경음: 스테이지마다 컨셉별 사냥터 곡 · 보스방은 보스 곡 · 야영지는 작게 · 최종장 곡
+func _test_bgm(main: Node2D) -> void:
+	print("[배경음]")
+	var stage := main.get_node("StageManager") as StageManager
+	var all_ok := true
+	for n in range(1, 101):
+		var path := Bgm.DIR + String(Bgm.field_track(n)) + ".ogg"
+		if Bgm.field_track(n) == Bgm.TITLE_TRACK and n not in [1, 4, 16, 30]:
+			all_ok = false
+		if not ResourceLoader.exists(path) or not ResourceLoader.exists(Bgm.DIR + String(Bgm.boss_track(n)) + ".ogg"):
+			all_ok = false
+	_check(all_ok and ResourceLoader.exists(Bgm.DIR + "bgm_boss_07_final.ogg"), "1~100스테이지 모두 사냥터 곡 · 보스 곡이 있음 (23곡)")
+	_check(Bgm.field_track(1) == &"bgm_field_01_meadow" and Bgm.field_track(7) == &"bgm_field_07_undead" and Bgm.field_track(71) == &"bgm_field_09_sea"
+		and Bgm.boss_track(30) == &"bgm_boss_02_milestone" and Bgm.boss_track(33) == &"bgm_boss_03_dragon" and Bgm.boss_track(60) == &"bgm_boss_04_god"
+		and Bgm.boss_track(90) == &"bgm_boss_05_abaddon" and Bgm.boss_track(100) == &"bgm_boss_06_gabriel" and Bgm.boss_track(6) == &"bgm_boss_01_normal",
+		"곡 고르기: 1 초원 · 7 망자 · 71 바다 / 보스 30 10단위 · 33 용 · 60 신 · 90 아바돈 · 100 가브리엘 · 6 일반")
+	stage.instant_travel = true
+	stage.go_to_stage(7)
+	await _frames(5)
+	_check(Bgm.get_track() == &"bgm_field_07_undead" and Bgm._gain < 1.0 and Bgm.get_active_player().playing, "야영지: 그 스테이지 사냥터 곡을 작게")
+	stage._do_enter_field()
+	await _frames(20)
+	_check(Bgm.get_track() == &"bgm_field_07_undead" and is_equal_approx(Bgm._gain, 1.0), "사냥터: 망자의 묘지 곡")
+	stage._do_enter_boss_room()
+	await _frames(5)
+	_check(Bgm.get_track() == &"bgm_boss_01_normal", "보스방: 보스 곡 (곡이 겹치며 넘어감)")
+	var before := Bgm.get_active_player()
+	before.seek(before.stream.get_length() - 1.0)
+	await _frames(10)
+	_check(Bgm.get_active_player() != before and Bgm.get_active_player().playing and Bgm.get_track() == &"bgm_boss_01_normal", "곡 끝에서 처음과 겹쳐 이어짐 (끊기지 않음)")
+	Profile.set_setting("bgm_volume", 0.0)
+	await _frames(120)
+	_check(Bgm.get_active_player().volume_db <= -60.0, "설정 배경음 0% → 소리 없음")
+	Profile.set_setting("bgm_volume", 0.7)
+	stage._do_return_to_camp()
+	await _frames(3)
+
+
 ## 보스방 해방 시련: 봉인 코어 · 정예 · 제단 (스테이지 4 · 5 · 6)
 func _test_gate_trials(main: Node2D) -> void:
 	print("[보스방 해방 시련 · 문이 열리는 연출]")
@@ -4361,7 +4399,7 @@ func _test_final_and_no_hidden(main: Node2D, final_boss: Enemy) -> void:
 	var kills_before: int = _gm.total_kills
 	pending = AoeStrike.spawn(main, player.global_position, 40.0, 0.03, 9999, Color.RED)
 	if master != null:
-		master.take_damage(9999999, Vector2.ZERO, false, 999999)
+		master.take_damage(999999999, Vector2.ZERO, false, 999999)
 	await _frames(4)
 	_check(not is_instance_valid(pending) and not _gm.is_player_dead and not stage.is_in_finale(), "최종 보스가 쓰러지면 남은 예고 장판도 사라짐")
 	_check(_gm.is_game_cleared and stage.get_state() == StageManager.State.CLEARED, "최종 보스(멀티버스의 주인) 토벌 → 모든 스테이지 클리어")
@@ -6341,6 +6379,8 @@ func _run() -> void:
 		"업적 id 는 스팀 API 이름 규칙 (대문자 · 공백 없음)")
 
 	await _test_admin(main)
+
+	await _test_bgm(main)
 
 	print("[난이도 배율]")
 	_gm.difficulty = _gm.Difficulty.VERY_HARD
