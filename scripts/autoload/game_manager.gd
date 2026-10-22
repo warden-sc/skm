@@ -277,7 +277,7 @@ func can_save() -> bool:
 
 
 static func _ids(list: Array) -> Array:
-	return list.map(func(it: ItemData) -> String: return String(it.id) if it != null else "")
+	return list.map(func(it: ItemData) -> String: return String(it.id) if it != null and not it.admin_only else "")  # 운영자 장비는 저장하지 않음
 
 
 ## 저장할 내용 — 장비는 id 로. 불러오면 그 스테이지 야영지에서 체력을 가득 채운 채 이어함
@@ -411,7 +411,7 @@ func get_hit_cap() -> int:
 
 
 func damage_player(amount: int) -> void:
-	if is_player_dead or amount <= 0:
+	if is_player_dead or amount <= 0 or is_invincible():
 		return
 	var reduction := get_damage_reduction()
 	if reduction > 0.0:
@@ -422,6 +422,11 @@ func damage_player(amount: int) -> void:
 	if hp == 0:
 		is_player_dead = true
 		player_died.emit()
+
+
+## 무적: 운영자 장비 착용 중 · 개발자의 보호막
+func is_invincible() -> bool:
+	return Admin.god or get_buff_value("invincible") > 0.0
 
 
 func heal_player(amount: int) -> void:
@@ -753,7 +758,7 @@ func buy_item(item: ItemData) -> bool:
 
 ## 장착 중이 아닌 장비만 팔 수 있습니다. 신화 장비는 팔 수 없음
 func can_sell(item: ItemData) -> bool:
-	return item != null and items.has(item) and not is_equipped(item) and not item.is_mythic()
+	return item != null and items.has(item) and not is_equipped(item) and not item.is_mythic() and not item.admin_only
 
 
 ## 상인에게 판매. 받은 골드를 반환 (실패하면 0)
@@ -769,7 +774,7 @@ func sell_item(item: ItemData) -> int:
 
 ## 버릴 수 있는 장비인지 (포션 · 사용 아이템은 안 됨, 장착 중이면 먼저 해제 — 마지막 무기는 못 버림)
 func can_drop(item: ItemData) -> bool:
-	if item == null or item is PotionData or item is RelicData or not owns_item(item.id):
+	if item == null or item is PotionData or item is RelicData or item.admin_only or not owns_item(item.id):
 		return false
 	if item is WeaponData and is_equipped(item) and _equipped_weapon_count() <= 1:
 		return false

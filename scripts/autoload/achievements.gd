@@ -32,8 +32,8 @@ func get_unlocked_count() -> int:
 
 ## 달성 (이미 했으면 아무것도 안 함). 처음이면 true
 func unlock(id: StringName) -> bool:
-	if not ACHIEVEMENTS.has(id) or is_unlocked(id):
-		return false
+	if not ACHIEVEMENTS.has(id) or is_unlocked(id) or Admin.enabled:
+		return false  # 운영자 모드가 켜져 있으면 업적 없음
 	Profile.achievements.append(String(id))
 	Profile.save_profile()
 	GameManager.show_notice("업적 달성: %s — %s" % [ACHIEVEMENTS[id]["name"], ACHIEVEMENTS[id]["desc"]], Color(1.0, 0.85, 0.35))

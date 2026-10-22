@@ -781,9 +781,19 @@ func room_theme(room: Node, texture: Texture2D, tint: Color) -> void:
 	_room_theme.rpc(String(room.name), path, tint)
 
 
+## 참이면 Fx 를 참가자에게 보내지 않음 (각자 자기 화면에서 그리는 연출 — 운영자 강림)
+var fx_muted: bool = false
+
+
 func fx_event(fx_name: StringName, args: Array) -> void:
-	if is_host() and in_game:
+	if is_host() and in_game and not fx_muted:
 		_fx.rpc(fx_name, args)
+
+
+## 운영자 강림: 방장(운영자)이 발동하면 모든 참가자 화면에 같은 연출 · 대사 · 선물 (Admin.descend)
+func admin_descent(data: Dictionary) -> void:
+	if is_host() and in_game:
+		_admin_descent.rpc(data)
 
 
 ## 보스방 문이 열릴 때 내 카메라가 문을 비추고, 방장이면 참가자들의 카메라도
@@ -1360,6 +1370,14 @@ func _notice(text: String, color: Color) -> void:
 func _story(key: String, mark: String) -> void:
 	if _bound():
 		Story.play(key, mark)
+
+
+## 방장만 보낼 수 있음("authority") + 보낸 사람이 방장(1)인지 한 번 더 확인 + 내용은 받는 쪽에서 다시 거름
+@rpc("authority", "reliable")
+func _admin_descent(data: Dictionary) -> void:
+	if multiplayer.get_remote_sender_id() != 1 or not _bound():
+		return
+	Admin.play_descent(Admin.sanitize(data))
 
 
 @rpc("authority", "reliable")

@@ -286,6 +286,34 @@
 - 파일: `user://profile.cfg` (이름 · 튜토리얼 완료 · 설정 · 업적), `user://save.json` (모험) — `scripts/autoload/profile.gd` (`Profile` 오토로드)
   · Windows: `%APPDATA%\Godot\app_userdata\Sefirah-like Topdown Action\` · 웹: 브라우저 저장소
 
+## 운영자 모드 (개발자 전용 수동 개입 · 구제)
+
+평소에는 **항상 일반 플레이어 모드**로 시작하고, 개발자가 직접 판단해 단축키를 눌렀을 때만 움직입니다. 자동으로 발동되는 것은 하나도 없고, 켠 상태도 저장되지 않습니다.
+
+**켜지는 조건 (두 가지 모두)** — `scripts/autoload/admin.gd` (`Admin` 오토로드)
+1. **빌드**: Godot 에디터에서 실행했거나, 내보내기 설정 **「Windows (운영자)」**(사용자 기능 `admin_build`)로 만든 빌드. 일반 배포 · 스팀용 「Windows Desktop」 · 「Web」 에는 이 기능이 없어서 **키가 있어도 절대 켜지지 않음** (자동 테스트가 내보내기 설정을 검사).
+2. **신원**: 운영자 키가 맞아야 함 — 환경변수 `CRUSADER_ADMIN_KEY` 또는 `user://admin.key` 파일(Windows: `%APPDATA%\Godot\app_userdata\Sefirah-like Topdown Action\admin.key`)에 키 한 줄. 저장소에는 키의 **SHA-256 해시만** 있음. 스팀판(GodotSteam)에서는 `DEV_STEAM_IDS` 에 넣은 스팀 ID 도 인정.
+   키 바꾸기: `python3 tools/make_admin_key.py` → 나온 해시를 `ADMIN_KEY_SHA256` 에 (키 파일 `admin.key` 는 `.gitignore`).
+
+권한이 없으면 아래 단축키는 **아무 반응도 없고**(알림도 없음) 운영자 UI 자체가 만들어지지 않습니다.
+
+| 단축키 | 동작 |
+| --- | --- |
+| `Ctrl + Shift + A` | 운영자 모드 ON / OFF — 켜져 있으면 화면 왼쪽 아래 작게 `ADMIN MODE` |
+| `F11` | 운영자 패널 (운영자 모드일 때만, 여는 동안 게임 멈춤) |
+| `Ctrl + Shift + D` | 개발자 강림 (패널에 적어 둔 대사 · 선물로 바로) |
+
+**운영자 패널**
+- **자유 스테이지 이동**: 1~100 중 고른 스테이지의 야영지로 바로 · **보스방 문 바로 열기**(해방 시련 건너뛰기)
+- **운영자 장비**: 운영자의 검 · 운영자의 활 · 운영자의 지팡이 (공격력 99,999,999 · 치명타 100% · 방어 관통 · 신화 스킬) + 착용 중 **무적**. 벗으면 원래 무기로. 저장 · 판매 · 버리기 불가
+- **개발자 강림**: 대사(최대 6줄) + 선물 — 체력 회복(멀티에서 쓰러진 동료 부활) · 개발자의 축복(공격 +100% 60초) · 개발자의 가호(받는 피해 -50% 60초) · 개발자의 보호막(무적 15초) · 골드 · 아이템(장비 · 포션 개수 · 사용 아이템 아무거나)
+
+**강림 연출**: 하늘에서 **빛기둥이 내리꽂히며** 착지 섬광 · 충격파 · 화면 흔들림 → 빛기둥 속에서 **개발자** 등장 → [개발자] 초상화 대사창 → 대사가 끝나면 선물 · 버프 → 발밑에서 **역 빛기둥**이 솟아 개발자를 감싸고 하늘로 거두어지며 퇴장. 그림 · 소리: `tools/generate_admin_assets.py`.
+
+**멀티플레이**: **방장만** 운영자 모드를 켤 수 있음(참가자는 키가 있어도 안 됨). 방장이 강림을 발동하면 RPC(`Net._admin_descent` — 방장만 보낼 수 있는 `authority` RPC + 보낸 사람 확인 + 받는 쪽에서 내용 다시 거름)로 **모든 참가자 화면에 같은 연출 · 대사창**이 나오고, 방장이 대사를 넘기면 함께 끝나며 **각자에게 같은 버프 · 선물**이 들어갑니다.
+
+**치트 방지**: 운영자 모드가 켜져 있는 동안 **업적(스팀 업적 포함) 달성 안 됨** · 운영자 장비는 저장 파일에 남지 않음.
+
 ## 멀티플레이 (협동)
 
 **방식** — 방장의 컴퓨터가 서버를 겸합니다 (호스트-클라이언트, 흔히 말하는 「P2P」 · 리슨 서버. 따로 서버를 빌리지 않음).
@@ -924,6 +952,7 @@ scripts/
   autoload/net.gd              ← Autoload "Net" — 멀티플레이 (방 · 참가 · 화면 복제 · 전달)
   autoload/sfx.gd              ← Autoload "Sfx" — 효과음 재생 (assets/audio/sfx/*.wav · 설정의 음량 · 멀티는 모두에게)
   autoload/achievements.gd     ← Autoload "Achievements" — 업적 (스팀 업적 id 와 같음)
+  autoload/admin.gd            ← Autoload "Admin" — 운영자 모드 (개발자 전용 · 키 + 빌드 조건) · 강림 · 운영자 장비
   net/   net_visual.gd (화면에 보이는 노드 상태를 바이트로 적고 입힘), net_invite.gd (초대 코드), room_finder.gd (공개 방 목록), spectator.gd (유령 관전)
   core/  layers.gd, elements.gd, floating_text.gd
   fx/    fx.gd (파티클·빛·충격파 static 헬퍼), aoe_strike.gd (예고 장판)

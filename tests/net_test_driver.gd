@@ -247,6 +247,30 @@ func _run_host() -> void:
 	check(tour_status.get("location", "") == "보스방", "보스방 %d곳을 돌며 참가자 화면에 복제 (마지막 %d스테이지)" % [stages.size(), stages.back()])
 	check(int((await ask("errors")).get("count", -1)) == 0, "참가자 쪽 복제 중 오류 없음")
 
+	# 운영자 강림: 방장(운영자)이 발동 → 참가자 화면에도 대사창 · 개발자 · 버프 · 골드
+	_hold_players()
+	var client_gold := int((await ask("gold")).get("gold", 0))
+	check(not (await ask("admin_try")).get("enabled", true), "참가자는 운영자 키가 있어도 운영자 모드를 못 켬 (방장만)")
+	Admin.key_hash = "net-test-key".sha256_text()
+	OS.set_environment(Admin.ENV_KEY, "net-test-key")
+	Admin.refresh_authorization()
+	Admin.set_enabled(true)
+	check(Admin.descend({"lines": ["모두 버텨라!"], "attack": true, "gold": 777}), "방장이 개발자 강림 발동")
+	await frames(100)
+	var seen := await ask("admin")
+	check(int(seen.get("dev", 0)) == 1 and seen.get("talking", false) and seen.get("speaker", "") == Admin.DEV_NAME and seen.get("text", "") == "모두 버텨라!",
+		"참가자 화면에도 빛기둥 속 개발자 + [개발자] 대사창 「%s」" % seen.get("text", ""))
+	Story.skip()
+	await frames(90)
+	var after := await ask("admin")
+	check(after.get("buff", false) and int(after.get("gold", 0)) == client_gold + 777 and not after.get("talking", true), "방장이 대사를 넘기면 참가자도 끝 → 같은 버프 · 777G")
+	await frames(120)
+	Admin.set_enabled(false)
+	OS.unset_environment(Admin.ENV_KEY)
+	Admin.key_hash = Admin.ADMIN_KEY_SHA256
+	Admin.refresh_authorization()
+	GameManager._buffs.clear()
+
 	# 전멸 → 게임 오버 → 방장이 1스테이지부터 다시
 	_hold_players()
 	await ask("die")
@@ -414,6 +438,20 @@ func _do(command: String, args: Array = []) -> Dictionary:
 				Net.voice.feed(tone.slice(start, start + 1920), 48000.0)
 				await frames(2)
 			return {"speaking": Net.voice.is_speaking(Net.my_id())}
+		"admin":
+			var box := Story.get_box()
+			var line: Dictionary = box.current_line() if box != null and Story.is_playing() else {}
+			return {"dev": get_tree().get_nodes_in_group(&"admin_developer").size(), "talking": Story.is_playing(),
+				"speaker": line.get("name", ""), "text": line.get("text", ""), "buff": GameManager.has_buff("개발자의 축복"), "gold": GameManager.gold}
+		"admin_try":
+			Admin.key_hash = "net-test-key".sha256_text()
+			OS.set_environment(Admin.ENV_KEY, "net-test-key")
+			Admin.refresh_authorization()
+			var enabled := Admin.set_enabled(true)
+			OS.unset_environment(Admin.ENV_KEY)
+			Admin.key_hash = Admin.ADMIN_KEY_SHA256
+			Admin.refresh_authorization()
+			return {"enabled": enabled or Admin.enabled}
 		"wiped":
 			return {"wiped": Net.party_wiped}
 		"errors":

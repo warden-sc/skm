@@ -12,7 +12,8 @@
 | 효과음 · 음량 설정 | `scripts/autoload/sfx.gd` · ESC → 설정 → 효과음 | 지금은 보스문 · 시련 효과음 5개 (임시 WAV) |
 | 설정 저장 | `user://profile.cfg` | 화면 흔들림 · 전체 화면 · 대사 · 효과음 · 음성 채팅 |
 | 난이도 3단계 + 한 방 상한 | `GameManager.DIFFICULTY_INFO` | 처음 하는 사람도 끝까지 갈 수 있게 노멀을 낮춤 |
-| Windows 빌드 | `export_presets.cfg` "Windows Desktop" | 스팀 기본 대상 |
+| Windows 빌드 | `export_presets.cfg` "Windows Desktop" | 스팀 기본 대상 — **이 설정으로만 업로드** |
+| 운영자 모드 분리 | `scripts/autoload/admin.gd` · "Windows (운영자)" 설정 | 개발자용 빌드(`admin_build`)에서만, 그것도 운영자 키 · 개발자 스팀 ID 가 맞을 때만. 켜져 있으면 업적 없음 |
 
 ### 업적 API 이름 (스팀웍스에 그대로 등록)
 
@@ -45,4 +46,5 @@
 6. **멀티플레이** — 지금은 IP · 포트 포워딩(UDP 24570) 방식. 스팀판은 `SteamMultiplayerPeer`(GodotSteam) 로 바꾸면 스팀 친구 초대 · 중계(포트 포워딩 불필요)가 됨 → `scripts/autoload/net.gd` 의 피어 생성 부분만 교체
 7. **스팀 클라우드** — `user://save.json` · `user://profile.cfg` 를 자동 클라우드(스팀웍스 설정만으로 가능)에 등록
 8. **스팀 덱** — 게임패드 조작(지금은 키보드 + 마우스 전용), 1280×800 화면 확인
-9. **콘텐츠 마감** — 배경음악 · 타격음 · 효과음 전체, 영어 번역(지금은 한국어만), 실제 사람의 플레이 테스트로 밸런스 확인
+9. **운영자 모드** — 개발자 스팀 ID(64비트)를 `Admin.DEV_STEAM_IDS` 에. 스팀에 올리는 빌드는 반드시 「Windows Desktop」 설정 (「Windows (운영자)」 빌드는 올리지 말 것)
+10. **콘텐츠 마감** — 배경음악 · 타격음 · 효과음 전체, 영어 번역(지금은 한국어만), 실제 사람의 플레이 테스트로 밸런스 확인

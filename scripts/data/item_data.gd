@@ -63,6 +63,8 @@ const MYTHIC_STAGE_STEP := 10
 @export var set_id: StringName = &""
 ## false 면 상점에 없고 몬스터 드랍 · 보스 상자로만 (드랍 전용 장비)
 @export var in_shop: bool = true
+## 운영자 장비 (Admin) — 저장 · 판매 · 버리기 · 선물 불가, 봉인 없음
+var admin_only: bool = false
 
 @export_group("Shop")
 @export var price: int = 50
@@ -100,7 +102,7 @@ func is_mythic() -> bool:
 
 ## 신화 장비는 100스테이지를 깨기 전에는 봉인 (착용 불가)
 func is_sealed() -> bool:
-	return is_mythic() and not GameManager.mythic_unlocked
+	return is_mythic() and not admin_only and not GameManager.mythic_unlocked
 
 
 ## 이 장비가 제 실력을 내는 스테이지 (드랍 · 보물상자 순서)

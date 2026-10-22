@@ -154,14 +154,29 @@ func play(key: String, mark: String = "") -> bool:
 		return false
 	_played[mark] = true
 	_key = key
-	if _box == null or not is_instance_valid(_box):
-		_box = DialogueBox.new()
-		_box.done.connect(_on_box_done)
-		get_tree().root.add_child(_box)
+	_ensure_box()
 	get_tree().paused = true  # 먼저 멈춤 — @연출 만 있는 구간은 start 안에서 바로 끝남
 	Net.story_event(key, mark)  # 멀티플레이: 참가자 화면에도 같은 대사
 	_box.start(resolve_lines(key))
 	return true
+
+
+## 대본에 없는 대사를 바로 보여 줌 (개발자 강림 등) — 스토리 대사 설정과 상관없이. lines: [{"name", "face", "text"}, …]
+func play_lines(lines: Array, key: String = "") -> bool:
+	if lines.is_empty() or is_playing():
+		return false
+	_key = key
+	_ensure_box()
+	get_tree().paused = true
+	_box.start(lines)
+	return true
+
+
+func _ensure_box() -> void:
+	if _box == null or not is_instance_valid(_box):
+		_box = DialogueBox.new()
+		_box.done.connect(_on_box_done)
+		get_tree().root.add_child(_box)
 
 
 ## 「보스」 · 「용사」를 실제 이름으로 바꾼 대사: [{"name": 이름, "face": 초상화 이름, "text": 대사}, …] (@연출 은 {"cue": 이름})

@@ -64,6 +64,116 @@ func _enemy_names() -> Dictionary:
 	return names
 
 
+## 운영자 모드: 권한 없으면 단축키 무시 → 시험용 키로 권한 → 모드 · 패널 · 스테이지 이동 · 운영자 장비 · 강림 · 선물
+func _press_key(keycode: Key, ctrl: bool = false, shift: bool = false) -> void:
+	var ev := InputEventKey.new()
+	ev.keycode = keycode
+	ev.pressed = true
+	ev.ctrl_pressed = ctrl
+	ev.shift_pressed = shift
+	Input.parse_input_event(ev)
+	await _frames(2)
+	var up := ev.duplicate() as InputEventKey
+	up.pressed = false
+	Input.parse_input_event(up)
+	await _frames(1)
+
+
+func _test_admin(main: Node2D) -> void:
+	print("[운영자 모드 (개발자 수동 개입)]")
+	var stage := main.get_node("StageManager") as StageManager
+	var player := main.get_node("Entities/Player") as Player
+	var cfg := ConfigFile.new()
+	_check(cfg.load("res://export_presets.cfg") == OK and range(3).all(func(i: int) -> bool:
+		var preset_name: String = cfg.get_value("preset.%d" % i, "name", "")
+		var features: String = cfg.get_value("preset.%d" % i, "custom_features", "")
+		return features.contains("admin_build") == (preset_name == "Windows (운영자)")),
+		"배포용 내보내기(Windows Desktop · Web)에는 운영자 기능 없음 — 「Windows (운영자)」에만 admin_build")
+	OS.unset_environment(Admin.ENV_KEY)
+	Admin.refresh_authorization()
+	var key_file := FileAccess.file_exists(Admin.KEY_FILE)
+	if not key_file:
+		_check(not Admin.authorized, "키 없음 → 권한 없음")
+		await _press_key(KEY_A, true, true)
+		await _press_key(KEY_F11)
+		await _press_key(KEY_D, true, true)
+		_check(not Admin.enabled and not Admin.set_enabled(true) and Admin.get_node_or_null(^"AdminLayer") == null and not Admin.descent_active,
+			"권한 없음: Ctrl+Shift+A · F11 · Ctrl+Shift+D 를 눌러도 아무 일도 없음 (UI 도 안 만들어짐)")
+	OS.set_environment(Admin.ENV_KEY, "wrong-key")
+	Admin.refresh_authorization()
+	_check(key_file or not Admin.authorized, "틀린 키 → 권한 없음")
+	# 시험용 키 (진짜 운영자 키는 저장소에 없음 — 해시만)
+	Admin.key_hash = "smoke-test-key".sha256_text()
+	OS.set_environment(Admin.ENV_KEY, "smoke-test-key")
+	Admin.refresh_authorization()
+	_check(Admin.authorized and Admin.auth_source in ["env", "file"] and not Admin.enabled, "맞는 키(환경변수) → 권한 있음, 그래도 처음엔 일반 플레이어 모드")
+	stage.instant_travel = true
+	stage.go_to_stage(3)
+	await _frames(3)
+	await _press_key(KEY_F11)
+	_check(not Admin.is_panel_open(), "운영자 모드가 꺼져 있으면 F11 도 안 열림")
+	await _press_key(KEY_A, true, true)
+	_check(Admin.enabled and Admin.get_badge() != null and Admin.get_badge().visible and Admin.get_badge().text == "ADMIN MODE", "Ctrl+Shift+A → 운영자 모드 ON · 구석에 「ADMIN MODE」")
+	await _press_key(KEY_F11)
+	_check(Admin.is_panel_open() and get_tree().paused, "F11 → 운영자 패널 (게임 멈춤)")
+	var panel := Admin.get_panel() as AdminPanel
+	_check(panel != null and panel.item_option.item_count > 200, "패널: 선물할 아이템 목록 %d개" % (panel.item_option.item_count if panel != null else 0))
+	await _press_key(KEY_F11)
+	await _frames(2)
+	_check(not Admin.is_panel_open() and not get_tree().paused, "F11 다시 → 패널 닫힘")
+	_check(Admin.teleport_to_stage(12) and _gm.stage == 12, "자유 스테이지 이동: 12스테이지 야영지로")
+	await _frames(3)
+	stage._do_enter_field()
+	await _frames(3)
+	_check(Admin.open_boss_gate() and stage.boss_gate.is_open(), "보스방 문 바로 열기")
+	await _frames(240)
+	# 운영자 장비
+	var before_weapons: Array = _gm.weapon_slots.duplicate()
+	_check(Admin.set_gear(true) and Admin.god and _gm.equipped_weapon != null and _gm.equipped_weapon.id == &"admin_sword"
+		and _gm.equipped_weapon.display_name == "운영자의 검" and _gm.weapon_slots[1].display_name == "운영자의 활", "운영자 장비 착용: 운영자의 검 · 활 · 지팡이")
+	var hp_before: int = _gm.hp
+	_gm.damage_player(999999999)
+	var roll: Dictionary = _gm.roll_weapon_damage(_gm.equipped_weapon)
+	_check(_gm.hp == hp_before and not _gm.is_player_dead and int(roll["amount"]) >= Admin.GEAR_DAMAGE, "무적 (피해 0) · 즉사급 공격력 %d" % int(roll["amount"]))
+	_check(not _gm.can_sell(_gm.equipped_weapon) and not _gm.can_drop(_gm.weapon_slots[2]) and not (_gm.to_save_data()["weapon_slots"] as Array).has("admin_sword")
+		and not (_gm.to_save_data()["items"] as Array).has("admin_bow"), "운영자 장비는 팔기 · 버리기 · 저장 불가")
+	_check(not Achievements.unlock(&"HARD_CLEAR"), "운영자 모드 중에는 업적 달성 안 됨")
+	Admin.set_gear(false)
+	_check(not Admin.god and _gm.weapon_slots == before_weapons and not _gm.owns_item(&"admin_sword"), "운영자 장비 벗기 → 원래 무기로")
+	# 강림
+	var clean := Admin.sanitize({"lines": ["1", "2", "3", "4", "5", "6", "7"], "gold": 999999999999, "item": "no_such_item", "count": 500})
+	_check((clean["lines"] as Array).size() == Admin.MAX_LINES and int(clean["gold"]) == Admin.MAX_GOLD and clean["item"] == "" and int(clean["count"]) == 99
+		and Admin.sanitize({"item": "admin_sword"})["item"] == "", "강림 내용 거르기: 대사 6줄 · 골드 상한 · 없는/운영자 아이템 제외")
+	_gm.damage_player(roundi(_gm.max_hp * 0.3))
+	var gold_before: int = _gm.gold
+	var potion := ItemDB.get_potion(&"greater_potion")
+	var potion_id := potion.id
+	var potions_before: int = _gm.get_potion_count(potion_id)
+	_check(Admin.descend({"lines": ["버텨라, 용사여!", "축복을 내리마."], "heal": true, "attack": true, "invincible": true, "gold": 5000, "item": String(potion_id), "count": 2}),
+		"Ctrl+Shift+D / 패널 → 개발자 강림 시작")
+	await _frames(30)
+	_check(get_tree().get_nodes_in_group(&"admin_developer").size() == 1 and Sfx.last_played == &"descent", "하늘에서 빛기둥이 내리꽂히며 개발자 등장 (효과음)")
+	await _frames(90)
+	var box := Story.get_box()
+	_check(Story.is_playing() and box != null and box.current_line().get("name", "") == Admin.DEV_NAME and box.current_portrait() == Admin.DEV_TEXTURE,
+		"[개발자] 초상화 + 커스텀 대사창 「%s」" % (box.current_line().get("text", "") if box != null else ""))
+	Story.skip()
+	await _frames(20)
+	_check(_gm.hp == _gm.max_hp and _gm.has_buff("개발자의 축복") and _gm.has_buff("개발자의 보호막") and _gm.gold == gold_before + 5000
+		and _gm.get_potion_count(potion_id) > potions_before, "대사가 끝나면 선물: 체력 회복 · 공격 축복 · 보호막 · 5000G · 포션")
+	_check(_gm.is_invincible(), "개발자의 보호막: 무적")
+	await _frames(150)
+	_check(get_tree().get_nodes_in_group(&"admin_developer").is_empty() and not Admin.descent_active and Sfx.last_played == &"ascend", "역 빛기둥을 타고 퇴장")
+	await _press_key(KEY_A, true, true)
+	_check(not Admin.enabled and not Admin.get_badge().visible, "Ctrl+Shift+A 다시 → 일반 플레이어 모드")
+	OS.unset_environment(Admin.ENV_KEY)
+	Admin.key_hash = Admin.ADMIN_KEY_SHA256
+	Admin.refresh_authorization()
+	_check(not Admin.authorized or key_file, "키를 지우면 다시 권한 없음")
+	_gm._buffs.clear()
+	_gm._recalculate_stats()
+
+
 ## 보스방 해방 시련: 봉인 코어 · 정예 · 제단 (스테이지 4 · 5 · 6)
 func _test_gate_trials(main: Node2D) -> void:
 	print("[보스방 해방 시련 · 문이 열리는 연출]")
@@ -5987,11 +6097,17 @@ func _run() -> void:
 					var orc_king := boss as BossOrcKing
 					orc_king.set_physics_process(false)
 					var before_rally := orc_king.get_minions().size()
+					var base_power := {}
+					for m in orc_king.get_minions():
+						if not m.has_meta(&"war_cry"):
+							base_power[m] = m.power
 					orc_king.cast(BossOrcKing.Pattern.WAR_CRY)
 					await _frames(4)
 					var rallied_ok := orc_king.get_minions().size() > before_rally
 					for m in orc_king.get_minions():
-						if not m.has_meta(&"war_cry") or m.power < 1.3 or m.defense < 8:
+						# 난이도 배율(노멀 x0.7)이 곱해진 기본 공격력에서 x1.4 (새로 부른 부하는 enemy 기본값 기준)
+						var was: float = base_power.get(m, m.power / BossOrcKing.WAR_CRY_POWER)
+						if not m.has_meta(&"war_cry") or m.power < was * 1.39 or m.defense < 8:
 							rallied_ok = false
 					_check(rallied_ok, "[기믹] 족장의 함성: 오크킹이 부른 부하 %d명 강화 (공격력 x1.4 · 방어력 +8)" % orc_king.get_minions().size())
 					var calm_power := orc_king.power
@@ -6141,6 +6257,8 @@ func _run() -> void:
 	_check(saved.load(Profile.profile_path) == OK and Array(saved.get_value("player", "achievements", [])).has("STAGE_100"), "업적은 프로필 파일에 저장")
 	_check(Achievements.ACHIEVEMENTS.keys().all(func(id: StringName) -> bool: return String(id) == String(id).to_upper() and not String(id).contains(" ")),
 		"업적 id 는 스팀 API 이름 규칙 (대문자 · 공백 없음)")
+
+	await _test_admin(main)
 
 	print("[난이도 배율]")
 	_gm.difficulty = _gm.Difficulty.VERY_HARD

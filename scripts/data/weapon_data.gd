@@ -66,7 +66,8 @@ const SKILL_BY_RARITY := {
 	WeaponType.BOW: [&"volley", &"meteor_rain"],
 	WeaponType.STAFF: [&"blast", &"cataclysm"],
 }
-const MYTHIC_SKILLS := {&"abaddon_sword": &"abyss_descent", &"apollo_bow": &"helios", &"archmage_staff": &"meteor_swarm"}
+const MYTHIC_SKILLS := {&"abaddon_sword": &"abyss_descent", &"apollo_bow": &"helios", &"archmage_staff": &"meteor_swarm",
+	&"admin_sword": &"abyss_descent", &"admin_bow": &"helios", &"admin_staff": &"meteor_swarm"}
 const SKILL_ICON_DIR := "res://assets/sprites/skills/"
 
 @export var weapon_type: WeaponType = WeaponType.SWORD
