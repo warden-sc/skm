@@ -58,7 +58,7 @@ func _stream(sound: StringName) -> AudioStream:
 	if not _cache.has(sound):
 		_cache[sound] = null
 		for ext in [".wav", ".ogg"]:
-			var path := SFX_DIR + String(sound) + ext
+			var path: String = SFX_DIR + String(sound) + String(ext)
 			if ResourceLoader.exists(path):
 				_cache[sound] = load(path)
 				break
