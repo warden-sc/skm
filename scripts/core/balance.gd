@@ -92,3 +92,13 @@ static func item_price(category: String, rarity: int, fit_stage: int, in_shop: b
 	if not in_shop:
 		value *= DROP_ONLY_PRICE_MULT
 	return nice_price(value)
+
+
+## 포션 값 = 그 포션이 풀리는 스테이지 수입 × 등급 비중 (작은 포션 ≈ 26G · 회복 포션 ≈ 280G · 고급 ≈ 940G · 엘릭서 ≈ 2,950G)
+const POTION_PRICE_STAGES := {ItemData.Rarity.COMMON: 0.12, ItemData.Rarity.RARE: 0.08, ItemData.Rarity.EPIC: 0.06, ItemData.Rarity.LEGENDARY: 0.1}
+
+
+static func potion_price(rarity: int, unlock_stage: int) -> int:
+	if not POTION_PRICE_STAGES.has(rarity):
+		return 0
+	return nice_price(stage_income(unlock_stage) * float(POTION_PRICE_STAGES[rarity]))

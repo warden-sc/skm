@@ -7,7 +7,7 @@
 script = ExtResource("1_script")
 heal_amount = 0
 heal_percent = 0.8
-unlock_stage = 2
+unlock_stage = 41
 id = &"greater_potion"
 display_name = "고급 회복 포션"
 description = "정제된 마력이 깃든 고급 물약. 체력을 크게 회복한다."

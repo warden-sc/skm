@@ -18,11 +18,12 @@ extends CanvasLayer
 @onready var _close_button: Button = %CloseButton
 @onready var _tabs: HFlowContainer = %CategoryTabs
 
-enum Category { POTION, SWORD, BOW, STAFF, SHIELD, HELMET, ARMOR, BOOTS, BRACELET, RING, PENDANT }
-const CATEGORY_NAMES := ["포션", "검", "활", "지팡이", "방패", "투구", "갑옷", "신발", "팔찌", "반지", "펜던트"]
+## ALL = 「전체」 탭 (맨 앞에 보임 — 모든 종류를 한 목록에, 종류 순서대로)
+enum Category { POTION, SWORD, BOW, STAFF, SHIELD, HELMET, ARMOR, BOOTS, BRACELET, RING, PENDANT, ALL }
+const CATEGORY_NAMES := ["포션", "검", "활", "지팡이", "방패", "투구", "갑옷", "신발", "팔찌", "반지", "펜던트", "전체"]
 
 var _stock: Array[ItemData] = []
-var category: Category = Category.SWORD
+var category: Category = Category.ALL
 var _tab_buttons: Array[Button] = []
 
 
@@ -45,6 +46,7 @@ func _ready() -> void:
 		button.pressed.connect(set_category.bind(i))
 		_tabs.add_child(button)
 		_tab_buttons.append(button)
+	_tabs.move_child(_tab_buttons[Category.ALL], 0)  # 「전체」를 맨 앞으로
 
 
 ## 장비 종류 → 상점 탭
@@ -78,7 +80,18 @@ func set_category(value: int) -> void:
 
 ## 지금 탭에 보이는 판매 장비 (테스트용)
 func get_visible_stock() -> Array[ItemData]:
+	if category == Category.ALL:
+		var all := _stock.duplicate()
+		all.sort_custom(func(a: ItemData, b: ItemData) -> bool:
+			var ca := category_of(a)
+			var cb := category_of(b)
+			return ca < cb if ca != cb else _stock.find(a) < _stock.find(b))
+		return all
 	return _stock.filter(func(it: ItemData) -> bool: return category_of(it) == category)
+
+
+func _in_category(item: ItemData) -> bool:
+	return category == Category.ALL or category_of(item) == category
 
 
 func open(shop_name: String, stock_ids: Array) -> void:
@@ -144,7 +157,7 @@ func _refresh() -> void:
 		_buy_list.add_child(ItemRow.build(item, [button], _show_detail.bind(item, locked), locked))
 
 	for item in GameManager.items:
-		if category_of(item) != category:
+		if not _in_category(item):
 			continue
 		var equipped := GameManager.is_equipped(item)
 		var sealed := item.is_sealed()

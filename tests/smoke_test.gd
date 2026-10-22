@@ -4507,7 +4507,10 @@ func _test_gear(main: Node2D) -> void:
 	var tab_names := PackedStringArray()
 	for b in shop_ui.get_node("%CategoryTabs").get_children():
 		tab_names.append((b as Button).text)
-	_check(tab_names.size() == 11 and tab_names[1] == "검" and tab_names[3] == "지팡이", "탭 11개: %s" % " · ".join(tab_names))
+	_check(tab_names.size() == 12 and tab_names[0] == "전체" and tab_names[2] == "검" and tab_names[4] == "지팡이", "탭 12개 (맨 앞 「전체」): %s" % " · ".join(tab_names))
+	shop_ui.set_category(ShopUI.Category.ALL)
+	var all_stock := shop_ui.get_visible_stock()
+	_check(all_stock.size() == shop_items.size() and all_stock[0] is PotionData and all_stock.back() is AccessoryData, "「전체」 탭: 모든 장비 · 포션 %d개를 종류 순서대로" % all_stock.size())
 	_gm.gold = 999999
 	_check(not _gm.buy_item(mithril) and not _gm.owns_item(&"mithril_sword"), "1스테이지에서는 희귀 장비를 살 수 없음 (11스테이지부터)")
 	_check(_gm.buy_item(ItemDB.get_item(&"bronze_sword")) and _gm.weapon_slots[0].id == &"bronze_sword", "일반 상급 청동 검 구매 → 바로 장착")
@@ -5353,8 +5356,11 @@ func _run() -> void:
 	await _press_action(&"use_potion")
 	_check(_gm.hp == mini(hp_low + small.get_heal(_gm.max_hp), _gm.max_hp) and _gm.get_potion_count(&"small_potion") == 1, "H 키 → 작은 포션 사용 (HP %d → %d)" % [hp_low, _gm.hp])
 	_gm.add_gold(1000)
-	_check(_gm.buy_item(medium) and _gm.buy_item(medium) and _gm.get_potion_count(&"potion") == 2, "회복 포션 여러 개 구매")
-	_check(not _gm.buy_item(greater), "고급 회복 포션(레어)은 2스테이지부터")
+	_check(not _gm.buy_item(medium) and not _gm.buy_item(greater) and small.get_unlock_stage() == 1 and medium.get_unlock_stage() == 11 and greater.get_unlock_stage() == 41,
+		"포션도 등급 구간대로 풀림: 작은(일반) 1 · 회복(희귀) 11 · 고급(레어) 41 · 엘릭서(전설) 71스테이지")
+	_check(small.price < medium.price and medium.price < greater.price and greater.price < ItemDB.get_potion(&"elixir").price, "포션 값도 풀리는 스테이지 수입에 맞춤 (%d · %d · %d · %d G)" % [small.price, medium.price, greater.price, ItemDB.get_potion(&"elixir").price])
+	_gm.add_potion(medium, 2)
+	_check(_gm.get_potion_count(&"potion") == 2, "회복 포션 2개 (보상으로)")
 	for i in 10:
 		_gm.buy_potion(small)
 	_check(_gm.get_potion_count(&"small_potion") == _gm.POTION_MAX_STACK, "종류별 최대 %d개" % _gm.POTION_MAX_STACK)

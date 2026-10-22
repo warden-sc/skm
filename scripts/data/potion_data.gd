@@ -6,7 +6,8 @@ extends ItemData
 @export_group("Heal")
 @export var heal_amount: int = 300
 @export_range(0.0, 1.0) var heal_percent: float = 0.0
-## 상점에서 살 수 있게 되는 스테이지 (포션은 등급 구간과 따로)
+## 상점에서 살 수 있게 되는 스테이지 — 장비처럼 등급 구간을 따름 (일반 1 · 희귀 11 · 레어 41 · 전설 71).
+## 이 값이 더 크면 이 값 (고대 용의 피 999 = 상점에 없음)
 @export var unlock_stage: int = 1
 ## false 면 [H] 자동 선택에서 빠짐 (고대 용의 피 — 따로 [C] 키)
 @export var auto_use: bool = true
@@ -21,7 +22,7 @@ extends ItemData
 
 
 func get_unlock_stage() -> int:
-	return unlock_stage
+	return maxi(unlock_stage, int(ItemData.RARITY_UNLOCK_STAGE.get(rarity, 999)))
 
 
 func get_heal(max_hp: int) -> int:

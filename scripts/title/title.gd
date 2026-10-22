@@ -87,6 +87,8 @@ func _ready() -> void:
 	_start_button.pressed.connect(start_game)
 	(%NameConfirmButton as Button).pressed.connect(confirm_name)
 	_hero_name_edit.text_submitted.connect(func(_t: String) -> void: confirm_name())
+	# 한글 입력기(IME): LineEdit 에 max_length 를 두면 조합 중인 글자와 부딪혀 한 글자만 들어가는 경우가 있어
+	# 입력 칸에는 제한을 두지 않고, 결정할 때 GameManager.HERO_NAME_MAX(12자)로 자름
 	(%SingleButton as Button).pressed.connect(open_single)
 	(%MultiButton as Button).text = "멀티플레이 (협동 · 최대 4명)"
 	(%MultiButton as Button).pressed.connect(open_multi)

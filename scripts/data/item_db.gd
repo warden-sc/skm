@@ -388,8 +388,12 @@ static func _ensure_loaded() -> void:
 		_apply_price(item)
 
 
-## 장비 값은 Balance 의 공식으로 (스테이지 수입 곡선 · 종류 · 등급 · 단계) — .tres 의 price 는 덮어씀. 포션 · 사용 아이템은 그대로
+## 장비 · 포션 값은 Balance 의 공식으로 (스테이지 수입 곡선 · 종류 · 등급 · 단계) — .tres 의 price 는 덮어씀. 사용 아이템(신화)은 그대로
 static func _apply_price(item: ItemData) -> void:
+	if item is PotionData:
+		if item.rarity < ItemData.Rarity.MYTHIC:
+			item.price = Balance.potion_price(item.rarity, (item as PotionData).get_unlock_stage())
+		return
 	var category := price_category(item)
 	if category != "":
 		item.price = Balance.item_price(category, item.rarity, item.get_fit_stage(), item.in_shop)
