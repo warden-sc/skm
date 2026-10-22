@@ -4,7 +4,9 @@ extends Node
 ##
 ## 스테이지 하나의 흐름
 ##   야영지(CAMP)  : 상인에게서 장비 구매·판매. 안전 지대. 텔레포트[E] → 사냥터
-##   사냥터(FIELD) : 일반 몬스터 처치. 처치 목표를 채우면 북쪽 보스문의 봉인이 풀림. (귀환 텔레포트로 야영지 복귀 가능)
+##   사냥터(FIELD) : 스테이지마다 다른 「해방 시련」을 이루면 북쪽 보스문의 봉인이 풀림 (귀환 텔레포트로 야영지 복귀 가능)
+##                   처치(몬스터 N마리) · 봉인 코어 파괴(사냥터 곳곳 수정 3개) · 정예 처치(강해진 정예 하나) · 제단 정화(원 안에서 버티기)
+##                   — gate_trial_for(stage). 1~2스테이지와 튜토리얼은 처치. 시련을 이루면 문이 웅장하게 열림 (BossGate.open)
 ##   보스방(BOSS)  : 보스문[E]으로 입장 → 보스 등장
 ##   토벌(CLEARED) : 보스 처치 → 보물상자(다음 스테이지 등급 장비 1개) + 다음 스테이지 텔레포트 등장
 ##   다음 스테이지 텔레포트[E] → 다음 스테이지 야영지
@@ -94,6 +96,27 @@ var _state: State = State.CAMP
 var _spawn_timer: float = 0.0
 var _kills: int = 0
 var _kill_target: int = 0
+
+# ---- 보스방 해방 시련
+enum GateTrial { KILL, SEAL_CORES, ELITE, ALTAR }
+const GATE_TRIAL_NAMES := ["몬스터 처치", "봉인 코어 파괴", "정예 처치", "제단 정화"]
+const SEAL_CORE_SCENE := preload("res://scenes/enemies/seal_core.tscn")
+const SEAL_CORE_COUNT := 3
+## 봉인 코어 체력 = 그 스테이지 사냥터 몬스터 체력 × 이만큼
+const SEAL_CORE_HP_MOBS := 7.0
+## 정예: 체력 · 공격력 · 크기 · 골드 배율
+const ELITE_HP := 12.0
+const ELITE_POWER := 1.35
+const ELITE_SCALE := 1.55
+const ELITE_GOLD := 6.0
+## 제단 정화에 필요한 시간(초, 원 안에 서 있는 동안만 참)
+const ALTAR_TIME := 18.0
+var gate_trial: GateTrial = GateTrial.KILL
+var _trial_count: int = 0           # 부순 코어 수 / 정예 처치(0·1)
+var _altar_progress: float = 0.0    # 0 ~ ALTAR_TIME
+var _altar: GateAltar
+var _elite_name: String = ""
+var _altar_report: float = 0.0
 var _boss: Enemy
 ## 히든 보스(고대 드래곤 아르케)가 주는 고대 용의 피 개수
 const DRAGON_BLOOD_REWARD := 5
@@ -164,6 +187,7 @@ func _process(delta: float) -> void:
 func _physics_process(delta: float) -> void:
 	if _state != State.FIELD:
 		return
+	_update_altar(delta)
 	_spawn_timer -= delta
 	if _spawn_timer <= 0.0:
 		var data := get_stage_data()
@@ -281,7 +305,8 @@ func _do_enter_field() -> void:
 	if boss_gate.is_open():
 		Net.announce("보스방이 열려 있습니다! 사냥터 북쪽의 문으로 가세요", Color(1.0, 0.6, 0.5))
 	else:
-		Net.announce("몬스터 %d마리를 처치하면 보스방이 열립니다" % _kill_target, Color(1.0, 0.9, 0.5))
+		_spawn_trial_objects()
+		Net.announce(get_trial_description(), Color(1.0, 0.9, 0.5))
 
 
 func _do_return_to_camp() -> void:
@@ -342,8 +367,13 @@ func _setup_stage(stage: int) -> void:
 		_hidden_portal.enabled = false
 	_kills = 0
 	_kill_target = data.kill_target
-	GameManager.set_kill_progress(_kills, _kill_target)
+	gate_trial = gate_trial_for(stage)
+	_trial_count = 0
+	_altar_progress = 0.0
+	_elite_name = ""
+	_clear_trial_objects()
 	boss_gate.seal(_kills, _kill_target)
+	_report_trial_progress()
 	next_stage_portal.enabled = false
 	if is_instance_valid(_chest):
 		_chest.queue_free()
@@ -703,12 +733,182 @@ func _on_enemy_died(enemy: Enemy) -> void:
 		_on_boss_defeated()
 		return
 	if _state == State.FIELD and not boss_gate.is_open():
-		_kills += 1
-		GameManager.set_kill_progress(_kills, _kill_target)
-		boss_gate.update_progress(_kills, _kill_target)
-		if _kills >= _kill_target:
-			boss_gate.open()
-			Net.announce("보스방의 봉인이 풀렸습니다! 사냥터 북쪽의 문으로 가세요", Color(1.0, 0.55, 0.45))
+		if enemy.has_meta(&"gate_core"):
+			_trial_count += 1
+			Sfx.play(&"core_break")
+			Fx.explosion(enemy, enemy.get_hit_center(), Color(0.8, 0.55, 1.0), 40.0, 3)
+			Fx.pillar(enemy, enemy.global_position, Color(0.8, 0.6, 1.0), 20.0, 120.0, 0.6)
+			if _trial_count < SEAL_CORE_COUNT:
+				Net.announce("봉인 코어 파괴! (%d / %d)" % [_trial_count, SEAL_CORE_COUNT], Color(0.85, 0.65, 1.0))
+		elif enemy.has_meta(&"gate_elite"):
+			_trial_count = 1
+		else:
+			_kills += 1
+		_report_trial_progress()
+		if is_trial_complete():
+			_unlock_boss_gate()
+
+
+## 보스방 해방 시련 (스테이지마다) — 1~2스테이지 · 튜토리얼은 처치, 그 뒤로는 네 가지가 돌아가며
+static func gate_trial_for(stage: int) -> GateTrial:
+	if stage <= 2 or GameManager.tutorial_mode:
+		return GateTrial.KILL
+	return [GateTrial.SEAL_CORES, GateTrial.ELITE, GateTrial.ALTAR, GateTrial.KILL][stage % 4]
+
+
+func is_trial_complete() -> bool:
+	match gate_trial:
+		GateTrial.SEAL_CORES:
+			return _trial_count >= SEAL_CORE_COUNT
+		GateTrial.ELITE:
+			return _trial_count >= 1
+		GateTrial.ALTAR:
+			return _altar_progress >= ALTAR_TIME
+	return _kills >= _kill_target
+
+
+## 사냥터에 들어갈 때 안내 문구
+func get_trial_description() -> String:
+	match gate_trial:
+		GateTrial.SEAL_CORES:
+			return "보스방 해방 시련: 사냥터 곳곳의 봉인 코어 %d개를 부수세요" % SEAL_CORE_COUNT
+		GateTrial.ELITE:
+			return "보스방 해방 시련: 정예 「%s」를 쓰러뜨리세요" % _elite_name if _elite_name != "" else "보스방 해방 시련: 정예를 쓰러뜨리세요"
+		GateTrial.ALTAR:
+			return "보스방 해방 시련: 정화 제단의 원 안에서 %d초 동안 버티세요" % roundi(ALTAR_TIME)
+	return "몬스터 %d마리를 처치하면 보스방이 열립니다" % _kill_target
+
+
+## HUD · 보스문에 보일 진행도 글 (예: 「봉인 코어 파괴 1 / 3」)
+func get_trial_progress_text() -> String:
+	match gate_trial:
+		GateTrial.SEAL_CORES:
+			return "봉인 코어 파괴 %d / %d" % [_trial_count, SEAL_CORE_COUNT]
+		GateTrial.ELITE:
+			return "정예 %s 처치 %d / 1" % ["「%s」" % _elite_name if _elite_name != "" else "", _trial_count]
+		GateTrial.ALTAR:
+			return "제단 정화 %d%%" % roundi(_altar_progress / ALTAR_TIME * 100.0)
+	return ""
+
+
+func get_altar() -> GateAltar:
+	return _altar if is_instance_valid(_altar) else null
+
+
+func _report_trial_progress() -> void:
+	var text := get_trial_progress_text()
+	match gate_trial:
+		GateTrial.SEAL_CORES:
+			GameManager.set_kill_progress(_trial_count, SEAL_CORE_COUNT, text)
+		GateTrial.ELITE:
+			GameManager.set_kill_progress(_trial_count, 1, text)
+		GateTrial.ALTAR:
+			GameManager.set_kill_progress(roundi(_altar_progress / ALTAR_TIME * 100.0), 100, text)
+		_:
+			GameManager.set_kill_progress(_kills, _kill_target)
+	boss_gate.update_progress(_kills, _kill_target, text)
+
+
+## 시련 달성 → 보스문이 웅장하게 열림
+func _unlock_boss_gate() -> void:
+	if boss_gate.is_open():
+		return
+	_clear_trial_objects(true)
+	Sfx.play(&"trial_clear", 0.7)
+	boss_gate.open()
+	Net.announce("%s 완료! 보스방의 봉인이 풀렸습니다 — 사냥터 북쪽의 문으로" % GATE_TRIAL_NAMES[gate_trial], Color(1.0, 0.55, 0.45))
+
+
+## 사냥터에 시련 물건을 둠 (아직 남아 있는 것만 — 야영지에 다녀오면 부서진 코어 · 쓰러진 정예는 그대로)
+func _spawn_trial_objects() -> void:
+	var arena := field_room.get_arena_rect()
+	match gate_trial:
+		GateTrial.SEAL_CORES:
+			var spots := [Vector2(0.18, 0.3), Vector2(0.82, 0.3), Vector2(0.5, 0.8)]
+			for i in range(_trial_count, SEAL_CORE_COUNT):
+				var core := SEAL_CORE_SCENE.instantiate() as BossPart
+				core.max_hp = maxi(1, roundi(_sample_mob_hp() * SEAL_CORE_HP_MOBS))
+				core.set_meta(&"gate_core", true)
+				_add_enemy(core, arena.position + arena.size * spots[i], arena)
+				Fx.pillar(core, arena.position + arena.size * spots[i], Color(0.8, 0.55, 1.0), 16.0, 90.0, 0.6)
+		GateTrial.ELITE:
+			if _trial_count < 1:
+				_spawn_elite(arena)
+		GateTrial.ALTAR:
+			if not is_instance_valid(_altar):
+				_altar = GateAltar.new()
+				_add_entity(_altar, arena.position + arena.size * Vector2(0.5, 0.55))
+
+
+func _spawn_elite(arena: Rect2) -> void:
+	var scene := get_stage_data().pick_enemy_scene()
+	if scene == null:
+		_trial_count = 1
+		return
+	var elite := scene.instantiate() as Enemy
+	elite.set_meta(&"gate_elite", true)
+	elite.max_hp = maxi(1, roundi(elite.max_hp * ELITE_HP))
+	elite.contact_damage = roundi(elite.contact_damage * ELITE_POWER)
+	elite.power *= ELITE_POWER
+	elite.item_drop_chance = 1.0
+	_elite_name = "정예 " + elite.display_name
+	elite.display_name = _elite_name
+	elite.scale = Vector2.ONE * ELITE_SCALE
+	elite.base_tint = Color(1.25, 1.1, 0.75)
+	var at := arena.position + arena.size * Vector2(randf_range(0.3, 0.7), randf_range(0.25, 0.45))
+	_add_enemy(elite, at, arena)
+	elite.gold_min *= int(ELITE_GOLD)
+	elite.gold_max *= int(ELITE_GOLD)
+	var aura := Fx.make_aura(Color(1.0, 0.8, 0.3), 18, 10.0, Vector2(0, -40), 0.6)
+	aura.position = Vector2(0, -10)
+	elite.add_child(aura)
+	aura.emitting = true
+	Fx.pillar(elite, at, Color(1.0, 0.75, 0.3), 20.0, 110.0, 0.6)
+	Sfx.play(&"elite_roar")
+	_report_trial_progress()
+
+
+## 이 스테이지 사냥터 몬스터 하나의 씬 체력 (난이도 · 딜 인플레는 _add_enemy 에서 함께 곱해짐)
+func _sample_mob_hp() -> float:
+	var scene := get_stage_data().pick_enemy_scene()
+	if scene == null:
+		return 20.0
+	var probe := scene.instantiate() as Enemy
+	var value := float(probe.max_hp)
+	probe.free()
+	return value
+
+
+func _clear_trial_objects(keep_altar_fade: bool = false) -> void:
+	if is_instance_valid(_altar):
+		if keep_altar_fade:
+			var altar := _altar
+			var tween := altar.create_tween()
+			tween.tween_property(altar, "modulate:a", 0.0, 0.8)
+			tween.tween_callback(altar.queue_free)
+		else:
+			_altar.queue_free()
+	_altar = null
+
+
+## 제단 정화: 누군가 원 안에 있으면 차오름
+func _update_altar(delta: float) -> void:
+	if gate_trial != GateTrial.ALTAR or boss_gate.is_open() or not is_instance_valid(_altar):
+		return
+	var inside := false
+	for p in Player.get_all(get_tree()):
+		if not p.is_net_dead() and p.global_position.distance_to(_altar.global_position) <= GateAltar.RADIUS:
+			inside = true
+	_altar.active = inside
+	if inside:
+		_altar_progress = minf(_altar_progress + delta, ALTAR_TIME)
+		_altar_report -= delta
+		if _altar_report <= 0.0 or _altar_progress >= ALTAR_TIME:
+			_altar_report = 0.25
+			_report_trial_progress()
+	_altar.progress = _altar_progress / ALTAR_TIME
+	if _altar_progress >= ALTAR_TIME:
+		_unlock_boss_gate()
 
 
 func _spawn_drops(at_global: Vector2, enemy: Enemy) -> void:

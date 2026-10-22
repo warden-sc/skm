@@ -20,6 +20,7 @@ var _shake_check: CheckButton
 var _fullscreen_check: CheckButton
 var _story_check: CheckButton
 var _voice_button: Button
+var _sfx_button: Button
 var _speed_button: Button
 var _confirm_title: bool = false
 var _title_button: Button
@@ -155,6 +156,7 @@ func _build() -> void:
 	_story_check.toggled.connect(func(on: bool) -> void: Profile.set_setting("story", on))
 	_settings_box.add_child(_story_check)
 	_speed_button = _add_button(_settings_box, "", cycle_text_speed)
+	_sfx_button = _add_button(_settings_box, "", cycle_sfx_volume)
 	_voice_button = _add_button(_settings_box, "", cycle_voice_mode)
 	_voice_button.tooltip_text = "멀티플레이 음성 채팅 — 눌러서 말하기는 [T] 를 누르는 동안만 마이크가 켜짐"
 	_add_button(_settings_box, "← 돌아가기", _show_main)
@@ -169,6 +171,21 @@ func cycle_text_speed() -> void:
 		if is_equal_approx(TEXT_SPEEDS[i], current):
 			index = i
 	Profile.set_setting("text_speed", TEXT_SPEEDS[(index + 1) % TEXT_SPEEDS.size()])
+	_sync_settings()
+
+
+## 효과음 크기: 0% → 25% → 50% → 80% → 100% → …
+const SFX_STEPS := [0.0, 0.25, 0.5, 0.8, 1.0]
+
+
+func cycle_sfx_volume() -> void:
+	var current := float(Profile.get_setting("sfx_volume"))
+	var index := 0
+	for i in SFX_STEPS.size():
+		if is_equal_approx(SFX_STEPS[i], current):
+			index = i
+	Profile.set_setting("sfx_volume", SFX_STEPS[(index + 1) % SFX_STEPS.size()])
+	Sfx.play(&"trial_clear", 0.6)
 	_sync_settings()
 
 
@@ -188,6 +205,7 @@ func _sync_settings() -> void:
 		if is_equal_approx(TEXT_SPEEDS[i], speed):
 			speed_name = TEXT_SPEED_NAMES[i]
 	_speed_button.text = "대사 속도: %s" % speed_name
+	_sfx_button.text = "효과음: %d%%" % roundi(float(Profile.get_setting("sfx_volume")) * 100.0)
 	_voice_button.text = "음성 채팅: %s" % VoiceChat.MODE_NAMES[VoiceChat.get_mode()]
 	_voice_button.visible = VoiceChat.is_supported()
 

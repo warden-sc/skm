@@ -529,7 +529,7 @@ func _hud_relay(signal_name: StringName) -> Callable:
 		&"location_changed":
 			return func(location: String) -> void: _on_host_hud(signal_name, [location])
 		&"kill_progress_changed":
-			return func(k: int, t: int) -> void: _on_host_hud(signal_name, [k, t])
+			return func(k: int, t: int) -> void: _on_host_hud(signal_name, [k, t, GameManager.gate_text])
 		&"boss_spawned":
 			return func(n: String, hp: int) -> void: _on_host_hud(signal_name, [n, hp])
 		&"boss_hp_changed":
@@ -784,6 +784,15 @@ func room_theme(room: Node, texture: Texture2D, tint: Color) -> void:
 func fx_event(fx_name: StringName, args: Array) -> void:
 	if is_host() and in_game:
 		_fx.rpc(fx_name, args)
+
+
+## 보스방 문이 열릴 때 내 카메라가 문을 비추고, 방장이면 참가자들의 카메라도
+func gate_cinematic(at_global: Vector2, hold: float) -> void:
+	var me := _local_player() if is_online() else get_tree().get_first_node_in_group(&"player") as Player
+	if me != null:
+		me.focus_camera(at_global, hold)
+	if is_host() and in_game:
+		_fx.rpc(&"gate_cinematic", [at_global, hold])
 
 
 func story_event(key: String, mark: String) -> void:
@@ -1286,7 +1295,7 @@ func _apply_hud(signal_name: StringName, args: Array) -> void:
 		&"location_changed":
 			GameManager.set_location(String(args[0]))
 		&"kill_progress_changed":
-			GameManager.set_kill_progress(int(args[0]), int(args[1]))
+			GameManager.set_kill_progress(int(args[0]), int(args[1]), String(args[2]) if args.size() > 2 else "")
 		&"boss_spawned":
 			GameManager.report_boss_spawned(String(args[0]), int(args[1]))
 		&"boss_hp_changed":
@@ -1334,6 +1343,12 @@ func _fx(fx_name: StringName, args: Array) -> void:
 			Fx.beam(m, args[0], args[1], args[2], args[3], args[4])
 		&"screen_tint":
 			Fx.screen_tint(m, args[0], args[1])
+		&"sfx":
+			Sfx.play(StringName(args[0]), float(args[1]))
+		&"gate_cinematic":
+			var me := _local_player()
+			if me != null:
+				me.focus_camera(args[0], args[1])
 
 
 @rpc("authority", "reliable")

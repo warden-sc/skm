@@ -134,6 +134,8 @@ var stage_name: String = ""
 var location_name: String = ""
 var kills: int = 0
 var kill_target: int = 0
+## 보스방 해방 시련 진행 글 (처치 시련이면 "")
+var gate_text: String = ""
 var is_boss_active: bool = false
 
 # --- 엔딩용 기록 ---
@@ -208,6 +210,7 @@ func reset_game() -> void:
 	location_name = ""
 	kills = 0
 	kill_target = 0
+	gate_text = ""
 	is_boss_active = false
 	is_game_cleared = false
 	dragon_scales.clear()
@@ -1171,9 +1174,11 @@ func set_location(new_location: String) -> void:
 	location_changed.emit(location_name)
 
 
-func set_kill_progress(current_kills: int, target: int) -> void:
+## text: 처치 말고 다른 해방 시련일 때 HUD 에 보일 글 (예: 「봉인 코어 파괴 1 / 3」) — 비우면 「처치 k / t」
+func set_kill_progress(current_kills: int, target: int, text: String = "") -> void:
 	kills = current_kills
 	kill_target = target
+	gate_text = text
 	kill_progress_changed.emit(kills, kill_target)
 
 

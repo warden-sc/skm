@@ -161,6 +161,8 @@ func _update_progress_text() -> void:
 		_progress_label.text = ""
 	elif kills >= target:
 		_progress_label.text = "보스방 해방됨 — 사냥터 북쪽 문"
+	elif GameManager.gate_text != "":
+		_progress_label.text = "보스방 해방 시련: " + GameManager.gate_text
 	else:
 		_progress_label.text = "보스방 해방까지 처치 %d / %d" % [kills, target]
 

@@ -89,6 +89,9 @@ var _ghost_timer: float = 0.0
 var _invincible_left: float = 0.0
 var _anim_time: float = 0.0
 var _shake_strength: float = 0.0
+## 카메라를 잠깐 다른 곳으로 옮겨 보여 줄 때 (보스방 문이 열리는 장면)
+var _focus_offset: Vector2 = Vector2.ZERO
+var _focus_tween: Tween
 var _weapon_kick: float = 0.0
 var _swing_sign: float = 1.0
 var _swing_tween: Tween
@@ -1084,6 +1087,23 @@ func _update_status(delta: float) -> void:
 		GameManager.set_player_status(text)
 
 
+## 카메라가 target(전역 좌표)으로 옮겨 가서 hold 초 보여 준 뒤 돌아옴 (내 화면만 — 멀티는 Net 이 각자에게)
+func focus_camera(target: Vector2, hold: float = 1.2) -> void:
+	if net_mode != NetMode.LOCAL or _camera == null:
+		return
+	if _focus_tween != null and _focus_tween.is_valid():
+		_focus_tween.kill()
+	_focus_tween = create_tween()
+	_focus_tween.tween_method(func(t: float) -> void: _focus_offset = (target - global_position) * t, 0.0, 1.0, 0.55).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_focus_tween.tween_method(func(_t: float) -> void: _focus_offset = target - global_position, 0.0, 1.0, hold)
+	_focus_tween.tween_method(func(t: float) -> void: _focus_offset = (target - global_position) * (1.0 - t), 0.0, 1.0, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_focus_tween.tween_callback(func() -> void: _focus_offset = Vector2.ZERO)
+
+
+func is_camera_focused() -> bool:
+	return _focus_offset != Vector2.ZERO
+
+
 func shake_camera(strength: float) -> void:
 	if _forwarded(&"shake_camera", [strength], true):
 		return
@@ -1337,7 +1357,7 @@ func _update_visuals(delta: float) -> void:
 
 	# 카메라 흔들림
 	_shake_strength = move_toward(_shake_strength, 0.0, delta * 20.0)
-	_camera.offset = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * _shake_strength
+	_camera.offset = _focus_offset + Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * _shake_strength
 
 
 func _setup_windup_visuals() -> void:

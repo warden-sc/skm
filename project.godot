@@ -20,6 +20,7 @@ GameManager="*res://scripts/autoload/game_manager.gd"
 Story="*res://scripts/autoload/story.gd"
 Profile="*res://scripts/autoload/profile.gd"
 Net="*res://scripts/autoload/net.gd"
+Sfx="*res://scripts/autoload/sfx.gd"
 
 [display]
 

@@ -1,0 +1,199 @@
+#!/usr/bin/env python3
+"""보스방 해방 시련(봉인 코어 · 정화 제단)의 그림 + 효과음(WAV).
+
+  assets/sprites/characters/seal_core.png   봉인 코어 (사슬에 묶인 보랏빛 수정)
+  assets/sprites/world/gate_altar.png       정화 제단 (돌 받침 + 빛나는 룬)
+  assets/audio/sfx/*.wav                    효과음 — 문이 열리는 굉음 · 사슬 끊김 · 코어 파괴 · 정예 등장 · 시련 완료
+효과음은 사인파 · 잡음을 섞어 만든 임시 소리입니다. 같은 파일명으로 덮어쓰면 바로 교체됩니다.
+실행: python3 tools/generate_trial_assets.py   (Pillow 필요)
+"""
+import math
+import os
+import random
+import struct
+import wave
+
+from PIL import Image
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+SPRITES = os.path.join(HERE, "..", "assets", "sprites")
+AUDIO = os.path.join(HERE, "..", "assets", "audio", "sfx")
+RATE = 22050
+
+
+def canvas(w, h):
+    return Image.new("RGBA", (w, h), (0, 0, 0, 0))
+
+
+def lerp(a, b, t):
+    t = max(0.0, min(1.0, t))
+    return tuple(int(a[i] + (b[i] - a[i]) * t) for i in range(len(a)))
+
+
+def put(img, x, y, col):
+    x, y = int(round(x)), int(round(y))
+    if 0 <= x < img.width and 0 <= y < img.height:
+        img.putpixel((x, y), col)
+
+
+def outline(img, col=(24, 16, 32, 255)):
+    out = img.copy()
+    for y in range(img.height):
+        for x in range(img.width):
+            if img.getpixel((x, y))[3] == 0:
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    nx, ny = x + dx, y + dy
+                    if 0 <= nx < img.width and 0 <= ny < img.height and img.getpixel((nx, ny))[3] > 160:
+                        out.putpixel((x, y), col)
+                        break
+    return out
+
+
+def seal_core():
+    img = canvas(24, 34)
+    # 수정: 위아래로 뾰족한 육각 기둥
+    for y in range(34):
+        for x in range(24):
+            cx, top, bot = 11.5, 2, 30
+            if y < top or y > bot:
+                continue
+            t = (y - top) / (bot - top)
+            half = 8.5 * math.sin(math.pi * t) ** 0.7
+            d = abs(x - cx)
+            if d <= half:
+                shade = d / max(half, 0.1)
+                col = lerp((240, 210, 255), (120, 60, 190), shade * 0.8 + (0.2 if x > cx else 0.0))
+                put(img, x, y, col + (255,))
+    # 가운데 빛나는 룬
+    for y in range(12, 22):
+        put(img, 11, y, (255, 250, 255, 255))
+        put(img, 12, y, (255, 230, 255, 255))
+    for x in range(8, 16):
+        put(img, x, 16, (255, 240, 255, 255))
+    # 감긴 사슬 두 줄
+    for row in (10, 23):
+        for x in range(2, 22, 3):
+            for dx in range(2):
+                put(img, x + dx, row + (x // 3) % 2, (150, 150, 165, 255))
+                put(img, x + dx, row + 1 + (x // 3) % 2, (90, 90, 105, 255))
+    return outline(img)
+
+
+def gate_altar():
+    img = canvas(28, 22)
+    for y in range(10, 22):
+        for x in range(2, 26):
+            col = lerp((150, 140, 130), (80, 75, 70), (y - 10) / 12)
+            if y in (10, 11):
+                col = (180, 170, 160)
+            put(img, x, y, col + (255,))
+    for x in range(6, 22):
+        for y in range(4, 10):
+            put(img, x, y, lerp((170, 160, 150), (110, 100, 95), (y - 4) / 6) + (255,))
+    for x in (9, 14, 19):
+        put(img, x, 15, (130, 230, 255, 255))
+        put(img, x, 16, (90, 180, 240, 255))
+    for y in range(0, 4):
+        put(img, 13, y, (180, 240, 255, 255))
+        put(img, 14, y, (220, 250, 255, 255))
+    return outline(img, (30, 26, 24, 255))
+
+
+# ============================================================ 효과음
+def write_wav(name, samples):
+    os.makedirs(AUDIO, exist_ok=True)
+    peak = max(1e-6, max(abs(s) for s in samples))
+    with wave.open(os.path.join(AUDIO, name), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(RATE)
+        w.writeframes(b"".join(struct.pack("<h", int(max(-1.0, min(1.0, s / peak * 0.9)) * 32767)) for s in samples))
+
+
+def env(t, attack, length):
+    if t < attack:
+        return t / attack
+    return max(0.0, 1.0 - (t - attack) / max(length - attack, 1e-6)) ** 2
+
+
+def gate_open():
+    """웅장한 문 열림: 낮은 굉음(럼블) + 징 소리 + 쇳소리"""
+    rnd = random.Random(1)
+    n = int(RATE * 2.6)
+    out = []
+    lp = 0.0
+    for i in range(n):
+        t = i / RATE
+        lp += (rnd.uniform(-1, 1) - lp) * 0.02  # 저역 잡음 = 돌이 끌리는 굉음
+        rumble = lp * 3.0 * env(t, 0.3, 2.4)
+        gong = sum(math.sin(2 * math.pi * f * t) * a for f, a in ((82, 1.0), (123, 0.6), (196, 0.35), (311, 0.2))) * env(max(t - 0.5, 0), 0.01, 2.0) * (t > 0.5)
+        clank = math.sin(2 * math.pi * 900 * t) * rnd.uniform(0.3, 1.0) * env(max(t - 0.45, 0), 0.002, 0.15) * (t > 0.45)
+        out.append(rumble * 0.9 + gong * 0.55 + clank * 0.25)
+    return out
+
+
+def chain_break():
+    rnd = random.Random(2)
+    n = int(RATE * 0.6)
+    out = []
+    for i in range(n):
+        t = i / RATE
+        ring = sum(math.sin(2 * math.pi * f * t) for f in (1400, 2100, 2900)) * env(t, 0.002, 0.5)
+        crack = rnd.uniform(-1, 1) * env(t, 0.001, 0.08)
+        out.append(ring * 0.3 + crack)
+    return out
+
+
+def core_break():
+    rnd = random.Random(3)
+    n = int(RATE * 0.9)
+    out = []
+    for i in range(n):
+        t = i / RATE
+        shatter = rnd.uniform(-1, 1) * env(t, 0.001, 0.35)
+        chime = sum(math.sin(2 * math.pi * f * t) for f in (1760, 2637, 3520)) * env(t, 0.003, 0.85) * 0.35
+        boom = math.sin(2 * math.pi * 70 * t) * env(t, 0.005, 0.4)
+        out.append(shatter * 0.7 + chime + boom * 0.6)
+    return out
+
+
+def elite_roar():
+    rnd = random.Random(4)
+    n = int(RATE * 1.2)
+    out = []
+    for i in range(n):
+        t = i / RATE
+        f = 110 - 40 * t
+        growl = math.sin(2 * math.pi * f * t + math.sin(2 * math.pi * 30 * t) * 2.0) * env(t, 0.08, 1.1)
+        out.append(growl + rnd.uniform(-1, 1) * 0.25 * env(t, 0.05, 1.0))
+    return out
+
+
+def trial_clear():
+    """시련 완료: 올라가는 세 음"""
+    n = int(RATE * 1.0)
+    out = []
+    for i in range(n):
+        t = i / RATE
+        s = 0.0
+        for k, f in enumerate((523, 659, 784)):
+            if t >= k * 0.12:
+                s += math.sin(2 * math.pi * f * t) * env(t - k * 0.12, 0.01, 0.8)
+        out.append(s)
+    return out
+
+
+def main():
+    os.makedirs(os.path.join(SPRITES, "world"), exist_ok=True)
+    seal_core().save(os.path.join(SPRITES, "characters", "seal_core.png"))
+    gate_altar().save(os.path.join(SPRITES, "world", "gate_altar.png"))
+    write_wav("gate_open.wav", gate_open())
+    write_wav("chain_break.wav", chain_break())
+    write_wav("core_break.wav", core_break())
+    write_wav("elite_roar.wav", elite_roar())
+    write_wav("trial_clear.wav", trial_clear())
+    print("ok")
+
+
+if __name__ == "__main__":
+    main()

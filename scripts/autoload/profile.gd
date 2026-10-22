@@ -9,7 +9,7 @@ signal settings_changed
 const PROFILE_PATH := "user://profile.cfg"
 const SAVE_PATH := "user://save.json"
 ## 설정 기본값 — screen_shake: 화면 흔들림 · fullscreen: 전체 화면 · text_speed: 대사 글자 속도 배율 · story: 스토리 대사 보기
-const DEFAULT_SETTINGS := {"screen_shake": true, "fullscreen": false, "text_speed": 1.0, "story": true, "voice": 1}
+const DEFAULT_SETTINGS := {"screen_shake": true, "fullscreen": false, "text_speed": 1.0, "story": true, "voice": 1, "sfx_volume": 0.8}
 
 ## 테스트에서 실제 파일을 건드리지 않도록 경로를 바꿀 수 있음
 var profile_path: String = PROFILE_PATH

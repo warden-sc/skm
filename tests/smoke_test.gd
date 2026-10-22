@@ -58,8 +58,88 @@ func _find_boss() -> Enemy:
 func _enemy_names() -> Dictionary:
 	var names := {}
 	for e in get_tree().get_nodes_in_group(&"enemies"):
+		if (e as Node).has_meta(&"gate_core") or (e as Node).has_meta(&"gate_elite"):
+			continue  # 보스방 해방 시련의 봉인 코어 · 정예는 빼고
 		names[(e as Enemy).display_name] = true
 	return names
+
+
+## 보스방 해방 시련: 봉인 코어 · 정예 · 제단 (스테이지 4 · 5 · 6)
+func _test_gate_trials(main: Node2D) -> void:
+	print("[보스방 해방 시련 · 문이 열리는 연출]")
+	var stage := main.get_node("StageManager") as StageManager
+	var player := main.get_node("Entities/Player") as Player
+	var gate := main.get_node("Entities/BossGate") as BossGate
+	var hud := main.get_node("HUD") as HUD
+	stage.instant_travel = true
+	_check(StageManager.gate_trial_for(1) == StageManager.GateTrial.KILL and StageManager.gate_trial_for(2) == StageManager.GateTrial.KILL
+		and StageManager.gate_trial_for(4) == StageManager.GateTrial.SEAL_CORES and StageManager.gate_trial_for(5) == StageManager.GateTrial.ELITE
+		and StageManager.gate_trial_for(6) == StageManager.GateTrial.ALTAR and StageManager.gate_trial_for(7) == StageManager.GateTrial.KILL,
+		"해방 시련이 스테이지마다 바뀜: 1~2 처치 → 4 봉인 코어 · 5 정예 · 6 제단 · 7 처치 …")
+	var trial_counts := {}
+	for st in range(3, 101):
+		trial_counts[StageManager.gate_trial_for(st)] = int(trial_counts.get(StageManager.gate_trial_for(st), 0)) + 1
+	_check(trial_counts.size() == 4 and trial_counts.values().all(func(n: int) -> bool: return n >= 20), "3~100스테이지: 네 시련이 고르게 (%s)" % str(trial_counts))
+	# 봉인 코어
+	stage.go_to_stage(4)
+	await _frames(3)
+	stage._do_enter_field()
+	await _frames(4)
+	var cores: Array = get_tree().get_nodes_in_group(&"enemies").filter(func(e: Node) -> bool: return e.has_meta(&"gate_core"))
+	_check(stage.gate_trial == StageManager.GateTrial.SEAL_CORES and cores.size() == StageManager.SEAL_CORE_COUNT and not gate.is_open()
+		and (hud.get_node("%ProgressLabel") as Label).text.contains("봉인 코어 파괴 0 / 3"), "4스테이지: 사냥터에 봉인 코어 3개 · HUD 「%s」" % (hud.get_node("%ProgressLabel") as Label).text)
+	(cores[0] as Enemy).take_damage(999999999, Vector2.ZERO, false, 99999)
+	await _frames(3)
+	_check(stage._trial_count == 1 and not gate.is_open() and Sfx.last_played == &"core_break", "코어 하나 파괴 → 1 / 3 (파괴음)")
+	stage._do_return_to_camp()
+	await _frames(3)
+	stage._do_enter_field()
+	await _frames(4)
+	cores = get_tree().get_nodes_in_group(&"enemies").filter(func(e: Node) -> bool: return e.has_meta(&"gate_core"))
+	_check(cores.size() == 2, "야영지에 다녀와도 부순 코어는 그대로 — 남은 코어 2개")
+	for c in cores:
+		(c as Enemy).take_damage(999999999, Vector2.ZERO, false, 99999)
+	await _frames(3)
+	_check(gate.is_open() and gate.enabled and stage.is_trial_complete(), "코어 3개 모두 파괴 → 보스방 해방")
+	await _frames(20)
+	_check(player.is_camera_focused(), "문이 열리면 카메라가 잠깐 북쪽 보스문을 비춤")
+	await _frames(80)
+	_check((gate.get_node("Sprite2D") as Sprite2D).texture == gate.open_texture, "땅이 울리고(굉음) → 사슬이 끊기고 → 빛기둥 속에 문이 열림")
+	await _frames(60)
+	_check(not player.is_camera_focused(), "연출이 끝나면 카메라가 용사에게 돌아옴")
+	# 정예
+	stage.go_to_stage(5)
+	await _frames(3)
+	stage._do_enter_field()
+	await _frames(4)
+	var elites: Array = get_tree().get_nodes_in_group(&"enemies").filter(func(e: Node) -> bool: return e.has_meta(&"gate_elite"))
+	var elite: Enemy = elites[0] if not elites.is_empty() else null
+	_check(stage.gate_trial == StageManager.GateTrial.ELITE and elite != null and elite.display_name.begins_with("정예 ") and elite.scale.x > 1.4 and not gate.is_open(),
+		"5스테이지: 정예 「%s」 등장 (크고 금빛 · 체력 x%d)" % [elite.display_name if elite != null else "?", roundi(StageManager.ELITE_HP)])
+	if elite != null:
+		elite.take_damage(999999999, Vector2.ZERO, false, 99999)
+	await _frames(3)
+	_check(gate.is_open(), "정예를 쓰러뜨리면 보스방 해방")
+	await _frames(150)
+	# 제단
+	stage.go_to_stage(6)
+	await _frames(3)
+	stage._do_enter_field()
+	await _frames(4)
+	var altar := stage.get_altar()
+	_check(stage.gate_trial == StageManager.GateTrial.ALTAR and altar != null and not gate.is_open(), "6스테이지: 사냥터에 정화 제단")
+	if altar != null:
+		player.global_position = altar.global_position + Vector2(GateAltar.RADIUS + 30.0, 0)
+		await _survive(30)
+		_check(stage._altar_progress == 0.0, "원 밖에서는 정화가 차오르지 않음")
+		await _survive(60, func() -> void: player.global_position = altar.global_position)
+		_check(stage._altar_progress > 0.5 and altar.active and (hud.get_node("%ProgressLabel") as Label).text.contains("제단 정화"), "원 안에 서 있으면 정화가 차오름 (%s)" % (hud.get_node("%ProgressLabel") as Label).text)
+		stage._altar_progress = StageManager.ALTAR_TIME - 0.05
+		await _survive(10, func() -> void: player.global_position = altar.global_position)
+		_check(gate.is_open(), "정화를 마치면 보스방 해방")
+	await _frames(150)
+	stage.go_to_stage(1)
+	await _frames(3)
 
 
 func _press_action(action: StringName) -> void:
@@ -6050,6 +6130,8 @@ func _run() -> void:
 	final_boss = await _test_late_stages(main)
 
 	await _test_final_and_no_hidden(main, final_boss)
+
+	await _test_gate_trials(main)
 
 	print("[난이도 배율]")
 	_gm.difficulty = _gm.Difficulty.VERY_HARD
