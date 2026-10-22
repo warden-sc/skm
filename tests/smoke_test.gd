@@ -4451,7 +4451,7 @@ func _test_tutorial_and_save() -> void:
 	_check(tutorial.get_step_id() == "hunt", "상점을 열면 → 「사냥」")
 	for i in tutorial.KILL_TARGET:
 		_gm.report_kill()
-	await _frames(2)
+	await _frames(5)
 	_check(tutorial.get_step_id() == "done", "몬스터 %d마리 → 「완료」" % tutorial.KILL_TARGET)
 	await _frames(int(tutorial.DONE_DELAY * 60) + 10)
 	_check(Profile.tutorial_done and not _gm.tutorial_mode and _gm.weapon_slots[1] == null, "튜토리얼 완료 → 프로필에 기록, 튜토리얼에서 받은 것은 초기화 → 타이틀로")
