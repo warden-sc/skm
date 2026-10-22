@@ -19,9 +19,10 @@ var _status: Label
 var _shake_check: CheckButton
 var _fullscreen_check: CheckButton
 var _story_check: CheckButton
-var _voice_button: Button
-var _sfx_button: Button
-var _bgm_button: Button
+var _voice_option: OptionButton
+## 음량 슬라이더 (설정 키 → HSlider) · 옆의 % 글자
+var volume_sliders: Dictionary = {}
+var _volume_labels: Dictionary = {}
 var _speed_button: Button
 var _confirm_title: bool = false
 var _title_button: Button
@@ -157,11 +158,25 @@ func _build() -> void:
 	_story_check.toggled.connect(func(on: bool) -> void: Profile.set_setting("story", on))
 	_settings_box.add_child(_story_check)
 	_speed_button = _add_button(_settings_box, "", cycle_text_speed)
-	_bgm_button = _add_button(_settings_box, "", cycle_bgm_volume)
-	_sfx_button = _add_button(_settings_box, "", cycle_sfx_volume)
-	_sfx_button.visible = Sfx.has_sounds()  # 지금은 효과음 파일이 없어서 숨김
-	_voice_button = _add_button(_settings_box, "", cycle_voice_mode)
-	_voice_button.tooltip_text = "멀티플레이 음성 채팅 — 눌러서 말하기는 [T] 를 누르는 동안만 마이크가 켜짐"
+	# 음량: 끌어서 조절 (이 컴퓨터에만 저장 — 멀티플레이에서도 각자)
+	for entry in VOLUME_SETTINGS:
+		_add_volume_slider(entry[0], entry[1])
+	var voice_row := HBoxContainer.new()
+	_settings_box.add_child(voice_row)
+	var voice_label := Label.new()
+	voice_label.text = "음성 채팅"
+	voice_label.add_theme_font_size_override(&"font_size", 9)
+	voice_label.custom_minimum_size = Vector2(70, 0)
+	voice_row.add_child(voice_label)
+	_voice_option = OptionButton.new()
+	for mode_name in VoiceChat.MODE_NAMES:
+		_voice_option.add_item(mode_name)
+	_voice_option.add_theme_font_size_override(&"font_size", 9)
+	_voice_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_voice_option.tooltip_text = "멀티플레이 음성 채팅 — 끄기 / 눌러서 말하기([T] 를 누르는 동안만 마이크) / 항상 켜기"
+	_voice_option.item_selected.connect(set_voice_mode)
+	voice_row.add_child(_voice_option)
+	voice_row.visible = VoiceChat.is_supported()  # 웹 버전은 음성 채팅 없음
 	_add_button(_settings_box, "← 돌아가기", _show_main)
 	_settings_box.hide()
 
@@ -177,39 +192,45 @@ func cycle_text_speed() -> void:
 	_sync_settings()
 
 
-## 효과음 크기: 0% → 25% → 50% → 80% → 100% → …
-const SFX_STEPS := [0.0, 0.25, 0.5, 0.8, 1.0]
+## 음량 설정: [설정 키, 이름] — 마스터(전체) · 배경음 · 효과음 (효과음은 지금 소리 파일이 없어도 미리 맞춰 둘 수 있음)
+const VOLUME_SETTINGS := [["master_volume", "마스터 음량"], ["bgm_volume", "배경음"], ["sfx_volume", "효과음"]]
 
 
-func cycle_sfx_volume() -> void:
-	var current := float(Profile.get_setting("sfx_volume"))
-	var index := 0
-	for i in SFX_STEPS.size():
-		if is_equal_approx(SFX_STEPS[i], current):
-			index = i
-	Profile.set_setting("sfx_volume", SFX_STEPS[(index + 1) % SFX_STEPS.size()])
-	Sfx.play(&"trial_clear", 0.6)
-	_sync_settings()
+func _add_volume_slider(key: String, title: String) -> void:
+	var row := HBoxContainer.new()
+	_settings_box.add_child(row)
+	var name_label := Label.new()
+	name_label.text = title
+	name_label.add_theme_font_size_override(&"font_size", 9)
+	name_label.custom_minimum_size = Vector2(70, 0)
+	row.add_child(name_label)
+	var slider := HSlider.new()
+	slider.min_value = 0.0
+	slider.max_value = 100.0
+	slider.step = 1.0
+	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	slider.custom_minimum_size = Vector2(110, 0)
+	slider.value_changed.connect(func(v: float) -> void: set_volume(key, v / 100.0))
+	row.add_child(slider)
+	var value_label := Label.new()
+	value_label.add_theme_font_size_override(&"font_size", 9)
+	value_label.custom_minimum_size = Vector2(32, 0)
+	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row.add_child(value_label)
+	volume_sliders[key] = slider
+	_volume_labels[key] = value_label
 
 
-## 배경음 크기: 0% → 25% → 50% → 70% → 100% → …
-const BGM_STEPS := [0.0, 0.25, 0.5, 0.7, 1.0]
+## 음량 바꾸기 (0 ~ 1) — 바로 들리고 저장됨
+func set_volume(key: String, value: float) -> void:
+	Profile.set_setting(key, clampf(value, 0.0, 1.0))
+	(_volume_labels[key] as Label).text = "%d%%" % roundi(clampf(value, 0.0, 1.0) * 100.0)
 
 
-func cycle_bgm_volume() -> void:
-	var current := float(Profile.get_setting("bgm_volume"))
-	var index := 0
-	for i in BGM_STEPS.size():
-		if is_equal_approx(BGM_STEPS[i], current):
-			index = i
-	Profile.set_setting("bgm_volume", BGM_STEPS[(index + 1) % BGM_STEPS.size()])
-	_sync_settings()
-
-
-## 음성 채팅: 끄기 → 눌러서 말하기 [T] → 항상 켜기 → …
-func cycle_voice_mode() -> void:
-	Profile.set_setting("voice", (VoiceChat.get_mode() + 1) % VoiceChat.MODE_NAMES.size())
-	_sync_settings()
+## 음성 채팅: 0 끄기 · 1 눌러서 말하기 [T] · 2 항상 켜기
+func set_voice_mode(mode: int) -> void:
+	Profile.set_setting("voice", clampi(mode, 0, VoiceChat.MODE_NAMES.size() - 1))
 
 
 func _sync_settings() -> void:
@@ -222,10 +243,11 @@ func _sync_settings() -> void:
 		if is_equal_approx(TEXT_SPEEDS[i], speed):
 			speed_name = TEXT_SPEED_NAMES[i]
 	_speed_button.text = "대사 속도: %s" % speed_name
-	_bgm_button.text = "배경음: %d%%" % roundi(float(Profile.get_setting("bgm_volume")) * 100.0)
-	_sfx_button.text = "효과음: %d%%" % roundi(float(Profile.get_setting("sfx_volume")) * 100.0)
-	_voice_button.text = "음성 채팅: %s" % VoiceChat.MODE_NAMES[VoiceChat.get_mode()]
-	_voice_button.visible = VoiceChat.is_supported()
+	for key in volume_sliders:
+		var v := clampf(float(Profile.get_setting(key)), 0.0, 1.0)
+		(volume_sliders[key] as HSlider).set_value_no_signal(roundf(v * 100.0))
+		(_volume_labels[key] as Label).text = "%d%%" % roundi(v * 100.0)
+	_voice_option.select(VoiceChat.get_mode())
 
 
 func _show_main() -> void:

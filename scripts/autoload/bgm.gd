@@ -1,11 +1,11 @@
 extends Node
 ## 배경음 (오토로드 Bgm) — 사냥터 16곡 · 보스 7곡 (Suno 유료 플랜으로 제작, docs/SUNO_PROMPTS.md).
 ## 지금 있는 곳(GameManager 의 스테이지 · 위치)을 보고 알맞은 곡을 고름 — 멀티플레이 참가자도 방장이 보내는 위치로 같은 곡.
-##   야영지     그 스테이지의 사냥터 곡을 작게 (야영지 전용 곡이 생기면 CAMP_TRACKS 에)
+##   야영지     야영지 전용 곡(CAMP_TRACKS — 파일이 있으면) · 없으면 그 스테이지의 사냥터 곡을 작게
 ##   사냥터     컨셉별 사냥터 곡 (FIELD_GROUPS)
 ##   보스방     보스 곡 (10단위 · 용 · 신 · 아바돈 · 가브리엘 · 그 밖) → 보스를 쓰러뜨리면 사냥터 곡을 작게
 ##   최종장     최종 보스 곡 · 히든(고대 용의 둥지)은 용 보스 곡
-##   타이틀     임시로 초원 곡 (타이틀 곡이 생기면 TITLE_TRACK)
+##   타이틀     bgm_title.ogg 가 있으면 그것, 없으면 임시로 초원 곡
 ## 곡이 바뀔 때는 서로 겹치며 넘어가고(CROSSFADE), 곡이 끝날 때도 처음과 겹쳐 이어져서 끊기지 않음(LOOP_OVERLAP).
 ## 음량: 설정 「배경음」(Profile "bgm_volume").
 
@@ -35,8 +35,10 @@ const FIELD_GROUPS := {
 	&"bgm_field_15_sin": [37, 81, 82, 83, 84, 85, 86, 87, 89],
 	&"bgm_field_16_heaven": [36, 91, 92, 93, 94, 95, 97, 98, 99, 100],
 }
-## 야영지 전용 곡 (아직 없음 — 생기면 [첫 스테이지, 끝 스테이지, 곡] 으로)
-const CAMP_TRACKS: Array = []
+## 야영지 전용 곡 [첫 스테이지, 끝 스테이지, 곡] — 파일이 들어오면 자동으로 씀 (없으면 사냥터 곡을 작게)
+const CAMP_TRACKS: Array = [[1, 37, &"bgm_camp_01_fantasy"], [38, 80, &"bgm_camp_02_myth"], [81, 100, &"bgm_camp_03_heaven"]]
+## 타이틀 전용 곡 (파일이 들어오면 자동으로, 없으면 TITLE_TRACK)
+const TITLE_THEME := &"bgm_title"
 const BOSS_MILESTONE := [10, 20, 30]
 const BOSS_DRAGON := [8, 31, 32, 33, 34, 35, 53]
 const BOSS_GOD := [40, 50, 60, 70, 80]
@@ -84,17 +86,25 @@ static func boss_track(stage: int) -> StringName:
 	return &"bgm_boss_01_normal"
 
 
+static func has_track(track: StringName) -> bool:
+	return ResourceLoader.exists(DIR + String(track) + ".ogg")
+
+
 static func camp_track(stage: int) -> StringName:
 	for entry in CAMP_TRACKS:
-		if stage >= int(entry[0]) and stage <= int(entry[1]):
+		if stage >= int(entry[0]) and stage <= int(entry[1]) and has_track(entry[2]):
 			return entry[2]
 	return &""
+
+
+static func title_track() -> StringName:
+	return TITLE_THEME if has_track(TITLE_THEME) else TITLE_TRACK
 
 
 ## 지금 나와야 하는 곡과 음량 비율 [곡, 비율]
 func desired() -> Array:
 	if get_tree().get_first_node_in_group(&"stage_manager") == null:
-		return [TITLE_TRACK, 1.0] if get_tree().current_scene != null and String(get_tree().current_scene.scene_file_path).contains("title") else [&"", 1.0]
+		return [title_track(), 1.0] if get_tree().current_scene != null and String(get_tree().current_scene.scene_file_path).contains("title") else [&"", 1.0]
 	var stage := GameManager.stage
 	var location := GameManager.location_name
 	if GameManager.stage_name.begins_with("최종장"):

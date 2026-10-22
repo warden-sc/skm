@@ -4688,6 +4688,22 @@ func _test_tutorial_and_save() -> void:
 	var speed0 := float(Profile.get_setting("text_speed"))
 	pause_menu.cycle_text_speed()
 	_check(not is_equal_approx(float(Profile.get_setting("text_speed")), speed0) and pause_menu._speed_button.text.begins_with("대사 속도"), "대사 속도 바꾸기 (%s)" % pause_menu._speed_button.text)
+	_check(pause_menu.volume_sliders.has("master_volume") and pause_menu.volume_sliders.has("bgm_volume") and pause_menu.volume_sliders.has("sfx_volume"),
+		"설정: 마스터 음량 · 배경음 · 효과음 슬라이더")
+	(pause_menu.volume_sliders["bgm_volume"] as HSlider).value = 35.0
+	(pause_menu.volume_sliders["master_volume"] as HSlider).value = 50.0
+	_check(is_equal_approx(float(Profile.get_setting("bgm_volume")), 0.35) and is_equal_approx(db_to_linear(AudioServer.get_bus_volume_db(0)), 0.5),
+		"슬라이더를 끌면 바로 적용 · 저장 (배경음 35% · 마스터 50% → Master 버스)")
+	(pause_menu.volume_sliders["master_volume"] as HSlider).value = 0.0
+	_check(AudioServer.is_bus_mute(0), "마스터 0% → 모든 소리 끔")
+	(pause_menu.volume_sliders["master_volume"] as HSlider).value = 100.0
+	(pause_menu.volume_sliders["bgm_volume"] as HSlider).value = 70.0
+	_check(pause_menu._voice_option.item_count == 3 and pause_menu._voice_option.get_item_text(0) == "끄기" and pause_menu._voice_option.get_item_text(1).begins_with("눌러서 말하기")
+		and pause_menu._voice_option.get_item_text(2) == "항상 켜기", "설정: 음성 채팅 끄기 / 눌러서 말하기 [T] / 항상 켜기")
+	var voice_before := VoiceChat.get_mode()
+	pause_menu._voice_option.item_selected.emit(0)
+	_check(VoiceChat.get_mode() == 0, "음성 채팅 끄기 선택 → 적용")
+	pause_menu.set_voice_mode(voice_before)
 	Profile.set_setting("text_speed", 1.0)
 	pause_menu._story_check.button_pressed = false
 	Story.enabled = true

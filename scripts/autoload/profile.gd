@@ -9,7 +9,7 @@ signal settings_changed
 const PROFILE_PATH := "user://profile.cfg"
 const SAVE_PATH := "user://save.json"
 ## 설정 기본값 — screen_shake: 화면 흔들림 · fullscreen: 전체 화면 · text_speed: 대사 글자 속도 배율 · story: 스토리 대사 보기
-const DEFAULT_SETTINGS := {"screen_shake": true, "fullscreen": false, "text_speed": 1.0, "story": true, "voice": 1, "sfx_volume": 0.8, "bgm_volume": 0.7, "trials_done": []}
+const DEFAULT_SETTINGS := {"screen_shake": true, "fullscreen": false, "text_speed": 1.0, "story": true, "voice": 1, "master_volume": 1.0, "sfx_volume": 0.8, "bgm_volume": 0.7, "trials_done": []}
 
 ## 테스트에서 실제 파일을 건드리지 않도록 경로를 바꿀 수 있음
 var profile_path: String = PROFILE_PATH
@@ -82,6 +82,10 @@ func set_setting(key: String, value: Variant) -> void:
 
 
 func apply_settings() -> void:
+	# 마스터 음량 = 모든 소리(배경음 · 효과음 · 음성 채팅)가 지나는 Master 버스
+	var master := clampf(float(get_setting("master_volume")), 0.0, 1.0)
+	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(master, 0.0001)))
+	AudioServer.set_bus_mute(0, master <= 0.0)
 	if DisplayServer.get_name() != "headless":
 		var want_full := bool(get_setting("fullscreen"))
 		var is_full := DisplayServer.window_get_mode() in [DisplayServer.WINDOW_MODE_FULLSCREEN, DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN]

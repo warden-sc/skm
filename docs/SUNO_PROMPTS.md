@@ -1,4 +1,4 @@
-# Suno 프롬프트 — 사냥터 배경음 16곡 · 보스 음악 7곡
+# Suno 프롬프트 — 사냥터 16곡 · 보스 7곡 · 야영지 3곡 · 타이틀 1곡
 
 곡마다 Suno **Custom 모드 · Instrumental 켜기**로 아래 세 칸을 그대로 복사해 넣으면 됩니다.
 - **Title** = 파일 이름 (다운로드한 파일 이름이 그대로 이것이 되게) — 이 이름 그대로 보내 주면 게임에 바로 연결합니다.
@@ -508,5 +508,95 @@ fantasy RPG game soundtrack, orchestral with retro 16-bit flavor, instrumental, 
 
 ---
 
+## 야영지 · 타이틀 (4곡)
+
+야영지는 상점 · 휴식을 하는 안전한 곳이라 사냥터 곡보다 잔잔하게. 지금은 이 곡들이 없어 야영지에서 사냥터 곡을 작게 틀고, 타이틀은 초원 곡을 임시로 씀 — 받으면 바로 바꿔 넣음.
+
+### 1. 야영지 1 — 중세 판타지 — `bgm_camp_01_fantasy`
+쓰이는 곳: 1 ~ 37 스테이지 · 히든 앞 야영지 (모닥불 옆의 따뜻한 쉼)
+
+**Title**
+```
+bgm_camp_01_fantasy
+```
+**Style of Music**
+```
+fantasy RPG game soundtrack, orchestral with retro 16-bit flavor, instrumental, no vocals, steady tempo, no fade out, loopable, calm campfire rest, acoustic guitar, soft flute, warm strings, peaceful and cozy, 80 bpm
+```
+**Lyrics**
+```
+[Instrumental]
+[Intro]
+[Main Theme]
+[Variation]
+[Main Theme]
+[Outro - ends on the same chord as the intro, no fade]
+```
+
+### 2. 야영지 2 — 그리스 신화 — `bgm_camp_02_myth`
+쓰이는 곳: 38 ~ 80 스테이지 야영지 (고대 신전 앞의 고요함)
+
+**Title**
+```
+bgm_camp_02_myth
+```
+**Style of Music**
+```
+fantasy RPG game soundtrack, orchestral with retro 16-bit flavor, instrumental, no vocals, steady tempo, no fade out, loopable, serene ancient greek temple, lyre, soft harp, gentle pads, calm and noble, 80 bpm
+```
+**Lyrics**
+```
+[Instrumental]
+[Intro]
+[Main Theme]
+[Variation]
+[Main Theme]
+[Outro - ends on the same chord as the intro, no fade]
+```
+
+### 3. 야영지 3 — 묵시록 · 천상 — `bgm_camp_03_heaven`
+쓰이는 곳: 81 ~ 100 스테이지 · 최종장 앞 야영지 (엄숙하지만 희망이 남은 쉼)
+
+**Title**
+```
+bgm_camp_03_heaven
+```
+**Style of Music**
+```
+fantasy RPG game soundtrack, orchestral with retro 16-bit flavor, instrumental, no vocals, steady tempo, no fade out, loopable, quiet sanctuary, soft choir, celesta, warm strings, solemn but hopeful, 75 bpm
+```
+**Lyrics**
+```
+[Instrumental]
+[Intro]
+[Main Theme]
+[Variation]
+[Main Theme]
+[Outro - ends on the same chord as the intro, no fade]
+```
+
+### 4. 타이틀 — `bgm_title`
+쓰이는 곳: 타이틀 화면 · 이름 짓기 · 메뉴 · 멀티 대기실 (게임의 얼굴 — 웅장하게 시작해 모험을 예고)
+
+**Title**
+```
+bgm_title
+```
+**Style of Music**
+```
+fantasy RPG game soundtrack, orchestral with retro 16-bit flavor, instrumental, no vocals, steady tempo, no fade out, loopable, main title theme, heroic and nostalgic, full orchestra, choir swell, memorable melody, crusader knight epic, 100 bpm
+```
+**Lyrics**
+```
+[Instrumental]
+[Intro]
+[Main Theme]
+[Variation]
+[Main Theme]
+[Outro - ends on the same chord as the intro, no fade]
+```
+
+---
+
 ## 남은 곡 (나중에 같은 틀로)
-타이틀 · 야영지(상점 · 휴식) · 보스 등장 / 토벌 승리 / 신화 획득 / 시련 완료 / 게임 오버 짧은 음악 · 엔딩 · 스토리 장면(긴장 · 슬픔) · 개발자 강림
+보스 등장 / 토벌 승리 / 신화 획득 / 시련 완료 / 게임 오버 짧은 음악 · 엔딩 · 스토리 장면(긴장 · 슬픔) · 개발자 강림
