@@ -52,7 +52,7 @@ func _ready() -> void:
 	_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(_box)
 	_line = LineEdit.new()
-	_line.placeholder_text = "채팅 — [Enter] 보내기 · [Esc] 취소"
+	_line.placeholder_text = "채팅 — [Enter] 보내기 · [Esc] 취소 · 「/한 dkssud」 → 안녕"
 	_line.add_theme_font_size_override(&"font_size", 9)
 	_line.max_length = 0  # 한글 입력기와 부딪히지 않게 제한은 보낼 때 자름
 	_line.visible = false
@@ -132,6 +132,8 @@ static func clean(text: String) -> String:
 ## 내 글 보내기 (운영자 모드인 방장 · 혼자 할 때 운영자면 [운영자] 글)
 func send(text: String) -> bool:
 	text = clean(text)
+	if text.begins_with("/한 "):
+		text = Hangul.from_qwerty(text.substr(3))  # 한글 입력기가 말썽일 때: 「/한 dkssud」 → 「안녕」
 	if text == "":
 		return false
 	var kind := Kind.ADMIN if Admin.can_act() else Kind.PLAYER

@@ -196,7 +196,7 @@ static func holy_tempest(player: Player, weapon: WeaponData) -> void:
 ## 땅에서 마계의 손아귀가 솟아 적을 붙잡고(기절) → 암흑 기둥이 솟구침 → 무저갱의 폭발로 마무리
 static func abyss_descent(player: Player, weapon: WeaponData) -> void:
 	var center := player.get_attack_origin()
-	Fx.screen_tint(player, Color(0.1, 0.0, 0.03, 0.72), 2.2)
+	Fx.screen_tint(player, Color(0.1, 0.0, 0.03, 0.4), 1.6)
 	Fx.flash(player, center, ABYSS_COLOR, 60.0, 0.4)
 	Fx.shockwave(player, center, Color(0.9, 0.1, 0.25), 90.0, 0.45)
 	Fx.burst(player, center, Color(0.5, 0.0, 0.1), 40, 160.0, 0.6, Vector2(0, -40), 1.3)
@@ -325,7 +325,7 @@ static func helios(player: Player, weapon: WeaponData) -> void:
 	var dir := origin.direction_to(end)
 	var length := origin.distance_to(end)
 	player.play_attack_feedback()
-	Fx.screen_tint(player, Color(1.0, 0.85, 0.4, 0.28), 1.6)
+	Fx.screen_tint(player, Color(1.0, 0.85, 0.4, 0.1), 1.2)
 	Fx.beam(player, origin, end, SUN_COLOR, 22.0, 0.5)
 	Fx.beam(player, origin, end, Color(1.0, 1.0, 0.9), 8.0, 0.4)
 	shoot(player, weapon, origin, dir, SUN_ARROW, 1.0, 380.0, length + 60.0, 999, 1.5, 1.0, Enemy.HitKind.BOW)
@@ -397,7 +397,7 @@ static func cataclysm(player: Player, weapon: WeaponData) -> void:
 static func meteor_swarm(player: Player, weapon: WeaponData) -> void:
 	var at := player.get_aim_point(weapon.projectile_range * 1.3)
 	player.play_attack_feedback()
-	Fx.screen_tint(player, Color(0.25, 0.1, 0.45, 0.35), 2.6)
+	Fx.screen_tint(player, Color(0.25, 0.1, 0.45, 0.15), 2.0)
 	Fx.sprite_pop(player, at, MAGIC_CIRCLE, Color(1.0, 1.0, 1.0, 0.95), 0.4, 4.0, 2.4, Vector2.ZERO, TAU, true)
 	Fx.sprite_pop(player, player.global_position, MAGIC_CIRCLE, Color(ARCANE_COLOR, 0.8), 0.3, 1.4, 1.2, Vector2.ZERO, -TAU, true)
 	for i in 16:

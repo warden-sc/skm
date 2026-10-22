@@ -89,6 +89,7 @@ func _ready() -> void:
 	_hero_name_edit.text_submitted.connect(func(_t: String) -> void: confirm_name())
 	# 한글 입력기(IME): LineEdit 에 max_length 를 두면 조합 중인 글자와 부딪혀 한 글자만 들어가는 경우가 있어
 	# 입력 칸에는 제한을 두지 않고, 결정할 때 GameManager.HERO_NAME_MAX(12자)로 자름
+	_add_hangul_button()
 	_add_version_label()
 	(%SingleButton as Button).pressed.connect(open_single)
 	(%MultiButton as Button).text = "멀티플레이 (협동 · 최대 4명)"
@@ -526,3 +527,22 @@ func _add_version_label() -> void:
 	label.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	label.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	add_child(label)
+
+
+## 한글 입력기가 말썽일 때: 영문 자판으로 친 글자(gksrmf)를 한글(한글)로 바꾸는 버튼 — 이름 칸 바로 아래
+func _add_hangul_button() -> void:
+	var button := Button.new()
+	button.name = "HangulButton"
+	button.text = "영문 자판으로 친 글자 → 한글  (예: dydtk → 용사)"
+	button.add_theme_font_size_override(&"font_size", 9)
+	button.tooltip_text = "한글이 한 글자만 들어가면: 한/영 키를 영문으로 두고 한글 자리대로 친 뒤 이 버튼"
+	button.pressed.connect(convert_name_to_hangul)
+	var confirm := %NameConfirmButton as Button
+	confirm.get_parent().add_child(button)
+	confirm.get_parent().move_child(button, confirm.get_index())
+
+
+func convert_name_to_hangul() -> void:
+	_hero_name_edit.text = Hangul.from_qwerty(_hero_name_edit.text)
+	_hero_name_edit.caret_column = _hero_name_edit.text.length()
+	_hero_name_edit.grab_focus()

@@ -47,6 +47,7 @@ func _ready() -> void:
 	scroll.add_child(box)
 
 	box.add_child(_label("운영자 패널  [F11] 닫기", 11, ACCENT))
+	box.add_child(_label("개발자 본인 전용 · 이 PC 코드 %s%s" % [Admin.machine_code(), "" if not Admin.DEV_MACHINE_CODES.is_empty() else " (admin.gd 의 DEV_MACHINE_CODES 에 넣으면 이 PC 에서만)"], 8, Color(0.6, 0.6, 0.65)))
 	box.add_child(_label("스테이지 · 장비 · 공지", 9, SUB))
 	var stage_row := HBoxContainer.new()
 	box.add_child(stage_row)

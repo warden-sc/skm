@@ -107,6 +107,7 @@ func _test_admin(main: Node2D) -> void:
 	OS.set_environment(Admin.ENV_KEY, "smoke-test-key")
 	Admin.refresh_authorization()
 	_check(Admin.authorized and Admin.auth_source in ["env", "file"] and not Admin.enabled, "맞는 키(환경변수) → 권한 있음, 그래도 처음엔 일반 플레이어 모드")
+	_check(Admin.machine_code().length() == 16 and Admin.DEV_MACHINE_CODES.is_empty(), "이 PC 코드 %s (DEV_MACHINE_CODES 에 넣으면 그 PC 에서만)" % Admin.machine_code())
 	stage.instant_travel = true
 	stage.go_to_stage(3)
 	await _frames(3)
@@ -221,6 +222,7 @@ func _test_admin(main: Node2D) -> void:
 	var last := Chat.get_last()
 	_check(not Chat.is_typing() and last.get("name", "") == _gm.hero_name and String(last.get("text", "")).begins_with("안녕하세요") and String(last["text"]).length() == Chat.MAX_CHARS
 		and last["kind"] == Chat.Kind.PLAYER, "[Enter] 보내기 → 「%s: …」 (%d자 제한)" % [_gm.hero_name, Chat.MAX_CHARS])
+	_check(Chat.send("/한 dkssudgktpdy") and Chat.get_last()["text"] == "안녕하세요", "채팅 「/한 dkssudgktpdy」 → 「안녕하세요」 (한글 입력기 대체)")
 	await _press_key(KEY_ENTER)
 	await _press_key(KEY_ESCAPE)
 	_check(not Chat.is_typing() and not get_tree().paused, "[Esc] → 채팅 취소 (설정창은 안 열림)")
@@ -4989,6 +4991,17 @@ func _run() -> void:
 	_check(title.get_screen() == "name" and not Profile.has_hero_name(), "처음 켜면 용사의 이름부터 정함")
 	_check((title.get_node("Background") as TextureRect).texture != null, "전투 배경 일러스트")
 	var name_edit := title.get_node("%HeroNameEdit") as LineEdit
+	_check(name_edit.max_length == 0, "이름 칸에 글자 수 제한 없음 (한글 입력기와 부딪히지 않게 — 결정할 때 %d자로 자름)" % _gm.HERO_NAME_MAX)
+	var samples := {"dydtk": "용사", "gksrmf": "한글", "fostmffht": "랜슬롯", "rkqtdl": "값이", "rkqtl": "갑시", "ekfr": "닭", "dhkdwk": "왕자", "아서 rltk 2": "아서 기사 2"}
+	var hangul_ok := true
+	for typed in samples:
+		if Hangul.from_qwerty(typed) != samples[typed]:
+			hangul_ok = false
+			print("    ", typed, " → ", Hangul.from_qwerty(typed))
+	_check(hangul_ok, "영문 자판으로 친 글자 → 한글 (dydtk → 용사 · fostmffht → 랜슬롯 · 겹받침 · 숫자 그대로)")
+	name_edit.text = "fostmffht"
+	(title.find_child("HangulButton", true, false) as Button).pressed.emit()
+	_check(name_edit.text == "랜슬롯", "이름 칸 아래 [영문 자판 → 한글] 버튼 (한글 입력기가 말썽일 때)")
 	name_edit.text = "랜슬롯"
 	title.confirm_name()
 	_check(_gm.hero_name == "랜슬롯" and Profile.hero_name == "랜슬롯" and title.last_scene_request == title.MAIN_SCENE and _gm.tutorial_mode,

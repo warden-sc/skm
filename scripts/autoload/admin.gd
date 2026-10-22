@@ -8,6 +8,8 @@ extends Node
 ##      - 환경변수 CRUSADER_ADMIN_KEY = 운영자 키 (키의 SHA-256 이 ADMIN_KEY_SHA256 과 같아야 — 저장소에는 해시만 있음)
 ##      - user://admin.key 파일에 운영자 키 한 줄 (Windows: %APPDATA%\Godot\app_userdata\Sefirah-like Topdown Action\admin.key)
 ##      - 스팀판(GodotSteam)이면 내 스팀 ID 가 DEV_STEAM_IDS 에 있음
+##   3) (선택) 개발자 PC: DEV_MACHINE_CODES 에 「이 PC 코드」를 넣으면 키가 맞아도 그 PC 에서만
+##   → 일반 플레이어는 물론 멀티플레이 방장 · 참가자도 키가 없으면 절대 못 씀. 운영자 = 게임을 만든 사람 한 명.
 ##   권한이 없으면 단축키를 눌러도 아무 일도 일어나지 않고(알림도 없음) 운영자 UI 는 만들어지지도 않음.
 ##   키를 바꾸려면 python3 tools/make_admin_key.py → 나온 해시를 ADMIN_KEY_SHA256 에.
 ##
@@ -15,7 +17,8 @@ extends Node
 ##   Ctrl + Shift + A : 운영자 모드 켜기 / 끄기 (켜지면 화면 왼쪽 아래 작은 「ADMIN MODE」)
 ##   F11              : 운영자 패널 (운영자 모드일 때만) — 스테이지 이동 · 보스문 열기 · 운영자 장비 · 강림 이벤트
 ##   Ctrl + Shift + D : 개발자 강림 (패널에 적어 둔 대사 · 선물로 바로)
-##   멀티플레이에서는 방장만 쓸 수 있고, 강림 이벤트는 RPC 로 모든 참가자 화면 · 버프에 똑같이 적용.
+##   멀티플레이에서는 개발자가 방을 만든(방장) 경우에만 쓸 수 있고, 강림 이벤트는 RPC 로 모든 참가자 화면 · 버프에 똑같이 적용.
+##   개발자가 아닌 사람이 방장이면 그 방에서는 아무도 운영자 기능을 못 씀 (방장이라는 것만으로는 권한 없음).
 ##   운영자 모드가 켜져 있는 동안에는 업적이 달성되지 않음.
 
 signal mode_changed(on: bool)
@@ -24,6 +27,8 @@ signal descent_finished
 const ADMIN_KEY_SHA256 := "e6ef828eb4f2b1e6fca252c27803f017642ee40011ac14de3ecc76ff149ad82c"
 ## 개발자 스팀 ID(64비트 숫자). 스팀판에서 이 계정이면 키 없이도 권한 (빌드 조건은 그대로)
 const DEV_STEAM_IDS: Array[int] = []
+## 운영자 PC 등록 (비어 있으면 키만으로). 패널 맨 위의 「이 PC 코드」를 여기에 넣으면 키가 새어 나가도 그 PC 에서만 켜짐
+const DEV_MACHINE_CODES: Array[String] = []
 const ENV_KEY := "CRUSADER_ADMIN_KEY"
 const KEY_FILE := "user://admin.key"
 const BUILD_FEATURE := "admin_build"
@@ -105,6 +110,8 @@ func refresh_authorization() -> void:
 			auth_source = "file"
 		elif _steam_id_allowed():
 			auth_source = "steam"
+		if auth_source != "" and not DEV_MACHINE_CODES.is_empty() and not DEV_MACHINE_CODES.has(machine_code()):
+			auth_source = ""  # 키는 맞지만 등록한 개발자 PC 가 아님
 		authorized = auth_source != ""
 	if not authorized:
 		set_enabled(false)
@@ -114,6 +121,11 @@ func refresh_authorization() -> void:
 			_badge = null
 			_panel = null
 	set_process_input(authorized)
+
+
+## 이 PC 를 나타내는 코드 (기기 고유 id 의 해시 앞 16자 — 기기 id 자체는 드러나지 않음)
+static func machine_code() -> String:
+	return OS.get_unique_id().sha256_text().left(16)
 
 
 func _steam_id_allowed() -> bool:
@@ -516,7 +528,7 @@ func _make_beam(root: Node, at: Vector2, width: float, color: Color) -> Sprite2D
 ## 등장: 하늘에서 빛기둥이 내리꽂힘 → 착지 섬광 · 충격파 · 화면 흔들림
 func _pillar_down(root: Node, at: Vector2) -> void:
 	Sfx.play(&"descent", 0.9)
-	var beams: Array[Sprite2D] = [_make_beam(root, at, PILLAR_WIDTH, Color(1.0, 0.85, 0.45, 0.9)), _make_beam(root, at, PILLAR_WIDTH * 0.4, Color(1, 1, 1, 1))]
+	var beams: Array[Sprite2D] = [_make_beam(root, at, PILLAR_WIDTH, Color(1.0, 0.85, 0.45, 0.55)), _make_beam(root, at, PILLAR_WIDTH * 0.35, Color(1, 1, 1, 0.9))]
 	var fall := 0.55
 	var tween := root.create_tween().set_parallel(true)
 	for beam in beams:
@@ -536,7 +548,7 @@ func _pillar_down(root: Node, at: Vector2) -> void:
 ## 퇴장: 발밑에서 빛기둥이 솟아 개발자를 감싸고, 개발자와 함께 하늘로 거두어짐 (역 빛기둥)
 func _pillar_up(root: Node, at: Vector2, dev: Sprite2D) -> void:
 	Sfx.play(&"ascend", 0.9)
-	var beams: Array[Sprite2D] = [_make_beam(root, at, PILLAR_WIDTH, Color(1.0, 0.85, 0.45, 0.9)), _make_beam(root, at, PILLAR_WIDTH * 0.4, Color(1, 1, 1, 1))]
+	var beams: Array[Sprite2D] = [_make_beam(root, at, PILLAR_WIDTH, Color(1.0, 0.85, 0.45, 0.55)), _make_beam(root, at, PILLAR_WIDTH * 0.35, Color(1, 1, 1, 0.9))]
 	for beam in beams:
 		# 아래에서 위로 자라도록: 바닥에 붙이고 위로(음수) 늘림
 		beam.global_position = at + Vector2(0, 12)
@@ -566,7 +578,7 @@ func _pillar_up(root: Node, at: Vector2, dev: Sprite2D) -> void:
 
 func _impact(root: Node, at: Vector2, power: float) -> void:
 	_local_fx(func() -> void:
-		Fx.flash(root, at, Color(1, 1, 1), 70.0 * power, 0.5)
+		Fx.flash(root, at, Color(1, 1, 1, 0.5), 45.0 * power, 0.45)
 		Fx.shockwave(root, at, LIGHT, 110.0 * power, 0.6)
 		Fx.shockwave(root, at, Color(1, 1, 1), 60.0 * power, 0.4)
 		Fx.burst(root, at, LIGHT, roundi(36 * power), 160.0, 0.6, Vector2.ZERO, 1.3))
