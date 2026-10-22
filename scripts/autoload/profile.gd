@@ -9,7 +9,7 @@ signal settings_changed
 const PROFILE_PATH := "user://profile.cfg"
 const SAVE_PATH := "user://save.json"
 ## 설정 기본값 — screen_shake: 화면 흔들림 · fullscreen: 전체 화면 · text_speed: 대사 글자 속도 배율 · story: 스토리 대사 보기
-const DEFAULT_SETTINGS := {"screen_shake": true, "fullscreen": false, "text_speed": 1.0, "story": true, "voice": 1, "sfx_volume": 0.8}
+const DEFAULT_SETTINGS := {"screen_shake": true, "fullscreen": false, "text_speed": 1.0, "story": true, "voice": 1, "sfx_volume": 0.8, "trials_done": []}
 
 ## 테스트에서 실제 파일을 건드리지 않도록 경로를 바꿀 수 있음
 var profile_path: String = PROFILE_PATH
@@ -18,6 +18,8 @@ var save_path: String = SAVE_PATH
 var hero_name: String = ""
 var tutorial_done: bool = false
 var settings: Dictionary = DEFAULT_SETTINGS.duplicate()
+## 달성한 업적 id 목록 (Achievements)
+var achievements: Array = []
 
 
 func _ready() -> void:
@@ -29,11 +31,13 @@ func _ready() -> void:
 func load_profile() -> void:
 	hero_name = ""
 	tutorial_done = false
-	settings = DEFAULT_SETTINGS.duplicate()
+	settings = DEFAULT_SETTINGS.duplicate(true)
+	achievements = []
 	var cfg := ConfigFile.new()
 	if cfg.load(profile_path) == OK:
 		hero_name = String(cfg.get_value("player", "hero_name", "")).strip_edges()
 		tutorial_done = bool(cfg.get_value("player", "tutorial_done", false))
+		achievements = Array(cfg.get_value("player", "achievements", []))
 		for key in DEFAULT_SETTINGS:
 			settings[key] = cfg.get_value("settings", key, DEFAULT_SETTINGS[key])
 	if hero_name != "":
@@ -45,6 +49,7 @@ func save_profile() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("player", "hero_name", hero_name)
 	cfg.set_value("player", "tutorial_done", tutorial_done)
+	cfg.set_value("player", "achievements", achievements)
 	for key in settings:
 		cfg.set_value("settings", key, settings[key])
 	cfg.save(profile_path)

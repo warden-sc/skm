@@ -6,6 +6,7 @@ config_version=5
 [application]
 
 config/name="Sefirah-like Topdown Action"
+config/version="0.9.0"
 config/description="세피리아 스타일 탑뷰 액션 게임 뼈대"
 run/main_scene="res://scenes/title/title.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
@@ -21,6 +22,7 @@ Story="*res://scripts/autoload/story.gd"
 Profile="*res://scripts/autoload/profile.gd"
 Net="*res://scripts/autoload/net.gd"
 Sfx="*res://scripts/autoload/sfx.gd"
+Achievements="*res://scripts/autoload/achievements.gd"
 
 [display]
 

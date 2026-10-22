@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""후반(60스테이지 이후) 보스의 전용 탄 그림 — 둥근 구체 대신 보스 컨셉에 맞는 모양 (assets/sprites/projectiles/).
+"""신화 이야기가 시작되는 40스테이지 이후 보스의 전용 탄 그림 — 둥근 구체 대신 보스 컨셉에 맞는 모양 (assets/sprites/projectiles/).
 
 탄은 날아가는 방향으로 돌아가므로, 방향이 있는 그림은 오른쪽이 앞입니다.
 실행: python3 tools/generate_boss_projectiles.py   (Pillow 필요)
@@ -232,7 +232,69 @@ def locust():
     return outline(img, (30, 20, 10, 255))
 
 
+def water_jet():
+    """스킬라와 카립디스: 바닷물 물줄기 (앞은 하얀 물보라, 뒤로 푸른 꼬리)"""
+    img = canvas(16, 8)
+    for x in range(16):
+        for y in range(8):
+            hx = 11.5
+            d = math.hypot(x - hx, (y - 3.5) * 1.2) / 3.6
+            tail = x < hx and abs(y - 3.5 + math.sin(x * 0.9) * 0.6) <= 2.6 * (x / hx)
+            if d <= 1.0 or tail:
+                col = lerp((240, 255, 255), (60, 150, 230), d if d <= 1.0 else 0.75)
+                put(img, x, y, col + (255 if d <= 1.0 else int(255 * (0.35 + 0.65 * x / hx)),))
+    put(img, 13, 2, (255, 255, 255, 255))
+    return img
+
+
+def sand_spike():
+    """안타이오스: 대지에서 뽑아 던진 모래 바위 가시"""
+    img = canvas(14, 8)
+    for x in range(14):
+        half = 3.4 * (1 - x / 14.0) ** 0.6 if x > 2 else 2.0 + x * 0.5
+        for y in range(8):
+            if abs(y - 3.5) <= half:
+                put(img, x, y, lerp((235, 205, 150), (150, 115, 70), abs(y - 3.5) / max(half, 0.1)) + (255,))
+    for x, y in ((4, 2), (7, 5), (9, 3)):
+        put(img, x, y, (120, 90, 55, 255))
+    return outline(img, (60, 40, 20, 255))
+
+
+def silk_shot():
+    """아라크네: 거미줄 뭉치 (방사형 실 + 끈적한 중심)"""
+    img = canvas(13, 13)
+    c = 6.0
+    for k in range(8):
+        a = k * math.pi / 4
+        for r in range(1, 7):
+            put(img, c + math.cos(a) * r, c + math.sin(a) * r, (235, 235, 245, 230))
+    for r in (2.5, 4.5):
+        for k in range(24):
+            a = k * math.tau / 24
+            put(img, c + math.cos(a) * r, c + math.sin(a) * r, (210, 210, 225, 200))
+    put(img, 6, 6, (255, 255, 255, 255))
+    return img
+
+
+def magma_shard():
+    """헤파이스토스 · 엔켈라도스: 벼림 불똥 (흘러내리는 쇳물 방울)"""
+    img = canvas(14, 9)
+    for x in range(14):
+        for y in range(9):
+            hx = 10.0
+            d = math.hypot(x - hx, (y - 4) * 1.1) / 3.6
+            tail = x < hx and abs(y - 4) <= 2.6 * (x / hx) ** 1.3
+            if d <= 1.0 or tail:
+                col = lerp((255, 250, 200), (220, 70, 20), d if d <= 1.0 else 0.8)
+                put(img, x, y, col + (255 if d <= 1.0 else int(255 * (0.4 + 0.6 * x / hx)),))
+    return outline(img, (60, 15, 5, 255))
+
+
 def main():
+    save(water_jet(), "water_jet.png")
+    save(sand_spike(), "sand_spike.png")
+    save(silk_shot(), "silk_shot.png")
+    save(magma_shard(), "magma_shard.png")
     save(solar_flare(), "solar_flare.png")
     save(omen_eye(), "omen_eye.png")
     save(gold_coin(), "gold_coin.png")

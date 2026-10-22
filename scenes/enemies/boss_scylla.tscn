@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/enemies/boss_scylla.gd" id="1_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/scylla.png" id="2_res"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://scenes/enemies/strait_shark.tscn" id="4_res"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/serpent_warrior.tscn" id="5_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/projectiles/mana_bolt.png" id="6_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/water_jet.png" id="bp_water_texture"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
 radius = 16.0
@@ -27,7 +28,7 @@ gold_min = 8400
 gold_max = 8900
 item_drop_chance = 1.0
 minion_scenes = Array[PackedScene]([ExtResource("4_res"), ExtResource("5_res")])
-water_texture = ExtResource("6_res")
+water_texture = ExtResource("bp_water_texture")
 item_drop_ids = Array[StringName]([&"star_ring"])
 
 [node name="Shadow" type="Sprite2D" parent="."]

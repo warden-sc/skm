@@ -89,6 +89,7 @@ func _ready() -> void:
 	_hero_name_edit.text_submitted.connect(func(_t: String) -> void: confirm_name())
 	# 한글 입력기(IME): LineEdit 에 max_length 를 두면 조합 중인 글자와 부딪혀 한 글자만 들어가는 경우가 있어
 	# 입력 칸에는 제한을 두지 않고, 결정할 때 GameManager.HERO_NAME_MAX(12자)로 자름
+	_add_version_label()
 	(%SingleButton as Button).pressed.connect(open_single)
 	(%MultiButton as Button).text = "멀티플레이 (협동 · 최대 4명)"
 	(%MultiButton as Button).pressed.connect(open_multi)
@@ -512,3 +513,16 @@ func _refresh_lobby() -> void:
 		_lobby_info.text = "\n".join(lines)
 	else:
 		_lobby_info.text = "방장이 게임을 시작하길 기다리는 중…" if not Net.players.is_empty() else "접속하는 중…"
+
+
+## 오른쪽 아래 버전 표기 (project.godot 의 config/version — 스팀 빌드마다 올림)
+func _add_version_label() -> void:
+	var label := Label.new()
+	label.name = "VersionLabel"
+	label.text = "v%s" % str(ProjectSettings.get_setting("application/config/version", "0.0.0"))
+	label.modulate = Color(1, 1, 1, 0.55)
+	label.add_theme_font_size_override(&"font_size", 12)
+	label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_MINSIZE, 8)
+	label.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	label.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	add_child(label)

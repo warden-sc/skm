@@ -439,6 +439,8 @@ func _on_boss_defeated() -> void:
 		_finale_done = true
 		_on_final_boss_defeated()
 		return
+	if not GameManager.tutorial_mode:
+		Achievements.on_stage_cleared(GameManager.stage)
 	_grant_mythic(GameManager.stage)
 	_hidden_pending = is_hidden_gate_ready()
 	if is_final_stage() and not _hidden_pending:
@@ -485,6 +487,7 @@ func _grant_mythic(stage: int) -> void:
 		Net.grant_all("item", mythic.id)  # 멀티플레이: 동료들도 하나씩
 	if mythic != null and not GameManager.owns_item(mythic.id):
 		GameManager.add_item(mythic)
+		Achievements.unlock(&"FIRST_MYTHIC")
 		if mythic.icon != null:
 			_fly_icon(mythic.icon, _boss_fall_position if _boss_fall_position != Vector2.ZERO else player.global_position)
 		Fx.explosion(player, player.global_position + Vector2(0, -8), mythic.get_rarity_color(), 40.0, 3)
@@ -815,6 +818,8 @@ func _unlock_boss_gate() -> void:
 		return
 	_clear_trial_objects(true)
 	Sfx.play(&"trial_clear", 0.7)
+	if not GameManager.tutorial_mode:
+		Achievements.on_trial_cleared(gate_trial)
 	boss_gate.open()
 	Net.announce("%s 완료! 보스방의 봉인이 풀렸습니다 — 사냥터 북쪽의 문으로" % GATE_TRIAL_NAMES[gate_trial], Color(1.0, 0.55, 0.45))
 
@@ -1009,6 +1014,7 @@ func _on_hidden_boss_defeated() -> void:
 	_hidden_active = false
 	_hidden_done = true
 	GameManager.hidden_cleared = true
+	Achievements.unlock(&"HIDDEN_CLEAR")
 	var blood := ItemDB.get_potion(&"dragon_blood")
 	if blood != null:
 		Net.grant_all("potion", blood.id, DRAGON_BLOOD_REWARD)

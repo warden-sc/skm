@@ -69,7 +69,8 @@ func _get_move_velocity(delta: float) -> Vector2:
 	return Vector2.ZERO
 
 
-const LATE_STAGE := 60
+## 신화 이야기가 시작되는 40스테이지(헤르메스)부터 보스 연출 강화
+const LATE_STAGE := 40
 const CAST_CIRCLE := preload("res://assets/sprites/effects/magic_circle.png")
 
 
@@ -80,7 +81,7 @@ func cast(pattern: int) -> void:
 	_btimer = _run_pattern(pattern)
 
 
-## 패턴을 쓸 때의 연출: 보스 속성 색으로 번쩍임. 60스테이지 이후 보스는 발밑에 마법진이 깔리고 충격파 (신 · 마왕 · 천사의 위엄)
+## 패턴을 쓸 때의 연출: 보스 속성 색으로 번쩍임. 40스테이지 이후 보스는 발밑에 마법진이 깔리고 충격파 (신화 · 마왕 · 천사의 위엄)
 func _cast_flourish() -> void:
 	if not is_inside_tree():
 		return

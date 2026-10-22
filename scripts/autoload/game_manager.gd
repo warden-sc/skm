@@ -1224,6 +1224,9 @@ func has_all_dragon_scales() -> bool:
 
 func report_game_cleared() -> void:
 	is_game_cleared = true
+	Achievements.unlock(&"GAME_CLEAR")
+	if difficulty == Difficulty.VERY_HARD:
+		Achievements.unlock(&"HARD_CLEAR")
 	game_cleared.emit()
 
 

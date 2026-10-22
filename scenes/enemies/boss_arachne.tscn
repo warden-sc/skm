@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/enemies/boss_arachne.gd" id="1_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/arachne.png" id="2_res"]
@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/enemies/spider_maiden.tscn" id="5_res"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/cave_spider.tscn" id="6_res"]
 [ext_resource type="Texture2D" path="res://assets/sprites/projectiles/silk.png" id="7_res"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/silk_shot.png" id="bp_silk_texture"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
 radius = 16.0
@@ -29,7 +30,7 @@ gold_max = 9300
 item_drop_chance = 1.0
 loom_scene = ExtResource("4_res")
 minion_scenes = Array[PackedScene]([ExtResource("5_res"), ExtResource("6_res")])
-silk_texture = ExtResource("7_res")
+silk_texture = ExtResource("bp_silk_texture")
 item_drop_ids = Array[StringName]([&"arcana_staff"])
 
 [node name="Shadow" type="Sprite2D" parent="."]

@@ -6133,6 +6133,15 @@ func _run() -> void:
 
 	await _test_gate_trials(main)
 
+	print("[업적 (스팀 업적과 같은 id)]")
+	for id in [&"FIRST_BOSS", &"STAGE_10", &"STAGE_40", &"STAGE_70", &"STAGE_100", &"FIRST_MYTHIC", &"ALL_TRIALS"]:
+		_check(Achievements.is_unlocked(id), "업적 「%s」 달성됨" % Achievements.ACHIEVEMENTS[id]["name"])
+	_check(not Achievements.unlock(&"FIRST_BOSS") and not Achievements.unlock(&"NO_SUCH"), "이미 이룬 업적 · 없는 id 는 다시 달성되지 않음")
+	var saved := ConfigFile.new()
+	_check(saved.load(Profile.profile_path) == OK and Array(saved.get_value("player", "achievements", [])).has("STAGE_100"), "업적은 프로필 파일에 저장")
+	_check(Achievements.ACHIEVEMENTS.keys().all(func(id: StringName) -> bool: return String(id) == String(id).to_upper() and not String(id).contains(" ")),
+		"업적 id 는 스팀 API 이름 규칙 (대문자 · 공백 없음)")
+
 	print("[난이도 배율]")
 	_gm.difficulty = _gm.Difficulty.VERY_HARD
 	var tough := slime_scene.instantiate() as Enemy
