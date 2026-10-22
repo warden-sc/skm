@@ -67,7 +67,13 @@ const SKILL_BY_RARITY := {
 	WeaponType.STAFF: [&"blast", &"cataclysm"],
 }
 const MYTHIC_SKILLS := {&"abaddon_sword": &"abyss_descent", &"apollo_bow": &"helios", &"archmage_staff": &"meteor_swarm",
-	&"admin_sword": &"abyss_descent", &"admin_bow": &"helios", &"admin_staff": &"meteor_swarm"}
+	&"admin_sword": &"seraph_dive", &"admin_bow": &"heaven_judgement", &"admin_staff": &"genesis_light"}
+## 운영자 장비(AdminGear) 전용 스킬 — AdminSkills
+const ADMIN_SKILLS := {
+	&"seraph_dive": {"name": "천상낙하참", "desc": "빛의 날개를 펼쳐 하늘 높이 올랐다가, 거대한 빛의 검이 되어 보스를 향해 내리꽂힘 — 착지한 자리에 빛의 검 열두 자루가 쏟아짐", "cooldown": 3.0, "mult": 40.0, "hits": 4},
+	&"heaven_judgement": {"name": "천벌의 빛화살", "desc": "날개를 펼쳐 하늘로 올라 전장 모든 적에게 빛의 화살비를 퍼붓고, 하늘에서 거대한 천벌의 화살이 꿰뚫음", "cooldown": 3.0, "mult": 30.0, "hits": 4},
+	&"genesis_light": {"name": "창세의 빛", "desc": "하늘에 거대한 마법진이 겹겹이 열려 모든 적 머리 위로 빛기둥이 내리꽂히고, 마지막에 세상이 하얗게 타오름", "cooldown": 3.0, "mult": 30.0, "hits": 4},
+}
 const SKILL_ICON_DIR := "res://assets/sprites/skills/"
 
 @export var weapon_type: WeaponType = WeaponType.SWORD
@@ -166,7 +172,7 @@ func get_skill_id() -> StringName:
 
 
 func get_skill_info() -> Dictionary:
-	return SKILLS.get(get_skill_id(), {})
+	return SKILLS.get(get_skill_id(), ADMIN_SKILLS.get(get_skill_id(), {}))
 
 
 func get_skill_name() -> String:

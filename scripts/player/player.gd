@@ -1438,6 +1438,33 @@ func _on_boots_equipped(boots: BootsData) -> void:
 func _on_armor_equipped(armor: ArmorData) -> void:
 	_armor_sprite.texture = armor.worn_texture if armor != null else null
 	_armor_sprite.visible = armor != null
+	_set_wings(AdminGear.is_admin_armor(armor))
+
+
+## 운영자의 갑옷: 등 뒤에서 천천히 퍼덕이는 빛의 날개 (몸 그림의 자식 — 멀티플레이 화면에도 복제됨)
+func _set_wings(on: bool) -> void:
+	var wings := _body_sprite.get_node_or_null(^"Wings") as Sprite2D
+	if not on:
+		if wings != null:
+			_body_sprite.remove_child(wings)
+			wings.queue_free()
+		return
+	if wings != null:
+		return
+	wings = Sprite2D.new()
+	wings.name = "Wings"
+	wings.texture = AdminGear.WINGS
+	wings.z_index = -1  # 몸 뒤 (z 는 멀티플레이 화면에도 복제됨)
+	wings.position = Vector2(0, -3)
+	_body_sprite.add_child(wings)
+	_body_sprite.move_child(wings, 0)
+	var flap := wings.create_tween().set_loops()
+	flap.tween_property(wings, "scale", Vector2(0.82, 1.06), 0.45).set_trans(Tween.TRANS_SINE)
+	flap.tween_property(wings, "scale", Vector2(1.0, 1.0), 0.45).set_trans(Tween.TRANS_SINE)
+
+
+func has_wings() -> bool:
+	return _body_sprite.get_node_or_null(^"Wings") != null
 
 
 func _on_helmet_equipped(helmet: HelmetData) -> void:

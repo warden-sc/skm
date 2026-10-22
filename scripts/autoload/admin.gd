@@ -35,18 +35,20 @@ const LIGHT := Color(1.0, 0.92, 0.6)
 const PILLAR_HEIGHT := 420.0
 const PILLAR_WIDTH := 46.0
 
-## 운영자 장비: [id, 이름, 바탕이 될 신화 무기, 그림, 손에 든 그림]
-const GEAR_SPECS := [
-	[&"admin_sword", "운영자의 검", &"abaddon_sword", "res://assets/sprites/weapons/admin_sword.png", ""],
-	[&"admin_bow", "운영자의 활", &"apollo_bow", "res://assets/sprites/weapons/admin_bow.png", "res://assets/sprites/weapons/admin_bow_held.png"],
-	[&"admin_staff", "운영자의 지팡이", &"archmage_staff", "res://assets/sprites/weapons/admin_staff.png", ""],
-]
-const GEAR_DAMAGE := 99999999
+const GEAR_DAMAGE := AdminGear.WEAPON_DAMAGE
 
-## 강림 이벤트 선물 (한 번에 여러 개)
-const BUFF_ATTACK := {"name": "개발자의 축복", "effects": {"attack": 1.0}, "time": 60.0}
-const BUFF_GUARD := {"name": "개발자의 가호", "effects": {"reduction": 0.5}, "time": 60.0}
-const BUFF_SHIELD := {"name": "개발자의 보호막", "effects": {"invincible": 1.0}, "time": 15.0}
+## 운영자의 가호 — 운영자가 수치를 정해서 주는 버프. 키: [표시 이름, 최댓값, 버프 효과 키]
+const BLESSING_NAME := "운영자의 가호"
+const BLESSING_STATS := {
+	"attack": ["공격력 +%", 10000.0, "attack"],
+	"max_hp": ["최대 체력 +%", 10000.0, "max_hp_pct"],
+	"defense": ["방어력 +%", 10000.0, "defense_pct"],
+	"reduction": ["받는 피해 -%", 95.0, "admin_reduction"],
+	"move": ["이동 속도 +%", 200.0, "move"],
+	"regen": ["초당 체력 회복 %", 50.0, "regen_pct"],
+}
+const BLESSING_MAX_TIME := 3600.0
+const SHIELD_NAME := "개발자의 보호막"
 const MAX_LINES := 6
 const MAX_LINE_CHARS := 160
 const MAX_GOLD := 100000000
@@ -57,21 +59,23 @@ var authorized: bool = false
 ## 권한을 준 것: "env" · "file" · "steam" (없으면 "")
 var auth_source: String = ""
 var enabled: bool = false
-## 운영자 장비 착용 중 — 무적
-var god: bool = false
+## 운영자의 갑옷을 입고 있음 — 무적
+var god: bool:
+	get:
+		return AdminGear.is_admin_armor(GameManager.equipped_armor)
 var descent_active: bool = false
 ## 패널에 적어 둔 다음 강림 내용 (Ctrl+Shift+D 도 이것으로)
 var preset: Dictionary = {
 	"lines": ["용사여, 잠시 손을 빌려주지.", "이 축복으로 다시 일어서라!"],
-	"heal": true, "attack": true, "guard": false, "invincible": true, "gold": 0, "item": "", "count": 1,
+	"heal": true, "invincible": true, "shield_time": 15.0, "gold": 0, "item": "", "count": 1,
+	"blessing": {"attack": 100.0, "max_hp": 0.0, "defense": 0.0, "reduction": 0.0, "move": 0.0, "regen": 0.0, "time": 60.0},
+	"chat": true,
 }
 
 var _layer: CanvasLayer
 var _badge: Label
 var _panel: Control
-var _gear: Array[WeaponData] = []
-var _saved_weapons: Array = []
-var _saved_slot: int = 0
+var _saved_equipment: Dictionary = {}
 
 
 func _ready() -> void:
@@ -243,66 +247,76 @@ func open_boss_gate() -> bool:
 
 
 # ============================================================ 운영자 장비
-## 운영자의 검 · 활 · 지팡이 (신화 무기를 바탕으로, 공격력 즉사급 · 치명타 100% · 방어 관통). 저장 · 판매 · 버리기 불가
-func get_gear() -> Array[WeaponData]:
-	if _gear.is_empty():
-		for spec in GEAR_SPECS:
-			var base := ItemDB.get_weapon(spec[2])
-			if base == null:
-				continue
-			var weapon := base.duplicate() as WeaponData
-			weapon.id = spec[0]
-			weapon.display_name = spec[1]
-			weapon.description = "운영자 전용 — 즉사급 공격력, 들고 있는 동안 무적. 저장 · 판매 · 버리기 불가"
-			weapon.icon = load(spec[3]) as Texture2D
-			if spec[4] != "":
-				weapon.held_texture = load(spec[4]) as Texture2D
-			weapon.damage = GEAR_DAMAGE
-			weapon.crit_chance = 1.0
-			weapon.armor_pen = 999999
-			weapon.effect_color = LIGHT
-			weapon.set_id = &""
-			weapon.price = 0
-			weapon.in_shop = false
-			weapon.admin_only = true
-			_gear.append(weapon)
-	return _gear
+## 운영자 장비 10종 (AdminGear) — 무기 3 · 방패 · 투구 · 갑옷(날개 · 무적) · 신발 · 반지 · 팔찌 · 펜던트
+func get_gear() -> Array[ItemData]:
+	return AdminGear.get_all()
 
 
-## 운영자 장비 착용(무적 + 즉사급 무기) / 벗기(원래 무기로)
+## 운영자 장비 한 벌 착용 / 벗기(원래 장비로). 저장 · 판매 · 버리기 불가
 func set_gear(on: bool) -> bool:
 	if on == god:
 		return true
 	if on:
 		if not can_act():
 			return false
-		_saved_weapons = GameManager.weapon_slots.duplicate()
-		_saved_slot = GameManager.active_weapon_slot
-		for weapon in get_gear():
-			GameManager.add_item(weapon)
-			GameManager.equip_item(weapon)
+		_saved_equipment = {
+			"weapons": GameManager.weapon_slots.duplicate(), "slot": GameManager.active_weapon_slot,
+			"accessories": GameManager.accessory_slots.duplicate(),
+			"shield": GameManager.equipped_shield, "helmet": GameManager.equipped_helmet,
+			"armor": GameManager.equipped_armor, "boots": GameManager.equipped_boots,
+		}
+		for item in get_gear():
+			GameManager.add_item(item)
+			GameManager.equip_item(item)
 		GameManager.select_weapon_slot(GameManager.WeaponSlot.MELEE)
-		god = true
-		GameManager.show_notice("[운영자] 운영자 장비 착용 — 무적 · 즉사급 공격", LIGHT)
+		GameManager.heal_full()
+		GameManager.show_notice("[운영자] 운영자 장비 착용 — 날개 · 무적 · 즉사급 공격", AdminGear.COLOR)
 	else:
-		god = false
-		for i in GameManager.weapon_slots.size():
-			var before: WeaponData = _saved_weapons[i] if i < _saved_weapons.size() else null
-			GameManager.weapon_slots[i] = before if before != null and GameManager.owns_item(before.id) else null
-		for weapon in get_gear():
-			GameManager.items.erase(weapon)
-		var slot := _saved_slot
-		if GameManager.weapon_slots[slot] == null:
-			for i in GameManager.weapon_slots.size():
-				if GameManager.weapon_slots[i] != null:
-					slot = i
-					break
-		GameManager.equipped_weapon = null
-		GameManager._set_active_weapon_slot(slot)
-		GameManager._recalculate_stats()
-		GameManager.equipment_changed.emit()
-		GameManager.inventory_changed.emit()
+		remove_admin_items()
 	return true
+
+
+## 가방 · 장비 칸의 운영자 장비를 모두 치우고 (운영자 장비를 입기 전의) 원래 장비로
+func remove_admin_items() -> void:
+	var saved := _saved_equipment
+	var weapons: Array = saved.get("weapons", [])
+	for i in GameManager.weapon_slots.size():
+		var w := GameManager.weapon_slots[i]
+		if w != null and w.admin_only:
+			var before: WeaponData = weapons[i] if i < weapons.size() else null
+			GameManager.weapon_slots[i] = before if before != null and GameManager.owns_item(before.id) else null
+	var accessories: Array = saved.get("accessories", [])
+	for i in GameManager.accessory_slots.size():
+		var a = GameManager.accessory_slots[i]
+		if a != null and a.admin_only:
+			var before = accessories[i] if i < accessories.size() else null
+			GameManager.accessory_slots[i] = before if before != null and GameManager.owns_item(before.id) else null
+	for key in ["shield", "helmet", "armor", "boots"]:
+		var current: ItemData = GameManager.get("equipped_" + key)
+		if current != null and current.admin_only:
+			var before: ItemData = saved.get(key)
+			GameManager.set("equipped_" + key, before if before != null and GameManager.owns_item(before.id) else null)
+	for item in GameManager.items.duplicate():
+		if item.admin_only:
+			GameManager.items.erase(item)
+	var slot := int(saved.get("slot", GameManager.active_weapon_slot))
+	if GameManager.weapon_slots[slot] == null:
+		for i in GameManager.weapon_slots.size():
+			if GameManager.weapon_slots[i] != null:
+				slot = i
+				break
+	GameManager.equipped_weapon = null
+	GameManager._set_active_weapon_slot(slot)
+	GameManager.shield_equipped.emit(GameManager.equipped_shield)
+	GameManager.helmet_equipped.emit(GameManager.equipped_helmet)
+	GameManager.armor_equipped.emit(GameManager.equipped_armor)
+	GameManager.boots_equipped.emit(GameManager.equipped_boots)
+	GameManager._recalculate_stats()
+	GameManager.hp = mini(GameManager.hp, GameManager.max_hp)
+	GameManager.player_hp_changed.emit(GameManager.hp, GameManager.max_hp)
+	GameManager.equipment_changed.emit()
+	GameManager.inventory_changed.emit()
+	_saved_equipment = {}
 
 
 # ============================================================ 개발자 강림
@@ -314,20 +328,56 @@ static func sanitize(payload: Dictionary) -> Dictionary:
 		if text != "" and lines.size() < MAX_LINES:
 			lines.append(text)
 	var item_id := String(payload.get("item", ""))
-	if item_id != "" and (not ItemDB.has_item(StringName(item_id)) or ItemDB.get_item(StringName(item_id)).admin_only):
+	if item_id != "" and AdminGear.find(StringName(item_id)) == null:
 		item_id = ""
 	var at: Variant = payload.get("at", Vector2.ZERO)
+	var raw_blessing: Variant = payload.get("blessing", {})
+	var blessing := {}
+	if raw_blessing is Dictionary:
+		for key in BLESSING_STATS:
+			blessing[key] = clampf(float((raw_blessing as Dictionary).get(key, 0.0)), 0.0, float(BLESSING_STATS[key][1]))
+		blessing["time"] = clampf(float((raw_blessing as Dictionary).get("time", 60.0)), 1.0, BLESSING_MAX_TIME)
 	return {
 		"lines": lines,
 		"heal": bool(payload.get("heal", false)),
-		"attack": bool(payload.get("attack", false)),
-		"guard": bool(payload.get("guard", false)),
 		"invincible": bool(payload.get("invincible", false)),
+		"shield_time": clampf(float(payload.get("shield_time", 15.0)), 1.0, BLESSING_MAX_TIME),
+		"blessing": blessing,
 		"gold": clampi(int(payload.get("gold", 0)), 0, MAX_GOLD),
 		"item": item_id,
 		"count": clampi(int(payload.get("count", 1)), 1, 99),
+		"chat": bool(payload.get("chat", true)),
 		"at": at if at is Vector2 else Vector2.ZERO,
 	}
+
+
+## 가호에 실제로 오르는 능력치가 있는지
+static func has_blessing(blessing: Dictionary) -> bool:
+	for key in BLESSING_STATS:
+		if float(blessing.get(key, 0.0)) > 0.0:
+			return true
+	return false
+
+
+## 가호 → GameManager 버프 효과 (백분율 → 비율)
+static func blessing_effects(blessing: Dictionary) -> Dictionary:
+	var effects := {}
+	for key in BLESSING_STATS:
+		var value := float(blessing.get(key, 0.0))
+		if value > 0.0:
+			effects[BLESSING_STATS[key][2]] = value / 100.0
+	return effects
+
+
+## 「공격력 +100% · 최대 체력 +50% …」
+static func blessing_text(blessing: Dictionary) -> String:
+	var parts := PackedStringArray()
+	for key in BLESSING_STATS:
+		var value := float(blessing.get(key, 0.0))
+		if value > 0.0:
+			var label: String = BLESSING_STATS[key][0]
+			parts.append("%s%s%%" % [label.trim_suffix("%"), str(snappedf(value, 0.1)).trim_suffix(".0")])
+	return " · ".join(parts)
 
 
 ## 개발자 강림 (운영자 모드 · 방장만). 하늘에서 빛기둥 → 개발자 등장 → 대사 → 선물 · 버프 → 역 빛기둥으로 퇴장
@@ -363,6 +413,9 @@ func play_descent(data: Dictionary) -> void:
 		tween.tween_property(dev, "modulate:a", 1.0, 0.35)
 		tween.parallel().tween_property(dev, "scale", Vector2.ONE * DEV_SCALE, 0.35).from(Vector2(0.4, 3.0) * DEV_SCALE).set_trans(Tween.TRANS_BACK)
 		await tween.finished
+	if data.get("chat", true):
+		for line in data["lines"]:
+			Chat.add_message(DEV_NAME, String(line), Chat.Kind.ADMIN)  # 대사는 채팅창에도 남음
 	var lines: Array = (data["lines"] as Array).map(func(t: String) -> Dictionary: return {"name": DEV_NAME, "face": DEV_NAME, "text": t})
 	if not lines.is_empty() and Story.play_lines(lines, "admin_descent"):
 		await Story.finished
@@ -382,17 +435,20 @@ func apply_gifts(data: Dictionary) -> void:
 			Net._revive_local()
 		GameManager.heal_full()
 		got.append("체력 완전 회복")
-	for pair in [["attack", BUFF_ATTACK], ["guard", BUFF_GUARD], ["invincible", BUFF_SHIELD]]:
-		if data.get(pair[0], false):
-			var buff: Dictionary = pair[1]
-			GameManager.add_buff(buff["name"], buff["effects"], buff["time"])
-			got.append("%s %d초" % [buff["name"], int(buff["time"])])
+	var blessing: Dictionary = data.get("blessing", {})
+	if has_blessing(blessing):
+		GameManager.add_buff(BLESSING_NAME, blessing_effects(blessing), float(blessing.get("time", 60.0)))
+		if data.get("heal", false):
+			GameManager.heal_full()  # 최대 체력이 늘었으면 늘어난 만큼까지
+		got.append("%s %d초 (%s)" % [BLESSING_NAME, int(blessing.get("time", 60.0)), blessing_text(blessing)])
+	if data.get("invincible", false):
+		GameManager.add_buff(SHIELD_NAME, {"invincible": 1.0}, float(data.get("shield_time", 15.0)))
+		got.append("%s %d초" % [SHIELD_NAME, int(data.get("shield_time", 15.0))])
 	if int(data.get("gold", 0)) > 0:
 		GameManager.add_gold(int(data["gold"]))
 		got.append("%dG" % int(data["gold"]))
-	var item_id := StringName(data.get("item", ""))
-	if item_id != &"" and ItemDB.has_item(item_id):
-		var item := ItemDB.get_item(item_id)
+	var item := AdminGear.find(StringName(data.get("item", "")))
+	if item != null:
 		if item is PotionData:
 			GameManager.add_potion(item as PotionData, int(data.get("count", 1)))
 		elif item is RelicData:
@@ -402,6 +458,7 @@ func apply_gifts(data: Dictionary) -> void:
 		got.append(item.display_name)
 	if not got.is_empty():
 		GameManager.show_notice("[개발자의 선물] " + " · ".join(got), LIGHT)
+		Chat.system("개발자의 선물: " + " · ".join(got))
 	var me := _local_player()
 	if me != null:
 		_local_fx(func() -> void:

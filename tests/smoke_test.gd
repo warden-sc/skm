@@ -127,29 +127,57 @@ func _test_admin(main: Node2D) -> void:
 	await _frames(3)
 	_check(Admin.open_boss_gate() and stage.boss_gate.is_open(), "보스방 문 바로 열기")
 	await _frames(240)
-	# 운영자 장비
+	# 운영자 장비 한 벌
 	var before_weapons: Array = _gm.weapon_slots.duplicate()
+	var before_shield: ItemData = _gm.equipped_shield
 	_check(Admin.set_gear(true) and Admin.god and _gm.equipped_weapon != null and _gm.equipped_weapon.id == &"admin_sword"
 		and _gm.equipped_weapon.display_name == "운영자의 검" and _gm.weapon_slots[1].display_name == "운영자의 활", "운영자 장비 착용: 운영자의 검 · 활 · 지팡이")
+	var worn_ids := [_gm.equipped_shield, _gm.equipped_helmet, _gm.equipped_armor, _gm.equipped_boots].map(func(it: ItemData) -> String: return String(it.id) if it != null else "")
+	worn_ids.append_array(_gm.accessory_slots.map(func(it: ItemData) -> String: return String(it.id) if it != null else ""))
+	_check(worn_ids.all(func(id: String) -> bool: return id.begins_with("admin_")) and worn_ids.size() == 7,
+		"운영자의 방패 · 투구 · 갑옷 · 신발 · 반지 · 팔찌 · 펜던트 (%s)" % ", ".join(worn_ids))
+	_check(player.has_wings() and _gm.equipped_armor.worn_texture.resource_path.ends_with("admin_armor_worn.png"), "갑옷 등 뒤에 날개 · 앞에 운영자의 문양")
 	var hp_before: int = _gm.hp
 	_gm.damage_player(999999999)
 	var roll: Dictionary = _gm.roll_weapon_damage(_gm.equipped_weapon)
 	_check(_gm.hp == hp_before and not _gm.is_player_dead and int(roll["amount"]) >= Admin.GEAR_DAMAGE, "무적 (피해 0) · 즉사급 공격력 %d" % int(roll["amount"]))
 	_check(not _gm.can_sell(_gm.equipped_weapon) and not _gm.can_drop(_gm.weapon_slots[2]) and not (_gm.to_save_data()["weapon_slots"] as Array).has("admin_sword")
-		and not (_gm.to_save_data()["items"] as Array).has("admin_bow"), "운영자 장비는 팔기 · 버리기 · 저장 불가")
+		and not (_gm.to_save_data()["items"] as Array).has("admin_bow") and _gm.to_save_data()["armor"] != "admin_armor", "운영자 장비는 팔기 · 버리기 · 저장 불가")
 	_check(not Achievements.unlock(&"HARD_CLEAR"), "운영자 모드 중에는 업적 달성 안 됨")
+	# 운영자 전용 스킬
+	var attack := player.get_node("AttackController") as AttackController
+	var skill_names := []
+	for i in 3:
+		var w: WeaponData = _gm.weapon_slots[i]
+		skill_names.append(w.get_skill_name())
+		_gm.skill_cooldowns.clear()
+		var start_pos := player.global_position
+		var target := AdminSkills.pick_target(player)
+		_check(w.get_skill_icon() != null and w.get_skill_cooldown() <= 3.0 and attack.use_skill(w), "[Q] %s — %s" % [w.get_skill_name(), w.get_skill_info().get("desc", "")])
+		await _frames(150)
+		_check(player.modulate.a == 1.0 and not _gm.is_player_dead, "%s: 하늘에서 내려와 다시 보임" % w.get_skill_name())
+		if i == 0 and target != null:
+			_check(player.global_position.distance_to(start_pos) > 10.0 or start_pos.distance_to(target.global_position) < 40.0, "천상낙하참: 노린 적(보스 우선)에게 내리꽂힘")
+	_check(skill_names == ["천상낙하참", "천벌의 빛화살", "창세의 빛"], "운영자 무기 스킬: %s" % ", ".join(skill_names))
 	Admin.set_gear(false)
-	_check(not Admin.god and _gm.weapon_slots == before_weapons and not _gm.owns_item(&"admin_sword"), "운영자 장비 벗기 → 원래 무기로")
-	# 강림
-	var clean := Admin.sanitize({"lines": ["1", "2", "3", "4", "5", "6", "7"], "gold": 999999999999, "item": "no_such_item", "count": 500})
+	_check(not Admin.god and _gm.weapon_slots == before_weapons and _gm.equipped_shield == before_shield and not _gm.owns_item(&"admin_sword")
+		and not player.has_wings(), "운영자 장비 벗기 → 원래 장비로 (날개도 사라짐)")
+	# 강림 · 가호
+	var clean := Admin.sanitize({"lines": ["1", "2", "3", "4", "5", "6", "7"], "gold": 999999999999, "item": "no_such_item", "count": 500,
+		"blessing": {"attack": 999999.0, "reduction": 300.0, "time": 99999.0}})
 	_check((clean["lines"] as Array).size() == Admin.MAX_LINES and int(clean["gold"]) == Admin.MAX_GOLD and clean["item"] == "" and int(clean["count"]) == 99
-		and Admin.sanitize({"item": "admin_sword"})["item"] == "", "강림 내용 거르기: 대사 6줄 · 골드 상한 · 없는/운영자 아이템 제외")
+		and float(clean["blessing"]["attack"]) == 10000.0 and float(clean["blessing"]["reduction"]) == 95.0 and float(clean["blessing"]["time"]) == Admin.BLESSING_MAX_TIME
+		and Admin.sanitize({"item": "admin_sword"})["item"] == "admin_sword", "강림 내용 거르기: 대사 6줄 · 골드 · 가호 상한 · 없는 아이템 제외 (운영자 장비는 선물 가능)")
 	_gm.damage_player(roundi(_gm.max_hp * 0.3))
 	var gold_before: int = _gm.gold
 	var potion := ItemDB.get_potion(&"greater_potion")
 	var potion_id := potion.id
 	var potions_before: int = _gm.get_potion_count(potion_id)
-	_check(Admin.descend({"lines": ["버텨라, 용사여!", "축복을 내리마."], "heal": true, "attack": true, "invincible": true, "gold": 5000, "item": String(potion_id), "count": 2}),
+	var max_hp_before: int = _gm.max_hp
+	var defense_before: int = _gm.get_total_defense()
+	var chat_before := Chat.history.size()
+	_check(Admin.descend({"lines": ["버텨라, 용사여!", "축복을 내리마."], "heal": true, "invincible": true, "shield_time": 20.0, "gold": 5000, "item": String(potion_id), "count": 2,
+		"blessing": {"attack": 200.0, "max_hp": 50.0, "defense": 100.0, "reduction": 50.0, "time": 45.0}}),
 		"Ctrl+Shift+D / 패널 → 개발자 강림 시작")
 	await _frames(30)
 	_check(get_tree().get_nodes_in_group(&"admin_developer").size() == 1 and Sfx.last_played == &"descent", "하늘에서 빛기둥이 내리꽂히며 개발자 등장 (효과음)")
@@ -157,13 +185,51 @@ func _test_admin(main: Node2D) -> void:
 	var box := Story.get_box()
 	_check(Story.is_playing() and box != null and box.current_line().get("name", "") == Admin.DEV_NAME and box.current_portrait() == Admin.DEV_TEXTURE,
 		"[개발자] 초상화 + 커스텀 대사창 「%s」" % (box.current_line().get("text", "") if box != null else ""))
+	_check(Chat.history.size() >= chat_before + 2 and Chat.history[chat_before]["text"] == "버텨라, 용사여!" and Chat.history[chat_before]["kind"] == Chat.Kind.ADMIN,
+		"강림 대사는 채팅창에도 [운영자] 글로 남음")
 	Story.skip()
 	await _frames(20)
-	_check(_gm.hp == _gm.max_hp and _gm.has_buff("개발자의 축복") and _gm.has_buff("개발자의 보호막") and _gm.gold == gold_before + 5000
-		and _gm.get_potion_count(potion_id) > potions_before, "대사가 끝나면 선물: 체력 회복 · 공격 축복 · 보호막 · 5000G · 포션")
+	_check(_gm.hp == _gm.max_hp and _gm.has_buff(Admin.BLESSING_NAME) and _gm.has_buff(Admin.SHIELD_NAME) and _gm.gold == gold_before + 5000
+		and _gm.get_potion_count(potion_id) > potions_before, "대사가 끝나면 선물: 체력 회복 · 운영자의 가호 · 보호막 · 5000G · 포션")
+	_check(_gm.max_hp >= roundi(max_hp_before * 1.45) and _gm.get_total_defense() == defense_before * 2 and _gm.get_damage_reduction() >= 0.5
+		and absf(_gm.get_buff_value("attack") - 2.0) < 0.001,
+		"운영자의 가호 (직접 정한 수치): 공격 +200%% · 최대 체력 %d → %d · 방어 %d → %d · 받는 피해 -%d%%" % [max_hp_before, _gm.max_hp, defense_before, _gm.get_total_defense(), roundi(_gm.get_damage_reduction() * 100)])
 	_check(_gm.is_invincible(), "개발자의 보호막: 무적")
 	await _frames(150)
 	_check(get_tree().get_nodes_in_group(&"admin_developer").is_empty() and not Admin.descent_active and Sfx.last_played == &"ascend", "역 빛기둥을 타고 퇴장")
+	# 운영자 장비 · 드랍 전용 · 신화 아이템도 선물
+	Admin.apply_gifts(Admin.sanitize({"item": "admin_bow"}))
+	Admin.apply_gifts(Admin.sanitize({"item": "goblin_dagger"}))
+	_check(_gm.owns_item(&"admin_bow") and _gm.owns_item(&"goblin_dagger"), "운영자 장비 · 드랍 전용 장비도 선물로 받음")
+	_check(AdminPanel.get_gift_items().size() == ItemDB.get_all().size() + AdminGear.get_all().size() and AdminGear.get_all().size() == 10,
+		"선물 목록: 모든 아이템 %d개 + 운영자 장비 10종" % ItemDB.get_all().size())
+	Admin.remove_admin_items()
+	_check(not _gm.owns_item(&"admin_bow"), "운영자 장비 치우기")
+	# 채팅
+	Admin.set_enabled(false)
+	await _frames(2)
+	await _press_key(KEY_ENTER)
+	_check(Chat.is_typing() and Net.ui_blocks_input(), "[Enter] → 채팅 입력 (그동안 용사 조작 막힘)")
+	var pos_before := player.global_position
+	Input.action_press(&"move_right")
+	await _frames(20)
+	Input.action_release(&"move_right")
+	_check(player.global_position.distance_to(pos_before) < 2.0, "채팅 입력 중에는 움직이지 않음")
+	Chat._line.text = "안녕하세요 " + "가".repeat(200)
+	Chat.submit()
+	await _frames(2)
+	var last := Chat.get_last()
+	_check(not Chat.is_typing() and last.get("name", "") == _gm.hero_name and String(last.get("text", "")).begins_with("안녕하세요") and String(last["text"]).length() == Chat.MAX_CHARS
+		and last["kind"] == Chat.Kind.PLAYER, "[Enter] 보내기 → 「%s: …」 (%d자 제한)" % [_gm.hero_name, Chat.MAX_CHARS])
+	await _press_key(KEY_ENTER)
+	await _press_key(KEY_ESCAPE)
+	_check(not Chat.is_typing() and not get_tree().paused, "[Esc] → 채팅 취소 (설정창은 안 열림)")
+	Admin.set_enabled(true)
+	_check(Chat.send("운영자 테스트") and Chat.get_last()["kind"] == Chat.Kind.ADMIN and Chat.send_admin("공지입니다") and Chat.get_last()["name"] == Admin.DEV_NAME,
+		"운영자 모드의 글 · 패널 공지는 금빛 [운영자] 글")
+	Admin.set_enabled(false)
+	_check(not Chat.send_admin("몰래 공지"), "운영자 모드가 아니면 공지 불가")
+	Admin.set_enabled(true)
 	await _press_key(KEY_A, true, true)
 	_check(not Admin.enabled and not Admin.get_badge().visible, "Ctrl+Shift+A 다시 → 일반 플레이어 모드")
 	OS.unset_environment(Admin.ENV_KEY)
@@ -4561,7 +4627,10 @@ func _test_tutorial_and_save() -> void:
 	_check(tutorial.get_step_id() == "hunt", "상점을 열면 → 「사냥」")
 	for i in tutorial.KILL_TARGET:
 		_gm.report_kill()
-	await _frames(5)
+	for _i in 60:  # 튜토리얼은 매 프레임 처치 수를 봄 — 엔진 버전에 따라 몇 프레임 늦을 수 있음
+		if tutorial.get_step_id() == "done":
+			break
+		await _frames(1)
 	_check(tutorial.get_step_id() == "done", "몬스터 %d마리 → 「완료」" % tutorial.KILL_TARGET)
 	await _frames(int(tutorial.DONE_DELAY * 60) + 10)
 	_check(Profile.tutorial_done and not _gm.tutorial_mode and _gm.weapon_slots[1] == null, "튜토리얼 완료 → 프로필에 기록, 튜토리얼에서 받은 것은 초기화 → 타이틀로")

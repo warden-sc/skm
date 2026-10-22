@@ -5,6 +5,7 @@ class_name WeaponSkills
 ##   레어(기본형)  whirlwind 회전 베기 · flurry 그림자 난무 · volley 화살비 · blast 대폭발
 ##   전설(진화형)  holy_tempest 성검 폭풍 · shadow_dance 그림자 무도 · meteor_rain 유성 화살비 · cataclysm 원소 붕괴
 ##   신화(전용)    abyss_descent 마왕강림(아바돈의 검) · helios 헬리오스의 심판(아폴론의 활) · meteor_swarm 메테오 스웜(대마법사의 지팡이)
+##   운영자 장비   seraph_dive 천상낙하참 · heaven_judgement 천벌의 빛화살 · genesis_light 창세의 빛 (AdminSkills)
 ##
 ## 피해는 모두 Enemy.hit / Spells.damage_area / 플레이어 투사체로 — 멀티플레이 참가자가 써도 방장 세계의 적이 맞음.
 ## 이펙트는 Fx (방장이 쓰면 참가자 화면에도). 화면 어둡게(Fx.screen_tint)도 같은 방 모두에게.
@@ -57,6 +58,12 @@ static func cast(player: Player, weapon: WeaponData) -> bool:
 			cataclysm(player, weapon)
 		&"meteor_swarm":
 			meteor_swarm(player, weapon)
+		&"seraph_dive":
+			AdminSkills.seraph_dive(player, weapon)
+		&"heaven_judgement":
+			AdminSkills.heaven_judgement(player, weapon)
+		&"genesis_light":
+			AdminSkills.genesis_light(player, weapon)
 		_:
 			return false
 	return true

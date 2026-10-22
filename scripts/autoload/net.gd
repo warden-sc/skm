@@ -165,6 +165,8 @@ func get_local_addresses() -> PackedStringArray:
 
 ## 멀티플레이 중 상점 · 인벤토리 · 설정창이 열려 있으면 용사 조작을 막음 (멀티에서는 게임을 멈추지 않으므로)
 func ui_blocks_input() -> bool:
+	if Chat.is_typing():
+		return true  # 채팅 입력 중에는 혼자 할 때도 용사가 움직이지 않음
 	if not is_online() or _main == null or not is_instance_valid(_main):
 		return false
 	for path in [^"ShopUI", ^"InventoryUI", ^"PauseMenu"]:
@@ -788,6 +790,30 @@ var fx_muted: bool = false
 func fx_event(fx_name: StringName, args: Array) -> void:
 	if is_host() and in_game and not fx_muted:
 		_fx.rpc(fx_name, args)
+
+
+## 채팅: 참가자 → 방장 (방장이 이름을 붙여 모두에게)
+func chat_request(text: String) -> void:
+	if is_client():
+		_chat_request.rpc_id(1, text)
+
+
+func chat_broadcast(sender: String, text: String, kind: int) -> void:
+	if is_host():
+		_chat_message.rpc(sender, text, kind)
+
+
+@rpc("any_peer", "reliable")
+func _chat_request(text: String) -> void:
+	if is_host():
+		Chat.receive_from_peer(multiplayer.get_remote_sender_id(), String(text))
+
+
+@rpc("authority", "reliable")
+func _chat_message(sender: String, text: String, kind: int) -> void:
+	if multiplayer.get_remote_sender_id() != 1:
+		return
+	Chat.add_message(String(sender).left(24), Chat.clean(String(text)), clampi(kind, 0, Chat.Kind.size() - 1))
 
 
 ## 운영자 강림: 방장(운영자)이 발동하면 모든 참가자 화면에 같은 연출 · 대사 · 선물 (Admin.descend)

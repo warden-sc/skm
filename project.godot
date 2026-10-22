@@ -24,6 +24,7 @@ Net="*res://scripts/autoload/net.gd"
 Sfx="*res://scripts/autoload/sfx.gd"
 Achievements="*res://scripts/autoload/achievements.gd"
 Admin="*res://scripts/autoload/admin.gd"
+Chat="*res://scripts/autoload/chat.gd"
 
 [display]
 

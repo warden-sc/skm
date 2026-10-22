@@ -255,7 +255,7 @@ func _run_host() -> void:
 	OS.set_environment(Admin.ENV_KEY, "net-test-key")
 	Admin.refresh_authorization()
 	Admin.set_enabled(true)
-	check(Admin.descend({"lines": ["모두 버텨라!"], "attack": true, "gold": 777}), "방장이 개발자 강림 발동")
+	check(Admin.descend({"lines": ["모두 버텨라!"], "blessing": {"attack": 150.0, "max_hp": 20.0, "time": 30.0}, "gold": 777, "item": "admin_sword"}), "방장이 개발자 강림 발동 (가호 · 골드 · 운영자의 검)")
 	await frames(100)
 	var seen := await ask("admin")
 	check(int(seen.get("dev", 0)) == 1 and seen.get("talking", false) and seen.get("speaker", "") == Admin.DEV_NAME and seen.get("text", "") == "모두 버텨라!",
@@ -263,7 +263,18 @@ func _run_host() -> void:
 	Story.skip()
 	await frames(90)
 	var after := await ask("admin")
-	check(after.get("buff", false) and int(after.get("gold", 0)) == client_gold + 777 and not after.get("talking", true), "방장이 대사를 넘기면 참가자도 끝 → 같은 버프 · 777G")
+	check(after.get("buff", false) and int(after.get("gold", 0)) == client_gold + 777 and not after.get("talking", true) and after.get("admin_sword", false)
+		and after.get("chat", false), "방장이 대사를 넘기면 참가자도 끝 → 같은 가호 · 777G · 운영자의 검 · 채팅창에 대사")
+	# 채팅: 참가자 → 방장 (이름은 방장이 붙임) · 방장 공지 → 참가자
+	await ask("chat_send", ["안녕 방장!"])
+	await frames(30)
+	var chat_heard := Chat.get_last()
+	check(chat_heard.get("name", "") == "랜슬롯" and chat_heard.get("text", "") == "안녕 방장!" and chat_heard.get("kind", -1) == Chat.Kind.PLAYER, "참가자 채팅이 방장에게 「랜슬롯: 안녕 방장!」")
+	check(Chat.send_admin("다들 힘내!"), "방장(운영자) 채팅 공지")
+	await frames(30)
+	var notice := await ask("chat_last")
+	check(notice.get("name", "") == Admin.DEV_NAME and notice.get("text", "") == "다들 힘내!" and int(notice.get("kind", -1)) == Chat.Kind.ADMIN, "참가자 화면에 [운영자] 공지")
+	check((await ask("chat_last_after_own", ["두번째"])).get("name", "") == "랜슬롯", "참가자 자기 글도 방장을 거쳐 돌아옴")
 	await frames(120)
 	Admin.set_enabled(false)
 	OS.unset_environment(Admin.ENV_KEY)
@@ -442,7 +453,17 @@ func _do(command: String, args: Array = []) -> Dictionary:
 			var box := Story.get_box()
 			var line: Dictionary = box.current_line() if box != null and Story.is_playing() else {}
 			return {"dev": get_tree().get_nodes_in_group(&"admin_developer").size(), "talking": Story.is_playing(),
-				"speaker": line.get("name", ""), "text": line.get("text", ""), "buff": GameManager.has_buff("개발자의 축복"), "gold": GameManager.gold}
+				"speaker": line.get("name", ""), "text": line.get("text", ""), "buff": GameManager.has_buff(Admin.BLESSING_NAME), "gold": GameManager.gold,
+				"admin_sword": GameManager.owns_item(&"admin_sword"), "chat": Chat.history.any(func(e: Dictionary) -> bool: return e["text"] == "모두 버텨라!" and e["kind"] == Chat.Kind.ADMIN)}
+		"chat_send":
+			Chat.send(String(args[0]))
+			return {}
+		"chat_last":
+			return Chat.get_last()
+		"chat_last_after_own":
+			Chat.send(String(args[0]))
+			await frames(30)
+			return Chat.get_last()
 		"admin_try":
 			Admin.key_hash = "net-test-key".sha256_text()
 			OS.set_environment(Admin.ENV_KEY, "net-test-key")

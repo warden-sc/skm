@@ -298,10 +298,10 @@ func to_save_data() -> Dictionary:
 		"weapon_slots": _ids(weapon_slots),
 		"active_weapon_slot": active_weapon_slot,
 		"accessory_slots": _ids(accessory_slots),
-		"shield": String(equipped_shield.id) if equipped_shield else "",
-		"helmet": String(equipped_helmet.id) if equipped_helmet else "",
-		"armor": String(equipped_armor.id) if equipped_armor else "",
-		"boots": String(equipped_boots.id) if equipped_boots else "",
+		"shield": _ids([equipped_shield])[0],
+		"helmet": _ids([equipped_helmet])[0],
+		"armor": _ids([equipped_armor])[0],
+		"boots": _ids([equipped_boots])[0],
 		"potions": potion_counts,
 		"relics": relics.map(func(r: RelicData) -> String: return String(r.id)),
 		"relic_charges": relic_charges.duplicate(),
@@ -426,7 +426,7 @@ func damage_player(amount: int) -> void:
 
 ## 무적: 운영자 장비 착용 중 · 개발자의 보호막
 func is_invincible() -> bool:
-	return Admin.god or get_buff_value("invincible") > 0.0
+	return AdminGear.is_admin_armor(equipped_armor) or get_buff_value("invincible") > 0.0
 
 
 func heal_player(amount: int) -> void:
@@ -490,7 +490,8 @@ func get_total_defense() -> int:
 		total += equipped_armor.defense
 	if equipped_boots != null:
 		total += equipped_boots.defense
-	return total + roundi(get_set_value("defense"))
+	total += roundi(get_set_value("defense"))
+	return roundi(total * (1.0 + get_buff_value("defense_pct")))  # 운영자의 가호
 
 
 ## 신발로 더해지는 이동 속도 (0.1 = +10%)
@@ -505,7 +506,9 @@ func get_dash_cooldown_reduction() -> float:
 
 ## 세트 효과 · 잠깐 붙는 효과로 줄어드는 받는 피해 비율
 func get_damage_reduction() -> float:
-	return clampf(get_set_value("reduction") + get_buff_value("reduction"), 0.0, 0.7)
+	var normal := clampf(get_set_value("reduction") + get_buff_value("reduction"), 0.0, 0.7)
+	var admin := clampf(get_buff_value("admin_reduction"), 0.0, 0.95)  # 운영자의 가호 (따로 곱함)
+	return 1.0 - (1.0 - normal) * (1.0 - admin)
 
 
 ## 멀티버스의 주인에게 주는 피해 보너스 (신화의 유산 10세트 「억제의 권능」)
@@ -645,7 +648,7 @@ func roll_weapon_damage(weapon: WeaponData) -> Dictionary:
 func _recalculate_stats() -> void:
 	_set_bonus = ItemSets.total_bonus(get_equipped_items())
 	damage_multiplier = 1.0 + get_attack_bonus()
-	var new_max := roundi((BASE_MAX_HP + get_bonus_max_hp()) * (1.0 + get_set_value("max_hp_pct")))
+	var new_max := roundi((BASE_MAX_HP + get_bonus_max_hp()) * (1.0 + get_set_value("max_hp_pct") + get_buff_value("max_hp_pct")))
 	if new_max != max_hp:
 		var diff := new_max - max_hp
 		max_hp = new_max
