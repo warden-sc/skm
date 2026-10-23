@@ -4998,11 +4998,11 @@ func _test_gear(main: Node2D) -> void:
 		if cat == "" or item.is_mythic():
 			continue
 		var stages_worth := float(item.price) / Balance.stage_income(item.get_fit_stage())
-		var want := float(Balance.PRICE_STAGES[cat]) * (Balance.COMMON_PRICE_MULT if item.rarity == ItemData.Rarity.COMMON else 1.0) * (1.0 if item.in_shop else Balance.DROP_ONLY_PRICE_MULT)
+		var want := float(Balance.PRICE_STAGES[cat]) * (Balance.COMMON_PRICE_MULT if item.rarity == ItemData.Rarity.COMMON else 1.0) * (1.0 if item.in_shop else Balance.DROP_ONLY_PRICE_MULT) * Balance.PRICE_MULT
 		if absf(stages_worth - want) > 0.05 * want + 0.02:
 			price_ok = false
 			print("    값 어긋남: %s %d (%.2f스테이지 수입, 목표 %.2f)" % [item.display_name, item.price, stages_worth, want])
-	_check(price_ok, "장비 값 = 그 장비가 쓰일 스테이지 수입 × 비중 (무기 %.1f · 갑옷 %.1f스테이지)" % [Balance.PRICE_STAGES["sword"], Balance.PRICE_STAGES["armor"]])
+	_check(price_ok, "장비 값 = 그 장비가 쓰일 스테이지 수입 × 비중 × %.0f (무기 %.1f · 갑옷 %.1f스테이지)" % [Balance.PRICE_MULT, Balance.PRICE_STAGES["sword"] * Balance.PRICE_MULT, Balance.PRICE_STAGES["armor"] * Balance.PRICE_MULT])
 	var genesis_sword := ItemDB.get_item(&"genesis_sword")
 	var holy_sword := ItemDB.get_item(&"holy_sword")
 	_check(genesis_sword.price > holy_sword.price and genesis_sword.price > roundi(Balance.stage_income(90)) and ItemDB.get_item(&"ancient_sword").price > ItemDB.get_item(&"seraph_sword").price,
