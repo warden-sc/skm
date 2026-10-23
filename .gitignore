@@ -4,3 +4,5 @@
 *.translation
 build/
 admin.key
+# Godot 4.4+ 가 테스트 때 만드는 파일 (이 프로젝트는 4.3)
+*.uid
