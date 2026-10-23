@@ -59,7 +59,7 @@ func _enemy_names() -> Dictionary:
 	var names := {}
 	for e in get_tree().get_nodes_in_group(&"enemies"):
 		if (e as Node).has_meta(&"gate_core") or (e as Node).has_meta(&"gate_elite"):
-			continue  # 보스방 해방 시련의 봉인 코어 · 정예는 빼고
+			continue  # 보스방 해방 시련의 파괴 물건 · 정예는 빼고
 		names[(e as Enemy).display_name] = true
 	return names
 
@@ -338,79 +338,144 @@ func _test_sfx(main: Node2D) -> void:
 	_check(Sfx._players.all(func(p: AudioStreamPlayer) -> bool: return not p.playing), "설정 효과음 0% → 소리 없음")
 	Profile.set_setting("sfx_volume", 0.8)
 
-## 보스방 해방 시련: 봉인 코어 · 정예 · 제단 (스테이지 4 · 5 · 6)
+## 보스방 해방 시련: 스테이지 컨셉별 7가지 (3 파괴 · 4 수집 · 5 점화 · 6 정예 · 9 수호 · 14 버티기)
 func _test_gate_trials(main: Node2D) -> void:
-	print("[보스방 해방 시련 · 문이 열리는 연출]")
+	print("[보스방 해방 시련 (스테이지 컨셉별) · 문이 열리는 연출]")
 	var stage := main.get_node("StageManager") as StageManager
 	var player := main.get_node("Entities/Player") as Player
 	var gate := main.get_node("Entities/BossGate") as BossGate
 	var hud := main.get_node("HUD") as HUD
+	var progress_label := hud.get_node("%ProgressLabel") as Label
 	stage.instant_travel = true
-	_check(StageManager.gate_trial_for(1) == StageManager.GateTrial.KILL and StageManager.gate_trial_for(2) == StageManager.GateTrial.KILL
-		and StageManager.gate_trial_for(4) == StageManager.GateTrial.SEAL_CORES and StageManager.gate_trial_for(5) == StageManager.GateTrial.ELITE
-		and StageManager.gate_trial_for(6) == StageManager.GateTrial.ALTAR and StageManager.gate_trial_for(7) == StageManager.GateTrial.KILL,
-		"해방 시련이 스테이지마다 바뀜: 1~2 처치 → 4 봉인 코어 · 5 정예 · 6 제단 · 7 처치 …")
-	var trial_counts := {}
+	var T := StageManager.GateTrial
+	_check(StageManager.gate_trial_for(1) == T.KILL and StageManager.gate_trial_for(2) == T.KILL and StageManager.gate_trial_for(3) == T.SEAL_CORES
+		and StageManager.gate_trial_for(4) == T.COLLECT and StageManager.gate_trial_for(5) == T.IGNITE and StageManager.gate_trial_for(6) == T.ELITE
+		and StageManager.gate_trial_for(9) == T.ALTAR and StageManager.gate_trial_for(14) == T.SURVIVE,
+		"해방 시련이 스테이지 컨셉에 맞게: 3 원소 결정 파괴 · 4 생명의 씨앗 · 5 성의 횃불 · 6 오크 족장 · 9 마계의 문 봉인 · 14 시간의 틈")
+	var kinds := {}
+	var titles := {}
+	var elites_ok := true
 	for st in range(3, 101):
-		trial_counts[StageManager.gate_trial_for(st)] = int(trial_counts.get(StageManager.gate_trial_for(st), 0)) + 1
-	_check(trial_counts.size() == 4 and trial_counts.values().all(func(n: int) -> bool: return n >= 20), "3~100스테이지: 네 시련이 고르게 (%s)" % str(trial_counts))
-	# 봉인 코어
-	stage.go_to_stage(4)
+		var info := GateTrials.get_info(st)
+		kinds[info["type"]] = int(kinds.get(info["type"], 0)) + 1
+		titles[info["title"]] = true
+		if info["type"] == T.ELITE:
+			var data: StageData = load("res://data/stages/stage_%d.tres" % st)
+			elites_ok = elites_ok and data.enemy_scenes.any(func(sc: PackedScene) -> bool: return sc.resource_path.get_file().get_basename() == info["elite"])
+	_check(kinds.size() == 7 and titles.size() >= 95 and kinds.values().all(func(n: int) -> bool: return n >= 2), "3~100스테이지: 7가지 시련, 이름은 스테이지마다 다름 (%d가지 · %s)" % [titles.size(), str(kinds)])
+	_check(elites_ok, "정예 시련의 몬스터는 모두 그 스테이지 몬스터")
+	# 파괴 (3 원소의 유적: 원소 결정 4개)
+	stage.go_to_stage(3)
 	await _frames(3)
 	stage._do_enter_field()
 	await _frames(4)
 	var cores: Array = get_tree().get_nodes_in_group(&"enemies").filter(func(e: Node) -> bool: return e.has_meta(&"gate_core"))
-	_check(stage.gate_trial == StageManager.GateTrial.SEAL_CORES and cores.size() == StageManager.SEAL_CORE_COUNT and not gate.is_open()
-		and (hud.get_node("%ProgressLabel") as Label).text.contains("봉인 코어 파괴 0 / 3"), "4스테이지: 사냥터에 봉인 코어 3개 · HUD 「%s」" % (hud.get_node("%ProgressLabel") as Label).text)
+	_check(stage.gate_trial == T.SEAL_CORES and cores.size() == 4 and (cores[0] as Enemy).display_name == "원소 결정" and not gate.is_open()
+		and progress_label.text.contains("원소 결정 파괴 0 / 4"), "3스테이지: 원소 결정 4개 · HUD 「%s」" % progress_label.text)
+	Sfx.history.clear()
 	(cores[0] as Enemy).take_damage(999999999, Vector2.ZERO, false, 99999)
 	await _frames(3)
-	_check(stage._trial_count == 1 and not gate.is_open() and Sfx.last_played == &"core_break", "코어 하나 파괴 → 1 / 3 (파괴음)")
+	_check(stage._trial_count == 1 and not gate.is_open() and Sfx.history.has(&"core_break"), "결정 하나 파괴 → 1 / 4")
 	stage._do_return_to_camp()
 	await _frames(3)
 	stage._do_enter_field()
 	await _frames(4)
 	cores = get_tree().get_nodes_in_group(&"enemies").filter(func(e: Node) -> bool: return e.has_meta(&"gate_core"))
-	_check(cores.size() == 2, "야영지에 다녀와도 부순 코어는 그대로 — 남은 코어 2개")
+	_check(cores.size() == 3, "야영지에 다녀와도 부순 결정은 그대로 — 남은 결정 3개")
 	for c in cores:
 		(c as Enemy).take_damage(999999999, Vector2.ZERO, false, 99999)
 	await _frames(3)
-	_check(gate.is_open() and gate.enabled and stage.is_trial_complete(), "코어 3개 모두 파괴 → 보스방 해방")
+	_check(gate.is_open() and gate.enabled and stage.is_trial_complete(), "결정 4개 모두 파괴 → 보스방 해방")
 	await _frames(20)
 	_check(player.is_camera_focused(), "문이 열리면 카메라가 잠깐 북쪽 보스문을 비춤")
 	await _frames(80)
 	_check((gate.get_node("Sprite2D") as Sprite2D).texture == gate.open_texture, "땅이 울리고(굉음) → 사슬이 끊기고 → 빛기둥 속에 문이 열림")
 	await _frames(60)
 	_check(not player.is_camera_focused(), "연출이 끝나면 카메라가 용사에게 돌아옴")
-	# 정예
+	# 수집 (4 드라이어드의 숲: 생명의 씨앗 5개)
+	stage.go_to_stage(4)
+	await _frames(3)
+	stage._do_enter_field()
+	await _frames(4)
+	var seeds := stage.get_trial_markers()
+	_check(stage.gate_trial == T.COLLECT and seeds.size() == 5 and seeds.all(func(m: TrialMarker) -> bool: return m.kind == TrialMarker.Kind.COLLECT and stage.field_room.get_arena_rect().grow(4).has_point(m.global_position))
+		and progress_label.text.contains("생명의 씨앗 0 / 5"), "4스테이지: 사냥터 안에 생명의 씨앗 5개 · 「%s」" % progress_label.text)
+	player.global_position = seeds[0].global_position
+	await _frames(3)
+	_check(stage._trial_count == 1 and stage.get_trial_markers().size() == 4, "씨앗에 닿으면 주워짐 → 1 / 5")
+	stage._do_return_to_camp()
+	await _frames(3)
+	stage._do_enter_field()
+	await _frames(4)
+	seeds = stage.get_trial_markers()
+	_check(seeds.size() == 4 and stage._trial_count == 1, "야영지에 다녀와도 주운 씨앗은 그대로 — 남은 씨앗 4개")
+	for m in seeds:
+		player.global_position = m.global_position
+		await _frames(2)
+	_check(gate.is_open(), "씨앗 5개를 모두 모으면 보스방 해방")
+	await _frames(150)
+	# 점화 (5 어둠의 성: 횃불 4개)
 	stage.go_to_stage(5)
+	await _frames(3)
+	stage._do_enter_field()
+	await _frames(4)
+	var torches := stage.get_trial_markers()
+	_check(stage.gate_trial == T.IGNITE and torches.size() == 4 and torches.all(func(m: TrialMarker) -> bool: return m.kind == TrialMarker.Kind.IGNITE and not m.done), "5스테이지: 꺼진 횃불 4개")
+	player.global_position = torches[0].global_position + Vector2(TrialMarker.IGNITE_RADIUS + 20.0, 0)
+	await _survive(20)
+	_check(torches[0].progress == 0.0, "원 밖에서는 불이 붙지 않음")
+	await _survive(30, func() -> void: player.global_position = torches[0].global_position)
+	_check(torches[0].progress > 0.1 and not torches[0].done, "원 안에 서 있으면 불씨가 차오름")
+	await _survive(90, func() -> void: player.global_position = torches[0].global_position)
+	_check(torches[0].done and stage._trial_count == 1 and progress_label.text.contains("횃불 1 / 4"), "%.1f초 서 있으면 횃불이 켜짐 → 1 / 4" % StageManager.IGNITE_TIME)
+	for m in torches.slice(1):
+		await _survive(110, func() -> void: player.global_position = m.global_position)
+	_check(gate.is_open(), "횃불 4개를 모두 밝히면 보스방 해방")
+	await _frames(150)
+	# 정예 (6 오크 요새: 오크 족장)
+	stage.go_to_stage(6)
 	await _frames(3)
 	stage._do_enter_field()
 	await _frames(4)
 	var elites: Array = get_tree().get_nodes_in_group(&"enemies").filter(func(e: Node) -> bool: return e.has_meta(&"gate_elite"))
 	var elite: Enemy = elites[0] if not elites.is_empty() else null
-	_check(stage.gate_trial == StageManager.GateTrial.ELITE and elite != null and elite.display_name.begins_with("정예 ") and elite.scale.x > 1.4 and not gate.is_open(),
-		"5스테이지: 정예 「%s」 등장 (크고 금빛 · 체력 x%d)" % [elite.display_name if elite != null else "?", roundi(StageManager.ELITE_HP)])
+	_check(stage.gate_trial == T.ELITE and elite != null and elite.display_name == "오크 족장" and elite.scene_file_path.ends_with("orc_warrior.tscn") and elite.scale.x > 1.4 and not gate.is_open(),
+		"6스테이지: 정예 「%s」 등장 (오크 전사가 크고 금빛 · 체력 x%d)" % [elite.display_name if elite != null else "?", roundi(StageManager.ELITE_HP)])
 	if elite != null:
 		elite.take_damage(999999999, Vector2.ZERO, false, 99999)
 	await _frames(3)
 	_check(gate.is_open(), "정예를 쓰러뜨리면 보스방 해방")
 	await _frames(150)
-	# 제단
-	stage.go_to_stage(6)
+	# 수호 (9 마계의 문: 봉인진 20초)
+	stage.go_to_stage(9)
 	await _frames(3)
 	stage._do_enter_field()
 	await _frames(4)
 	var altar := stage.get_altar()
-	_check(stage.gate_trial == StageManager.GateTrial.ALTAR and altar != null and not gate.is_open(), "6스테이지: 사냥터에 정화 제단")
+	_check(stage.gate_trial == T.ALTAR and altar != null and not gate.is_open() and is_equal_approx(stage.trial_time(), 20.0), "9스테이지: 마계의 문 봉인진 (20초)")
 	if altar != null:
 		player.global_position = altar.global_position + Vector2(GateAltar.RADIUS + 30.0, 0)
 		await _survive(30)
-		_check(stage._altar_progress == 0.0, "원 밖에서는 정화가 차오르지 않음")
+		_check(stage._altar_progress == 0.0, "원 밖에서는 봉인이 차오르지 않음")
 		await _survive(60, func() -> void: player.global_position = altar.global_position)
-		_check(stage._altar_progress > 0.5 and altar.active and (hud.get_node("%ProgressLabel") as Label).text.contains("제단 정화"), "원 안에 서 있으면 정화가 차오름 (%s)" % (hud.get_node("%ProgressLabel") as Label).text)
-		stage._altar_progress = StageManager.ALTAR_TIME - 0.05
+		_check(stage._altar_progress > 0.5 and altar.active and progress_label.text.contains("마계의 문 봉인"), "원 안에 서 있으면 봉인이 차오름 (%s)" % progress_label.text)
+		stage._altar_progress = stage.trial_time() - 0.05
 		await _survive(10, func() -> void: player.global_position = altar.global_position)
-		_check(gate.is_open(), "정화를 마치면 보스방 해방")
+		_check(gate.is_open(), "봉인을 마치면 보스방 해방")
+	await _frames(150)
+	# 버티기 (14 시간의 회랑: 35초)
+	stage.go_to_stage(14)
+	await _frames(3)
+	var normal_alive := stage.get_max_alive()
+	stage._do_enter_field()
+	await _frames(4)
+	_check(stage.gate_trial == T.SURVIVE and stage.get_max_alive() > normal_alive and progress_label.text.contains("시간의 틈") and progress_label.text.contains("초 남음"),
+		"14스테이지: 시간의 틈 버티기 — 몬스터가 더 많이 (%d → %d) · 「%s」" % [normal_alive, stage.get_max_alive(), progress_label.text])
+	await _survive(60)
+	_check(stage._survive_time > 0.5 and not gate.is_open(), "살아 있는 동안 시간이 흐름")
+	stage._survive_time = stage.trial_time() - 0.05
+	await _survive(10)
+	_check(gate.is_open() and stage.get_max_alive() == normal_alive, "다 버티면 보스방 해방 · 몬스터 수는 원래대로")
 	await _frames(150)
 	stage.go_to_stage(1)
 	await _frames(3)
@@ -878,7 +943,7 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 				player.global_position = boss_center + Vector2(0, 100)
 				mario.begin_control()
 				await _frames(2)
-				_check(player.is_puppeted() and mario.get_threads() == 4 and is_equal_approx(player.get_puppet_strength(), 0.9) and not player.can_attack() and not player.can_guard() and _gm.player_status.contains("꼭두각시"), "[기믹] 꼭두각시 조종: 실 4가닥, 공격·가드 불가 (%s)" % _gm.player_status)
+				_check(player.is_puppeted() and mario.get_threads() == 4 and is_equal_approx(player.get_puppet_strength(), BossMarionette.STRENGTH_BY_THREADS[4]) and not player.can_attack() and not player.can_guard() and _gm.player_status.contains("꼭두각시"), "[기믹] 꼭두각시 조종: 실 4가닥, 공격·가드 불가 (%s)" % _gm.player_status)
 				var d0 := player.global_position.distance_to(mario.global_position)
 				await _frames(40)
 				_check(player.global_position.distance_to(mario.global_position) < d0 - 10.0, "조종당하면 마리오네트 쪽으로 끌려감")
@@ -5025,6 +5090,22 @@ func _test_gear(main: Node2D) -> void:
 	# 사용 아이템 · 포션
 	var elixir := ItemDB.get_potion(&"elixir")
 	_check(elixir.rarity == ItemData.Rarity.LEGENDARY and elixir.get_unlock_stage() == 71 and ItemDB.get_shop_items().has(elixir) and elixir.get_heal(_gm.max_hp) >= _gm.max_hp, "전설 포션 「전설의 엘릭서」: 71스테이지부터 상점 · 체력 전부 + 재생")
+	# [G] 마실 포션 고르기: 여러 등급을 섞어 가지면 원하는 것으로 고정
+	var saved_potions: Dictionary = _gm.potions.duplicate()
+	_gm.potions = {&"small_potion": 2, &"potion": 1, &"greater_potion": 1}
+	_gm.selected_potion = &""
+	_gm.hp = _gm.max_hp - 1
+	_check(_gm.is_potion_auto() and _gm.choose_potion().id == &"small_potion", "[G] 처음엔 자동 — 조금 다치면 작은 포션")
+	_check(_gm.cycle_potion() == &"small_potion" and _gm.cycle_potion() == &"potion" and _gm.choose_potion().id == &"potion" and not _gm.is_potion_auto(),
+		"[G] 누를 때마다 작은 → 회복 포션으로 고정 (체력이 거의 차 있어도 고른 것을 마심)")
+	_check(_gm.use_potion() and _gm.get_potion_count(&"potion") == 0 and _gm.is_potion_auto() and _gm.choose_potion() != null, "고른 포션을 다 마시면 다시 자동")
+	_gm.selected_potion = &"greater_potion"
+	_check(StringName(_gm.to_save_data().get("selected_potion", "")) == &"greater_potion", "고른 포션은 저장됨")
+	_gm.cycle_potion()
+	_check(_gm.is_potion_auto(), "[G] 마지막(고급 포션) 다음은 다시 자동")
+	_gm.potions = saved_potions
+	_gm.selected_potion = &""
+	_gm.hp = _gm.max_hp
 	var blood := ItemDB.get_potion(&"dragon_blood")
 	_gm.add_potion(blood, 5)
 	_check(blood.is_mythic() and not ItemDB.get_shop_items().has(blood) and _gm.choose_potion() != blood and _gm.get_potion_count(&"dragon_blood") == 5, "고대 용의 피: 신화 · 상점에 없음 · [H] 자동 선택에서 빠짐 (5병)")
@@ -6454,6 +6535,8 @@ func _run() -> void:
 	_check(saved.load(Profile.profile_path) == OK and Array(saved.get_value("player", "achievements", [])).has("STAGE_100"), "업적은 프로필 파일에 저장")
 	_check(Achievements.ACHIEVEMENTS.keys().all(func(id: StringName) -> bool: return String(id) == String(id).to_upper() and not String(id).contains(" ")),
 		"업적 id 는 스팀 API 이름 규칙 (대문자 · 공백 없음)")
+	_check(not SteamApi.is_running() and SteamApi.steam() == null and SteamApi.get_steam_id() == 0 and SteamApi.status_text != "",
+		"GodotSteam 이 없으면 스팀 연결 없이도 그대로 동작 (%s)" % SteamApi.status_text)
 
 	await _test_admin(main)
 

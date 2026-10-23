@@ -183,6 +183,8 @@ def nice(v):
 INCOME_BASE, INCOME_EXP = 220.0, 1.15
 PRICE_STAGES = {"sword": 1.4, "bow": 1.4, "staff": 1.4, "dagger": 1.2, "shield": 0.7, "helmet": 0.7, "armor": 0.8, "boots": 0.7,
                 "bracelet": 0.8, "ring": 0.8, "pendant": 0.8}
+# 전체 값 올림 (Balance.PRICE_MULT)
+PRICE_MULT = 2.0
 UNLOCK = {0: 1, 1: 11, 2: 41, 3: 71}
 TIER_STEP = {0: 1.5, 1: 5.0, 2: 5.0, 3: 5.0}
 
@@ -215,7 +217,7 @@ def price(item, weight):
         v *= 0.6
     if not item.get("in_shop", True):
         v *= 1.15
-    return nice_price(v)
+    return nice_price(v * PRICE_MULT)
 
 
 def fix_prices(prices):

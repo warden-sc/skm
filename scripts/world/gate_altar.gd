@@ -8,6 +8,8 @@ const TEXTURE := preload("res://assets/sprites/world/gate_altar.png")
 const RADIUS := 34.0
 
 var progress: float = 0.0
+## 스테이지 시련의 색 (GateTrials)
+var color: Color = Color(0.45, 0.85, 1.0)
 var active: bool = false  # 지금 누군가 원 안에 있음
 var _time: float = 0.0
 var _sprite: Sprite2D
@@ -22,7 +24,7 @@ func _ready() -> void:
 	_sprite.z_as_relative = false
 	_sprite.z_index = 1
 	add_child(_sprite)
-	_glow = Fx.make_aura(Color(0.55, 0.9, 1.0), 14, 6.0, Vector2(0, -50), 0.7)
+	_glow = Fx.make_aura(color.lightened(0.1), 14, 6.0, Vector2(0, -50), 0.7)
 	_glow.position = Vector2(0, -16)
 	add_child(_glow)
 	_glow.emitting = false
@@ -35,13 +37,13 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-	var base := Color(0.45, 0.85, 1.0)
+	var base := color
 	var pulse := 0.5 + 0.5 * sin(_time * (6.0 if active else 2.0))
 	draw_circle(Vector2.ZERO, RADIUS, Color(base, 0.08 + (0.08 * pulse if active else 0.0)))
 	draw_arc(Vector2.ZERO, RADIUS + 1.0, 0.0, TAU, 48, Color(0.0, 0.0, 0.0, 0.5), 2.0)
 	draw_arc(Vector2.ZERO, RADIUS, 0.0, TAU, 48, Color(base, 0.45 + 0.25 * pulse), 1.0)
 	if progress > 0.0:
-		draw_arc(Vector2.ZERO, RADIUS - 3.0, -PI / 2.0, -PI / 2.0 + TAU * clampf(progress, 0.0, 1.0), 48, Color(0.8, 1.0, 1.0, 0.95), 3.0)
+		draw_arc(Vector2.ZERO, RADIUS - 3.0, -PI / 2.0, -PI / 2.0 + TAU * clampf(progress, 0.0, 1.0), 48, Color(color.lightened(0.5), 0.95), 3.0)
 	for i in 6:
 		var a := _time * 0.6 + TAU * i / 6.0
 		draw_circle(Vector2.from_angle(a) * (RADIUS - 8.0), 1.2, Color(base.lightened(0.4), 0.7))

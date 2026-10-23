@@ -36,8 +36,8 @@ const GOLD_SPREAD := 0.2
 const PARTY_GOLD_PER_PLAYER := 0.6
 
 ## 장비 값 = 그 장비가 「제 실력」을 내는 스테이지(get_fit_stage)의 한 스테이지 수입 × 종류 비중 × 등급 비중
-##   무기 하나 ≈ 1.4스테이지 수입, 방어구 · 장신구 하나 ≈ 0.7~0.8 — 등급 안에서 단계마다 5스테이지 간격이라
-##   그 사이 수입으로 주무기 + 방어구 몇 개를 바꿀 수 있음 (나머지는 몬스터 드랍 · 보물상자)
+##   (× PRICE_MULT 2) 무기 하나 ≈ 2.8스테이지 수입, 방어구 · 장신구 하나 ≈ 1.4~1.6 — 등급 안에서 단계마다 5스테이지 간격이라
+##   그 사이 수입으로는 주무기 + 방어구 한두 개 — 다 사기는 어렵고 골라서 (나머지는 몬스터 드랍 · 보물상자)
 const PRICE_STAGES := {
 	"sword": 1.4, "bow": 1.4, "staff": 1.4, "dagger": 1.2,
 	"shield": 0.7, "helmet": 0.7, "armor": 0.8, "boots": 0.7,
@@ -47,6 +47,8 @@ const PRICE_STAGES := {
 const COMMON_PRICE_MULT := 0.6
 ## 상점에 없는 드랍 전용 장비 (팔 때 값)
 const DROP_ONLY_PRICE_MULT := 1.15
+## 전체 값 올림 — 처음 플레이 테스트에서 엔딩 때 골드가 200만 넘게 남음 (판매가 비율은 그만큼 낮춰 파는 돈은 그대로)
+const PRICE_MULT := 2.0
 
 
 ## 노멀 · 혼자 기준 스테이지 수입
@@ -91,14 +93,15 @@ static func item_price(category: String, rarity: int, fit_stage: int, in_shop: b
 		value *= COMMON_PRICE_MULT
 	if not in_shop:
 		value *= DROP_ONLY_PRICE_MULT
-	return nice_price(value)
+	return nice_price(value * PRICE_MULT)
 
 
-## 포션 값 = 그 포션이 풀리는 스테이지 수입 × 등급 비중 (작은 포션 ≈ 26G · 회복 포션 ≈ 280G · 고급 ≈ 940G · 엘릭서 ≈ 2,950G)
+## 포션 값 = 그 포션이 풀리는 스테이지 수입 × 등급 비중 × POTION_PRICE_MULT
 const POTION_PRICE_STAGES := {ItemData.Rarity.COMMON: 0.12, ItemData.Rarity.RARE: 0.08, ItemData.Rarity.EPIC: 0.06, ItemData.Rarity.LEGENDARY: 0.1}
+const POTION_PRICE_MULT := 1.5
 
 
 static func potion_price(rarity: int, unlock_stage: int) -> int:
 	if not POTION_PRICE_STAGES.has(rarity):
 		return 0
-	return nice_price(stage_income(unlock_stage) * float(POTION_PRICE_STAGES[rarity]))
+	return nice_price(stage_income(unlock_stage) * float(POTION_PRICE_STAGES[rarity]) * POTION_PRICE_MULT)

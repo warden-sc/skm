@@ -390,14 +390,26 @@ func _update_skill_slot() -> void:
 	_skill_time.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 
-## 포션 칸: [H] 로 마실 포션 아이콘 + 총 개수
+## 포션 칸: [H] 로 마실 포션 아이콘 + 그 포션 개수 / 전체 개수 · 오른쪽 위에 「자동」 또는 「고정」([G] 로 바꿈)
 func _make_potion_slot() -> Control:
 	var potion := GameManager.choose_potion()
 	_shown_potion = potion
 	var slot := _make_slot(potion, WEAPON_SLOT_SIZE, "H", false)
+	var mode := Label.new()
+	mode.name = "PotionMode"
+	mode.text = "자동" if GameManager.is_potion_auto() else "고정"
+	mode.add_theme_font_size_override(&"font_size", 7)
+	mode.add_theme_constant_override(&"outline_size", 3)
+	mode.add_theme_color_override(&"font_outline_color", Color(0.05, 0.05, 0.1))
+	mode.add_theme_color_override(&"font_color", Color(0.75, 0.9, 0.75) if GameManager.is_potion_auto() else Color(1.0, 0.85, 0.4))
+	mode.size_flags_horizontal = Control.SIZE_SHRINK_END
+	mode.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	slot.add_child(mode)
 	var count := Label.new()
 	count.name = "PotionCount"
-	count.text = "x%d" % GameManager.get_total_potions()
+	var own := GameManager.get_potion_count(potion.id) if potion != null else 0
+	var total := GameManager.get_total_potions()
+	count.text = ("x%d/%d" % [own, total]) if potion != null and own != total else "x%d" % total
 	count.add_theme_font_size_override(&"font_size", 9)
 	count.add_theme_constant_override(&"outline_size", 3)
 	count.add_theme_color_override(&"font_outline_color", Color(0.05, 0.05, 0.1))

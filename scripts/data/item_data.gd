@@ -70,7 +70,7 @@ var admin_only: bool = false
 @export var price: int = 50
 
 ## 상인에게 팔 때 받는 비율
-const SELL_RATIO := 0.4
+const SELL_RATIO := 0.2
 
 
 func get_rarity_color() -> Color:

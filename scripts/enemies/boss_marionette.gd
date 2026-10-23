@@ -19,7 +19,7 @@ enum Pattern { STRINGS, DANCE, NEEDLE, SUMMON }
 
 const THREADS := 4
 ## 남은 실 수별 구속력 (index = 남은 실 수)
-const STRENGTH_BY_THREADS: Array[float] = [0.0, 0.24, 0.46, 0.68, 0.9]
+const STRENGTH_BY_THREADS: Array[float] = [0.0, 0.14, 0.28, 0.43, 0.58]
 
 @export var minion_scenes: Array[PackedScene] = []
 @export var needle_texture: Texture2D

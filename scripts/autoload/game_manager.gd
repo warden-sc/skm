@@ -124,6 +124,8 @@ var _regen_buffer: float = 0.0
 var accessory_slots: Array[AccessoryData] = [null, null, null]
 ## 회복 포션 보유 개수 { 포션 id: 개수 } (소모품이라 items 와 따로 보관)
 var potions: Dictionary = {}
+## [G] 로 고른 포션 (&"" = 자동: 잃은 체력에 맞는 것). 고른 포션이 다 떨어지면 자동으로
+var selected_potion: StringName = &""
 ## 플레이어 쪽 공격력 배율 (반지 공격력 보너스 반영)
 var damage_multiplier: float = 1.0
 ## 신앙 게이지로 오르는 공격력 (37스테이지 아스타로트, Player 가 매 프레임 갱신)
@@ -242,6 +244,7 @@ func reset_game() -> void:
 		add_item(item)
 		equip_item(item)
 	potions = STARTING_POTIONS.duplicate()
+	selected_potion = &""
 	_recalculate_stats()
 	hp = max_hp
 	emit_all()
@@ -303,6 +306,7 @@ func to_save_data() -> Dictionary:
 		"armor": _ids([equipped_armor])[0],
 		"boots": _ids([equipped_boots])[0],
 		"potions": potion_counts,
+		"selected_potion": String(selected_potion),
 		"relics": relics.map(func(r: RelicData) -> String: return String(r.id)),
 		"relic_charges": relic_charges.duplicate(),
 		"dragon_scales": dragon_scales.duplicate(),
@@ -340,6 +344,7 @@ func apply_save_data(data: Dictionary) -> bool:
 	total_kills = int(data.get("total_kills", 0))
 	play_time = float(data.get("play_time", 0.0))
 	potions = {}
+	selected_potion = StringName(data.get("selected_potion", ""))
 	var saved_potions: Dictionary = data.get("potions", {})
 	for potion_id in saved_potions:
 		if ItemDB.has_item(StringName(potion_id)):
@@ -829,16 +834,45 @@ func get_owned_potions() -> Array[PotionData]:
 	return result
 
 
-## [H] 로 마실 포션 고르기: 잃은 체력을 다 채우는 것 중 가장 작은 것, 없으면 가장 큰 것
+## [H] 로 마실 포션: [G] 로 고른 것이 있으면 그것, 아니면(자동) 잃은 체력을 다 채우는 것 중 가장 작은 것, 없으면 가장 큰 것
 func choose_potion() -> PotionData:
 	var owned := get_owned_potions().filter(func(p: PotionData) -> bool: return p.auto_use)
 	if owned.is_empty():
 		return null
+	for potion in owned:
+		if potion.id == selected_potion:
+			return potion
 	var missing := max_hp - hp
 	for potion in owned:
 		if potion.get_heal(max_hp) >= missing:
 			return potion
 	return owned[owned.size() - 1]
+
+
+## 지금 [H] 가 자동으로 고르는 중인지 (고른 포션이 없거나 다 떨어짐)
+func is_potion_auto() -> bool:
+	return selected_potion == &"" or get_potion_count(selected_potion) <= 0
+
+
+## [G] 포션 바꾸기: 자동 → 가진 포션(회복량 작은 순) → 자동 …
+func cycle_potion() -> StringName:
+	var options: Array[StringName] = [&""]
+	for potion in get_owned_potions():
+		if potion.auto_use:
+			options.append(potion.id)
+	var current := selected_potion if not is_potion_auto() else &""
+	select_potion(options[(options.find(current) + 1) % options.size()])
+	return selected_potion
+
+
+func select_potion(potion_id: StringName) -> void:
+	selected_potion = potion_id
+	potions_changed.emit()
+	var potion := ItemDB.get_potion(potion_id) if potion_id != &"" else null
+	if potion == null:
+		show_notice("[H] 포션: 자동 (잃은 체력에 맞는 것)", Color(0.7, 1.0, 0.7))
+	else:
+		show_notice("[H] 포션: %s (%d개)" % [potion.display_name, get_potion_count(potion_id)], potion.get_rarity_color())
 
 
 func can_buy_potion(potion: PotionData) -> bool:

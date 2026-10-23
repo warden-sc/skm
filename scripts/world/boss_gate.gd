@@ -40,7 +40,7 @@ func seal(kills: int, target: int) -> void:
 	update_progress(kills, target)
 
 
-## text 가 있으면 그대로 (봉인 코어 · 정예 · 제단 시련), 없으면 「처치 k / t」
+## text 가 있으면 그대로 (처치 말고 다른 해방 시련), 없으면 「처치 k / t」
 func update_progress(kills: int, target: int, text: String = "") -> void:
 	if _is_open:
 		return

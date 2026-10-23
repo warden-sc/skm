@@ -1,7 +1,7 @@
 extends Node
 ## 업적 (오토로드 Achievements) — 스팀 출시를 염두에 둔 업적 목록 · 기록.
-## 달성하면 화면 알림 + Profile(user://profile.cfg)에 기록. 스팀 버전에서 GodotSteam 이 들어 있으면
-## (Engine.has_singleton("Steam")) 같은 id 로 Steam.setAchievement / storeStats 도 호출 → 스팀 업적과 바로 연결됨.
+## 달성하면 화면 알림 + Profile(user://profile.cfg)에 기록. 스팀에 연결되어 있으면(SteamApi — GodotSteam)
+## 같은 id 로 Steam.setAchievement / storeStats 도 호출 → 스팀 업적과 바로 연결됨.
 ## 스팀웍스(파트너 사이트)에 아래 ACHIEVEMENTS 의 id 를 그대로 「API 이름」으로 등록하면 됨 (STEAM.md 참고).
 
 signal unlocked(id: StringName)
@@ -15,7 +15,7 @@ const ACHIEVEMENTS := {
 	&"GAME_CLEAR": {"name": "멀티버스의 끝", "desc": "멀티버스의 주인을 쓰러뜨리고 엔딩을 보았다"},
 	&"HIDDEN_CLEAR": {"name": "고대 용의 비늘", "desc": "숨겨진 고대 드래곤 아르케를 쓰러뜨렸다"},
 	&"FIRST_MYTHIC": {"name": "신화의 유산", "desc": "처음으로 신화 장비를 얻었다"},
-	&"ALL_TRIALS": {"name": "네 가지 시련", "desc": "처치 · 봉인 코어 · 정예 · 제단, 네 해방 시련을 모두 이뤘다"},
+	&"ALL_TRIALS": {"name": "일곱 가지 시련", "desc": "처치 · 파괴 · 정예 · 수호 · 수집 · 점화 · 버티기, 일곱 가지 해방 시련을 모두 이뤘다"},
 	&"CO_OP_BOSS": {"name": "함께라면", "desc": "멀티플레이로 보스를 쓰러뜨렸다"},
 	&"HARD_CLEAR": {"name": "베리하드 정복자", "desc": "베리하드로 엔딩을 보았다"},
 }
@@ -37,10 +37,7 @@ func unlock(id: StringName) -> bool:
 	Profile.achievements.append(String(id))
 	Profile.save_profile()
 	GameManager.show_notice("업적 달성: %s — %s" % [ACHIEVEMENTS[id]["name"], ACHIEVEMENTS[id]["desc"]], Color(1.0, 0.85, 0.35))
-	if Engine.has_singleton(&"Steam"):
-		var steam := Engine.get_singleton(&"Steam")
-		steam.call(&"setAchievement", String(id))
-		steam.call(&"storeStats")
+	SteamApi.set_achievement(String(id))
 	unlocked.emit(id)
 	return true
 
@@ -54,11 +51,15 @@ func on_stage_cleared(stage: int) -> void:
 
 
 ## 해방 시련을 이룸 — 네 종류를 모두 이루면 업적
+## 보스방 해방 시련 종류 수 (StageManager.GateTrial)
+const TRIAL_KINDS := 7
+
+
 func on_trial_cleared(trial: int) -> void:
 	var done: Array = Profile.get_setting("trials_done") if Profile.get_setting("trials_done") is Array else []
 	if not done.has(trial):
 		done = done.duplicate()
 		done.append(trial)
 		Profile.set_setting("trials_done", done)
-	if done.size() >= 4:
+	if done.size() >= TRIAL_KINDS:
 		unlock(&"ALL_TRIALS")

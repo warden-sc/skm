@@ -269,7 +269,7 @@ grow_horizontal = 0
 theme_override_colors/font_outline_color = Color(0.1, 0.1, 0.17, 1)
 theme_override_constants/outline_size = 3
 theme_override_font_sizes/font_size = 8
-text = "Tab 인벤토리 · E 상호작용 · H 포션 · Q 스킬"
+text = "Tab 인벤토리 · E 상호작용 · H 포션 · G 포션 바꾸기 · Q 스킬"
 horizontal_alignment = 2
 
 [node name="GameOver" type="ColorRect" parent="Root"]

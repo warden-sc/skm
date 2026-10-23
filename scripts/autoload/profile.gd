@@ -22,8 +22,14 @@ var settings: Dictionary = DEFAULT_SETTINGS.duplicate()
 var achievements: Array = []
 
 
+## 창 제목 (project.godot 의 config/name 은 저장 폴더 이름이라 그대로 두고 — 바꾸면 저장 파일 위치가 바뀜 — 창 제목만 따로)
+const WINDOW_TITLE := "크루세이더 (Crusader)"
+
+
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	if DisplayServer.get_name() != "headless":
+		DisplayServer.window_set_title(WINDOW_TITLE)
 	load_profile()
 
 

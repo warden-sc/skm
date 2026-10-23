@@ -5,7 +5,7 @@ extends Node
 ## 스테이지 하나의 흐름
 ##   야영지(CAMP)  : 상인에게서 장비 구매·판매. 안전 지대. 텔레포트[E] → 사냥터
 ##   사냥터(FIELD) : 스테이지마다 다른 「해방 시련」을 이루면 북쪽 보스문의 봉인이 풀림 (귀환 텔레포트로 야영지 복귀 가능)
-##                   처치(몬스터 N마리) · 봉인 코어 파괴(사냥터 곳곳 수정 3개) · 정예 처치(강해진 정예 하나) · 제단 정화(원 안에서 버티기)
+##                   스테이지 컨셉에 맞춘 처치 · 파괴 · 정예 · 수호 · 수집 · 점화 · 버티기 (이름 · 물건 · 개수는 GateTrials)
 ##                   — gate_trial_for(stage). 1~2스테이지와 튜토리얼은 처치. 시련을 이루면 문이 웅장하게 열림 (BossGate.open)
 ##   보스방(BOSS)  : 보스문[E]으로 입장 → 보스 등장
 ##   토벌(CLEARED) : 보스 처치 → 보물상자(다음 스테이지 등급 장비 1개) + 다음 스테이지 텔레포트 등장
@@ -98,22 +98,28 @@ var _kills: int = 0
 var _kill_target: int = 0
 
 # ---- 보스방 해방 시련
-enum GateTrial { KILL, SEAL_CORES, ELITE, ALTAR }
-const GATE_TRIAL_NAMES := ["몬스터 처치", "봉인 코어 파괴", "정예 처치", "제단 정화"]
+## 종류만 여기, 스테이지마다 무엇을 하는지(이름 · 물건 · 개수 · 시간)는 GateTrials (scripts/data/gate_trials.gd)
+enum GateTrial { KILL, SEAL_CORES, ELITE, ALTAR, COLLECT, IGNITE, SURVIVE }
+const GATE_TRIAL_NAMES := ["처치", "파괴", "정예", "수호", "수집", "점화", "버티기"]
 const SEAL_CORE_SCENE := preload("res://scenes/enemies/seal_core.tscn")
-const SEAL_CORE_COUNT := 3
-## 봉인 코어 체력 = 그 스테이지 사냥터 몬스터 체력 × 이만큼
-const SEAL_CORE_HP_MOBS := 7.0
+## 점화: 자리에 이만큼(초) 서 있으면 불이 켜짐
+const IGNITE_TIME := 1.6
+## 버티기: 몬스터가 이만큼 더 자주 · 더 많이
+const SURVIVE_SPAWN_MULT := 0.55
+const SURVIVE_ALIVE_MULT := 1.5
 ## 정예: 체력 · 공격력 · 크기 · 골드 배율
 const ELITE_HP := 12.0
 const ELITE_POWER := 1.35
 const ELITE_SCALE := 1.55
 const ELITE_GOLD := 6.0
-## 제단 정화에 필요한 시간(초, 원 안에 서 있는 동안만 참)
-const ALTAR_TIME := 18.0
 var gate_trial: GateTrial = GateTrial.KILL
-var _trial_count: int = 0           # 부순 코어 수 / 정예 처치(0·1)
-var _altar_progress: float = 0.0    # 0 ~ ALTAR_TIME
+## 이번 스테이지 시련 (GateTrials.get_info)
+var trial_info: Dictionary = GateTrials.get_info(1)
+var _trial_count: int = 0           # 부순 물건 · 주운 것 · 켠 자리 수 / 정예 처치(0·1)
+var _altar_progress: float = 0.0    # 수호: 0 ~ 시간
+var _survive_time: float = 0.0      # 버티기: 0 ~ 시간
+var _markers: Array[TrialMarker] = []
+var _marker_done: Array[bool] = []
 var _altar: GateAltar
 var _elite_name: String = ""
 var _altar_report: float = 0.0
@@ -188,10 +194,12 @@ func _physics_process(delta: float) -> void:
 	if _state != State.FIELD:
 		return
 	_update_altar(delta)
+	_update_markers(delta)
+	_update_survive(delta)
 	_spawn_timer -= delta
 	if _spawn_timer <= 0.0:
 		var data := get_stage_data()
-		_spawn_timer = data.spawn_interval * randf_range(0.7, 1.2)
+		_spawn_timer = data.spawn_interval * randf_range(0.7, 1.2) * (SURVIVE_SPAWN_MULT if _is_surviving() else 1.0)
 		if get_tree().get_nodes_in_group(&"enemies").size() < get_max_alive():
 			_spawn_regular_enemy()
 
@@ -219,7 +227,15 @@ func is_final_stage(stage: int = -1) -> bool:
 
 
 func get_max_alive() -> int:
-	return get_stage_data().max_alive + int(GameManager.get_difficulty_info()["max_alive_bonus"])
+	var n := get_stage_data().max_alive + int(GameManager.get_difficulty_info()["max_alive_bonus"])
+	if _is_surviving():
+		n = roundi(n * SURVIVE_ALIVE_MULT)
+	return n
+
+
+## 버티기 시련 중 (몬스터가 더 많이 · 더 빨리)
+func _is_surviving() -> bool:
+	return gate_trial == GateTrial.SURVIVE and _state == State.FIELD and not boss_gate.is_open()
 
 
 func get_kill_progress() -> Vector2i:
@@ -368,9 +384,14 @@ func _setup_stage(stage: int) -> void:
 		_hidden_portal.enabled = false
 	_kills = 0
 	_kill_target = data.kill_target
-	gate_trial = gate_trial_for(stage)
+	trial_info = GateTrials.get_info(stage, GameManager.tutorial_mode)
+	gate_trial = trial_info["type"] as GateTrial
 	_trial_count = 0
 	_altar_progress = 0.0
+	_survive_time = 0.0
+	_marker_done.clear()
+	for i in trial_target():
+		_marker_done.append(false)
 	_elite_name = ""
 	_clear_trial_objects()
 	boss_gate.seal(_kills, _kill_target)
@@ -742,8 +763,8 @@ func _on_enemy_died(enemy: Enemy) -> void:
 			Sfx.play(&"core_break")
 			Fx.explosion(enemy, enemy.get_hit_center(), Color(0.8, 0.55, 1.0), 40.0, 3)
 			Fx.pillar(enemy, enemy.global_position, Color(0.8, 0.6, 1.0), 20.0, 120.0, 0.6)
-			if _trial_count < SEAL_CORE_COUNT:
-				Net.announce("봉인 코어 파괴! (%d / %d)" % [_trial_count, SEAL_CORE_COUNT], Color(0.85, 0.65, 1.0))
+			if _trial_count < trial_target():
+				Net.announce("%s 파괴! (%d / %d)" % [trial_info["object"], _trial_count, trial_target()], trial_info["color"])
 		elif enemy.has_meta(&"gate_elite"):
 			_trial_count = 1
 		else:
@@ -753,45 +774,67 @@ func _on_enemy_died(enemy: Enemy) -> void:
 			_unlock_boss_gate()
 
 
-## 보스방 해방 시련 (스테이지마다) — 1~2스테이지 · 튜토리얼은 처치, 그 뒤로는 네 가지가 돌아가며
+## 보스방 해방 시련 종류 (스테이지마다 컨셉에 맞게 — GateTrials) · 1~2스테이지 · 튜토리얼은 처치
 static func gate_trial_for(stage: int) -> GateTrial:
-	if stage <= 2 or GameManager.tutorial_mode:
-		return GateTrial.KILL
-	return [GateTrial.SEAL_CORES, GateTrial.ELITE, GateTrial.ALTAR, GateTrial.KILL][stage % 4]
+	return GateTrials.get_info(stage, GameManager.tutorial_mode)["type"] as GateTrial
+
+
+## 파괴 · 수집 · 점화: 몇 개
+func trial_target() -> int:
+	return maxi(1, int(trial_info["count"]))
+
+
+## 수호 · 버티기: 몇 초
+func trial_time() -> float:
+	return maxf(1.0, float(trial_info["time"]))
 
 
 func is_trial_complete() -> bool:
 	match gate_trial:
-		GateTrial.SEAL_CORES:
-			return _trial_count >= SEAL_CORE_COUNT
+		GateTrial.SEAL_CORES, GateTrial.COLLECT, GateTrial.IGNITE:
+			return _trial_count >= trial_target()
 		GateTrial.ELITE:
 			return _trial_count >= 1
 		GateTrial.ALTAR:
-			return _altar_progress >= ALTAR_TIME
+			return _altar_progress >= trial_time()
+		GateTrial.SURVIVE:
+			return _survive_time >= trial_time()
 	return _kills >= _kill_target
 
 
 ## 사냥터에 들어갈 때 안내 문구
 func get_trial_description() -> String:
+	var goal := String(trial_info["goal"])
+	var title := String(trial_info["title"])
 	match gate_trial:
-		GateTrial.SEAL_CORES:
-			return "보스방 해방 시련: 사냥터 곳곳의 봉인 코어 %d개를 부수세요" % SEAL_CORE_COUNT
+		GateTrial.SEAL_CORES, GateTrial.COLLECT, GateTrial.IGNITE:
+			return "보스방 해방 — %s: %s" % [title, goal % trial_target() if goal.contains("%d") else goal]
 		GateTrial.ELITE:
-			return "보스방 해방 시련: 정예 「%s」를 쓰러뜨리세요" % _elite_name if _elite_name != "" else "보스방 해방 시련: 정예를 쓰러뜨리세요"
-		GateTrial.ALTAR:
-			return "보스방 해방 시련: 정화 제단의 원 안에서 %d초 동안 버티세요" % roundi(ALTAR_TIME)
+			return "보스방 해방 — %s: %s" % [title, goal]
+		GateTrial.ALTAR, GateTrial.SURVIVE:
+			return "보스방 해방 — %s: %s" % [title, goal % roundi(trial_time()) if goal.contains("%d") else goal]
+	if goal != "":
+		return "보스방 해방 — %s: %s" % [title, goal % _kill_target if goal.contains("%d") else goal]
 	return "몬스터 %d마리를 처치하면 보스방이 열립니다" % _kill_target
 
 
-## HUD · 보스문에 보일 진행도 글 (예: 「봉인 코어 파괴 1 / 3」)
+## HUD · 보스문에 보일 진행도 글 (예: 「관 1 / 3」)
 func get_trial_progress_text() -> String:
 	match gate_trial:
 		GateTrial.SEAL_CORES:
-			return "봉인 코어 파괴 %d / %d" % [_trial_count, SEAL_CORE_COUNT]
+			return "%s 파괴 %d / %d" % [trial_info["object"], _trial_count, trial_target()]
+		GateTrial.COLLECT:
+			return "%s %d / %d" % [trial_info["object"], _trial_count, trial_target()]
+		GateTrial.IGNITE:
+			return "%s %d / %d" % [trial_info["object"], _trial_count, trial_target()]
 		GateTrial.ELITE:
-			return "정예 %s 처치 %d / 1" % ["「%s」" % _elite_name if _elite_name != "" else "", _trial_count]
+			return "%s 처치 %d / 1" % ["「%s」" % _elite_name if _elite_name != "" else String(trial_info["title"]), _trial_count]
 		GateTrial.ALTAR:
-			return "제단 정화 %d%%" % roundi(_altar_progress / ALTAR_TIME * 100.0)
+			return "%s %d%%" % [trial_info["object"], roundi(_altar_progress / trial_time() * 100.0)]
+		GateTrial.SURVIVE:
+			return "%s %d초 남음" % [trial_info["object"], ceili(trial_time() - _survive_time)]
+	if String(trial_info["goal"]) != "":
+		return "%s %d / %d" % [trial_info["title"], _kills, _kill_target]
 	return ""
 
 
@@ -799,17 +842,31 @@ func get_altar() -> GateAltar:
 	return _altar if is_instance_valid(_altar) else null
 
 
+## 수집 · 점화 자리 (아직 남은 것)
+func get_trial_markers() -> Array[TrialMarker]:
+	var result: Array[TrialMarker] = []
+	for m in _markers:
+		if is_instance_valid(m):
+			result.append(m)
+	return result
+
+
 func _report_trial_progress() -> void:
 	var text := get_trial_progress_text()
 	match gate_trial:
-		GateTrial.SEAL_CORES:
-			GameManager.set_kill_progress(_trial_count, SEAL_CORE_COUNT, text)
+		GateTrial.SEAL_CORES, GateTrial.COLLECT, GateTrial.IGNITE:
+			GameManager.set_kill_progress(_trial_count, trial_target(), text)
 		GateTrial.ELITE:
 			GameManager.set_kill_progress(_trial_count, 1, text)
 		GateTrial.ALTAR:
-			GameManager.set_kill_progress(roundi(_altar_progress / ALTAR_TIME * 100.0), 100, text)
+			GameManager.set_kill_progress(roundi(_altar_progress / trial_time() * 100.0), 100, text)
+		GateTrial.SURVIVE:
+			GameManager.set_kill_progress(roundi(_survive_time / trial_time() * 100.0), 100, text)
 		_:
-			GameManager.set_kill_progress(_kills, _kill_target)
+			if text != "":
+				GameManager.set_kill_progress(_kills, _kill_target, text)
+			else:
+				GameManager.set_kill_progress(_kills, _kill_target)
 	boss_gate.update_progress(_kills, _kill_target, text)
 
 
@@ -822,32 +879,138 @@ func _unlock_boss_gate() -> void:
 	if not GameManager.tutorial_mode:
 		Achievements.on_trial_cleared(gate_trial)
 	boss_gate.open()
-	Net.announce("%s 완료! 보스방의 봉인이 풀렸습니다 — 사냥터 북쪽의 문으로" % GATE_TRIAL_NAMES[gate_trial], Color(1.0, 0.55, 0.45))
+	Net.announce("「%s」 완료! 보스방의 봉인이 풀렸습니다 — 사냥터 북쪽의 문으로" % trial_info["title"], Color(1.0, 0.55, 0.45))
 
 
-## 사냥터에 시련 물건을 둠 (아직 남아 있는 것만 — 야영지에 다녀오면 부서진 코어 · 쓰러진 정예는 그대로)
+## 시련 물건 자리 (스테이지마다 같은 곳 — 야영지에 다녀와도 그대로). 북쪽 보스문 앞 · 남쪽 텔레포트 앞은 비움
+func _trial_spots(count: int) -> Array[Vector2]:
+	var arena := field_room.get_arena_rect()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7919 * GameManager.stage + 17
+	var result: Array[Vector2] = []
+	var min_gap := 0.26
+	for i in count:
+		var best := Vector2(0.5, 0.5)
+		for attempt in 40:
+			var p := Vector2(rng.randf_range(0.12, 0.88), rng.randf_range(0.2, 0.8))
+			if absf(p.x - 0.5) < 0.12 and (p.y < 0.3 or p.y > 0.72):
+				continue
+			best = p
+			if result.all(func(q: Vector2) -> bool: return ((q - arena.position) / arena.size).distance_to(p) >= min_gap):
+				break
+		result.append(arena.position + arena.size * best)
+		if i == 4:
+			min_gap = 0.2
+	return result
+
+
+## 사냥터에 시련 물건을 둠 (아직 남아 있는 것만 — 야영지에 다녀오면 부서진 것 · 주운 것 · 켠 것은 그대로)
 func _spawn_trial_objects() -> void:
 	var arena := field_room.get_arena_rect()
+	var color: Color = trial_info["color"]
 	match gate_trial:
 		GateTrial.SEAL_CORES:
-			var spots := [Vector2(0.18, 0.3), Vector2(0.82, 0.3), Vector2(0.5, 0.8)]
-			for i in range(_trial_count, SEAL_CORE_COUNT):
+			var spots := _trial_spots(trial_target())
+			var left := trial_target() - _trial_count
+			for i in range(trial_target() - left, trial_target()):
 				var core := SEAL_CORE_SCENE.instantiate() as BossPart
-				core.max_hp = maxi(1, roundi(_sample_mob_hp() * SEAL_CORE_HP_MOBS))
+				core.max_hp = maxi(1, roundi(_sample_mob_hp() * float(trial_info["hp"])))
+				core.display_name = String(trial_info["object"])
+				core.base_tint = color.lightened(0.2)
+				core.bar_color = color
 				core.set_meta(&"gate_core", true)
-				_add_enemy(core, arena.position + arena.size * spots[i], arena)
-				Fx.pillar(core, arena.position + arena.size * spots[i], Color(0.8, 0.55, 1.0), 16.0, 90.0, 0.6)
+				_add_enemy(core, spots[i], arena)
+				Fx.pillar(core, spots[i], color, 16.0, 90.0, 0.6)
 		GateTrial.ELITE:
 			if _trial_count < 1:
 				_spawn_elite(arena)
 		GateTrial.ALTAR:
 			if not is_instance_valid(_altar):
 				_altar = GateAltar.new()
+				_altar.color = color
 				_add_entity(_altar, arena.position + arena.size * Vector2(0.5, 0.55))
+		GateTrial.COLLECT, GateTrial.IGNITE:
+			_clear_markers()
+			var spots := _trial_spots(trial_target())
+			for i in trial_target():
+				if _marker_done[i] and gate_trial == GateTrial.COLLECT:
+					continue
+				var marker := TrialMarker.new()
+				marker.kind = TrialMarker.Kind.COLLECT if gate_trial == GateTrial.COLLECT else TrialMarker.Kind.IGNITE
+				marker.color = color
+				marker.index = i
+				marker.done = _marker_done[i]
+				_markers.append(marker)
+				_add_entity(marker, spots[i])
+
+
+## 수집 · 점화: 용사가 닿거나(수집) 원 안에 서 있으면(점화)
+func _update_markers(delta: float) -> void:
+	if not (gate_trial == GateTrial.COLLECT or gate_trial == GateTrial.IGNITE) or boss_gate.is_open():
+		return
+	var players := Player.get_all(get_tree()).filter(func(p: Player) -> bool: return not p.is_net_dead())
+	for marker in get_trial_markers():
+		if marker.done or not marker.is_inside_tree():
+			continue
+		var radius := TrialMarker.PICK_RADIUS if marker.kind == TrialMarker.Kind.COLLECT else TrialMarker.IGNITE_RADIUS
+		var near := players.any(func(p: Player) -> bool: return p.global_position.distance_to(marker.global_position) <= radius)
+		if marker.kind == TrialMarker.Kind.COLLECT:
+			if near:
+				_complete_marker(marker)
+		elif near:
+			marker.progress = minf(marker.progress + delta / IGNITE_TIME, 1.0)
+			if marker.progress >= 1.0:
+				_complete_marker(marker)
+		else:
+			marker.progress = maxf(marker.progress - delta / IGNITE_TIME * 0.5, 0.0)
+
+
+func _complete_marker(marker: TrialMarker) -> void:
+	marker.done = true
+	marker.progress = 1.0
+	_marker_done[marker.index] = true
+	_trial_count += 1
+	var color: Color = trial_info["color"]
+	if marker.kind == TrialMarker.Kind.COLLECT:
+		Sfx.play(&"item_pickup")
+		Fx.burst(marker, marker.global_position + Vector2(0, -8), color, 10, 30.0, 0.5, Vector2(0, -40))
+		_markers.erase(marker)
+		marker.queue_free()
+	else:
+		Sfx.play(&"guard_perfect", 0.8)
+		Fx.pillar(marker, marker.global_position, color, 14.0, 70.0, 0.5)
+	if _trial_count < trial_target():
+		Net.announce("%s (%d / %d)" % [trial_info["object"], _trial_count, trial_target()], color)
+	_report_trial_progress()
+	if is_trial_complete():
+		_unlock_boss_gate()
+
+
+## 버티기: 사냥터에서 살아 있는 동안 시간이 흐름
+func _update_survive(delta: float) -> void:
+	if not _is_surviving():
+		return
+	if Player.get_all(get_tree()).all(func(p: Player) -> bool: return p.is_net_dead()):
+		return
+	var before := ceili(trial_time() - _survive_time)
+	_survive_time = minf(_survive_time + delta, trial_time())
+	if ceili(trial_time() - _survive_time) != before:
+		_report_trial_progress()
+	if _survive_time >= trial_time():
+		_unlock_boss_gate()
+
+
+func _clear_markers() -> void:
+	for m in _markers:
+		if is_instance_valid(m):
+			m.queue_free()
+	_markers.clear()
 
 
 func _spawn_elite(arena: Rect2) -> void:
-	var scene := get_stage_data().pick_enemy_scene()
+	var scene := _find_stage_enemy_scene(String(trial_info["elite"]))
+	if scene == null:
+		scene = get_stage_data().pick_enemy_scene()
 	if scene == null:
 		_trial_count = 1
 		return
@@ -857,7 +1020,7 @@ func _spawn_elite(arena: Rect2) -> void:
 	elite.contact_damage = roundi(elite.contact_damage * ELITE_POWER)
 	elite.power *= ELITE_POWER
 	elite.item_drop_chance = 1.0
-	_elite_name = "정예 " + elite.display_name
+	_elite_name = String(trial_info["title"]) if String(trial_info["elite"]) != "" else "정예 " + elite.display_name
 	elite.display_name = _elite_name
 	elite.scale = Vector2.ONE * ELITE_SCALE
 	elite.base_tint = Color(1.25, 1.1, 0.75)
@@ -872,6 +1035,16 @@ func _spawn_elite(arena: Rect2) -> void:
 	Fx.pillar(elite, at, Color(1.0, 0.75, 0.3), 20.0, 110.0, 0.6)
 	Sfx.play(&"elite_roar")
 	_report_trial_progress()
+
+
+## 이 스테이지 몬스터 중 씬 파일 이름이 name 인 것 (정예로 쓸 몬스터)
+func _find_stage_enemy_scene(scene_name: String) -> PackedScene:
+	if scene_name == "":
+		return null
+	for scene in get_stage_data().enemy_scenes:
+		if scene != null and scene.resource_path.get_file().get_basename() == scene_name:
+			return scene
+	return null
 
 
 ## 이 스테이지 사냥터 몬스터 하나의 씬 체력 (난이도 · 딜 인플레는 _add_enemy 에서 함께 곱해짐)
@@ -895,9 +1068,20 @@ func _clear_trial_objects(keep_altar_fade: bool = false) -> void:
 		else:
 			_altar.queue_free()
 	_altar = null
+	for m in _markers:
+		if not is_instance_valid(m):
+			continue
+		if keep_altar_fade:
+			var tween := m.create_tween()
+			tween.tween_interval(1.2)
+			tween.tween_property(m, "modulate:a", 0.0, 0.8)
+			tween.tween_callback(m.queue_free)
+		else:
+			m.queue_free()
+	_markers.clear()
 
 
-## 제단 정화: 누군가 원 안에 있으면 차오름
+## 수호(제단 · 봉인진 …): 누군가 원 안에 있으면 차오름
 func _update_altar(delta: float) -> void:
 	if gate_trial != GateTrial.ALTAR or boss_gate.is_open() or not is_instance_valid(_altar):
 		return
@@ -907,13 +1091,13 @@ func _update_altar(delta: float) -> void:
 			inside = true
 	_altar.active = inside
 	if inside:
-		_altar_progress = minf(_altar_progress + delta, ALTAR_TIME)
+		_altar_progress = minf(_altar_progress + delta, trial_time())
 		_altar_report -= delta
-		if _altar_report <= 0.0 or _altar_progress >= ALTAR_TIME:
+		if _altar_report <= 0.0 or _altar_progress >= trial_time():
 			_altar_report = 0.25
 			_report_trial_progress()
-	_altar.progress = _altar_progress / ALTAR_TIME
-	if _altar_progress >= ALTAR_TIME:
+	_altar.progress = _altar_progress / trial_time()
+	if _altar_progress >= trial_time():
 		_unlock_boss_gate()
 
 

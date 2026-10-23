@@ -396,6 +396,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"use_potion"):
 		if _potion_cooldown_left <= 0.0 and GameManager.use_potion():
 			_potion_cooldown_left = potion_cooldown
+	elif event.is_action_pressed(&"potion_next"):
+		GameManager.cycle_potion()
+		Sfx.play_local(&"ui_click")
 	elif event.is_action_pressed(&"use_relic_flame") or event.is_action_pressed(&"use_relic_trumpet"):
 		for relic in GameManager.relics:
 			if event.is_action_pressed(relic.input_action):

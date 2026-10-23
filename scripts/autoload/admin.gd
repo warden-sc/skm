@@ -129,10 +129,9 @@ static func machine_code() -> String:
 
 
 func _steam_id_allowed() -> bool:
-	if DEV_STEAM_IDS.is_empty() or not Engine.has_singleton(&"Steam"):
+	if DEV_STEAM_IDS.is_empty() or not SteamApi.is_running():
 		return false
-	var steam_id := int(Engine.get_singleton(&"Steam").call(&"getSteamID"))
-	return DEV_STEAM_IDS.has(steam_id)
+	return DEV_STEAM_IDS.has(SteamApi.get_steam_id())
 
 
 ## 지금 운영자 기능을 쓸 수 있는지 (멀티플레이 참가자는 안 됨 — 방장만)
