@@ -78,7 +78,11 @@ func _ready() -> void:
 	notice_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	notice_edit.text_submitted.connect(func(_t: String) -> void: send_notice())
 	notice_row.add_child(notice_edit)
+	HangulInput.attach(notice_edit)
 	notice_row.add_child(_button("보내기", send_notice))
+	var hangul_toggle := HangulInput.make_toggle_button()
+	hangul_toggle.add_theme_font_size_override(&"font_size", 9)
+	notice_row.add_child(hangul_toggle)
 
 	box.add_child(HSeparator.new())
 	box.add_child(_label("개발자 강림 — 대사 (한 줄에 하나, 최대 %d줄 · 채팅창에도 남음)" % Admin.MAX_LINES, 9, SUB))
@@ -87,6 +91,7 @@ func _ready() -> void:
 	lines_edit.add_theme_font_size_override(&"font_size", 9)
 	lines_edit.text = "\n".join(PackedStringArray(Admin.preset.get("lines", [])))
 	box.add_child(lines_edit)
+	HangulInput.attach(lines_edit)
 	var flags := HBoxContainer.new()
 	box.add_child(flags)
 	heal_check = _check(flags, "체력 회복 · 부활", bool(Admin.preset.get("heal", false)))

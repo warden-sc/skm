@@ -231,6 +231,11 @@ func _test_admin(main: Node2D) -> void:
 	_check(not Chat.is_typing() and last.get("name", "") == _gm.hero_name and String(last.get("text", "")).begins_with("안녕하세요") and String(last["text"]).length() == Chat.MAX_CHARS
 		and last["kind"] == Chat.Kind.PLAYER, "[Enter] 보내기 → 「%s: …」 (%d자 제한)" % [_gm.hero_name, Chat.MAX_CHARS])
 	_check(Chat.send("/한 dkssudgktpdy") and Chat.get_last()["text"] == "안녕하세요", "채팅 「/한 dkssudgktpdy」 → 「안녕하세요」 (한글 입력기 대체)")
+	Chat.open()
+	(Chat._line.get_node("HangulInput") as HangulInput).type_keys("rkwk qhtmfmf whrwk")
+	_check(Chat._line.text == "가자 보스를 족자", "채팅 칸에서도 한글이 여러 글자 조합되어 들어감 「%s」" % Chat._line.text)
+	Chat._line.text = ""
+	Chat.close()
 	await _press_key(KEY_ENTER)
 	await _press_key(KEY_ESCAPE)
 	_check(not Chat.is_typing() and not get_tree().paused, "[Esc] → 채팅 취소 (설정창은 안 열림)")
@@ -4153,7 +4158,7 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 				player._invincible_left = 0.0
 				_gm.hp = _gm.max_hp
 				mc.take_damage(99999999, Vector2.ZERO, false, 999999)
-				var reflected_hp := _gm.max_hp - _gm.hp
+				var reflected_hp: int = _gm.max_hp - _gm.hp
 				_check(mc.hp == hp99b and mc.get_reflected() == 1 and mc.is_shielded() and not _gm.is_player_dead
 					and absf(reflected_hp - _gm.max_hp * mc.reflect_hp_ratio * (1.0 - _gm.get_damage_reduction())) <= 2.0,
 					"[기믹] 「누가 하나님과 같으랴」 — 방패 앞에서 때리면 막히고 반사 (아무리 세게 때려도 최대 체력의 %d%%만: %d)" % [roundi(mc.reflect_hp_ratio * 100), reflected_hp])
@@ -5206,6 +5211,24 @@ func _run() -> void:
 	name_edit.text = "fostmffht"
 	(title.find_child("HangulButton", true, false) as Button).pressed.emit()
 	_check(name_edit.text == "랜슬롯", "이름 칸 아래 [영문 자판 → 한글] 버튼 (한글 입력기가 말썽일 때)")
+	# 게임 안 한글 입력: 윈도우 한글 입력기 대신 게임이 자판 위치대로 직접 조합
+	HangulInput.set_korean(true)
+	name_edit.text = ""
+	name_edit.caret_column = 0
+	title._name_hangul.type_keys("fostmffh")
+	var mid := name_edit.text
+	title._name_hangul.type_keys("t")
+	var full := name_edit.text
+	title._name_hangul.type_keys("<")
+	var back := name_edit.text
+	title._name_hangul.type_keys("t gksrmf")
+	_check(mid == "랜슬로" and full == "랜슬롯" and back == "랜슬로" and name_edit.text == "랜슬롯 한글",
+		"이름 칸에서 한글이 여러 글자 들어감 — 치는 대로 조합 (랜슬로 → 랜슬롯, Backspace 는 자모 하나씩) 「%s」" % name_edit.text)
+	HangulInput.toggle()
+	title._name_hangul.type_keys("ab")
+	_check(not HangulInput.korean and name_edit.text == "랜슬롯 한글" and (title.find_child("HangulToggle", true, false) as Button).text == "영",
+		"한/영 바꾸기 (Shift+Space · 버튼) — 영문일 때는 그대로 영문 입력")
+	HangulInput.set_korean(true)
 	name_edit.text = "랜슬롯"
 	title.confirm_name()
 	_check(_gm.hero_name == "랜슬롯" and Profile.hero_name == "랜슬롯" and title.last_scene_request == title.MAIN_SCENE and _gm.tutorial_mode,
@@ -5854,8 +5877,8 @@ func _run() -> void:
 	_gm.use_potion()
 	_check(_gm.hp == _gm.max_hp and _gm.get_potion_count(&"potion") == 1, "회복 포션: 최대 체력의 %d%% 회복" % roundi(medium.heal_percent * 100.0))
 	var potion_slot := hud.get_node("%Hotbar").get_child(hud.get_node("%Hotbar").get_child_count() - 1)
-	var shown_own := _gm.get_potion_count(_gm.choose_potion().id)
-	var want_count := ("x%d/%d" % [shown_own, _gm.get_total_potions()]) if shown_own != _gm.get_total_potions() else "x%d" % shown_own
+	var shown_own: int = _gm.get_potion_count(_gm.choose_potion().id)
+	var want_count: String = ("x%d/%d" % [shown_own, _gm.get_total_potions()]) if shown_own != _gm.get_total_potions() else "x%d" % shown_own
 	_check((potion_slot.get_node("PotionCount") as Label).text == want_count and (potion_slot.get_node("PotionMode") as Label).text == "자동",
 		"HUD 포션 칸: 마실 포션 개수 / 전체 「%s」 · 「자동」" % want_count)
 

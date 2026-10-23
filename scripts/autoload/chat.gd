@@ -21,6 +21,7 @@ signal message_added(entry: Dictionary)
 var history: Array[Dictionary] = []
 var _box: VBoxContainer
 var _line: LineEdit
+var _line_row: HBoxContainer
 var _panel: PanelContainer
 var _last_sent: Dictionary = {}
 
@@ -51,13 +52,21 @@ func _ready() -> void:
 	_box.add_theme_constant_override(&"separation", 0)
 	_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(_box)
+	_line_row = HBoxContainer.new()
+	_line_row.visible = false
+	column.add_child(_line_row)
+	var toggle := HangulInput.make_toggle_button()
+	toggle.add_theme_font_size_override(&"font_size", 9)
+	_line_row.add_child(toggle)
 	_line = LineEdit.new()
-	_line.placeholder_text = "채팅 — [Enter] 보내기 · [Esc] 취소 · 「/한 dkssud」 → 안녕"
+	_line.placeholder_text = "채팅 — [Enter] 보내기 · [Esc] 취소 · 한/영: Shift+Space"
 	_line.add_theme_font_size_override(&"font_size", 9)
-	_line.max_length = 0  # 한글 입력기와 부딪히지 않게 제한은 보낼 때 자름
-	_line.visible = false
+	_line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_line.max_length = 0  # 한글 입력과 부딪히지 않게 제한은 보낼 때 자름
 	_line.text_submitted.connect(func(_t: String) -> void: submit())
-	column.add_child(_line)
+	_line_row.add_child(_line)
+	# 한글은 게임이 직접 조합 (윈도우 한글 입력기가 한 글자만 들어가는 문제를 피함)
+	HangulInput.attach(_line)
 	visible = false
 
 
@@ -97,7 +106,7 @@ func _input(event: InputEvent) -> void:
 
 
 func open() -> void:
-	_line.visible = true
+	_line_row.visible = true
 	_line.text = ""
 	_line.grab_focus()
 
@@ -106,12 +115,12 @@ func close() -> void:
 	if _line == null:
 		return
 	_line.release_focus()
-	_line.visible = false
+	_line_row.visible = false
 
 
 ## 채팅 입력 중 — 용사 조작을 막음 (Net.ui_blocks_input)
 func is_typing() -> bool:
-	return _line != null and _line.visible
+	return _line_row != null and _line_row.visible
 
 
 ## 입력창의 글 보내기

@@ -48,6 +48,8 @@ var _multi_panel: PanelContainer
 var _multi_connect: VBoxContainer
 var _multi_lobby: VBoxContainer
 var _ip_edit: LineEdit
+## 이름 칸의 게임 안 한글 입력 (테스트에서 씀)
+var _name_hangul: HangulInput
 var _multi_status: Label
 var _lobby_list: Label
 var _lobby_info: Label
@@ -531,16 +533,32 @@ func _add_version_label() -> void:
 
 
 ## 한글 입력기가 말썽일 때: 영문 자판으로 친 글자(gksrmf)를 한글(한글)로 바꾸는 버튼 — 이름 칸 바로 아래
+## 이름 칸: 한글은 게임이 직접 조합 (HangulInput — 윈도우 한글 입력기가 한 글자만 들어가는 문제를 피함)
+## 칸 오른쪽 「한/영」 버튼 · Shift+Space 로 바꿈. 아래 버튼은 이미 영문으로 친 글자를 한글로 바꿈
 func _add_hangul_button() -> void:
+	_name_hangul = HangulInput.attach(_hero_name_edit)
+	var row := HBoxContainer.new()
+	row.name = "HangulRow"
+	var toggle := HangulInput.make_toggle_button()
+	toggle.name = "HangulToggle"
+	toggle.add_theme_font_size_override(&"font_size", 10)
+	row.add_child(toggle)
+	var hint := Label.new()
+	hint.text = "← 한/영 (Shift+Space)"
+	hint.add_theme_font_size_override(&"font_size", 9)
+	hint.add_theme_color_override(&"font_color", Color(0.75, 0.75, 0.8))
+	row.add_child(hint)
 	var button := Button.new()
 	button.name = "HangulButton"
-	button.text = "영문 자판으로 친 글자 → 한글  (예: dydtk → 용사)"
+	button.text = "영문 → 한글 (dydtk → 용사)"
 	button.add_theme_font_size_override(&"font_size", 9)
-	button.tooltip_text = "한글이 한 글자만 들어가면: 한/영 키를 영문으로 두고 한글 자리대로 친 뒤 이 버튼"
+	button.tooltip_text = "이미 영문 자판으로 친 글자를 한글로 바꿈"
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL | Control.SIZE_SHRINK_END
 	button.pressed.connect(convert_name_to_hangul)
-	var confirm := %NameConfirmButton as Button
-	confirm.get_parent().add_child(button)
-	confirm.get_parent().move_child(button, confirm.get_index())
+	row.add_child(button)
+	var box := _hero_name_edit.get_parent()
+	box.add_child(row)
+	box.move_child(row, _hero_name_edit.get_index() + 1)
 
 
 func convert_name_to_hangul() -> void:
