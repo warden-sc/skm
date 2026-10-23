@@ -106,6 +106,7 @@ func open(shop_name: String, stock_ids: Array) -> void:
 	_detail.text = "장비에 마우스를 올리면 상세 정보가 표시됩니다.  장착 중인 장비는 인벤토리[Tab]에서 해제한 뒤 팔 수 있습니다."
 	_refresh()
 	show()
+	Sfx.play_local(&"inventory_open")
 	Net.pause_tree(get_tree(), true)
 
 
@@ -113,6 +114,7 @@ func close() -> void:
 	if not visible:
 		return
 	hide()
+	Sfx.play_local(&"inventory_close")
 	Net.pause_tree(get_tree(), false)
 
 
@@ -189,16 +191,20 @@ func _show_detail(item: ItemData, locked: bool) -> void:
 
 func _on_buy_pressed(item: ItemData) -> void:
 	if GameManager.buy_item(item):
+		Sfx.play_local(&"shop_buy")
 		GameManager.show_notice("구매 완료: %s" % item.display_name, item.get_rarity_color())
 	else:
+		Sfx.play_local(&"denied")
 		GameManager.show_notice("골드가 부족합니다!", Color(1.0, 0.5, 0.5))
 
 
 func _on_equip_pressed(item: ItemData) -> void:
 	GameManager.equip_item(item)
+	Sfx.play_equip(item)
 
 
 func _on_sell_pressed(item: ItemData) -> void:
 	var gained := GameManager.sell_item(item)
 	if gained > 0:
+		Sfx.play_local(&"shop_buy")
 		GameManager.show_notice("판매: %s  +%dG" % [item.display_name, gained], Color(1.0, 0.85, 0.3))

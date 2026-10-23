@@ -45,6 +45,7 @@ func _interact() -> void:
 	_is_opened = true
 	set_enabled(false)
 	_sprite.texture = open_texture
+	Sfx.play(&"chest_open")
 	_glow.modulate.a = 0.9
 	create_tween().tween_property(_glow, "modulate:a", 0.0, 1.2)
 	Fx.explosion(self, _sprite.global_position, Color(1.0, 0.85, 0.4), 30.0, 2, Vector2(0, -60))

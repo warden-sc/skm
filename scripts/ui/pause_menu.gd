@@ -56,6 +56,7 @@ func open() -> void:
 	_refresh_save_button()
 	_show_main()
 	show()
+	Sfx.play_local(&"menu_open")
 	Net.pause_tree(get_tree(), true)
 	(_main_box.get_child(1) as Button).grab_focus()
 
@@ -64,6 +65,7 @@ func close() -> void:
 	if not visible:
 		return
 	hide()
+	Sfx.play_local(&"menu_close")
 	Net.pause_tree(get_tree(), false)
 
 

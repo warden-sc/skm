@@ -282,6 +282,59 @@ func _test_bgm(main: Node2D) -> void:
 	await _frames(3)
 
 
+
+## 효과음: 파일 · 무작위 변형 · 상황별로 나는지 · 너무 잦으면 한 번만
+func _test_sfx(main: Node2D) -> void:
+	print("[효과음]")
+	var stage := main.get_node("StageManager") as StageManager
+	var player := main.get_node("Entities/Player") as Player
+	var names := [&"ui_click", &"menu_open", &"menu_close", &"inventory_open", &"inventory_close", &"dialogue_next", &"denied",
+		&"gold_pickup", &"item_pickup", &"item_drop", &"equip_weapon", &"equip_armor", &"shop_buy", &"footstep", &"chest_open",
+		&"gate_open", &"teleport", &"hit", &"hit_crit", &"boss_hit", &"enemy_death", &"boss_death", &"guard_block",
+		&"guard_perfect", &"guard_break", &"player_hurt", &"skill_cast"]
+	_check(names.all(func(n: StringName) -> bool: return not Sfx._variants(n).is_empty()) and Sfx.has_sounds(), "효과음 %d 가지 모두 파일이 있음" % names.size())
+	_check(Sfx._variants(&"hit").size() == 5 and Sfx._variants(&"footstep").size() == 3 and Sfx._variants(&"enemy_death").size() == 3,
+		"같은 상황의 다른 소리: 타격 5 · 발소리 3 · 처치 3 (무작위)")
+	Sfx.history.clear()
+	Sfx._last_time.clear()
+	Sfx.play_local(&"hit")
+	Sfx.play_local(&"hit")
+	_check(Sfx.history.count(&"hit") == 1, "같은 소리를 한꺼번에 여러 번 → 한 번만")
+	Sfx._last_time.clear()
+	var arena := stage.field_room.get_arena_rect() if stage.field_room != null else Rect2(player.global_position - Vector2(200, 200), Vector2(400, 400))
+	var mob := (load("res://scenes/enemies/slime.tscn") as PackedScene).instantiate() as Enemy
+	stage._add_enemy(mob, player.global_position + Vector2(120, 0), arena)
+	await _frames(2)
+	mob.take_damage(1)
+	_check(Sfx.last_played == &"hit", "몬스터를 때림 → 타격음")
+	Sfx._last_time.clear()
+	mob.take_damage(1, Vector2.ZERO, true)
+	_check(Sfx.last_played == &"hit_crit", "치명타 → 치명타 타격음")
+	mob.take_damage(999999999)
+	_check(Sfx.history.has(&"enemy_death"), "몬스터 처치 → 처치음")
+	Sfx.history.clear()
+	GameManager.boss_defeated.emit()
+	_check(Sfx.history.has(&"boss_death"), "보스 토벌 → 보스 처치음")
+	Pickup.receive(Pickup.Kind.GOLD, 1, null)
+	_check(Sfx.history.has(&"gold_pickup"), "골드 줍기 → 동전 소리")
+	var inventory := main.get_node("InventoryUI") as InventoryUI
+	inventory.open()
+	inventory.close()
+	_check(Sfx.history.has(&"inventory_open") and Sfx.history.has(&"inventory_close"), "인벤토리 열기 · 닫기 소리")
+	var button := Button.new()
+	main.add_child(button)
+	Sfx._last_time.clear()
+	button.pressed.emit()
+	_check(Sfx.last_played == &"ui_click", "화면의 버튼을 누르면 딸깍")
+	button.queue_free()
+	for p in Sfx._players:
+		p.stop()
+	Profile.set_setting("sfx_volume", 0.0)
+	Sfx._last_time.clear()
+	Sfx.play_local(&"hit")
+	_check(Sfx._players.all(func(p: AudioStreamPlayer) -> bool: return not p.playing), "설정 효과음 0% → 소리 없음")
+	Profile.set_setting("sfx_volume", 0.8)
+
 ## 보스방 해방 시련: 봉인 코어 · 정예 · 제단 (스테이지 4 · 5 · 6)
 func _test_gate_trials(main: Node2D) -> void:
 	print("[보스방 해방 시련 · 문이 열리는 연출]")
@@ -6402,6 +6455,8 @@ func _run() -> void:
 	await _test_admin(main)
 
 	await _test_bgm(main)
+
+	await _test_sfx(main)
 
 	print("[난이도 배율]")
 	_gm.difficulty = _gm.Difficulty.VERY_HARD

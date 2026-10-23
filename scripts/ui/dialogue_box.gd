@@ -199,6 +199,7 @@ func advance() -> void:
 		_text.visible_characters = -1
 		return
 	_index += 1
+	Sfx.play_local(&"dialogue_next")
 	if _index >= _lines.size():
 		_finish()
 	else:

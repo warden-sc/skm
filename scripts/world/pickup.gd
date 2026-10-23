@@ -160,13 +160,16 @@ func _collect(collector: Player) -> void:
 static func receive(pickup_kind: Kind, gold: int, picked: ItemData) -> void:
 	match pickup_kind:
 		Kind.GOLD:
+			Sfx.play_local(&"gold_pickup")
 			GameManager.add_gold(gold)
 		Kind.ITEM:
 			if picked == null:
 				pass
 			elif GameManager.add_item(picked):
+				Sfx.play_local(&"item_pickup")
 				GameManager.show_notice("획득: %s  (Tab: 인벤토리에서 장착)" % picked.display_name, picked.get_rarity_color())
 			else:
 				var value := picked.get_sell_value()
+				Sfx.play_local(&"gold_pickup")
 				GameManager.add_gold(value)
 				GameManager.show_notice("이미 가진 장비 %s → +%dG" % [picked.display_name, value], Color(1.0, 0.85, 0.3))

@@ -88,6 +88,8 @@ var _dash_direction: Vector2 = Vector2.RIGHT
 var _ghost_timer: float = 0.0
 var _invincible_left: float = 0.0
 var _anim_time: float = 0.0
+## 다음 발소리까지 (초)
+var _step_left: float = 0.0
 var _shake_strength: float = 0.0
 ## 카메라를 잠깐 다른 곳으로 옮겨 보여 줄 때 (보스방 문이 열리는 장면)
 var _focus_offset: Vector2 = Vector2.ZERO
@@ -373,7 +375,19 @@ func _physics_process(delta: float) -> void:
 	velocity += push
 	move_and_slide()
 	velocity -= push
+	_update_footsteps(delta)
 	_update_visuals(delta)
+
+
+## 걷는 동안 발소리 (이 컴퓨터의 용사만, 대시 중에는 없음)
+func _update_footsteps(delta: float) -> void:
+	if velocity.length() < 25.0 or is_dashing():
+		_step_left = minf(_step_left, 0.08)
+		return
+	_step_left -= delta
+	if _step_left <= 0.0:
+		_step_left = 0.32
+		Sfx.play_local(&"footstep")
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -1160,6 +1174,7 @@ func take_unblockable_hit(amount: int, from_position: Vector2, dodgeable: bool =
 	_invincible_left = invincible_time
 	velocity = -hit_dir * hit_knockback * 1.8
 	shake_camera(6.0)
+	Sfx.play_local(&"player_hurt")
 	GameManager.damage_player(maxi(amount, 1))
 	return HitResult.DAMAGED
 
@@ -1212,6 +1227,7 @@ func get_net_status() -> Dictionary:
 func _apply_damage(amount: int) -> void:
 	if amount <= 0:
 		return
+	Sfx.play_local(&"player_hurt")
 	# 방패 + 투구 방어력 (최소 1은 들어감) · 한 방 상한 (난이도별 최대 체력의 35~75%)
 	GameManager.damage_player(mini(maxi(1, amount - get_effective_defense()), GameManager.get_hit_cap()))
 
@@ -1221,6 +1237,7 @@ func _on_blocked(leftover_damage: int, hit_dir: Vector2, attacker: Enemy) -> voi
 	if attacker != null:
 		attacker.apply_knockback(hit_dir * block_push_force)
 	shake_camera(1.5)
+	Sfx.play_local(&"guard_block")
 	if leftover_damage > 0:
 		_apply_damage(leftover_damage)
 	else:
@@ -1232,6 +1249,7 @@ func _on_parried(attacker: Enemy) -> void:
 		attacker.apply_knockback(global_position.direction_to(attacker.global_position) * block_push_force * 1.5)
 		attacker.stun(parry_stun_time)
 	shake_camera(3.0)
+	Sfx.play_local(&"guard_perfect")
 	FloatingText.spawn(self, global_position + Vector2(0, -18), "PERFECT!", Color(0.5, 1.0, 1.0), true)
 	_shield_sprite.self_modulate = Color(3.0, 3.0, 3.0)
 	create_tween().tween_property(_shield_sprite, "self_modulate", Color.WHITE, 0.25)
@@ -1491,6 +1509,7 @@ func _on_potion_used(potion: PotionData, healed: int) -> void:
 
 func _on_guard_broken() -> void:
 	shake_camera(5.0)
+	Sfx.play_local(&"guard_break")
 	FloatingText.spawn(self, global_position + Vector2(0, -18), "가드 브레이크!", Color(1.0, 0.4, 0.4), true)
 
 

@@ -1380,7 +1380,7 @@ func _fx(fx_name: StringName, args: Array) -> void:
 		&"screen_tint":
 			Fx.screen_tint(m, args[0], args[1])
 		&"sfx":
-			Sfx.play(StringName(args[0]), float(args[1]))
+			Sfx.play_remote(StringName(args[0]), float(args[1]))
 		&"gate_cinematic":
 			var me := _local_player()
 			if me != null:

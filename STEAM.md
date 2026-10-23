@@ -9,8 +9,8 @@
 | --- | --- | --- |
 | 업적 11개 | `scripts/autoload/achievements.gd` | 달성 시 화면 알림 + `user://profile.cfg` 기록. `Engine.has_singleton("Steam")` 이면 `Steam.setAchievement(id)` · `storeStats()` 도 호출 |
 | 버전 표기 | `project.godot` `config/version` · 타이틀 오른쪽 아래 · `export_presets.cfg` file/product_version | 스팀 빌드를 올릴 때마다 함께 올림 |
-| 효과음 자리 | `scripts/autoload/sfx.gd` | 지금은 소리 없음 — 파일을 넣으면 그 자리에서 나오고 설정에 음량도 나타남 |
-| 설정 저장 | `user://profile.cfg` | 화면 흔들림 · 전체 화면 · 대사 · 음성 채팅 (효과음 음량은 소리를 넣으면) |
+| 효과음 | `scripts/autoload/sfx.gd` · `assets/audio/sfx/` | 27가지 상황 43개 (Kenney CC0 — 크레딧 표기 의무 없음, README 「효과음」) |
+| 설정 저장 | `user://profile.cfg` | 화면 흔들림 · 전체 화면 · 대사 · 음성 채팅 · 음량 4가지 |
 | 난이도 3단계 + 한 방 상한 | `GameManager.DIFFICULTY_INFO` | 처음 하는 사람도 끝까지 갈 수 있게 노멀을 낮춤 |
 | Windows 빌드 | `export_presets.cfg` "Windows Desktop" | 스팀 기본 대상 — **이 설정으로만 업로드** |
 | 운영자 모드 분리 | `scripts/autoload/admin.gd` · "Windows (운영자)" 설정 | 개발자용 빌드(`admin_build`)에서만, 그것도 운영자 키 · 개발자 스팀 ID 가 맞을 때만. 켜져 있으면 업적 없음 |
@@ -47,4 +47,4 @@
 7. **스팀 클라우드** — `user://save.json` · `user://profile.cfg` 를 자동 클라우드(스팀웍스 설정만으로 가능)에 등록
 8. **스팀 덱** — 게임패드 조작(지금은 키보드 + 마우스 전용), 1280×800 화면 확인
 9. **운영자 모드** — 개발자 스팀 ID(64비트)를 `Admin.DEV_STEAM_IDS` 에. 스팀에 올리는 빌드는 반드시 「Windows Desktop」 설정 (「Windows (운영자)」 빌드는 올리지 말 것)
-10. **콘텐츠 마감** — 배경음악 · 타격음 · 효과음 전체, 영어 번역(지금은 한국어만), 실제 사람의 플레이 테스트로 밸런스 확인
+10. **콘텐츠 마감** — 짧은 효과 음악(징글), 영어 번역(지금은 한국어만), 실제 사람의 플레이 테스트로 밸런스 확인

@@ -51,6 +51,7 @@ func open() -> void:
 	_detail.text = "장비에 마우스를 올리면 상세 정보가 표시됩니다."
 	_refresh()
 	show()
+	Sfx.play_local(&"inventory_open")
 	Net.pause_tree(get_tree(), true)
 
 
@@ -58,6 +59,7 @@ func close() -> void:
 	if not visible:
 		return
 	hide()
+	Sfx.play_local(&"inventory_close")
 	Net.pause_tree(get_tree(), false)
 
 
@@ -196,6 +198,7 @@ func _show_detail(item: ItemData) -> void:
 
 func _on_equip_pressed(item: ItemData) -> void:
 	GameManager.equip_item(item)
+	Sfx.play_equip(item)
 
 
 ## 버리기: 용사 발밑에 떨어뜨림
@@ -208,7 +211,8 @@ func drop(item: ItemData) -> bool:
 
 
 func _on_drop_pressed(item: ItemData) -> void:
-	drop(item)
+	if drop(item):
+		Sfx.play_local(&"item_drop")
 
 
 func _on_use_potion_pressed(potion: PotionData) -> void:
@@ -222,3 +226,4 @@ func _on_use_relic_pressed(relic: RelicData) -> void:
 
 func _on_unequip_pressed(item: ItemData) -> void:
 	GameManager.unequip_item(item)
+	Sfx.play_local(&"equip_armor")

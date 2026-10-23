@@ -105,6 +105,7 @@ func use_skill(weapon: WeaponData = null) -> bool:
 	if not WeaponSkills.cast(player, weapon):
 		return false
 	GameManager.start_skill_cooldown(weapon)
+	Sfx.play_local(&"skill_cast")
 	_cooldown_left = maxf(_cooldown_left, weapon.attack_cooldown)
 	player.show_skill_name(weapon)
 	GameManager.report_player_attacked(weapon, player.get_aim_direction())

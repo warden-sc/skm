@@ -289,6 +289,7 @@ func go_to_stage(stage: int) -> void:
 
 
 func _travel(action: Callable) -> void:
+	Sfx.play(&"teleport")
 	if instant_travel or screen_fade == null:
 		action.call()
 	elif not screen_fade.is_busy():

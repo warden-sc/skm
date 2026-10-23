@@ -523,6 +523,10 @@ func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool =
 
 	if hp == 0:
 		_die()
+	elif is_boss:
+		Sfx.play(&"boss_hit")
+	else:
+		Sfx.play(&"hit_crit" if is_crit else &"hit")
 
 
 ## 드랍/시그널 없이 조용히 제거 (스테이지 정리용)
@@ -546,6 +550,8 @@ func _die() -> void:
 	# 충돌 콜백 안에서 호출될 수 있으므로 반드시 deferred
 	set_deferred(&"monitoring", false)
 	set_deferred(&"monitorable", false)
+	if not is_boss and not net_mirror:
+		Sfx.play(&"enemy_death")  # 보스는 GameManager.boss_defeated 때 boss_death
 	died.emit(self)
 	var tween := create_tween()
 	tween.set_parallel(true)
