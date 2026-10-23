@@ -212,6 +212,8 @@ func _test_admin(main: Node2D) -> void:
 	await _frames(2)
 	await _press_key(KEY_ENTER)
 	_check(Chat.is_typing() and Net.ui_blocks_input(), "[Enter] → 채팅 입력 (그동안 용사 조작 막힘)")
+	player.velocity = Vector2.ZERO  # 앞 테스트(운영자 스킬 등)에서 남은 밀림은 빼고 입력만 봄
+	await _frames(2)
 	var pos_before := player.global_position
 	Input.action_press(&"move_right")
 	await _frames(20)
