@@ -81,6 +81,7 @@ func _press_key(keycode: Key, ctrl: bool = false, shift: bool = false) -> void:
 
 func _test_admin(main: Node2D) -> void:
 	print("[운영자 모드 (개발자 수동 개입)]")
+	Sfx.history.clear()
 	var stage := main.get_node("StageManager") as StageManager
 	var player := main.get_node("Entities/Player") as Player
 	var cfg := ConfigFile.new()
@@ -181,7 +182,7 @@ func _test_admin(main: Node2D) -> void:
 		"blessing": {"attack": 200.0, "max_hp": 50.0, "defense": 100.0, "reduction": 50.0, "time": 45.0}}),
 		"Ctrl+Shift+D / 패널 → 개발자 강림 시작")
 	await _frames(30)
-	_check(get_tree().get_nodes_in_group(&"admin_developer").size() == 1 and Sfx.last_played == &"descent", "하늘에서 빛기둥이 내리꽂히며 개발자 등장 (효과음)")
+	_check(get_tree().get_nodes_in_group(&"admin_developer").size() == 1 and Sfx.history.has(&"descent"), "하늘에서 빛기둥이 내리꽂히며 개발자 등장 (효과음)")
 	await _frames(90)
 	var box := Story.get_box()
 	_check(Story.is_playing() and box != null and box.current_line().get("name", "") == Admin.DEV_NAME and box.current_portrait() == Admin.DEV_TEXTURE,
@@ -197,7 +198,7 @@ func _test_admin(main: Node2D) -> void:
 		"운영자의 가호 (직접 정한 수치): 공격 +200%% · 최대 체력 %d → %d · 방어 %d → %d · 받는 피해 -%d%%" % [max_hp_before, _gm.max_hp, defense_before, _gm.get_total_defense(), roundi(_gm.get_damage_reduction() * 100)])
 	_check(_gm.is_invincible(), "개발자의 보호막: 무적")
 	await _frames(150)
-	_check(get_tree().get_nodes_in_group(&"admin_developer").is_empty() and not Admin.descent_active and Sfx.last_played == &"ascend", "역 빛기둥을 타고 퇴장")
+	_check(get_tree().get_nodes_in_group(&"admin_developer").is_empty() and not Admin.descent_active and Sfx.history.has(&"ascend"), "역 빛기둥을 타고 퇴장")
 	# 운영자 장비 · 드랍 전용 · 신화 아이템도 선물
 	Admin.apply_gifts(Admin.sanitize({"item": "admin_bow"}))
 	Admin.apply_gifts(Admin.sanitize({"item": "goblin_dagger"}))
