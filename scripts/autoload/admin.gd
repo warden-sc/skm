@@ -95,7 +95,7 @@ static func is_build_allowed() -> bool:
 
 
 func key_matches(key: String) -> bool:
-	key = key.strip_edges()
+	key = key.replace("\ufeff", "").strip_edges()  # 메모장이 붙이는 BOM 은 빼고
 	return key != "" and key.sha256_text() == key_hash
 
 
@@ -120,7 +120,19 @@ func refresh_authorization() -> void:
 			_layer = null
 			_badge = null
 			_panel = null
-	set_process_input(authorized)
+	# 에디터 · 운영자 빌드에서만 단축키를 봄 (권한이 없으면 출력 창에 이유만 — 화면에는 아무것도 안 나옴)
+	set_process_input(is_build_allowed())
+
+
+## 권한이 없을 때 왜 없는지 (에디터 · 운영자 빌드의 출력 창에만)
+func explain_denied() -> String:
+	if not is_build_allowed():
+		return "이 빌드는 운영자 기능이 없는 일반 빌드입니다 (운영자 빌드는 run_admin.bat 로 실행)"
+	if auth_source == "" and not DEV_MACHINE_CODES.is_empty():
+		return "이 PC 코드(%s)가 DEV_MACHINE_CODES 에 없습니다" % machine_code()
+	return "운영자 키를 찾지 못했습니다 — 환경변수 %s 또는 %s (%s) 에 키 한 줄. 스팀 ID: %s" % [
+		ENV_KEY, KEY_FILE, ProjectSettings.globalize_path(KEY_FILE),
+		("연결됨 %d (DEV_STEAM_IDS 에 없음)" % SteamApi.get_steam_id()) if SteamApi.is_running() else "스팀 연결 안 됨"]
 
 
 ## 이 PC 를 나타내는 코드 (기기 고유 id 의 해시 앞 16자 — 기기 id 자체는 드러나지 않음)
@@ -141,21 +153,28 @@ func can_act() -> bool:
 
 # ============================================================ 모드
 func _input(event: InputEvent) -> void:
-	if not authorized:
-		return
 	var key := event as InputEventKey
 	if key == null or not key.pressed or key.echo:
 		return
 	var combo := key.ctrl_pressed and key.shift_pressed
-	if combo and key.keycode == KEY_A:
+	if not authorized:
+		if combo and _is_key(key, KEY_A):
+			print("[Admin] 운영자 모드를 켤 수 없음: ", explain_denied())
+		return
+	if combo and _is_key(key, KEY_A):
 		set_enabled(not enabled)
-	elif enabled and key.keycode == KEY_F11:
+	elif enabled and _is_key(key, KEY_F11):
 		toggle_panel()
-	elif enabled and combo and key.keycode == KEY_D:
+	elif enabled and combo and _is_key(key, KEY_D):
 		descend(preset)
 	else:
 		return
 	get_viewport().set_input_as_handled()
+
+
+## 한글 입력 상태 · 다른 자판에서도 같은 자리의 키면 인정
+static func _is_key(key: InputEventKey, code: Key) -> bool:
+	return key.keycode == code or key.physical_keycode == code
 
 
 ## 운영자 모드 켜기 / 끄기. 권한이 없거나 멀티플레이 참가자면 켜지지 않음

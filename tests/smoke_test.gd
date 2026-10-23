@@ -109,6 +109,11 @@ func _test_admin(main: Node2D) -> void:
 	Admin.refresh_authorization()
 	_check(Admin.authorized and Admin.auth_source in ["env", "file"] and not Admin.enabled, "맞는 키(환경변수) → 권한 있음, 그래도 처음엔 일반 플레이어 모드")
 	_check(Admin.machine_code().length() == 16 and Admin.DEV_MACHINE_CODES.is_empty(), "이 PC 코드 %s (DEV_MACHINE_CODES 에 넣으면 그 PC 에서만)" % Admin.machine_code())
+	var hangul_a := InputEventKey.new()
+	hangul_a.keycode = KEY_NONE
+	hangul_a.physical_keycode = KEY_A
+	_check(Admin.key_matches("\ufeffsmoke-test-key\r\n") and Admin._is_key(hangul_a, KEY_A) and Admin.explain_denied().contains(Admin.ENV_KEY),
+		"메모장 BOM · 줄바꿈이 붙은 키도 인정 · 한글 자판에서도 Ctrl+Shift+A (같은 자리 키) · 권한 없을 때 이유는 출력 창에")
 	stage.instant_travel = true
 	stage.go_to_stage(3)
 	await _frames(3)

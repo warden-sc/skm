@@ -24,7 +24,7 @@ func _ready() -> void:
 	var result: Variant = _init_steam()
 	var ok := result is Dictionary and int((result as Dictionary).get("status", 1)) == 0
 	_running = ok
-	status_text = "스팀 연결됨 (%s)" % get_persona_name() if ok else "스팀 연결 실패: %s" % (str((result as Dictionary).get("verbal", result)) if result is Dictionary else str(result))
+	status_text = "스팀 연결됨 (%s · 스팀 ID %d)" % [get_persona_name(), int(_steam.call(&"getSteamID"))] if ok else "스팀 연결 실패: %s" % (str((result as Dictionary).get("verbal", result)) if result is Dictionary else str(result))
 	print("[SteamApi] ", status_text)
 	set_process(ok)
 
