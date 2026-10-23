@@ -4151,9 +4151,12 @@ func _test_late_stages(main: Node2D, first: int = 11) -> Enemy:
 				mc.raise_shield()
 				var hp99b := mc.hp
 				player._invincible_left = 0.0
-				_gm.hp = 9999
-				mc.take_damage(1000, Vector2.ZERO, false, 999999)
-				_check(mc.hp == hp99b and mc.get_reflected() == 1 and mc.is_shielded(), "[기믹] 「누가 하나님과 같으랴」 — 방패 앞에서 때리면 막히고 반사됨")
+				_gm.hp = _gm.max_hp
+				mc.take_damage(99999999, Vector2.ZERO, false, 999999)
+				var reflected_hp := _gm.max_hp - _gm.hp
+				_check(mc.hp == hp99b and mc.get_reflected() == 1 and mc.is_shielded() and not _gm.is_player_dead
+					and absf(reflected_hp - _gm.max_hp * mc.reflect_hp_ratio * (1.0 - _gm.get_damage_reduction())) <= 2.0,
+					"[기믹] 「누가 하나님과 같으랴」 — 방패 앞에서 때리면 막히고 반사 (아무리 세게 때려도 최대 체력의 %d%%만: %d)" % [roundi(mc.reflect_hp_ratio * 100), reflected_hp])
 				_gm.hp = _gm.max_hp
 				player._invincible_left = 1.0
 				player.global_position = mc.get_hit_center() - mc.shield_dir * 70.0

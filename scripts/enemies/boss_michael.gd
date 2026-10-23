@@ -9,7 +9,8 @@ extends PatternBoss
 ## [기믹] 하늘의 전쟁: 보스방 둘레를 붉은 용이 날며 breath_interval 초마다 플레이어 쪽으로 불길을 뿜음 (불길 길이 미리 보임)
 ##   불길이 미카엘을 덮치면 미카엘이 최대 체력의 dragon_hit_ratio 피해를 입고 잠깐 휘청 → 불길 길 위로 미카엘을 끌어들이기
 ## [기믹] 「누가 하나님과 같으랴」: shield_interval 초마다 빛나는 방패를 shield_time 초 동안 듦 (그동안 움직이지 않음)
-##   방패 앞쪽에서 들어온 공격은 막히고 피해의 reflect_ratio 만큼 반사됨 — 옆이나 뒤로 돌아가 때리기
+##   방패 앞쪽에서 들어온 공격은 막히고 반사됨 — 용사의 최대 체력의 reflect_hp_ratio 피해 (reflect_cooldown 초에 한 번).
+##   때린 피해에 비례하면 강한 장비일수록 한 방에 죽어서, 용사 체력 기준으로 고정. 옆이나 뒤로 돌아가 때리기
 
 enum Pattern { SWORD, JUDGEMENT, SPEARS, SUMMON }
 
@@ -23,7 +24,8 @@ enum Pattern { SWORD, JUDGEMENT, SPEARS, SUMMON }
 @export var dragon_hit_ratio: float = 0.035
 @export var shield_interval: float = 12.0
 @export var shield_time: float = 4.0
-@export var reflect_ratio: float = 0.3
+@export var reflect_hp_ratio: float = 0.12
+@export var reflect_cooldown: float = 0.6
 
 var dragon: FieldProp
 var shield_dir: Vector2 = Vector2.DOWN
@@ -129,9 +131,9 @@ func take_damage(amount: int, knockback: Vector2 = Vector2.ZERO, is_crit: bool =
 	if amount > 0 and is_shielded() and has_target() and is_in_front(_player.global_position):
 		_hit_flash = 0.05
 		if _reflect_cd <= 0.0:
-			_reflect_cd = 0.3
+			_reflect_cd = reflect_cooldown
 			_reflected += 1
-			_player.take_unblockable_hit(maxi(1, roundi(amount * reflect_ratio)), global_position, false)
+			_player.take_unblockable_hit(maxi(1, roundi(GameManager.max_hp * reflect_hp_ratio)), global_position, false)
 			FloatingText.spawn(self, global_position + Vector2(0, -46), "반사!", Color(1.0, 0.95, 0.6))
 		return
 	super.take_damage(amount, knockback, is_crit, armor_pen)
