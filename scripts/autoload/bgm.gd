@@ -1,5 +1,5 @@
 extends Node
-## 배경음 (오토로드 Bgm) — 사냥터 16곡 · 보스 7곡 (Suno 유료 플랜으로 제작, docs/SUNO_PROMPTS.md).
+## 배경음 (오토로드 Bgm) — 사냥터 16곡 · 보스 7곡 · 야영지 3곡 · 타이틀 1곡 (Suno 유료 플랜으로 제작, docs/SUNO_PROMPTS.md).
 ## 지금 있는 곳(GameManager 의 스테이지 · 위치)을 보고 알맞은 곡을 고름 — 멀티플레이 참가자도 방장이 보내는 위치로 같은 곡.
 ##   야영지     야영지 전용 곡(CAMP_TRACKS — 파일이 있으면) · 없으면 그 스테이지의 사냥터 곡을 작게
 ##   사냥터     컨셉별 사냥터 곡 (FIELD_GROUPS)

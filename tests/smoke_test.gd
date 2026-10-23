@@ -253,7 +253,7 @@ func _test_bgm(main: Node2D) -> void:
 			all_ok = false
 		if not ResourceLoader.exists(path) or not ResourceLoader.exists(Bgm.DIR + String(Bgm.boss_track(n)) + ".ogg"):
 			all_ok = false
-	_check(all_ok and ResourceLoader.exists(Bgm.DIR + "bgm_boss_07_final.ogg"), "1~100스테이지 모두 사냥터 곡 · 보스 곡이 있음 (23곡)")
+	_check(all_ok and ResourceLoader.exists(Bgm.DIR + "bgm_boss_07_final.ogg"), "1~100스테이지 모두 사냥터 곡 · 보스 곡이 있음")
 	_check(Bgm.field_track(1) == &"bgm_field_01_meadow" and Bgm.field_track(7) == &"bgm_field_07_undead" and Bgm.field_track(71) == &"bgm_field_09_sea"
 		and Bgm.boss_track(30) == &"bgm_boss_02_milestone" and Bgm.boss_track(33) == &"bgm_boss_03_dragon" and Bgm.boss_track(60) == &"bgm_boss_04_god"
 		and Bgm.boss_track(90) == &"bgm_boss_05_abaddon" and Bgm.boss_track(100) == &"bgm_boss_06_gabriel" and Bgm.boss_track(6) == &"bgm_boss_01_normal",
@@ -261,7 +261,9 @@ func _test_bgm(main: Node2D) -> void:
 	stage.instant_travel = true
 	stage.go_to_stage(7)
 	await _frames(5)
-	_check(Bgm.get_track() == &"bgm_field_07_undead" and Bgm._gain < 1.0 and Bgm.get_active_player().playing, "야영지: 그 스테이지 사냥터 곡을 작게")
+	_check(Bgm.get_track() == &"bgm_camp_01_fantasy" and is_equal_approx(Bgm._gain, 1.0) and Bgm.get_active_player().playing, "야영지: 야영지 전용 곡 (1~37 중세 판타지)")
+	_check(Bgm.camp_track(38) == &"bgm_camp_02_myth" and Bgm.camp_track(100) == &"bgm_camp_03_heaven" and Bgm.title_track() == &"bgm_title",
+		"야영지 곡 3곡(38~80 그리스 · 81~100 천상) · 타이틀 전용 곡이 있음")
 	stage._do_enter_field()
 	await _frames(20)
 	_check(Bgm.get_track() == &"bgm_field_07_undead" and is_equal_approx(Bgm._gain, 1.0), "사냥터: 망자의 묘지 곡")
