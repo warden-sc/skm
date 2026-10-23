@@ -41,6 +41,7 @@ static var _decode_table := PackedFloat32Array()
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	Profile.settings_changed.connect(apply_volume)
 
 
 static func get_mode() -> int:
@@ -161,6 +162,20 @@ func _voice(data: PackedByteArray) -> void:
 		playback.push_buffer(frames)
 
 
+## 동료 목소리 크기 (설정 「음성 채팅 음량」 0 ~ 1 — 기본 1 = 예전과 같은 +2 dB)
+static func playback_db() -> float:
+	var v := clampf(float(Profile.get_setting("voice_volume")), 0.0, 1.0)
+	return 2.0 + linear_to_db(maxf(v, 0.0001))
+
+
+## 설정을 바꾸면 이미 듣고 있는 동료들의 목소리 크기도 바로
+func apply_volume() -> void:
+	for peer in _players:
+		var player := _players[peer] as AudioStreamPlayer
+		if player != null and is_instance_valid(player):
+			player.volume_db = playback_db()
+
+
 func _player_for(peer_id: int) -> AudioStreamPlayer:
 	var player := _players.get(peer_id) as AudioStreamPlayer
 	if player != null and is_instance_valid(player):
@@ -170,7 +185,7 @@ func _player_for(peer_id: int) -> AudioStreamPlayer:
 	generator.mix_rate = RATE
 	generator.buffer_length = 0.6
 	player.stream = generator
-	player.volume_db = 2.0
+	player.volume_db = playback_db()
 	add_child(player)
 	player.play()
 	_players[peer_id] = player

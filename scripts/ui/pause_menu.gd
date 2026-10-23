@@ -177,6 +177,7 @@ func _build() -> void:
 	_voice_option.item_selected.connect(set_voice_mode)
 	voice_row.add_child(_voice_option)
 	voice_row.visible = VoiceChat.is_supported()  # 웹 버전은 음성 채팅 없음
+	(volume_sliders["voice_volume"] as HSlider).get_parent().visible = VoiceChat.is_supported()
 	_add_button(_settings_box, "← 돌아가기", _show_main)
 	_settings_box.hide()
 
@@ -193,7 +194,7 @@ func cycle_text_speed() -> void:
 
 
 ## 음량 설정: [설정 키, 이름] — 마스터(전체) · 배경음 · 효과음 (효과음은 지금 소리 파일이 없어도 미리 맞춰 둘 수 있음)
-const VOLUME_SETTINGS := [["master_volume", "마스터 음량"], ["bgm_volume", "배경음"], ["sfx_volume", "효과음"]]
+const VOLUME_SETTINGS := [["master_volume", "마스터 음량"], ["bgm_volume", "배경음"], ["sfx_volume", "효과음"], ["voice_volume", "음성 채팅 음량"]]
 
 
 func _add_volume_slider(key: String, title: String) -> void:
