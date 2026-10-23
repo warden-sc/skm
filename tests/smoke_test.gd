@@ -5846,7 +5846,10 @@ func _run() -> void:
 	_gm.use_potion()
 	_check(_gm.hp == _gm.max_hp and _gm.get_potion_count(&"potion") == 1, "회복 포션: 최대 체력의 %d%% 회복" % roundi(medium.heal_percent * 100.0))
 	var potion_slot := hud.get_node("%Hotbar").get_child(hud.get_node("%Hotbar").get_child_count() - 1)
-	_check((potion_slot.get_node("PotionCount") as Label).text == "x%d" % _gm.get_total_potions(), "HUD 포션 개수 표시 x%d" % _gm.get_total_potions())
+	var shown_own := _gm.get_potion_count(_gm.choose_potion().id)
+	var want_count := ("x%d/%d" % [shown_own, _gm.get_total_potions()]) if shown_own != _gm.get_total_potions() else "x%d" % shown_own
+	_check((potion_slot.get_node("PotionCount") as Label).text == want_count and (potion_slot.get_node("PotionMode") as Label).text == "자동",
+		"HUD 포션 칸: 마실 포션 개수 / 전체 「%s」 · 「자동」" % want_count)
 
 	print("[인벤토리]")
 	await _press_action(&"inventory")
