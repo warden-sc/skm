@@ -6646,13 +6646,13 @@ func _run() -> void:
 			var p1 := cine.phase()
 			cine.time = 11.5
 			await _frames(2)
-			var closed := cine._portal_open(0) < 0.05
+			var portals_closed := cine._portal_open(0) < 0.05
 			cine.time = 15.8
 			await _frames(2)
 			var p3 := cine.phase()
 			cine.time = 20.5
 			await _frames(2)
-			_check(p1 == 1 and closed and p3 == 3 and cine._portal_open(0) > 0.9 and cine.phase() == 4,
+			_check(p1 == 1 and portals_closed and p3 == 3 and cine._portal_open(0) > 0.9 and cine.phase() == 4,
 				"균열 안정화 → 포탈이 닫힘 → 빈 관리자의 자리에 누군가 앉음 → 포탈이 다시 열림")
 		await _press_action(&"interact")
 		await _frames(2)
