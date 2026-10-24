@@ -1,6 +1,7 @@
 extends Control
 ## 엔딩 화면 (모든 스테이지 클리어 후 StageManager 가 전환)
 ##
+## 0) 엔딩 장면 (EndingCinematic): 세계들의 귀환 → 균열이 아묾 → 포탈이 닫힘 → 빈 관리자의 자리에 누군가 앉음 → 포탈이 다시 열림
 ## 1) 이야기 문장이 한 줄씩 떠오름
 ## 2) 모험 기록 (난이도 / 클리어 시간 / 처치 수 / 골드 / 최종 장비)
 ## 3) 「타이틀로 돌아가기」 → GameManager 초기화 후 타이틀 메뉴
@@ -35,6 +36,7 @@ const HIDDEN_LAST_LINE := "…그리고 아무도 모르는 고대 용 아르케
 @onready var _return_button: Button = %ReturnButton
 
 var _story_labels: Array[Label] = []
+var _cinematic: EndingCinematic
 var _sequence: Tween
 var _finished: bool = false
 var _time: float = 0.0
@@ -66,7 +68,27 @@ func _ready() -> void:
 	_add_light_particles()
 	if Story.play("엔딩"):
 		await Story.finished
-	_play_sequence()
+	if _finished:
+		return
+	_play_cinematic()
+
+
+func _play_cinematic() -> void:
+	var layout := _story_box.get_parent() as Control
+	layout.modulate.a = 0.0
+	_cinematic = EndingCinematic.new()
+	add_child(_cinematic)
+	_cinematic.finished.connect(func() -> void:
+		var fade := create_tween()
+		fade.tween_property(_cinematic, "modulate:a", 0.0, 1.0)
+		fade.parallel().tween_property(layout, "modulate:a", 1.0, 1.0)
+		fade.tween_callback(_cinematic.queue_free)
+		_play_sequence())
+
+
+## 엔딩 장면 (테스트용)
+func get_cinematic() -> EndingCinematic:
+	return _cinematic if is_instance_valid(_cinematic) else null
 
 
 func _process(delta: float) -> void:
@@ -94,6 +116,10 @@ func _play_sequence() -> void:
 
 ## 연출 건너뛰기: 모든 문장과 기록을 즉시 표시
 func skip() -> void:
+	if is_instance_valid(_cinematic):
+		_cinematic.queue_free()
+		_cinematic = null
+		(_story_box.get_parent() as Control).modulate.a = 1.0
 	if _sequence != null and _sequence.is_valid():
 		_sequence.kill()
 	_the_end.modulate.a = 1.0

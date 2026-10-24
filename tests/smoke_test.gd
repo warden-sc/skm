@@ -6638,6 +6638,22 @@ func _run() -> void:
 	var ending := get_tree().current_scene
 	_check(ending != null and ending.name == "Ending", "모든 스테이지 클리어 → 엔딩 화면")
 	if ending != null and ending.name == "Ending":
+		var cine: EndingCinematic = ending.get_cinematic()
+		_check(cine != null and cine.phase() == 0 and not ending.is_finished(), "엔딩 장면: 세계들이 각자의 포탈로 돌아감")
+		if cine != null:
+			cine.time = 7.0
+			await _frames(2)
+			var p1 := cine.phase()
+			cine.time = 11.5
+			await _frames(2)
+			var closed := cine._portal_open(0) < 0.05
+			cine.time = 15.8
+			await _frames(2)
+			var p3 := cine.phase()
+			cine.time = 20.5
+			await _frames(2)
+			_check(p1 == 1 and closed and p3 == 3 and cine._portal_open(0) > 0.9 and cine.phase() == 4,
+				"균열 안정화 → 포탈이 닫힘 → 빈 관리자의 자리에 누군가 앉음 → 포탈이 다시 열림")
 		await _press_action(&"interact")
 		await _frames(2)
 		_check(ending.is_finished() and (ending.get_node("%RecordPanel") as Control).visible, "아무 키 → 연출 건너뛰고 모험 기록 표시")

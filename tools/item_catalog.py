@@ -1321,7 +1321,9 @@ def readme_tables():
         return p.get("display_name", '""').strip('"')
 
     def price_of(item):
-        return int(_num(_tres_props(item), "price"))
+        # 게임 안 값과 같게 (Balance.item_price — .tres 의 price 는 게임이 덮어씀)
+        formula = price(item, WEIGHT[item["cat"]])
+        return int(formula) if formula is not None else int(_num(_tres_props(item), "price"))
 
     for r in range(4):
         lines.append("#### %s (상점 %d스테이지부터)" % (RARITY_NAMES[r], [1, 11, 41, 71][r]))
