@@ -73,13 +73,13 @@ const DIFFICULTY_INFO := {
 	},
 	Difficulty.HARD: {
 		"name": "하드", "color": Color(1.0, 0.75, 0.35),
-		"enemy_hp": 1.3, "enemy_defense": 1, "enemy_damage": 1.1, "enemy_speed": 1.1, "gold": 1.3, "max_alive_bonus": 2, "hit_cap": 0.5,
-		"desc": "몬스터 체력 x1.3 · 공격력 x1.1 · 방어력 +1 · 골드 x1.3 · 한 번에 최대 체력의 50%까지",
+		"enemy_hp": 1.6, "enemy_defense": 1, "enemy_damage": 1.3, "enemy_speed": 1.1, "gold": 1.0, "max_alive_bonus": 2, "hit_cap": 0.5,
+		"desc": "몬스터 체력 x1.6 · 공격력 x1.3 · 방어력 +1 · 골드는 노멀과 같음 · 한 번에 최대 체력의 50%까지",
 	},
 	Difficulty.VERY_HARD: {
 		"name": "베리하드", "color": Color(1.0, 0.35, 0.4),
-		"enemy_hp": 1.8, "enemy_defense": 3, "enemy_damage": 1.5, "enemy_speed": 1.2, "gold": 1.7, "max_alive_bonus": 4, "hit_cap": 0.75,
-		"desc": "몬스터 체력 x1.8 · 공격력 x1.5 · 방어력 +3 · 더 많고 빠름 · 골드 x1.7 · 한 번에 최대 체력의 75%까지",
+		"enemy_hp": 2.4, "enemy_defense": 3, "enemy_damage": 1.9, "enemy_speed": 1.2, "gold": 1.0, "max_alive_bonus": 4, "hit_cap": 0.75,
+		"desc": "몬스터 체력 x2.4 · 공격력 x1.9 · 방어력 +3 · 더 많고 빠름 · 골드는 노멀과 같음 · 한 번에 최대 체력의 75%까지",
 	},
 }
 const WEAPON_SLOT_NAMES := ["검", "활", "지팡이"]

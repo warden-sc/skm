@@ -172,7 +172,8 @@ func _ready() -> void:
 	# 문구는 띄우는 순간의 스테이지로 만듦 (그 사이 스테이지가 바뀌어도 맞는 번호가 나오게)
 	get_tree().create_timer(0.3, false).timeout.connect(func() -> void:
 		Net.announce("STAGE %d 「%s」 — 상인에게서 장비를 갖추고 텔레포트[E]로 사냥터에 가세요" % [GameManager.stage, GameManager.stage_name], Color(0.6, 1.0, 0.7))
-		Story.queue("%d스테이지 도착" % GameManager.stage))
+		if not GameManager.tutorial_mode:  # 튜토리얼에서는 이야기(첫 장면 · 대사)를 아껴 둠
+			Story.queue("%d스테이지 도착" % GameManager.stage))
 
 
 ## 멀티플레이 참가자: 스테이지 진행은 방장 컴퓨터에서 — 여기서는 화면 색(어둠)만 받아서 씀

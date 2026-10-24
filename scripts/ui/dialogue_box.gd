@@ -12,6 +12,8 @@ const PORTRAIT_SIZE := 56.0
 ## 표정이 바뀔 때(이름[표정]) 평소 얼굴을 보여 주는 시간
 const FACE_CHANGE_TIME := 0.45
 
+## @연출 장면을 보는 동안 남은 시간 (대화창 숨김)
+var _cue_wait: float = 0.0
 var _lines: Array = []
 var _index: int = 0
 var _typed: float = 0.0
@@ -136,10 +138,32 @@ func current_line() -> Dictionary:
 
 
 func _show_line() -> void:
-	# @연출 줄: 장면을 틀고 바로 다음 대사로
+	# @연출 줄: 장면을 틀고 다음 대사로 (장면을 먼저 봐야 하는 것은 그동안 대화창을 숨기고 기다림 — StoryCues.WAIT)
+	var wait := 0.0
 	while _index < _lines.size() and (_lines[_index] as Dictionary).has("cue"):
 		Story.run_cue(_lines[_index]["cue"])
+		wait = maxf(wait, StoryCues.wait_time(_lines[_index]["cue"]))
 		_index += 1
+	if wait > 0.0 and _index < _lines.size():
+		_cue_wait = wait
+		_set_panel_shown(false)
+		return
+	_display_line()
+
+
+## 대화창이 숨어 있는 동안 (@연출 장면을 보는 중) — 엔터로 넘기지 않음
+func is_waiting_cue() -> bool:
+	return _cue_wait > 0.0
+
+
+func _set_panel_shown(on: bool) -> void:
+	for child in get_children():
+		if child is CanvasItem:
+			(child as CanvasItem).visible = on
+
+
+func _display_line() -> void:
+	_set_panel_shown(true)
 	if _index >= _lines.size():
 		_finish()
 		return
@@ -169,6 +193,12 @@ func _show_line() -> void:
 func _process(delta: float) -> void:
 	if not visible:
 		return
+	if _cue_wait > 0.0:
+		_cue_wait -= delta
+		if _cue_wait <= 0.0:
+			_cue_wait = 0.0
+			_display_line()
+		return
 	if _face_left > 0.0:
 		_face_left -= delta
 		if _face_left <= 0.0:
@@ -193,7 +223,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## 다음으로 (테스트에서도 직접 호출)
 func advance() -> void:
-	if not visible:
+	if not visible or is_waiting_cue():
 		return
 	if is_typing():
 		_text.visible_characters = -1
@@ -209,6 +239,9 @@ func advance() -> void:
 ## [스킵] — 남은 대사를 모두 건너뛰고 닫음
 func skip_all() -> void:
 	while visible:
+		if is_waiting_cue():
+			_cue_wait = 0.0
+			_display_line()
 		advance()
 
 

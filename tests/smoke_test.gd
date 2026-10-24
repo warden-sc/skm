@@ -4730,10 +4730,34 @@ func _test_dialogue(main: Node2D) -> void:
 	_check(not Story.is_playing() and not get_tree().paused and cue_seen == ["장비빛남"], "[스킵] → 남은 대사를 건너뛰고 닫힘 (연출 장면은 그대로 · 게임 다시 움직임)")
 	Story.cue.disconnect(on_cue)
 	await get_tree().create_timer(StoryCues.GLOW_TIME + 0.2).timeout
+	# 첫 장면: 하늘에서 떨어짐 → (대화창은 장면이 끝난 뒤) → 상인의 선물
+	Story.load_text("[첫 장면]\n@연출: 하늘에서떨어짐\n용사: 으윽\n상인: 선물입니다\n@연출: 선물\n용사: 감사합니다\n[흔적]\n@연출: 도전자의흔적\n일지: 「…」\n")
+	var body := (main.get_node("Entities/Player") as Player).get_node("BodySprite") as Node2D
+	var body_y := body.position.y
+	Story.play("첫 장면")
+	box = Story.get_box()
+	await get_tree().process_frame
+	_check(box.is_waiting_cue() and body.position.y < body_y - 100.0 and not box.get_child(0).visible, "[장면] 하늘에서떨어짐: 용사가 하늘 높이에서 시작 · 그동안 대화창은 숨김")
+	box.advance()
+	_check(box.is_waiting_cue(), "장면 중에는 Enter 로 넘어가지 않음")
+	await get_tree().create_timer(StoryCues.wait_time("하늘에서떨어짐") + 0.2).timeout
+	_check(not box.is_waiting_cue() and is_equal_approx(body.position.y, body_y) and is_zero_approx(body.rotation) and box.current_line()["text"] == "으윽",
+		"떨어져 쿵 → 쓰러졌다 일어남 → 그다음 대화창 「으윽」")
+	box.advance()
+	box.advance()
+	box.advance()
+	_check(box.is_waiting_cue(), "[장면] 선물: 상인 쪽에서 장비가 날아가는 동안 대화창 숨김")
+	await get_tree().create_timer(StoryCues.wait_time("선물") + 0.2).timeout
+	_check(box.current_line()["text"] == "감사합니다", "선물 장면이 끝나면 다음 대사")
+	Story.skip()
+	Story.play("흔적")
+	await get_tree().process_frame
+	_check(main.get_node("Entities").get_children().filter(func(n: Node) -> bool: return n is StoryCues.ChallengerRelic).size() == 1, "[장면] 도전자의흔적: 용사 곁에 녹슨 갑옷과 일지가 놓임")
+	Story.skip()
 	# 실제 대본
 	Story.load_file(Story.STORY_PATH)
 	var speakers_ok := true
-	for key in ["5스테이지 보스 등장", "10스테이지 보스 등장", "31스테이지 상인", "50스테이지 보스 토벌", "51스테이지 도착", "100스테이지 보스 토벌", "히든 보스 토벌", "최종장 등장", "최종장 정체", "최종장 2페이즈", "최종장 토벌", "상인"]:
+	for key in ["1스테이지 도착", "5스테이지 보스 등장", "7스테이지 도착", "10스테이지 보스 등장", "26스테이지 도착", "31스테이지 상인", "36스테이지 상인", "46스테이지 도착", "50스테이지 보스 토벌", "51스테이지 도착", "63스테이지 상인", "68스테이지 도착", "88스테이지 도착", "91스테이지 상인", "95스테이지 보스 토벌", "97스테이지 보스 토벌", "98스테이지 보스 토벌", "99스테이지 상인", "99스테이지 보스 토벌", "100스테이지 보스 토벌", "히든 보스 토벌", "최종장 등장", "최종장 정체", "최종장 2페이즈", "최종장 토벌", "상인"]:
 		_check(Story.has_lines(key), "대본 [%s] 에 대사가 있음" % key)
 		for l in Story.resolve_lines(key):
 			if l.has("cue"):
@@ -5035,8 +5059,9 @@ func _test_gear(main: Node2D) -> void:
 	easy_mob.free()
 	minion_gold.free()
 	decoy.free()
-	_check(_gm.DIFFICULTY_INFO[_gm.Difficulty.HARD]["gold"] == 1.3 and _gm.DIFFICULTY_INFO[_gm.Difficulty.VERY_HARD]["gold"] == 1.7 and is_equal_approx(Balance.party_gold_multiplier(4), 2.8),
-		"골드 배율: 하드 x1.3 · 베리하드 x1.7 · 4명이면 총량 x2.8 (먼저 줍는 사람이)")
+	_check(_gm.DIFFICULTY_INFO[_gm.Difficulty.HARD]["gold"] == 1.0 and _gm.DIFFICULTY_INFO[_gm.Difficulty.VERY_HARD]["gold"] == 1.0 and is_equal_approx(Balance.party_gold_multiplier(4), 2.8)
+		and _gm.DIFFICULTY_INFO[_gm.Difficulty.VERY_HARD]["enemy_hp"] > _gm.DIFFICULTY_INFO[_gm.Difficulty.HARD]["enemy_hp"] and _gm.DIFFICULTY_INFO[_gm.Difficulty.HARD]["enemy_damage"] > 1.0,
+		"골드는 난이도와 상관없이 같음 (하드 · 베리하드는 몬스터만 강해짐) · 4명이면 총량 x2.8 (먼저 줍는 사람이)")
 	# 피해 ×10
 	var hp0: int = _gm.hp
 	player._invincible_left = 0.0
